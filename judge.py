@@ -5,7 +5,7 @@ import glob
 
 # --- Настройки ---
 TIME_LIMIT = 5      # лимит времени в секундах
-TASK = "3"          # <-- номер задачи по умолчанию
+TASK = "-1"          # <-- номер задачи по умолчанию
 SOURCE = "sol.cpp"  # sol.cpp всегда лежит в корне
 BINARY = "sol"      # бинарник тоже в корне
 LOG_FILE = "log.txt"  # итоговый лог в корне
@@ -85,6 +85,10 @@ def judge():
         log.write(f"Final verdict: {final}\n")
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        TASK = sys.argv[1]
+    if len(sys.argv) < 2:
+        print("Usage: python3 judge.py <task_number>")
+        sys.exit(1)
+
+    TASK = sys.argv[1]
     judge()
+    print(f"СПЕЦИАЛЬНО ДЛЯ ФОКИ, ВЫВОД ЛЕЖИТ В {LOG_FILE}!!!!!!!!")
