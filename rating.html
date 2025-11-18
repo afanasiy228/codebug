@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CodeBug — Рейтинг</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #151518;
+            --border: #2a2a33;
+            --text-main: #f5f5f7;
+            --text-muted: #9b9ba5;
+            --accent: #ffd451;
+            --accent-hover: #ffe38a;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: Inter, sans-serif;
+        }
+        /* HEADER — универсальный на всех страницах */
+        
+        header {
+            height: 56px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 22px;
+            font-size: 14px;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        /* CONTENT */
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        h1 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: #1a1a1d;
+            padding: 14px;
+            text-align: left;
+            color: var(--accent);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 15px;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+        }
+        
+        .user {
+            display: flex;
+            align-items: center;
+        }
+        
+        .place {
+            color: var(--accent);
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="container">
+        <h1>Рейтинг пользователей</h1>
+
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Пользователь</th>
+                <th>Решено задач</th>
+                <th>Опыт (XP)</th>
+                <th>Рейтинг</th>
+            </tr>
+
+            <!-- ТВОЙ АККАУНТ — 1 место -->
+            <tr>
+                <td class="place">1</td>
+                <td>
+                    <div class="user">
+                        <img src="dora.png" class="avatar">
+                        <span>Afanasy</span>
+                    </div>
+                </td>
+                <td>152</td>
+                <td>38200</td>
+                <td>Legendary</td>
+            </tr>
+
+            <!-- Фейковые другие пользователи -->
+            <tr>
+                <td>2</td>
+                <td>
+                    <div class="user">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user1" class="avatar">
+                        <span>Sergey</span>
+                    </div>
+                </td>
+                <td>121</td>
+                <td>29700</td>
+                <td>Master</td>
+            </tr>
+
+            <tr>
+                <td>3</td>
+                <td>
+                    <div class="user">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user2" class="avatar">
+                        <span>Robert</span>
+                    </div>
+                </td>
+                <td>93</td>
+                <td>21500</td>
+                <td>Expert</td>
+            </tr>
+
+            <tr>
+                <td>4</td>
+                <td>
+                    <div class="user">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user3" class="avatar">
+                        <span>Kirill</span>
+                    </div>
+                </td>
+                <td>61</td>
+                <td>14300</td>
+                <td>Specialist</td>
+            </tr>
+
+            <tr>
+                <td>5</td>
+                <td>
+                    <div class="user">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user4" class="avatar">
+                        <span>Vladimir</span>
+                    </div>
+                </td>
+                <td>48</td>
+                <td>11900</td>
+                <td>Pupil</td>
+            </tr>
+        </table>
+    </div>
+
+    <script src="auth.js"></script>
+
+</body>
+
+</html>

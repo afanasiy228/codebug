@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CodeBug — Авторизация</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #151518;
+            --border: #2a2a33;
+            --text-main: #f5f5f7;
+            --text-muted: #9b9ba5;
+            --accent: #ffd451;
+            --accent-hover: #ffe38a;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: Inter, sans-serif;
+        }
+        
+        header {
+            height: 56px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            color: var(--accent);
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        nav a {
+            color: var(--text-muted);
+            margin-left: 20px;
+            text-decoration: none;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        
+        .container {
+            width: 420px;
+            margin: 70px auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 30px 40px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--accent);
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+        /* TABS */
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        
+        .tab.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+        /* FORMS */
+        
+        .form {
+            display: none;
+        }
+        
+        .form.active {
+            display: block;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0e0e12;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-main);
+            margin-bottom: 14px;
+            font-size: 14px;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            border: none;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #111;
+            font-size: 15px;
+        }
+        
+        button:hover {
+            background: var(--accent-hover);
+        }
+        
+        .forgot {
+            text-align: right;
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+        /* SOCIAL BUTTONS */
+        
+        .social-container {
+            margin-top: 15px;
+        }
+        
+        .social-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #0e0e12;
+            color: var(--text-main);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .social-btn img {
+            width: 20px;
+        }
+        
+        .social-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        /* CAPTCHA */
+        
+        .captcha {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #0e0e12;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .captcha span {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        /* MODAL ANIMATION */
+        
+        #modal-bg {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        
+        #modal {
+            width: 300px;
+            padding: 25px;
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--accent);
+            /* ANIMATION */
+            opacity: 0;
+            transform: scale(0.7);
+            transition: 0.25s ease;
+        }
+        
+        #modal.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* AVATAR PREVIEW */
+        
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            background: #333;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            font-weight: 700;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+
+    <div class="container">
+
+        <h1>Добро пожаловать</h1>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Вход</div>
+            <div class="tab" onclick="switchTab('register')">Регистрация</div>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="login" class="form active">
+
+            <input id="login-user" type="text" placeholder="Логин">
+            <input id="login-pass" type="password" placeholder="Пароль">
+
+            <div class="forgot" onclick="forgotPassword()">Забыли пароль?</div>
+
+            <button onclick="login()">Войти</button>
+
+            <div class="social-container">
+                <button class="social-btn"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png"> Войти через GitHub</button>
+                <button class="social-btn"><img src="https://cdn-icons-png.flaticon.com/512/281/281764.png"> Войти через Google</button>
+                <button class="social-btn"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png"> Войти через Telegram</button>
+            </div>
+
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="register" class="form">
+
+            <div class="avatar-preview" id="avatarPreview">A</div>
+
+            <input id="reg-user" type="text" placeholder="Логин" oninput="updateAvatar()">
+            <input id="reg-pass" type="password" placeholder="Пароль">
+
+            <div class="captcha">
+                <span id="captchaText">3 + 4 = ?</span>
+                <input id="captchaAnswer" style="width: 60px; margin: 0;">
+            </div>
+
+            <button onclick="register()">Зарегистрироваться</button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL -->
+    <div id="modal-bg">
+        <div id="modal">
+            <h3 style="color: var(--accent); margin-top: 0;">Восстановление пароля</h3>
+            <p style="color: var(--text-muted); font-size: 14px;">
+                Пароль не найден.<br> Но мы верим, что ты вспомнишь 😎
+            </p>
+            <button onclick="closeModal()">Ок</button>
+        </div>
+    </div>
+
+
+    <script src="auth.js"></script>
+
+    <script>
+        renderHeader();
+
+        /* TABS */
+        function switchTab(tab) {
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".form").forEach(f => f.classList.remove("active"));
+
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add("active");
+            document.getElementById(tab).classList.add("active");
+        }
+
+        /* MODAL */
+        function forgotPassword() {
+            let bg = document.getElementById("modal-bg");
+            let box = document.getElementById("modal");
+
+            bg.style.display = "flex";
+
+            setTimeout(() => {
+                box.classList.add("show");
+            }, 10);
+        }
+
+        function closeModal() {
+            let box = document.getElementById("modal");
+            box.classList.remove("show");
+
+            setTimeout(() => {
+                document.getElementById("modal-bg").style.display = "none";
+            }, 200);
+        }
+
+        /* AVATAR GENERATION */
+        function updateAvatar() {
+            let user = document.getElementById("reg-user").value;
+            let box = document.getElementById("avatarPreview");
+
+            if (user.length === 0) {
+                box.innerText = "A";
+                box.style.background = "#333";
+                return;
+            }
+
+            box.innerText = user[0].toUpperCase();
+
+            let color = "#" + Math.floor(Math.random() * 16777215).toString(16);
+            box.style.background = color;
+        }
+
+        /* CAPTCHA GENERATION */
+        function generateCaptcha() {
+            let a = Math.floor(Math.random() * 5 + 1);
+            let b = Math.floor(Math.random() * 5 + 1);
+            let text = `${a} + ${b} = ?`;
+
+            document.getElementById("captchaText").innerText = text;
+
+            return a + b;
+        }
+
+        let correctCaptcha = generateCaptcha();
+
+        /* CAPTCHA CHECK IN REGISTER */
+        function register() {
+            let u = document.getElementById("reg-user").value.trim();
+            let p = document.getElementById("reg-pass").value.trim();
+            let c = document.getElementById("captchaAnswer").value.trim();
+
+            if (parseInt(c) !== correctCaptcha) {
+                alert("Капча неверная 😑");
+                correctCaptcha = generateCaptcha();
+                return;
+            }
+
+            if (u.length < 3 || p.length < 3) {
+                alert("Логин и пароль должны быть >= 3 символов");
+                return;
+            }
+
+            setUser(u);
+            alert("Регистрация успешна!");
+            window.location.href = "index.html";
+        }
+    </script>
+
+</body>
+
+</html>
