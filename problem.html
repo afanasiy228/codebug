@@ -2,8 +2,11 @@
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>CodeBug — Задача</title>
+
+    <!-- MONACO EDITOR CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 
     <style>
          :root {
@@ -18,148 +21,137 @@
         
         body {
             margin: 0;
+            font-family: Inter, sans-serif;
             background: var(--bg);
             color: var(--text-main);
-            font-family: Inter, sans-serif;
             overflow: hidden;
         }
+        /* HEADER */
         
         header {
-            height: 56px;
             background: #0d0d0f;
             border-bottom: 1px solid var(--border);
-            padding: 0 32px;
+            padding: 12px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .logo {
-            color: var(--accent);
-            font-weight: 800;
             font-size: 20px;
+            font-weight: 800;
+            color: var(--accent);
         }
         
         nav a {
-            text-decoration: none;
             color: var(--text-muted);
-            margin-left: 20px;
+            margin-left: 25px;
+            text-decoration: none;
+            font-size: 14px;
         }
         
         nav a:hover {
             color: var(--accent);
         }
-        /* TWO PANELS LAYOUT */
+        /* MAIN LAYOUT */
         
-        .workspace {
-            height: calc(100vh - 56px);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .split-container {
+            display: flex;
+            width: 100vw;
+            height: calc(100vh - 70px);
+            overflow: hidden;
         }
+        /* LEFT PANEL */
         
         .left-panel {
-            background: var(--bg);
-            padding: 30px;
-            border-right: 1px solid var(--border);
-            overflow-y: auto;
-            resize: horizontal;
-            min-width: 350px;
-        }
-        
-        h1 {
-            color: var(--accent);
-            margin-top: 0;
-        }
-        
-        .section {
-            margin-bottom: 20px;
-        }
-        
-        pre {
+            width: 40%;
+            min-width: 260px;
+            max-width: 80%;
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 14px;
-            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+        
+        .condition h1 {
+            color: var(--accent);
+        }
+        /* SPLITTER */
+        
+        .splitter {
+            width: 6px;
+            cursor: col-resize;
+            background: #2e2e33;
+        }
+        
+        .splitter:hover {
+            background: #ffd451;
         }
         /* RIGHT PANEL */
         
         .right-panel {
-            background: #000;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .controls {
-            padding: 10px;
-            display: flex;
-            gap: 10px;
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        
-        .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-        }
-        
-        .run-btn {
-            background: var(--accent);
-            color: #000;
-        }
-        
-        .run-btn:hover {
-            background: #ffe38a;
-        }
-        
-        .submit-btn {
-            background: #1b1b20;
-            color: var(--text-main);
-            border: 1px solid var(--border);
-        }
-        
-        .submit-btn:hover {
-            border-color: var(--accent);
+            background: var(--bg-soft);
         }
         
         #editor {
             flex: 1;
-            border-bottom: 1px solid var(--border);
-            min-height: 0;
+            min-height: 200px;
+        }
+        
+        .controls {
+            padding: 12px;
+            background: #111;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .run-btn {
+            background: #ffd451;
+            color: #000;
+        }
+        
+        .submit-btn {
+            background: #333;
+            color: #eee;
         }
         /* TABS */
         
         .tabs {
             display: flex;
-            gap: 24px;
-            padding: 10px 20px;
-            background: #0f0f12;
+            background: #111;
             border-bottom: 1px solid var(--border);
         }
         
         .tab {
+            padding: 12px 20px;
             cursor: pointer;
             color: var(--text-muted);
-            padding-bottom: 4px;
         }
         
         .tab.active {
             color: var(--accent);
             border-bottom: 2px solid var(--accent);
         }
-        /* OUTPUT PANELS */
         
         .tab-content {
-            flex: 0 0 240px;
-            background: #0f0f12;
-            overflow-y: auto;
-            padding: 14px 20px;
-            font-family: monospace;
             display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #141417;
         }
         
         .tab-content.active {
@@ -167,30 +159,12 @@
         }
         
         .testcase {
-            border: 1px solid var(--border);
-            padding: 12px;
+            padding: 10px;
             border-radius: 10px;
-            margin-bottom: 16px;
-            background: var(--bg-card);
-            color: var(--text-main);
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
         }
     </style>
-
-    <!-- MONACO EDITOR -->
-    <script>
-        window.MonacoEnvironment = {
-            getWorkerUrl: () => URL.createObjectURL(
-                new Blob([`
-                    self.MonacoEnvironment = { baseUrl: 'https://unpkg.com/monaco-editor@0.45.0/min/' };
-                    importScripts('https://unpkg.com/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js');
-                `], {
-                    type: "text/javascript"
-                })
-            )
-        };
-    </script>
-
-    <script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
 </head>
 
 <body>
@@ -200,112 +174,121 @@
         <nav id="nav-links"></nav>
     </header>
 
-    <div class="workspace">
+    <div class="split-container">
 
         <!-- LEFT -->
-        <div class="left-panel">
-            <h1>Исправь ошибку</h1>
-
-            <div class="section">
-                <h3>Описание</h3>
-                <p>вам дано число a, вам надо вывести число a + a</p>
+        <div class="left-panel" id="leftPanel">
+            <div class="condition">
+                <h1>Ошибка в формуле площади</h1>
+                <p>Тут будет текст условия задачи. Можно вставить любой Markdown или HTML.</p>
             </div>
-
-            <div class="section">
-                <h3>Пример</h3>
-                <pre>Ввод: 5  
-Вывод: 10</pre>
-            </div>
-
         </div>
 
-        <!-- RIGHT -->
-        <div class="right-panel">
+        <!-- SPLITTER -->
+        <div class="splitter" id="splitter"></div>
 
-            <!-- EDITOR -->
+        <!-- RIGHT -->
+        <div class="right-panel" id="rightPanel">
+
             <div id="editor"></div>
 
-            <!-- BUTTONS UNDER EDITOR -->
             <div class="controls">
                 <button class="btn run-btn" onclick="runCode()">Run</button>
                 <button class="btn submit-btn" onclick="submitCode()">Submit</button>
             </div>
 
-            <!-- TABS -->
             <div class="tabs">
                 <div class="tab active" data-tab="tests">Тесты</div>
                 <div class="tab" data-tab="output">Вывод</div>
                 <div class="tab" data-tab="errors">Ошибки</div>
             </div>
 
-            <!-- TAB CONTENT -->
             <div id="tests" class="tab-content active">
-                <div class="testcase">
-                    <b>Тест 1:</b><br> Ввод: [5 | 1 2 3 4 5]<br> Ожидаемый вывод: 15
-                </div>
-                <div class="testcase">
-                    <b>Тест 2:</b><br> Ввод: [3 | 10 10 10]<br> Ожидаемый вывод: 30
-                </div>
+                <div class="testcase"><b>Тест 1:</b><br>Ввод: [5 | 1 2 3 4 5]<br>Ожидаемый вывод: 15</div>
+                <div class="testcase"><b>Тест 2:</b><br>Ввод: [3 | 10 10 10]<br>Ожидаемый вывод: 30</div>
             </div>
 
-            <div id="output" class="tab-content">Здесь будет вывод.</div>
-            <div id="errors" class="tab-content">Ошибок нет.</div>
-
+            <div id="output" class="tab-content"></div>
+            <div id="errors" class="tab-content"></div>
         </div>
     </div>
 
-
+    <!-- AUTH SYSTEM -->
     <script src="auth.js"></script>
 
     <script>
-        /* MONACO INIT */
+        /* ---------------------- SPLITTER (как в VSCode) ---------------------- */
+        const splitter = document.getElementById('splitter');
+        const left = document.getElementById('leftPanel');
+        let isDragging = false;
+
+        splitter.addEventListener('mousedown', () => {
+            isDragging = true;
+            document.body.style.cursor = 'col-resize';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let w = e.clientX;
+            if (w < 200) w = 200;
+            if (w > window.innerWidth * 0.8) w = window.innerWidth * 0.8;
+            left.style.width = w + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.body.style.cursor = 'default';
+        });
+
+        /* ---------------------- TABS ---------------------- */
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            };
+        });
+
+        /* ---------------------- MONACO EDITOR ---------------------- */
+
         require.config({
             paths: {
-                "vs": "https://unpkg.com/monaco-editor@0.45.0/min/vs"
+                'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs'
             }
         });
 
-        require(["vs/editor/editor.main"], function() {
-            window.editor = monaco.editor.create(document.getElementById("editor"), {
-                value: `#include <bits/stdc++.h>
+        require(["vs/editor/editor.main"], () => {
+            window.editor = monaco.editor.create(document.getElementById('editor'), {
+                value: `#include <iostream>
 using namespace std;
 
 int main() {
-    int n;
-    cin >> n;
-    cout << n / 2 * 4;
-    return 0;
+    int n; cin >> n;
+    int sum = 0;
+    for (int i = 0; i < n; i++) {
+        int x; cin >> x;
+        sum += x;
+    }
+    cout << sum;
 }`,
                 language: "cpp",
                 theme: "vs-dark",
-                automaticLayout: true,
                 fontSize: 16,
                 minimap: {
                     enabled: false
-                },
-                scrollBeyondLastLine: false
+                }
             });
         });
 
-        /* TABS */
-        document.querySelectorAll(".tab").forEach(tab => {
-            tab.addEventListener("click", () => {
-                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-                document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-
-                tab.classList.add("active");
-                document.getElementById(tab.dataset.tab).classList.add("active");
-            });
-        });
-
-        /* RUN */
+        /* ---------------------- RUN / SUBMIT ---------------------- */
         function runCode() {
-            document.getElementById("output").textContent = "Примерный вывод: 10";
+            document.getElementById("output").innerHTML = "<b>Вывод:</b><br>42 (пример)";
         }
 
-        /* SUBMIT */
         function submitCode() {
-            document.getElementById("errors").textContent = "OK — задача решена!";
+            document.getElementById("errors").innerHTML = "<b>Ошибок не найдено.</b>";
         }
     </script>
 
