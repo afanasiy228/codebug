@@ -115,6 +115,11 @@ function register() {
         return;
     }
 
+    if (u.length > 30 || p.length > 30) {
+        alert("Фока ты тупой?");
+        return;
+    }
+
     // Создаём "аккаунт"
     setUser(u);
 
