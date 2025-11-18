@@ -261,14 +261,39 @@
         let isV = false;
 
         vSplit.addEventListener("mousedown", () => isV = true);
-        document.addEventListener("mouseup", () => isV = false);
+        document.addEventListener("mouseup", () => {
+            isV = false;
+            isH = false;
+        });
 
         document.addEventListener("mousemove", e => {
-            if (!isV) return;
-            let w = e.clientX;
-            if (w < 200) w = 200;
-            if (w > window.innerWidth * 0.7) w = window.innerWidth * 0.7;
-            left.style.width = w + "px";
+            let needUpdate = false;
+
+            if (isV) {
+                let w = e.clientX;
+                if (w < 200) w = 200;
+                if (w > window.innerWidth * 0.7) w = window.innerWidth * 0.7;
+                left.style.width = w + "px";
+                needUpdate = true;
+            }
+
+            if (isH) {
+                let newHeight = window.innerHeight - e.clientY - 70;
+                if (newHeight < 120) newHeight = 120;
+                if (newHeight > window.innerHeight * 0.7) newHeight = window.innerHeight * 0.7;
+                testsPanel.style.height = newHeight + "px";
+                needUpdate = true;
+            }
+
+            if (needUpdate) {
+                const editorContainer = document.getElementById("editor");
+                editorContainer.style.height =
+                    (window.innerHeight - testsPanel.offsetHeight - 90) + "px";
+
+                // ВАЖНО — обновляем Monaco layout
+                if (window.editor)
+                    requestAnimationFrame(() => editor.layout());
+            }
         });
 
         /* ------------ HORIZONTAL SPLIT ------------ */
@@ -277,16 +302,10 @@
         const testsPanel = document.getElementById("testsPanel");
 
         hSplit.onmousedown = () => isH = true;
-        document.onmouseup = () => isH = false;
 
-        document.onmousemove = e => {
-            if (!isH) return;
-            let newHeight = window.innerHeight - e.clientY - 70;
-            if (newHeight < 120) newHeight = 120;
-            if (newHeight > window.innerHeight * 0.7) newHeight = window.innerHeight * 0.7;
-            testsPanel.style.height = newHeight + "px";
-        };
-
+        /* Первичная установка высоты редактора */
+        const editorContainer = document.getElementById("editor");
+        editorContainer.style.height = (window.innerHeight - 140) + "px";
         /* ------------ MONACO ------------ */
         require.config({
             paths: {
@@ -307,7 +326,7 @@ int main() {
                 theme: "vs-dark",
                 fontSize: 16,
                 minimap: {
-                    enabled: false
+                    enabled: true
                 },
             });
         });
