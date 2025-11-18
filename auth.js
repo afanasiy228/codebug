@@ -37,30 +37,32 @@ function logout() {
 ============================ */
 function updateNavbar() {
     const nav = document.getElementById("nav-links");
-    if (!nav) {
-        // Подождать 50 мс и попробовать снова
-        setTimeout(updateNavbar, 50);
-        return;
-    }
+    const user = getUser(); // логин, если авторизован
 
-    const user = getUser();
+    if (!nav) return;
 
     if (user) {
+        // Авторизованный пользователь
         nav.innerHTML = `
             <a href="index.html">Главная</a>
-            <a href="train.html">Тренировка</a>
             <a href="archive.html">Архив</a>
+            <a href="train.html">Тренировка</a>
+            <a href="rating.html">Рейтинг</a>
+            <a href="donate.html">Донат</a>
             <a href="faq.html">FAQ</a>
             <a href="profile.html">${user}</a>
-            <a onclick="logout()" style="cursor:pointer;color:#ffd451;">Выйти</a>
+            <a onclick="logout()" style="cursor:pointer; color:#ffd451;">Выйти</a>
         `;
     } else {
+        // Гость
         nav.innerHTML = `
             <a href="index.html">Главная</a>
-            <a href="train.html">Тренировка</a>
             <a href="archive.html">Архив</a>
+            <a href="train.html">Тренировка</a>
+            <a href="rating.html">Рейтинг</a>
+            <a href="donate.html">Донат</a>
             <a href="faq.html">FAQ</a>
-            <a href="auth.html">Войти</a>
+            <a href="auth.html">Войти/Зарегестрироваться</a>
         `;
     }
 }
