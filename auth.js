@@ -105,18 +105,13 @@ function register() {
         }
     }
 
-    if (u.length < 3) {
-        alert("Логин должен содержать минимум 3 символа.");
+    if (u.length < 3 || u.length > 30) {
+        alert("Логин должен содержать минимум 3 символа и быть короче 30 символов");
         return;
     }
 
     if (p.length < 3) {
         alert("Пароль должен содержать минимум 3 символа.");
-        return;
-    }
-
-    if (u.length > 30 || p.length > 30) {
-        alert("Фока ты тупой?");
         return;
     }
 
