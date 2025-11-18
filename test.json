@@ -1,0 +1,9 @@
+{
+    "type": "syntax | logic | algorithm | optimization | edgecase",
+    "line": 0,
+    "description": "Короткое описание ошибки (1–2 предложения)",
+    "difficulty": "easy | medium | hard",
+    "hint": "Подсказка для ученика",
+    "tags": ["тема1", "тема2"]
+
+}

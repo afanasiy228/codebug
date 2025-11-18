@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CodeBug — Архив задач</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #141417;
+            --bg-soft: #1b1b20;
+            --border: #262631;
+            --border-light: #3a3a44;
+            --text-main: #f5f5f7;
+            --text-muted: #a3a3b8;
+            --accent: #ffd451;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: Inter, sans-serif;
+            color: var(--text-main);
+        }
+        
+        header {
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        
+        nav a {
+            color: var(--text-muted);
+            margin-left: 25px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        
+        .page {
+            max-width: 1300px;
+            margin: 40px auto;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
+            padding: 0 30px;
+        }
+        /* SIDEBAR */
+        
+        .filters {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .filters h2 {
+            margin: 0;
+            color: var(--accent);
+            font-size: 21px;
+        }
+        
+        label {
+            display: block;
+            color: var(--text-muted);
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        /* SELECT */
+        
+        .select {
+            position: relative;
+        }
+        
+        .select select {
+            width: 100%;
+            padding: 10px;
+            padding-right: 40px;
+            background: #0f0f13;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            color: var(--text-main);
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        .select::after {
+            content: "▾";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            pointer-events: none;
+        }
+        
+        .select select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+        }
+        /* SEARCH */
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background: #0f0f13;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+        }
+        /* MAIN */
+        
+        h1 {
+            color: var(--accent);
+            font-size: 30px;
+            margin-top: 0;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: var(--bg-soft);
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        tr:hover {
+            background: #1a1a21;
+        }
+        /* PILL TAGS */
+        
+        .pill {
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+            background: #232327;
+        }
+        
+        .link {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .empty {
+            padding: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="page">
+
+        <!-- SIDEBAR -->
+        <div class="filters">
+            <h2>Фильтры</h2>
+
+            <label>Сложность</label>
+            <div class="select">
+                <select id="difficulty">
+                <option value="">Любая</option>
+                <option value="easy">Лёгкая</option>
+                <option value="medium">Средняя</option>
+                <option value="hard">Сложная</option>
+            </select>
+            </div>
+
+            <label>Тип ошибки</label>
+            <div class="select">
+                <select id="errorType">
+                <option value="">Любая</option>
+                <option value="algo">Алгоритмическая</option>
+                <option value="memory">Память</option>
+                <option value="time">Время</option>
+                <option value="math">Формулы</option>
+            </select>
+            </div>
+
+            <label>Поиск</label>
+            <input type="text" id="search" placeholder="например: DFS, формула…">
+        </div>
+
+        <!-- MAIN -->
+        <main>
+            <h1>Архив задач</h1>
+            <div class="subtitle">Список всех задач с возможностью фильтрации.</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Сложность</th>
+                        <th>Тип ошибки</th>
+                        <th>Решивших</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+
+            <div id="empty" class="empty" style="display:none;">Задачи не найдены…</div>
+        </main>
+
+    </div>
+
+    <script src="auth.js"></script>
+
+    <script>
+        const problems = [{
+            id: 1,
+            title: "Off-by-one ошибка в цикле",
+            difficulty: "easy",
+            error: "algo",
+            solved: 210
+        }, {
+            id: 2,
+            title: "Переполнение массива",
+            difficulty: "medium",
+            error: "memory",
+            solved: 122
+        }, {
+            id: 3,
+            title: "O(n^2) цикл",
+            difficulty: "hard",
+            error: "time",
+            solved: 48
+        }, {
+            id: 4,
+            title: "Ошибка в формуле площади",
+            difficulty: "easy",
+            error: "math",
+            solved: 301
+        }, {
+            id: 5,
+            title: "Неправильный DFS",
+            difficulty: "hard",
+            error: "algo",
+            solved: 55
+        }];
+
+        function mapError(e) {
+            return {
+                algo: "Алгоритмическая",
+                memory: "Память",
+                time: "Время",
+                math: "Формулы"
+            }[e] || "";
+        }
+
+        function render() {
+            const diff = document.getElementById("difficulty").value;
+            const err = document.getElementById("errorType").value;
+            const query = document.getElementById("search").value.toLowerCase();
+
+            const filtered = problems.filter(p =>
+                (!diff || p.difficulty === diff) &&
+                (!err || p.error === err) &&
+                (!query || p.title.toLowerCase().includes(query))
+            );
+
+            const tbody = document.getElementById("tbody");
+            const empty = document.getElementById("empty");
+
+            tbody.innerHTML = "";
+            empty.style.display = filtered.length ? "none" : "block";
+
+            filtered.forEach(p => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                <td>${p.id}</td>
+                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a></td>
+                <td>${p.difficulty === "easy" ? "Лёгкая" : p.difficulty === "medium" ? "Средняя" : "Сложная"}</td>
+                <td><span class="pill">${mapError(p.error)}</span></td>
+                <td>${p.solved}</td>
+            `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById("difficulty").onchange = render;
+        document.getElementById("errorType").onchange = render;
+        document.getElementById("search").oninput = render;
+
+        render();
+    </script>
+
+</body>
+
+</html>

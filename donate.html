@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>CodeBug — Донат</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #141417;
+            --border: #2a2a33;
+            --border-light: #3a3a46;
+            --text-main: #f5f5f7;
+            --text-muted: #a0a0ad;
+            --accent: #ffd451;
+            --accent-hover: #ffe38a;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: Inter, sans-serif;
+            color: var(--text-main);
+        }
+        /* HEADER */
+        
+        header {
+            height: 56px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        nav a {
+            margin-left: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        /* CONTENT */
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px 80px;
+        }
+        
+        h1 {
+            font-size: 32px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        
+        p.sub {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 40px;
+        }
+        /* DONATE OPTIONS */
+        
+        .donate-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .box {
+            flex: 1;
+            min-width: 240px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .box:hover {
+            border-color: var(--accent);
+            background: #1b1b20;
+        }
+        
+        .price {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        
+        .desc {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+        /* CUSTOM DONATE */
+        
+        .custom-block {
+            margin-top: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            padding: 20px;
+            border-radius: 14px;
+        }
+        
+        .custom-block h3 {
+            margin: 0;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0e0e12;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 10px;
+            font-size: 15px;
+        }
+        
+        .btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: #111;
+            border-radius: 10px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="container">
+        <h1>Поддержать проект</h1>
+
+        <p class="sub">
+            CodeBug — бесплатная тренировочная платформа. Если хочешь ускорить развитие — можно поддержать разработку 🙂
+        </p>
+
+        <!-- DONATE BOXES -->
+        <div class="donate-options">
+
+            <!-- 100 ₽ -->
+            <div class="box" onclick="selectDonate(100)">
+                <div class="price">100 ₽</div>
+                <div class="desc">Спасибо! 💛</div>
+            </div>
+
+            <!-- 300 ₽ -->
+            <div class="box" onclick="selectDonate(300)">
+                <div class="price">300 ₽</div>
+                <div class="desc">На энергетик разработчику ⚡</div>
+            </div>
+
+            <!-- 1000 ₽ -->
+            <div class="box" onclick="selectDonate(1000)">
+                <div class="price">1 000 ₽</div>
+                <div class="desc">На кофе и печеньки ☕🍪</div>
+            </div>
+
+            <!-- 10 000 ₽ -->
+            <div class="box" onclick="selectDonate(10000)">
+                <div class="price">10 000 ₽</div>
+                <div class="desc">На кальян разработчикам 😎🔥</div>
+            </div>
+
+        </div>
+
+        <!-- CUSTOM -->
+        <div class="custom-block">
+            <h3>Свой донат</h3>
+            <input id="customInput" type="number" placeholder="Введите сумму">
+            <button class="btn" onclick="donateNow()">Поддержать</button>
+        </div>
+
+    </div>
+
+    <script src="auth.js"></script>
+
+    <script>
+        let selected = null;
+
+        function selectDonate(amount) {
+            selected = amount;
+            document.getElementById("customInput").value = amount;
+        }
+
+        function donateNow() {
+            const amount = Number(document.getElementById("customInput").value);
+            if (!amount || amount <= 0) {
+                alert("Введите корректную сумму");
+                return;
+            }
+
+            // Здесь просто имитация
+            alert("Спасибо за поддержку! (фронтенд)");
+        }
+    </script>
+
+</body>
+
+</html>

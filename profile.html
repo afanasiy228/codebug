@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль — CodeBug</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #151518;
+            --border: #2a2a33;
+            --text-main: #f5f5f7;
+            --text-muted: #9b9ba5;
+            --accent: #ffd451;
+            --accent-hover: #ffe38a;
+        }
+        
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+        }
+        /* HEADER */
+        
+        header {
+            height: 56px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: var(--text-muted);
+            margin-left: 20px;
+            font-size: 15px;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        /* PAGE */
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .profile-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 12px;
+        }
+        
+        .left-block {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .avatar {
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .info {
+            flex: 1;
+        }
+        
+        .top-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            cursor: pointer;
+            color: #111;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .logout-btn:hover {
+            background: var(--accent-hover);
+        }
+        
+        .yellow {
+            color: var(--accent);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 18px;
+            margin-top: 25px;
+        }
+        
+        .stat-box {
+            background: #1a1a1f;
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 10px;
+            width: 120px;
+            text-align: center;
+        }
+        
+        .stat-box .num {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .stat-box .lbl {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        h2 {
+            margin-top: 50px;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        th {
+            background: #1a1a1d;
+            padding: 12px;
+            color: var(--accent);
+            font-size: 14px;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .diff {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        
+        .easy {
+            background: #2e422e;
+            color: #88ff88;
+        }
+        
+        .medium {
+            background: #423c2e;
+            color: #ffd36a;
+        }
+        
+        .hard {
+            background: #442e2e;
+            color: #ff6a6a;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="container">
+
+        <!-- Профиль блок -->
+        <div class="profile-header">
+            <div class="left-block">
+
+                <img src="dora.png" class="avatar">
+
+                <div class="info">
+
+                    <div class="top-line">
+                        <h1 id="username">Afanasy</h1>
+
+                        <button class="logout-btn" onclick="logout()">Выйти</button>
+                    </div>
+
+                    <div class="level">
+                        Уровень: <span class="yellow">Новичок</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <span class="num">42</span>
+                    <span class="lbl">Решено</span>
+                </div>
+                <div class="stat-box">
+                    <span class="num">18</span>
+                    <span class="lbl">Лёгкие</span>
+                </div>
+                <div class="stat-box">
+                    <span class="num">16</span>
+                    <span class="lbl">Средние</span>
+                </div>
+                <div class="stat-box">
+                    <span class="num">8</span>
+                    <span class="lbl">Сложные</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Последние решённые -->
+        <h2>Последние решённые задачи</h2>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Сложность</th>
+                <th>Дата</th>
+            </tr>
+
+            <tr>
+                <td>12</td>
+                <td>Ошибка в формуле площади</td>
+                <td><span class="diff easy">easy</span></td>
+                <td>12.01.2025</td>
+            </tr>
+
+            <tr>
+                <td>41</td>
+                <td>Дубликаты в массиве</td>
+                <td><span class="diff medium">medium</span></td>
+                <td>10.01.2025</td>
+            </tr>
+
+            <tr>
+                <td>55</td>
+                <td>Оптимизация DFS</td>
+                <td><span class="diff hard">hard</span></td>
+                <td>08.01.2025</td>
+            </tr>
+        </table>
+
+    </div>
+
+    <script src="auth.js"></script>
+
+    <script>
+        // подставляем имя из localStorage
+        const u = localStorage.getItem("codebug_user");
+        if (u) document.getElementById("username").innerText = u;
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CodeBug — FAQ</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #141417;
+            --border: #2a2a33;
+            --text-main: #f5f5f7;
+            --text-muted: #b0b0b9;
+            --accent: #ffd451;
+            --accent-hover: #ffe38a;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: Inter, sans-serif;
+        }
+        /* HEADER */
+        
+        header {
+            height: 56px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        nav a {
+            margin-left: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        /* PAGE CONTAINER */
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto 80px;
+            padding: 0 20px;
+        }
+        
+        h1 {
+            color: var(--accent);
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        p.sub {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+        /* FAQ BLOCKS */
+        
+        .faq-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            transition: 0.2s;
+        }
+        
+        .faq-block:hover {
+            border-color: var(--accent);
+        }
+        
+        .faq-question {
+            font-size: 20px;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .faq-answer {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        
+        ul {
+            margin-top: 8px;
+            padding-left: 20px;
+        }
+        
+        pre {
+            background: #1c1c22;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="container">
+
+        <h1>FAQ</h1>
+        <p class="sub">Ответы на самые частые вопросы о платформе CodeBug.</p>
+
+        <!-- FAQ BLOCK 1 -->
+        <div class="faq-block">
+            <div class="faq-question">Что такое CodeBug?</div>
+            <div class="faq-answer">
+                CodeBug — это тренировочная платформа, где школьники учатся находить и исправлять ошибки в C++. Всё работает как в настоящем онлайн-джадже: решение запускается на тестах, выдаёт вердикт, и нужно исправить ошибку самостоятельно.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 2 -->
+        <div class="faq-block">
+            <div class="faq-question">Что означают CE, RE, WA?</div>
+            <div class="faq-answer">
+                <b>CE</b> — ошибка компиляции.<br>
+                <b>RE</b> — аварийное завершение программы.<br>
+                <b>WA</b> — программа выдала неверный ответ.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 3 -->
+        <div class="faq-block">
+            <div class="faq-question">Почему задача не проходит тесты?</div>
+            <div class="faq-answer">
+                Наиболее частые причины:
+                <ul>
+                    <li>выход за границы массива</li>
+                    <li>переполнение памяти</li>
+                    <li>ошибка один шаг (i &lt;= n вместо i &lt; n)</li>
+                    <li>неверный формат ввода</li>
+                    <li>необработанные случаи</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 4 -->
+        <div class="faq-block">
+            <div class="faq-question">Почему вы не показываете где ошибка?</div>
+            <div class="faq-answer">
+                Это принципиальная концепция CodeBug. Ты учишься как настоящий специалист — самостоятельно находить баги в реальном коде.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 5 -->
+        <div class="faq-block">
+            <div class="faq-question">Можно ли предложить свою задачу?</div>
+            <div class="faq-answer">
+                Да! Напиши на почту или в Telegram. Мы добавим твою задачу в будущие обновления.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 6 -->
+        <div class="faq-block">
+            <div class="faq-question">Будет ли поддержка других языков?</div>
+            <div class="faq-answer">
+                Пока что CodeBug целиком сфокусирован на C++. В будущем возможна поддержка Python или Java.
+            </div>
+        </div>
+
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+
+</html>
