@@ -3,26 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>CodeBug — Рейтинг</title>
+    <title>Рейтинг — CodeBug</title>
 
     <style>
          :root {
             --bg: #0f0f11;
-            --bg-card: #151518;
+            --bg-card: #141417;
             --border: #2a2a33;
             --text-main: #f5f5f7;
-            --text-muted: #9b9ba5;
+            --text-muted: #b0b0b9;
             --accent: #ffd451;
-            --accent-hover: #ffe38a;
         }
         
         body {
-            margin: 0;
             background: var(--bg);
             color: var(--text-main);
+            margin: 0;
             font-family: Inter, sans-serif;
         }
-        /* HEADER — универсальный на всех страницах */
         
         header {
             height: 56px;
@@ -32,83 +30,91 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin: 0;
         }
         
         .logo {
-            font-size: 20px;
             font-weight: 700;
             color: var(--accent);
+            font-size: 20px;
         }
         
         nav a {
+            margin-left: 20px;
             color: var(--text-muted);
             text-decoration: none;
-            margin-left: 22px;
-            font-size: 14px;
         }
         
         nav a:hover {
             color: var(--accent);
         }
-        /* CONTENT */
+        /* --- РЕЙТИНГ --- */
         
-        .container {
-            max-width: 900px;
+        .rating-container {
+            max-width: 850px;
             margin: 40px auto;
             padding: 0 20px;
         }
         
-        h1 {
+        .rating-container h1 {
             color: var(--accent);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-weight: 700;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        th {
-            background: #1a1a1d;
-            padding: 14px;
-            text-align: left;
-            color: var(--accent);
-            font-size: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        td {
-            padding: 14px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-main);
-            font-size: 15px;
-        }
-        
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 12px;
-        }
-        
-        .user {
+        .rating-row {
             display: flex;
             align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+            padding: 14px;
+            border-radius: 10px;
         }
         
         .place {
-            color: var(--accent);
+            width: 42px;
+            font-size: 20px;
             font-weight: 700;
+            color: var(--accent);
+            text-align: center;
+        }
+        
+        .user-block {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .ava {
+            width: 46px;
+            height: 46px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-right: 12px;
+            border: 1px solid var(--accent);
+        }
+        
+        .ava.default {
+            background: #333;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .user-exp,
+        .user-solved {
+            width: 120px;
+            text-align: right;
+            font-size: 16px;
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -120,92 +126,76 @@
         <nav id="nav-links"></nav>
     </header>
 
-    <div class="container">
+    <div class="rating-container">
         <h1>Рейтинг пользователей</h1>
-
-        <table>
-            <tr>
-                <th>#</th>
-                <th>Пользователь</th>
-                <th>Решено задач</th>
-                <th>Опыт (XP)</th>
-                <th>Рейтинг</th>
-            </tr>
-
-            <!-- ТВОЙ АККАУНТ — 1 место -->
-            <tr>
-                <td class="place">1</td>
-                <td>
-                    <div class="user">
-                        <img src="dora.png" class="avatar">
-                        <span>Afanasy</span>
-                    </div>
-                </td>
-                <td>152</td>
-                <td>38200</td>
-                <td>Legendary</td>
-            </tr>
-
-            <!-- Фейковые другие пользователи -->
-            <tr>
-                <td>2</td>
-                <td>
-                    <div class="user">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user1" class="avatar">
-                        <span>Sergey</span>
-                    </div>
-                </td>
-                <td>121</td>
-                <td>29700</td>
-                <td>Master</td>
-            </tr>
-
-            <tr>
-                <td>3</td>
-                <td>
-                    <div class="user">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user2" class="avatar">
-                        <span>Robert</span>
-                    </div>
-                </td>
-                <td>93</td>
-                <td>21500</td>
-                <td>Expert</td>
-            </tr>
-
-            <tr>
-                <td>4</td>
-                <td>
-                    <div class="user">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user3" class="avatar">
-                        <span>Kirill</span>
-                    </div>
-                </td>
-                <td>61</td>
-                <td>14300</td>
-                <td>Specialist</td>
-            </tr>
-
-            <tr>
-                <td>5</td>
-                <td>
-                    <div class="user">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=user4" class="avatar">
-                        <span>Vladimir</span>
-                    </div>
-                </td>
-                <td>48</td>
-                <td>11900</td>
-                <td>Pupil</td>
-            </tr>
-        </table>
+        <div id="rating-list"></div>
     </div>
+
+    <!-- ===================== Firebase ===================== -->
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script src="auth.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", updateNavbar);
+        updateNavbar();
+
+        async function loadRating() {
+            const snap = await firebase.database().ref("users").get();
+            if (!snap.exists()) return;
+
+            const list = document.getElementById("rating-list");
+            const users = snap.val();
+
+            let arr = [];
+
+            // формируем массив для сортировки
+            for (let login in users) {
+                let u = users[login];
+                let st = u.stats || {};
+
+                arr.push({
+                    login: login,
+                    avatar: u.avatar || null,
+                    exp: st.exp || 0,
+                    solved: st.solved || 0
+                });
+            }
+
+            // сортировка по exp (убывание)
+            arr.sort((a, b) => b.exp - a.exp);
+
+            // вывод
+            arr.forEach((u, index) => {
+
+                // аватар или буква
+                let avatar = u.avatar ?
+                    `<img class="ava" src="${u.avatar}">` :
+                    `<div class="ava default">${u.login[0].toUpperCase()}</div>`;
+
+                let row = document.createElement("div");
+                row.className = "rating-row";
+
+                row.innerHTML = `
+                <div class="place">${index + 1}</div>
+
+                <div class="user-block">
+                    ${avatar}
+                    <div class="user-name">${u.login}</div>
+                </div>
+
+                <div class="user-exp">${u.exp} EXP</div>
+                <div class="user-solved">${u.solved} задач</div>
+            `;
+
+                list.appendChild(row);
+            });
+        }
+
+        loadRating();
     </script>
+
 </body>
 
 </html>
