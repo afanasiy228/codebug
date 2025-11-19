@@ -7,7 +7,7 @@ if (!firebase.apps.length) {
         authDomain: "codebug-47347.firebaseapp.com",
         databaseURL: "https://codebug-47347-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "codebug-47347",
-        storageBucket: "codebug-47347.firebasestorage.app",
+        storageBucket: "codebug-47347.appspot.com", // ← исправлено !!!
         messagingSenderId: "1000157426060",
         appId: "1:1000157426060:web:4350f2d9f3db75e407e6a9"
     });
@@ -37,12 +37,11 @@ function logout() {
 ============================ */
 function updateNavbar() {
     const nav = document.getElementById("nav-links");
-    const user = getUser(); // логин, если авторизован
+    const user = getUser();
 
     if (!nav) return;
 
     if (user) {
-        // Авторизованный пользователь
         nav.innerHTML = `
             <a href="index.html">Главная</a>
             <a href="archive.html">Архив</a>
@@ -51,21 +50,22 @@ function updateNavbar() {
             <a href="donate.html">Донат</a>
             <a href="faq.html">FAQ</a>
             <a href="profile.html">${user}</a>
-            <a onclick="logout()" style="cursor:pointer; color:#ffd451;">Выйти</a>
+            <a onclick="logout()" style="cursor:pointer;color:#ffd451;">Выйти</a>
         `;
     } else {
-        // Гость
         nav.innerHTML = `
             <a href="index.html">Главная</a>
             <a href="archive.html">Архив</a>
             <a href="train.html">Тренировка</a>
-            <a href="rating.html">Рейтинг</a>
+            <a href="rating.html">Рейтинг</а>
             <a href="donate.html">Донат</a>
             <a href="faq.html">FAQ</a>
-            <a href="auth.html">Войти/Зарегестрироваться</a>
+            <a href="auth.html">Войти / Зарегистрироваться</a>
         `;
     }
 }
+
+
 /* ============================
    ERROR DISPLAY HELPERS
 ============================ */
@@ -78,6 +78,17 @@ function clearErrors() {
     showError("login-error", "");
     showError("reg-error", "");
     document.querySelectorAll("input").forEach(i => i.classList.remove("input-error"));
+}
+
+
+/* ============================
+   SIMPLE ID GENERATOR
+============================ */
+function generateId() {
+    // Простой псевдо-UUID, для системы хватит
+    return "xxxxxx-xxxxxx-xxxxxx".replace(/x/g, () =>
+        (Math.random() * 16 | 0).toString(16)
+    );
 }
 
 
@@ -139,10 +150,23 @@ async function registerUser(login, pass) {
         return { ok: false, error: "Логин уже занят" };
     }
 
+    // генерируем внутренний ID
+    const userId = "uid_" + Math.random().toString(36).substring(2, 10);
+
+    // минимум статистики, как ты просил
+    const stats = {
+        solved: 69,
+        exp: 1789,
+        lastSolved: [8, 8, 4, 1]
+    };
+
     await ref.set({
+        id: userId,
         login: login,
         password: pass,
-        created: Date.now()
+        avatarUrl: null,
+        created: Date.now(),
+        stats: stats
     });
 
     return { ok: true };
@@ -161,7 +185,7 @@ async function register() {
     }
 
     if (login.length > 16) {
-        showError("reg-error", "Максимальная длина логина — 16 символов");
+        showError("reg-error", "Максимум 16 символов");
         return;
     }
 
@@ -183,9 +207,8 @@ async function register() {
     }
 
     setUser(login);
-    window.location.href = "index.html";
+    window.location.href = "profile.html";
 }
-
 
 /* ============================
    UI HELPERS
@@ -202,6 +225,37 @@ function updateAvatar() {
     }
     box.textContent = login[0].toUpperCase();
     box.style.background = "#" + Math.floor(Math.random() * 16777215).toString(16);
+}
+/* ============================
+   UPLOAD AVATAR
+============================ */
+/* ============================
+   AVATAR UPLOAD (BASE64)
+============================ */
+async function uploadAvatarBase64(login, file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            resolve(null);
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            resolve(e.target.result); // base64 string
+        };
+
+        reader.onerror = function() {
+            reject("Ошибка чтения файла");
+        };
+
+        reader.readAsDataURL(file); // convert to base64
+    });
+}
+
+/* save avatar */
+async function saveAvatar(login, base64) {
+    await db.ref("users/" + login + "/avatar").set(base64);
 }
 
 function generateCaptcha() {
@@ -222,3 +276,9 @@ window.register = register;
 window.updateAvatar = updateAvatar;
 window.generateCaptcha = generateCaptcha;
 window.logout = logout;
+
+// нужно для profile.html, rating.html и других страниц
+window.getUser = getUser;
+window.db = db; // чтобы можно было использовать db в других 
+window.uploadAvatarBase64 = uploadAvatarBase64;
+window.saveAvatar = saveAvatar;

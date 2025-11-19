@@ -5,7 +5,7 @@ var firebaseConfig = {
     authDomain: "codebug-47347.firebaseapp.com",
     databaseURL: "https://codebug-47347-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "codebug-47347",
-    storageBucket: "codebug-47347.firebasestorage.app",
+    storageBucket: "codebug-47347.appspot.com", // ← исправлено !!!
     messagingSenderId: "1000157426060",
     appId: "1:1000157426060:web:4350f2d9f3db75e407e6a9"
 };

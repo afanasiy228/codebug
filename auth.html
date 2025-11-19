@@ -22,6 +22,7 @@
             color: var(--text-main);
             font-family: Inter, sans-serif;
         }
+        /* HEADER */
         
         header {
             height: 56px;
@@ -31,58 +32,42 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         
         .logo {
-            color: var(--accent);
             font-size: 20px;
             font-weight: 700;
+            color: var(--accent);
         }
         
         nav a {
-            color: var(--text-muted);
             margin-left: 20px;
+            color: var(--text-muted);
             text-decoration: none;
+            font-size: 14px;
         }
         
         nav a:hover {
             color: var(--accent);
         }
+        /* MAIN BLOCK */
         
         .container {
             width: 420px;
-            margin: 70px auto;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
+            margin: 80px auto;
             padding: 20px 30px 40px;
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
         }
         
         h1 {
             text-align: center;
             color: var(--accent);
-            font-size: 26px;
-            margin-bottom: 25px;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .tab {
-            flex: 1;
-            padding: 12px 0;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        
-        .tab.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
+            margin-bottom: 18px;
         }
         
         input {
@@ -105,96 +90,91 @@
         button {
             width: 100%;
             padding: 12px;
-            margin-top: 10px;
-            background: var(--accent);
+            margin-top: 12px;
             border: none;
             border-radius: 10px;
-            font-size: 15px;
+            background: var(--accent);
             font-weight: 700;
-            cursor: pointer;
             color: #111;
+            cursor: pointer;
         }
         
         button:hover {
             background: var(--accent-hover);
         }
         
-        .forgot {
-            text-align: right;
+        .error-msg {
+            color: #ff4d4d;
             font-size: 13px;
-            margin-bottom: 10px;
-            color: var(--accent);
-            cursor: pointer;
-        }
-        
-        .social-container {
-            margin-top: 15px;
-        }
-        
-        .social-btn {
-            width: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: #0e0e12;
-            color: var(--text-main);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        
-        .social-btn img {
-            width: 20px;
-        }
-        
-        .social-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+            height: 18px;
+            margin-top: -6px;
+            margin-bottom: 8px;
         }
         
         .switch-link {
-            margin-top: 12px;
-            color: var(--accent);
+            margin-top: 14px;
             text-align: center;
+            color: var(--accent);
             cursor: pointer;
             font-size: 14px;
         }
         
-        .captcha {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #0e0e12;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .switch-link:hover {
+            text-decoration: underline;
         }
+        /* Avatar preview */
         
         .avatar-preview {
             width: 80px;
             height: 80px;
+            margin: 0 auto 15px;
             background: #333;
             border-radius: 50%;
-            margin: 0 auto 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 30px;
+            font-size: 34px;
             font-weight: 700;
             color: white;
         }
+        /* CAPTCHA */
         
-        .error-text {
-            color: #ff4d4d;
-            font-size: 13px;
-            margin-top: -8px;
-            margin-bottom: 10px;
-            height: 16px;
+        .captcha {
+            background: #0e0e12;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* MODAL */
+        
+        #modal-bg {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #modal {
+            width: 280px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.7);
+            transition: .25s;
+        }
+        
+        #modal.show {
+            opacity: 1;
+            transform: scale(1);
         }
     </style>
 </head>
@@ -208,35 +188,20 @@
 
     <div class="container">
 
-        <!-- ======= TABS ======= -->
-        <div class="tabs">
-            <div id="tab-login" class="tab active" onclick="goLogin()">Вход</div>
-            <div id="tab-register" class="tab" onclick="goRegister()">Регистрация</div>
-        </div>
-
-        <!-- ======= LOGIN SCREEN ======= -->
+        <!-- ========== LOGIN SCREEN ========== -->
         <div id="screen-login">
-            <h1>Добро пожаловать</h1>
+            <h1>Вход</h1>
 
             <input id="login-user" type="text" placeholder="Логин">
             <input id="login-pass" type="password" placeholder="Пароль">
-
-            <div id="login-error" class="error-text"></div>
-
-            <div class="forgot" onclick="forgotPassword()">Забыли пароль?</div>
+            <div id="login-error" class="error-msg"></div>
 
             <button onclick="login()">Войти</button>
-
-            <div class="social-container">
-                <button class="social-btn"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png"> GitHub</button>
-                <button class="social-btn"><img src="https://cdn-icons-png.flaticon.com/512/281/281764.png"> Google</button>
-                <button class="social-btn"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png"> Telegram</button>
-            </div>
 
             <div class="switch-link" onclick="goRegister()">Нет аккаунта? Регистрация</div>
         </div>
 
-        <!-- ======= REGISTER SCREEN ======= -->
+        <!-- ========== REGISTER SCREEN ========== -->
         <div id="screen-register" style="display:none;">
             <h1>Регистрация</h1>
 
@@ -245,67 +210,66 @@
             <input id="reg-user" type="text" placeholder="Логин" oninput="updateAvatar()">
             <input id="reg-pass" type="password" placeholder="Пароль">
 
+
             <div class="captcha">
-                <span id="captchaText"></span>
+                <span id="captchaText">3 + 4 = ?</span>
                 <input id="captchaAnswer" style="width:60px;">
             </div>
 
-            <div id="reg-error" class="error-text"></div>
+            <div id="reg-error" style="color:#ff4d4d;font-size:13px;height:18px;margin-bottom:12px;"></div>
 
             <button onclick="register()">Зарегистрироваться</button>
-
-            <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
         </div>
 
     </div>
 
-    <!-- MODAL -->
-    <div id="modal-bg" style="display:none;">
+    <!-- MODAL PASSWORD RECOVERY -->
+    <div id="modal-bg">
         <div id="modal">
-            <h3 style="color:var(--accent);margin-top:0;">Восстановление пароля</h3>
-            <p style="color:var(--text-muted);">Йоу… вспомни?</p>
+            <h3 style="color:var(--accent);margin-top:0;">Забыли пароль?</h3>
+            <p style="color:var(--text-muted);">Вспоминай 😎</p>
             <button onclick="closeModal()">Ок</button>
         </div>
     </div>
 
 
-
-    <!-- Firebase SDK -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Firebase logic -->
-    <script src="firebase.js"></script>
-
-    <!-- Auth system -->
+    <!-- Auth + Navbar -->
     <script src="auth.js"></script>
 
     <script>
         updateNavbar();
 
+        /* SWITCH SCREENS */
         function goLogin() {
-            document.getElementById("tab-login").classList.add("active");
-            document.getElementById("tab-register").classList.remove("active");
-
             document.getElementById("screen-login").style.display = "block";
             document.getElementById("screen-register").style.display = "none";
         }
 
         function goRegister() {
-            document.getElementById("tab-register").classList.add("active");
-            document.getElementById("tab-login").classList.remove("active");
-
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-register").style.display = "block";
         }
 
+        /* MODAL */
         function forgotPassword() {
-            alert("У тебя нет восстановления 😀");
+            document.getElementById("modal-bg").style.display = "flex";
+            setTimeout(() => {
+                document.getElementById("modal").classList.add("show");
+            }, 10);
         }
 
-        // Генерация капчи
-        generateCaptcha();
+        function closeModal() {
+            document.getElementById("modal").classList.remove("show");
+            setTimeout(() => {
+                document.getElementById("modal-bg").style.display = "none";
+            }, 200);
+        }
     </script>
+
 </body>
 
 </html>

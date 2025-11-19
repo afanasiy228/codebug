@@ -8,19 +8,18 @@
     <style>
          :root {
             --bg: #0f0f11;
-            --bg-card: #151518;
+            --bg-card: #141417;
             --border: #2a2a33;
             --text-main: #f5f5f7;
-            --text-muted: #9b9ba5;
+            --text-muted: #b0b0b9;
             --accent: #ffd451;
-            --accent-hover: #ffe38a;
         }
         
         body {
             margin: 0;
-            font-family: Inter, sans-serif;
             background: var(--bg);
             color: var(--text-main);
+            font-family: Inter, sans-serif;
         }
         /* HEADER */
         
@@ -41,151 +40,137 @@
         }
         
         nav a {
-            text-decoration: none;
-            color: var(--text-muted);
             margin-left: 20px;
-            font-size: 15px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
         }
         
         nav a:hover {
             color: var(--accent);
         }
-        /* PAGE */
+        /* PROFILE LAYOUT */
         
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 40px auto;
             padding: 0 20px;
-        }
-        
-        .profile-header {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 25px;
-            border-radius: 12px;
-        }
-        
-        .left-block {
             display: flex;
-            gap: 20px;
+            gap: 30px;
         }
-        
-        .avatar {
-            width: 92px;
-            height: 92px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
+        /* LEFT COLUMN (INFO) */
         
         .info {
             flex: 1;
-        }
-        
-        .top-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .logout-btn {
-            padding: 8px 16px;
-            border-radius: 10px;
-            border: none;
-            background: var(--accent);
-            cursor: pointer;
-            color: #111;
-            font-weight: 700;
-            font-size: 14px;
-        }
-        
-        .logout-btn:hover {
-            background: var(--accent-hover);
-        }
-        
-        .yellow {
-            color: var(--accent);
-        }
-        
-        .stats {
-            display: flex;
-            gap: 18px;
-            margin-top: 25px;
-        }
-        
-        .stat-box {
-            background: #1a1a1f;
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            padding: 16px;
-            border-radius: 10px;
-            width: 120px;
-            text-align: center;
+            padding: 25px;
+            border-radius: 14px;
         }
         
-        .stat-box .num {
-            font-size: 22px;
+        .username {
+            font-size: 32px;
             font-weight: 700;
             color: var(--accent);
+            margin-bottom: 6px;
         }
         
-        .stat-box .lbl {
-            font-size: 13px;
+        .rank-text {
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            margin: 10px 0;
+            font-size: 16px;
             color: var(--text-muted);
         }
         
-        h2 {
-            margin-top: 50px;
-            margin-bottom: 10px;
+        .info-row span {
             color: var(--accent);
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 25px 0 10px;
+            color: var(--accent);
+        }
+        /* RIGHT COLUMN (AVATAR) */
+        
+        .avatar-block {
+            width: 320px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 10px;
+            padding: 25px;
+            border-radius: 14px;
+            text-align: center;
         }
         
-        th {
-            background: #1a1a1d;
-            padding: 12px;
-            color: var(--accent);
+        .avatar-block img {
+            width: 260px;
+            height: 260px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+        }
+        
+        #avatar-error {
+            color: #ff4d4d;
+            height: 16px;
+            margin-top: 6px;
             font-size: 14px;
         }
         
-        td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-main);
-        }
-        
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .diff {
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            text-transform: uppercase;
+        button {
+            margin-top: 12px;
+            padding: 10px 18px;
+            background: var(--accent);
+            color: #111;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
             font-weight: 700;
         }
         
-        .easy {
-            background: #2e422e;
-            color: #88ff88;
+        button:hover {
+            background: #ffe38a;
+        }
+        /* STATS BOX */
+        
+        .stats-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 14px;
+            margin-top: 20px;
         }
         
-        .medium {
-            background: #423c2e;
-            color: #ffd36a;
+        .stat-item {
+            font-size: 17px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
         }
         
-        .hard {
-            background: #442e2e;
-            color: #ff6a6a;
+        .stat-item span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        /* LAST SOLVED */
+        
+        .last-box {
+            margin-top: 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 14px;
+        }
+        
+        .last-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #2a2a33;
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -199,94 +184,144 @@
 
     <div class="container">
 
-        <!-- Профиль блок -->
-        <div class="profile-header">
-            <div class="left-block">
+        <!-- LEFT COLUMN -->
+        <div class="info">
 
-                <img src="dora.png" class="avatar">
+            <div class="username" id="username">Загрузка...</div>
+            <div class="rank-text" id="rank">Ранг загружается...</div>
 
-                <div class="info">
+            <div class="info-row">Профиль: <span id="userid">—</span></div>
+            <div class="info-row">Дата регистрации: <span id="created">—</span></div>
+            <div class="info-row">Опыт: <span id="exp">0</span></div>
+            <div class="info-row">Решено задач: <span id="solved">0</span></div>
 
-                    <div class="top-line">
-                        <h1 id="username">Afanasy</h1>
+            <div class="section-title">Статистика</div>
 
-                        <button class="logout-btn" onclick="logout()">Выйти</button>
-                    </div>
-
-                    <div class="level">
-                        Уровень: <span class="yellow">Новичок</span>
-                    </div>
-
-                </div>
+            <div class="stats-box">
+                <div class="stat-item">Решено: <span id="solved2">0</span></div>
+                <div class="stat-item">Опыт: <span id="exp2">0</span></div>
             </div>
 
-            <div class="stats">
-                <div class="stat-box">
-                    <span class="num">42</span>
-                    <span class="lbl">Решено</span>
-                </div>
-                <div class="stat-box">
-                    <span class="num">18</span>
-                    <span class="lbl">Лёгкие</span>
-                </div>
-                <div class="stat-box">
-                    <span class="num">16</span>
-                    <span class="lbl">Средние</span>
-                </div>
-                <div class="stat-box">
-                    <span class="num">8</span>
-                    <span class="lbl">Сложные</span>
-                </div>
+            <div class="section-title">Последние решённые задачи</div>
+
+            <div class="last-box">
+                <div id="lastList"></div>
+                <div id="emptyLast" style="display:none;">Нет решённых задач…</div>
             </div>
+
         </div>
 
-
-        <!-- Последние решённые -->
-        <h2>Последние решённые задачи</h2>
-
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Сложность</th>
-                <th>Дата</th>
-            </tr>
-
-            <tr>
-                <td>12</td>
-                <td>Ошибка в формуле площади</td>
-                <td><span class="diff easy">easy</span></td>
-                <td>12.01.2025</td>
-            </tr>
-
-            <tr>
-                <td>41</td>
-                <td>Дубликаты в массиве</td>
-                <td><span class="diff medium">medium</span></td>
-                <td>10.01.2025</td>
-            </tr>
-
-            <tr>
-                <td>55</td>
-                <td>Оптимизация DFS</td>
-                <td><span class="diff hard">hard</span></td>
-                <td>08.01.2025</td>
-            </tr>
-        </table>
+        <!-- RIGHT COLUMN (AVATAR) -->
+        <div class="avatar-block">
+            <img id="avatar" src="">
+            <input type="file" id="avatar-file" accept="image/*">
+            <button onclick="changeAvatar()">Загрузить аватар</button>
+            <div id="avatar-error"></div>
+        </div>
 
     </div>
 
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- Auth -->
     <script src="auth.js"></script>
 
     <script>
-        // подставляем имя из localStorage
-        const u = localStorage.getItem("codebug_user");
-        if (u) document.getElementById("username").innerText = u;
+        updateNavbar();
+
+        const user = getUser();
+        if (!user) window.location.href = "auth.html";
+
+        function getRank(exp) {
+            if (exp < 10) return "Новичок";
+            if (exp < 50) return "Мистер WA1";
+            if (exp < 100) return "Знает как отлавливать CE";
+            if (exp < 200) return "Бывалый";
+            if (exp < 300) return "Найдет ошибку в тени";
+            if (exp < 500) return "Повелитель RE";
+            if (exp < 800) return "Охотник за TL";
+            if (exp < 1200) return "Оптимизатор ML";
+            if (exp < 2000) return "Code Wizard";
+            return "Легенда CodeBug";
+        }
+
+        async function loadProfile() {
+            const snap = await firebase.database().ref("users/" + user).get();
+            if (!snap.exists()) return;
+
+            const data = snap.val();
+            const stats = data.stats || {};
+            const last = stats.last || [];
+
+            // -- BASIC INFO --
+            document.getElementById("username").innerText = data.login;
+            document.getElementById("userid").innerText = data.id || "—";
+            document.getElementById("created").innerText =
+                data.created ? new Date(data.created).toLocaleDateString() : "—";
+
+            // STATS
+            document.getElementById("solved").innerText = stats.solved || 0;
+            document.getElementById("solved2").innerText = stats.solved || 0;
+            document.getElementById("exp").innerText = stats.exp || 0;
+            document.getElementById("exp2").innerText = stats.exp || 0;
+
+            // RANK
+            document.getElementById("rank").innerText = getRank(stats.exp || 0);
+
+            // AVATAR
+            if (data.avatar) {
+                document.getElementById("avatar").src = data.avatar;
+            } else {
+                const svg = `
+                <svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'>
+                    <rect width='100%' height='100%' fill='#333'/>
+                    <text x='50%' y='55%' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle'>
+                        ${data.login[0].toUpperCase()}
+                    </text>
+                </svg>`;
+                document.getElementById("avatar").src =
+                    "data:image/svg+xml;base64," + btoa(svg);
+            }
+
+            // LAST SOLVED
+            if (last.length === 0) {
+                document.getElementById("emptyLast").style.display = "block";
+            } else {
+                let list = document.getElementById("lastList");
+                last.slice(-10).reverse().forEach(id => {
+                    let div = document.createElement("div");
+                    div.className = "last-item";
+                    div.innerText = "Задача #" + id;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        loadProfile();
+
+        async function changeAvatar() {
+            const file = document.getElementById("avatar-file").files[0];
+            if (!file) {
+                document.getElementById("avatar-error").innerText = "Выберите файл";
+                return;
+            }
+
+            try {
+                const base64 = await uploadAvatarBase64(user, file);
+                await saveAvatar(user, base64);
+
+                document.getElementById("avatar").src = base64;
+                document.getElementById("avatar-error").innerText = "";
+
+                alert("Аватар обновлён!");
+            } catch (e) {
+                document.getElementById("avatar-error").innerText = "Ошибка загрузки";
+            }
+        }
     </script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", updateNavbar);
-    </script>
 </body>
 
 </html>
