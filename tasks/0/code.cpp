@@ -20,7 +20,7 @@ db d(db x1, db y1, db x2, db y2) {
  
 
 db point_to_line(db cx, db cy, db ax, db ay, db bx, db by) {
-  return abs((bx - ax) * (cy - ay) - (by - ay) * (cx - ax)) / d(ax, ay, bx, by); 
+  return ((bx - ax) * (cy - ay) - (by - ay) * (cx - ax)) / d(ax, ay, bx, by); 
 }
 
 db point_to_ray(db cx, db cy, db ax, db ay, db bx, db by) {

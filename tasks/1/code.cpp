@@ -49,7 +49,6 @@ struct Treap {
       swap(tree[idx_v].idx_left_child, tree[idx_v].idx_right_child);
       if (tree[idx_v].idx_left_child != -1) tree[tree[idx_v].idx_left_child].reversed ^= 1;
       if (tree[idx_v].idx_right_child != -1) tree[tree[idx_v].idx_right_child].reversed ^= 1;
-      tree[idx_v].reversed = 1;
     }
 }
 
