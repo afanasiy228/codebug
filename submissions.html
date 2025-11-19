@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Глобальные посылки — CodeBug</title>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg-card: #141417;
+            --border: #262631;
+            --text: #f5f5f7;
+            --text2: #b5b5c0;
+            --accent: #ffd451;
+            --ok: #3ccf55;
+            --wa: #ff4d4d;
+            --ce: #729bff;
+            --re: #d47aff;
+            --tle: #f2c94c;
+            --mle: #f2994a;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, sans-serif;
+        }
+        
+        header {
+            height: 56px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 20px;
+        }
+        
+        nav a {
+            margin-left: 20px;
+            color: var(--text2);
+            text-decoration: none;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        
+        .page {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 30px;
+        }
+        
+        h1 {
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: #1a1a1e;
+            padding: 12px;
+            text-align: left;
+            color: var(--accent);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text);
+        }
+        
+        tr:hover {
+            background: #1a1a20;
+        }
+        
+        .status {
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: inline-block;
+        }
+        
+        .OK {
+            background: var(--ok);
+            color: #000;
+        }
+        
+        .WA {
+            background: var(--wa);
+            color: #fff;
+        }
+        
+        .CE {
+            background: var(--ce);
+            color: #fff;
+        }
+        
+        .RE {
+            background: var(--re);
+            color: #fff;
+        }
+        
+        .TLE {
+            background: var(--tle);
+            color: #000;
+        }
+        
+        .MLE {
+            background: var(--mle);
+            color: #000;
+        }
+        
+        .empty {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="page">
+        <h1>Глобальные посылки</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Пользователь</th>
+                    <th>Задача</th>
+                    <th>Статус</th>
+                    <th>Дата</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <div id="empty" class="empty" style="display:none;">
+            Посылок пока нет…
+        </div>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
+    <script src="auth.js"></script>
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
+
+    <script>
+        updateNavbar();
+
+        async function loadSubmissions() {
+            const snap = await db.ref("submissions").get();
+
+            const list = document.getElementById("tbody");
+            const empty = document.getElementById("empty");
+
+            if (!snap.exists()) {
+                empty.style.display = "block";
+                return;
+            }
+
+            let subs = snap.val();
+            let arr = [];
+
+            // преобразуем в массив
+            for (let id in subs) {
+                arr.push({
+                    id: id,
+                    ...subs[id]
+                });
+            }
+
+            // сортировка по дате (новые сверху)
+            arr.sort((a, b) => b.date - a.date);
+
+            list.innerHTML = "";
+
+            arr.forEach(s => {
+                let tr = document.createElement("tr");
+
+                let d = new Date(s.date);
+                let dt = d.toLocaleString();
+
+                tr.innerHTML = `
+                <td>${s.id}</td>
+                <td>${s.user}</td>
+                <td><a href="problem.html?id=${s.problem}" style="color:var(--accent);text-decoration:none;">#${s.problem}</a></td>
+                <td><span class="status ${s.status}">${s.status}</span></td>
+                <td>${dt}</td>
+            `;
+
+                list.appendChild(tr);
+            });
+        }
+
+        loadSubmissions();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CodeBug — Задача</title>
+
+    <!-- MONACO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+
+    <style>
+         :root {
+            --bg: #0f0f11;
+            --bg2: #141417;
+            --bg3: #1b1b20;
+            --border: #262631;
+            --text: #f5f5f7;
+            --text2: #b5b5c0;
+            --accent: #ffd451;
+        }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, sans-serif;
+            overflow: hidden;
+        }
+        /* HEADER */
+        
+        header {
+            padding: 12px 30px;
+            background: #0d0d0f;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        
+        nav a {
+            margin-left: 20px;
+            color: var(--text2);
+            text-decoration: none;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        /* LAYOUT */
+        
+        .split-v {
+            display: flex;
+            height: calc(100vh - 58px);
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .io-block {
+            background: #0f0f12;
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            margin-top: 4px;
+        }
+        
+        .left {
+            width: 40%;
+            min-width: 260px;
+            max-width: 70%;
+            padding: 20px;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .splitter-v {
+            width: 6px;
+            cursor: col-resize;
+            background: #2d2d33;
+            flex-shrink: 0;
+        }
+        
+        .splitter-v:hover {
+            background: var(--accent);
+        }
+        
+        .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg3);
+            overflow: hidden;
+        }
+        
+        #editorArea {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        #editor {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .splitter-h {
+            height: 6px;
+            cursor: row-resize;
+            background: #2d2d33;
+        }
+        
+        .splitter-h:hover {
+            background: var(--accent);
+        }
+        /* SUBMISSIONS PANEL */
+        
+        #testsPanel {
+            height: 240px;
+            min-height: 120px;
+            background: var(--bg2);
+            border-top: 1px solid var(--border);
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text);
+        }
+        
+        th,
+        td {
+            border-bottom: 1px solid var(--border);
+            padding: 8px;
+            font-size: 14px;
+        }
+        
+        th {
+            color: var(--accent);
+        }
+        
+        .ctrl {
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            background: #0d0d0f;
+            border-top: 1px solid var(--border);
+        }
+        
+        #taskStatement {
+            font-size: 16.5px;
+            line-height: 1.45;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            color: black;
+        }
+        
+        .btn:hover {
+            background: #ffe17e;
+        }
+        
+        .testcase {
+            margin-bottom: 12px;
+            background: #0f0f12;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            white-space: pre-wrap;
+        }
+        
+        .kf-block {
+            margin-top: 20px;
+        }
+        
+        .kf-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 16px;
+            color: var(--accent);
+        }
+        
+        .kf-io {
+            background: #0f0f11;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0;
+            margin-bottom: 22px;
+            position: relative;
+        }
+        
+        .kf-copy {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #1f1f22;
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text);
+        }
+        
+        .kf-copy:hover {
+            background: #2a2a2e;
+        }
+        
+        .kf-pre {
+            white-space: pre-wrap;
+            padding: 16px;
+            margin: 0;
+            font-family: monospace;
+            font-size: 15px;
+            line-height: 1.35;
+            color: var(--text);
+        }
+        
+        .kf-pre {
+            font-size: 13.5px;
+            padding: 10px;
+            line-height: 1.25;
+        }
+        
+        .testcase-block {
+            margin-bottom: 70px;
+            /* ровно один маленький отступ */
+        }
+    </style>
+</head>
+
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script src="firebase.js"></script>
+<!-- обязательно первой! -->
+<script src="auth.js"></script>
+<!-- использует db -->
+<script src="globalsubmissions.js"></script>
+<!-- использует db -->
+<script src="submit.js"></script>
+
+
+<script>
+    console.log("AFTER LOADING FIREBASE:", typeof firebase);
+</script>
+
+
+<!-- =========================================== -->
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <div class="split-v">
+
+        <!-- LEFT -->
+        <div class="left" id="leftPanel">
+            <h1 id="taskTitle">...</h1>
+            <div id="taskStatement">Загружаю условие…</div>
+
+            <h2 style="color:var(--accent); margin-top:25px;">Примеры тестов</h2>
+            <div id="examples"></div>
+        </div>
+
+        <div class="splitter-v" id="vSplit"></div>
+
+        <!-- RIGHT -->
+        <div class="right">
+            <div id="editorArea">
+                <div id="editor" style="height: 100%; width: 100%;"></div>
+            </div>
+
+            <div class="splitter-h" id="hSplit"></div>
+
+            <div id="testsPanel">
+                <h3 style="margin:0 0 10px; color:var(--accent);">Посылки</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Статус</th>
+                            <th>Время</th>
+                            <th>Память</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subs">
+                        <tr>
+                            <td colspan="4" style="color:var(--text2);text-align:center;">Пока нет посылок</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ctrl">
+                <button class="btn" onclick="testFirebaseWrite()">TEST SUBMIT</button>
+                <button class="btn" onclick="submitCodeWrapper()">Отправить</button> </div>
+        </div>
+    </div>
+
+
+    <!-- ===================== JUDGE REQUEST ===================== -->
+    <script>
+        const JUDGE_URL = "https://b049a6b3a66c.ngrok-free.app/submit";
+
+        async function sendToJudge(taskId, code) {
+            console.log("%c[sendToJudge()] start", "color:#0bf");
+
+            const body = {
+                task: String(taskId),
+                code: String(code)
+            };
+
+            const res = await fetch(JUDGE_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) throw new Error("HTTP " + res.status);
+
+            return await res.json();
+        }
+    </script>
+
+    <!-- ===================== GLOBAL SUBMISSIONS ===================== -->
+    <script>
+        function addSubmissionToTable(idx, sub) {
+            const body = document.getElementById("subs");
+            const tr = document.createElement("tr");
+
+            const color = sub.status === "OK" ? "#4f4" : "#f55";
+            const date = new Date(sub.date).toLocaleTimeString();
+
+            tr.innerHTML = `
+        <td>${idx}</td>
+        <td style="color:${color}; font-weight:600;">${sub.status}</td>
+        <td>${date}</td>
+        <td>—</td>
+    `;
+
+            body.appendChild(tr);
+        }
+    </script>
+    <script>
+        async function saveGlobalSubmission(user, problem, verdict) {
+            const entry = {
+                user: String(user),
+                problem: String(problem),
+                status: String(verdict),
+                date: Date.now()
+            };
+
+            await firebase.database().ref("submissions").push().set(entry);
+
+            console.log("🔥 Глобальная посылка сохранена:", entry);
+        }
+    </script>
+
+    <!-- ===================== SUBMIT CODE ===================== -->
+    <script>
+        async function submitCode(taskId, code) {
+            console.log("%c[submitCode()]", "color:#4af");
+
+            const user = getUser();
+            if (!user) {
+                alert("Вы не авторизованы!");
+                return;
+            }
+
+            try {
+                const verdict = await sendToJudge(taskId, code);
+                await saveGlobalSubmission(user, taskId, verdict.status);
+
+                alert("Вердикт: " + verdict.status);
+                loadMySubmissions();
+            } catch (e) {
+                console.error("submitCode error:", e);
+                alert("Ошибка отправки");
+            }
+        }
+
+        function submitCodeWrapper() {
+            const url = new URL(location.href);
+            const taskId = url.searchParams.get("id") || "0";
+
+            const code = editor.getValue();
+            submitCode(taskId, code);
+        }
+    </script>
+
+    <!-- ===================== COPY INPUT BUTTON ===================== -->
+    <script>
+        function copyKF(btn) {
+            const pre = btn.parentElement.querySelector(".kf-pre");
+            if (!pre) return;
+
+            const text = pre.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.innerText = "Скопировано";
+                setTimeout(() => (btn.innerText = "Скопировать"), 800);
+            });
+        }
+    </script>
+
+    <!-- ===================== LOAD USER SUBMISSIONS ON START ===================== -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            updateNavbar();
+            loadMySubmissions();
+        });
+    </script>
+
+
+
+    <!-- ===================== VERTICAL + HORIZONTAL SPLITTERS ===================== -->
+    <script>
+        // Слайдеры оставлены как были
+
+        let vSplit = document.getElementById("vSplit");
+        let left = document.getElementById("leftPanel");
+        let isV = false;
+
+        vSplit.addEventListener("mousedown", () => isV = true);
+        document.addEventListener("mouseup", () => {
+            isV = false;
+            isH = false;
+        });
+
+        document.addEventListener("mousemove", e => {
+            let needUpdate = false;
+
+            if (isV) {
+                let w = e.clientX;
+                if (w < 200) w = 200;
+                if (w > window.innerWidth * 0.7) w = window.innerWidth * 0.7;
+                left.style.width = w + "px";
+                needUpdate = true;
+            }
+
+            if (isH) {
+                let newHeight = window.innerHeight - e.clientY - 70;
+                if (newHeight < 120) newHeight = 120;
+                if (newHeight > window.innerHeight * 0.7) newHeight = window.innerHeight * 0.7;
+                testsPanel.style.height = newHeight + "px";
+                needUpdate = true;
+            }
+
+            if (needUpdate) {
+                const editorContainer = document.getElementById("editor");
+                editorContainer.style.height =
+                    (window.innerHeight - testsPanel.offsetHeight - 90) + "px";
+
+                if (window.editor)
+                    requestAnimationFrame(() => editor.layout());
+            }
+        });
+
+        let isH = false;
+        const hSplit = document.getElementById("hSplit");
+        const testsPanel = document.getElementById("testsPanel");
+        hSplit.onmousedown = () => isH = true;
+    </script>
+
+
+
+    <!-- ===================== LOAD TASK (meta + tests) ===================== -->
+    <script>
+        async function loadTask() {
+            const url = new URL(location.href);
+            const id = url.searchParams.get("id") || "0";
+
+            // meta.json
+            try {
+                const meta = await fetch(`tasks/${id}/meta.json`).then(r => r.json());
+                document.getElementById("taskTitle").innerText = meta.title || "Без названия";
+            } catch {
+                document.getElementById("taskTitle").innerText = "Название не найдено";
+            }
+
+            // statement.md
+            try {
+                const md = await fetch(`tasks/${id}/statement.md`).then(r => r.text());
+                document.getElementById("taskStatement").innerHTML = md.replace(/\n/g, "<br>");
+            } catch {
+                document.getElementById("taskStatement").innerText = "statement.md не найден";
+            }
+
+            // code.cpp
+            try {
+                const code = await fetch(`tasks/${id}/code.cpp`).then(r => r.text());
+                editor.setValue(code);
+            } catch {
+                editor.setValue("// code.cpp не найден");
+            }
+
+            // первые 2 теста
+            const examples = document.getElementById("examples");
+            for (let i = 1; i <= 2; i++) {
+                try {
+                    const inp = await fetch(`tasks/${id}/tests/${i}.in`).then(r => r.text());
+                    const out = await fetch(`tasks/${id}/tests/${i}.out`).then(r => r.text());
+
+                    examples.innerHTML += `
+                        <div class="testcase-block">
+                            <div class="kf-title">Тест ${i}</div>
+
+                            <div class="kf-io">
+                                <div class="kf-copy" onclick="copyKF(this)">Скопировать</div>
+                                <pre class="kf-pre">${inp.trim()}</pre>
+                            </div>
+
+                            <div class="kf-title" style="margin-top:10px;">Вывод</div>
+                            <div class="kf-io">
+                                <div class="kf-copy" onclick="copyKF(this)">Скопировать</div>
+                                <pre class="kf-pre">${out.trim()}</pre>
+                            </div>
+                        </div>`;
+                } catch {}
+            }
+        }
+    </script>
+
+    <script>
+        console.log("FIREBASE TEST:", typeof firebase);
+    </script>
+
+    <script>
+        async function testFirebaseWrite() {
+            console.log("%c[testFirebaseWrite()] start", "color:#0f0");
+
+            // login берём из auth.js
+            const user = getUser() || "anonymous";
+
+            const entry = {
+                user: user,
+                message: "TEST WRITE OK",
+                time: Date.now()
+            };
+
+            try {
+                // ⚠️ Firebase уже инициализирован в firebase.js — здесь НЕ трогаем!
+                await firebase.database()
+                    .ref("submissions_test")
+                    .push()
+                    .set(entry);
+
+                console.log("🔥 Firebase TEST ENTRY ADDED:", entry);
+                alert("✔ Firebase запись успешно добавлена!");
+            } catch (e) {
+                console.error("❌ Firebase write error:", e);
+                alert("❌ Ошибка записи в Firebase (см. консоль)");
+            }
+        }
+    </script>
+
+    <!-- ===================== MONACO ===================== -->
+    <script>
+        require.config({
+            paths: {
+                "vs": "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs"
+            }
+        });
+
+        let editor;
+
+        require(["vs/editor/editor.main"], function() {
+            editor = monaco.editor.create(document.getElementById("editor"), {
+                value: "// Загружаю code.cpp...",
+                language: "cpp",
+                theme: "vs-dark",
+                fontSize: 16,
+            });
+
+            loadTask();
+        });
+    </script>
+</body>
+
+</html>
+
+</html>

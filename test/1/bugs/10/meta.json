@@ -1,0 +1,9 @@
+{
+    "type": "неправильный вывод",
+    "line": 33,
+    "description": "нужно выводить TriangolArea",
+    "difficulty": "easy",
+    "hint": "",
+    "tags": ["геометрия", "площадь"],
+    "verdict": "WA"
+}

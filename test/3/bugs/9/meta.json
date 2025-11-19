@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 99,
+    "description": "2 раза push левого ребенка",
+    "difficulty": "medium",
+    "hint": "",
+    "tags": ["декартовое дерего", "структуры данных"]
+}

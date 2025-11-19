@@ -2,7 +2,7 @@
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>CodeBug — Тренировка</title>
 
     <style>
@@ -11,15 +11,15 @@
             --bg-card: #141417;
             --bg-soft: #1b1b20;
             --border: #262631;
-            --border-light: #2f2f39;
+            --border-light: #3a3a44;
             --text-main: #f5f5f7;
             --text-muted: #a3a3b8;
             --accent: #ffd451;
         }
         
         body {
-            background: var(--bg);
             margin: 0;
+            background: var(--bg);
             font-family: Inter, sans-serif;
             color: var(--text-main);
         }
@@ -29,20 +29,20 @@
             border-bottom: 1px solid var(--border);
             padding: 12px 40px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
         
         .logo {
-            color: var(--accent);
             font-size: 20px;
-            font-weight: 700;
+            font-weight: 800;
+            color: var(--accent);
         }
         
         nav a {
             color: var(--text-muted);
-            text-decoration: none;
             margin-left: 25px;
+            text-decoration: none;
             font-size: 14px;
         }
         
@@ -51,149 +51,221 @@
         }
         
         .page {
-            max-width: 1400px;
+            max-width: 1300px;
             margin: 40px auto;
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 280px 1fr;
             gap: 40px;
             padding: 0 30px;
         }
         /* SIDEBAR */
         
-        .sidebar {
+        .filters {
             background: var(--bg-card);
             border: 1px solid var(--border);
             padding: 20px;
-            border-radius: 14px;
-            height: fit-content;
+            border-radius: 12px;
         }
         
-        .sidebar h2 {
+        .filters h2 {
+            margin: 0;
             color: var(--accent);
-            font-size: 20px;
-            margin-bottom: 20px;
+            font-size: 21px;
         }
         
-        .sidebar label {
+        label {
             display: block;
-            margin-top: 12px;
             color: var(--text-muted);
-            font-size: 13px;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        /* SELECT */
+        
+        .select {
+            position: relative;
         }
         
-        select,
-        input {
+        .select select {
             width: 100%;
-            margin-top: 4px;
-            padding: 8px 10px;
-            background: #0e0e12;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            padding: 10px;
+            padding-right: 40px;
+            background: #0f0f13;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
             color: var(--text-main);
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        .select::after {
+            content: "▾";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            pointer-events: none;
+        }
+        
+        .select select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+        }
+        /* SEARCH */
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background: #0f0f13;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
         }
         /* MAIN */
         
-        .title {
+        h1 {
             color: var(--accent);
             font-size: 30px;
-            font-weight: 800;
-            margin-bottom: 10px;
+            margin-top: 0;
         }
         
         .subtitle {
             color: var(--text-muted);
-            margin-bottom: 25px;
-            font-size: 15px;
+            margin-bottom: 20px;
         }
         
-        .problems-list {
+        .top-row {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-        }
-        /* CARD */
-        
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            padding: 18px 20px;
-            border-radius: 12px;
-            display: grid;
-            grid-template-columns: 1fr 140px;
-            align-items: center;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        
-        .card:hover {
-            background: var(--bg-soft);
-            border-color: var(--accent);
-        }
-        
-        .card h3 {
-            margin: 0;
-            font-size: 18px;
-            color: var(--text-main);
-        }
-        
-        .tags {
-            margin-top: 6px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .tag {
-            padding: 3px 10px;
-            background: #0f0f11;
-            border-radius: 999px;
-            font-size: 12px;
-            border: 1px solid #3c3c45;
-        }
-        
-        .easy {
-            color: #7af07a;
-            border-color: #255b25;
-        }
-        
-        .medium {
-            color: #ffd451;
-            border-color: #8b6a1a;
-        }
-        
-        .hard {
-            color: #ff7f7f;
-            border-color: #7a1b1b;
-        }
-        
-        .count {
-            text-align: right;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-        
-        .count span {
-            color: var(--accent);
-            font-weight: 700;
-            font-size: 15px;
-        }
-        
-        .empty {
-            padding: 20px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 20px;
+            gap: 16px;
+            margin-bottom: 24px;
         }
         
         .daily-card {
             background: var(--bg-card);
+            border-radius: 12px;
             border: 1px solid var(--accent);
-            padding: 20px;
-            border-radius: 14px;
-            margin-bottom: 25px;
+            padding: 16px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .daily-main {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .daily-caption {
+            font-size: 14px;
+            color: var(--accent);
+        }
+        
+        .daily-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .btn-small {
+            background: var(--accent);
+            border-radius: 10px;
+            border: none;
+            padding: 8px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #111;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .btn-small:hover {
+            filter: brightness(1.05);
+        }
+        
+        .random-row {
+            display: flex;
+            justify-content: flex-start;
+        }
+        
+        .btn-random {
+            background: var(--accent);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: #111;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-random:hover {
+            filter: brightness(1.05);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: var(--bg-soft);
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        tr:hover {
+            background: #1a1a21;
+        }
+        /* PILL TAGS */
+        
+        .pill {
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+            background: #232327;
+        }
+        
+        .link {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .empty {
+            padding: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -208,82 +280,68 @@
     <div class="page">
 
         <!-- SIDEBAR -->
-        <aside class="sidebar">
+        <div class="filters">
             <h2>Фильтры</h2>
 
             <label>Сложность</label>
-            <select id="difficulty">
-            <option value="">Любая</option>
-            <option value="easy">Лёгкая</option>
-            <option value="medium">Средняя</option>
-            <option value="hard">Сложная</option>
-        </select>
-
-            <label>Тип ошибки</label>
-            <select id="errorType">
-            <option value="">Любая</option>
-            <option value="algo">Алгоритмическая</option>
-            <option value="memory">Память</option>
-            <option value="time">Время</option>
-            <option value="math">Формулы</option>
-        </select>
-
-            <label>Тема</label>
-            <select id="topic">
-            <option value="">Любая</option>
-            <option value="structures">Структуры данных</option>
-            <option value="arithmetic">Арифметика</option>
-            <option value="geometry">Геометрия</option>
-            <option value="algorithms">Алгоритмы</option>
-            <option value="graphs">Обходы графов</option>
-        </select>
-
-            <label>Поиск</label>
-            <input id="search" type="text" placeholder="например: массив, граф..." />
-        </aside>
-
-        <!-- MAIN AREA -->
-        <main>
-
-            <div class="title">Тренировка</div>
-            <div class="subtitle">Подберите задачу по теме, сложности или типу ошибки.</div>
-
-            <!-- TASK OF THE DAY -->
-            <div id="daily" class="daily-card">
-                <div style="color: var(--accent); font-size: 22px; font-weight: 700; margin-bottom: 8px;">
-                    🔥 Задача дня
-                </div>
-                <div id="daily-title" style="font-size: 18px; font-weight: 600;"></div>
-
-                <button onclick="openDaily()" style="
-                margin-top: 14px;
-                background: var(--accent);
-                border: none;
-                padding: 10px 20px;
-                border-radius: 10px;
-                cursor: pointer;
-                font-weight: 700;
-                color: #111;">
-                Открыть задачу
-            </button>
+            <div class="select">
+                <select id="difficulty">
+                <option value="">Любая</option>
+                <option value="easy">Лёгкая</option>
+                <option value="medium">Средняя</option>
+                <option value="hard">Сложная</option>
+            </select>
             </div>
 
-            <!-- RANDOM BUTTON -->
-            <button onclick="randomTask()" style="
-            background: var(--accent);
-            border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
-            color: #111;
-            font-weight: 700;
-            margin-bottom: 25px;
-            cursor: pointer;">
-            🎲 Случайная задача
-        </button>
+            <label>Тип ошибки</label>
+            <div class="select">
+                <select id="errorType">
+                <option value="">Любая</option>
+                <option value="Алгоритмическая">Алгоритмическая</option>
+                <option value="Память">Память</option>
+                <option value="Время">Время</option>
+                <option value="Формулы">Формулы</option>
+            </select>
+            </div>
 
-            <div id="list" class="problems-list"></div>
-            <div id="empty" class="empty" style="display:none;">Ничего не найдено…</div>
+            <label>Поиск</label>
+            <input type="text" id="search" placeholder="например: SuperMemo, DFS, формула…">
+        </div>
 
+        <!-- MAIN -->
+        <main>
+            <h1>Тренировка</h1>
+            <div class="subtitle">Подберите задачу по сложности или типу ошибки, выберите задачу дня или возьмите рандом.</div>
+
+            <div class="top-row">
+                <!-- Задача дня -->
+                <div class="daily-card" id="daily-card">
+                    <div class="daily-main">
+                        <div class="daily-caption">🔥 Задача дня</div>
+                        <div class="daily-title" id="daily-title">Загружаю…</div>
+                    </div>
+                    <button class="btn-small" onclick="openDaily()">Открыть</button>
+                </div>
+
+                <!-- Рандомная задача -->
+                <div class="random-row">
+                    <button class="btn-random" onclick="openRandom()">🎲 Случайная задача</button>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Сложность</th>
+                        <th>Тип ошибки</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+
+            <div id="empty" class="empty" style="display:none;">Задачи не найдены…</div>
         </main>
 
     </div>
@@ -291,129 +349,173 @@
     <script src="auth.js"></script>
 
     <script>
-        // === MOCK DATA ===
-        const problems = [{
-            id: 1,
-            title: "Off-by-one ошибка в цикле",
-            difficulty: "easy",
-            error: "algo",
-            topic: "structures",
-            tags: ["Лёгкая", "Структуры данных", "Алгоритм"],
-            solved: 210
-        }, {
-            id: 2,
-            title: "Переполнение массива",
-            difficulty: "medium",
-            error: "memory",
-            topic: "arithmetic",
-            tags: ["Средняя", "Арифметика", "Память"],
-            solved: 122
-        }, {
-            id: 3,
-            title: "O(n^2) цикл",
-            difficulty: "hard",
-            error: "time",
-            topic: "algorithms",
-            tags: ["Сложная", "Сортировки", "Время"],
-            solved: 48
-        }, {
-            id: 4,
-            title: "Ошибка в формуле площади",
-            difficulty: "easy",
-            error: "math",
-            topic: "geometry",
-            tags: ["Лёгкая", "Геометрия", "Формулы"],
-            solved: 301
-        }, {
-            id: 5,
-            title: "Неправильный DFS",
-            difficulty: "hard",
-            error: "algo",
-            topic: "graphs",
-            tags: ["Сложная", "Обходы графов", "Алгоритм"],
-            solved: 55
-        }];
+        // ============================
+        // ЗАГРУЗКА ЗАДАЧ ИЗ tasks/<id>/meta.json
+        // ============================
 
+        async function loadProblems() {
+            console.log("[training] loadProblems() start");
+            const list = [];
+            let id = 0;
 
+            while (true) {
+                const url = `tasks/${id}/meta.json`;
+                console.log("[training] пробую", url);
 
-        // ============== ЗАДАЧА ДНЯ (фиксируется по дате) ===================
-        function getDailyProblem() {
-            const today = new Date();
-            const seed = today.getFullYear() * 1000 + today.getMonth() * 50 + today.getDate();
-            return problems[seed % problems.length];
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        console.log("[training] fetch not ok, break at id =", id, "status =", res.status);
+                        break;
+                    }
+
+                    const meta = await res.json();
+                    console.log("[training] meta loaded:", meta);
+
+                    list.push({
+                        id: typeof meta.id === "number" ? meta.id : id,
+                        title: meta.title || ("Задача " + id),
+                        difficulty: meta.difficulty || "",
+                        type: meta.type || "",
+                        tags: meta.tags || []
+                    });
+                } catch (e) {
+                    console.log("[training] fetch/meta error at id =", id, e);
+                    break;
+                }
+
+                id++;
+            }
+
+            console.log("[training] total problems loaded:", list.length);
+            return list;
         }
 
-        const daily = getDailyProblem();
-        document.getElementById("daily-title").innerText = daily.title;
+        let problems = [];
+        let dailyProblem = null;
 
-        function openDaily() {
-            window.location.href = "problem.html?id=" + daily.id;
+        async function initTraining() {
+            console.log("[training] initTraining()");
+
+            problems = await loadProblems();
+
+            if (problems.length === 0) {
+                document.getElementById("daily-title").innerText = "Задачи не найдены";
+                document.getElementById("daily-card").style.opacity = "0.6";
+            } else {
+                // задача дня — детерминированно по дате
+                const today = new Date();
+                const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+                const idx = seed % problems.length;
+                dailyProblem = problems[idx];
+
+                document.getElementById("daily-title").innerText = dailyProblem.title;
+            }
+
+            renderTable();
         }
 
+        // ============================
+        // РЕНДЕР ТАБЛИЦЫ
+        // ============================
 
+        function diffPill(diff) {
+            const map = {
+                easy: "background:#2c7a3f; color:#d6ffd6;",
+                medium: "background:#b59b34; color:#fff8d1;",
+                hard: "background:#8b2c2c; color:#ffd6d6;"
+            };
+            let text = diff;
+            if (diff === "easy") text = "Лёгкая";
+            else if (diff === "medium") text = "Средняя";
+            else if (diff === "hard") text = "Сложная";
 
-        // ============== RANDOM TASK ===================
-        function randomTask() {
-            const random = problems[Math.floor(Math.random() * problems.length)];
-            window.location.href = "problem.html?id=" + random.id;
+            return `<span class="pill" style="${map[diff] || ""}">${text || "-"}</span>`;
         }
 
+        function typePill(type) {
+            if (!type) return `<span class="pill">—</span>`;
+            return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
+        }
 
+        function renderTable() {
+            console.log("[training] renderTable()");
 
-        // ============== FILTER / RENDER ===================
-        function render() {
-            const diff = difficulty.value;
-            const err = errorType.value;
-            const top = topic.value;
-            const query = search.value.toLowerCase();
+            const diff = document.getElementById("difficulty").value;
+            const err = document.getElementById("errorType").value;
+            const query = document.getElementById("search").value.toLowerCase();
 
             const filtered = problems.filter(p =>
                 (!diff || p.difficulty === diff) &&
-                (!err || p.error === err) &&
-                (!top || p.topic === top) &&
+                (!err || p.type === err) &&
                 (!query || p.title.toLowerCase().includes(query))
             );
 
-            list.innerHTML = "";
+            const tbody = document.getElementById("tbody");
+            const empty = document.getElementById("empty");
+
+            tbody.innerHTML = "";
             empty.style.display = filtered.length ? "none" : "block";
 
             filtered.forEach(p => {
-                const card = document.createElement("div");
-                card.className = "card";
-
-                card.innerHTML = `
-            <div>
-                <h3>${p.title}</h3>
-                <div class="tags">
-                    <span class="tag ${p.difficulty}">${p.tags[0]}</span>
-                    <span class="tag">${p.tags[1]}</span>
-                    <span class="tag">${p.tags[2]}</span>
-                </div>
-            </div>
-
-            <div class="count">
-                Решивших:<br>
-                <span>${p.solved}</span>
-            </div>
-        `;
-
-                card.onclick = () => window.location.href = "problem.html?id=" + p.id;
-
-                list.appendChild(card);
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                <td>${p.id}</td>
+                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a></td>
+                <td>${diffPill(p.difficulty)}</td>
+                <td>${typePill(p.type)}</td>
+            `;
+                tbody.appendChild(tr);
             });
         }
 
-        difficulty.onchange = render;
-        errorType.onchange = render;
-        topic.onchange = render;
-        search.oninput = render;
+        // ============================
+        // КНОПКИ: ЗАДАЧА ДНЯ И РАНДОМ
+        // ============================
 
-        render();
+        function openDaily() {
+            console.log("[training] openDaily()");
+            if (!dailyProblem) {
+                alert("Задача дня пока недоступна");
+                return;
+            }
+            window.location.href = "problem.html?id=" + dailyProblem.id;
+        }
+
+        function openRandom() {
+            console.log("[training] openRandom()");
+            if (!problems.length) {
+                alert("Нет доступных задач");
+                return;
+            }
+            const idx = Math.floor(Math.random() * problems.length);
+            const p = problems[idx];
+            window.location.href = "problem.html?id=" + p.id;
+        }
+
+        // ============================
+        // СОБЫТИЯ
+        // ============================
+
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("[training] DOMContentLoaded");
+            // navbar
+            if (typeof updateNavbar === "function") {
+                updateNavbar();
+            } else {
+                console.warn("[training] updateNavbar() не найден");
+            }
+
+            // фильтры
+            document.getElementById("difficulty").addEventListener("change", renderTable);
+            document.getElementById("errorType").addEventListener("change", renderTable);
+            document.getElementById("search").addEventListener("input", renderTable);
+
+            // загрузка задач
+            initTraining();
+        });
     </script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", updateNavbar);
-    </script>
 </body>
 
 </html>

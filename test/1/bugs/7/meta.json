@@ -1,0 +1,9 @@
+{
+    "type": "неправильный ввод",
+    "line": 31,
+    "description": "2 раза вводиться x3",
+    "difficulty": "easy",
+    "hint": "",
+    "tags": ["геометрия", "площадь"],
+    "verdict": "WA"
+}

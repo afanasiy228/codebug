@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 80,
+    "description": "min у навой вершины при push_back() равен не 0 а val",
+    "difficulty": "medium-hard",
+    "hint": "",
+    "tags": ["декартовое дерего", "структуры данных"]
+}

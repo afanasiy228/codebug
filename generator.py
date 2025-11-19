@@ -4,12 +4,12 @@ import sys
 import glob
 
 # --- Настройки ---
-SOURCE = "solution.cpp"
-BINARY = "solution"
+SOURCE = "code.cpp"
+BINARY = "code"
 TIME_LIMIT = 2  # сек
 
 def task_dir(task):
-    return os.path.join("problems", task)
+    return os.path.join("tasks", task)
 
 def compile_solution(task):
     source_path = os.path.join(task_dir(task), SOURCE)

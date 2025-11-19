@@ -226,12 +226,12 @@
             <label>Тип ошибки</label>
             <div class="select">
                 <select id="errorType">
-                <option value="">Любая</option>
-                <option value="algo">Алгоритмическая</option>
-                <option value="memory">Память</option>
-                <option value="time">Время</option>
-                <option value="math">Формулы</option>
-            </select>
+        <option value="">Любая</option>
+        <option value="Алгоритмическая">Алгоритмическая</option>
+        <option value="Память">Память</option>
+        <option value="Время">Время</option>
+        <option value="Формулы">Формулы</option>
+    </select>
             </div>
 
             <label>Поиск</label>
@@ -250,7 +250,6 @@
                         <th>Название</th>
                         <th>Сложность</th>
                         <th>Тип ошибки</th>
-                        <th>Решивших</th>
                     </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
@@ -261,49 +260,80 @@
 
     </div>
 
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
     <script src="auth.js"></script>
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
 
     <script>
-        const problems = [{
-            id: 1,
-            title: "Off-by-one ошибка в цикле",
-            difficulty: "easy",
-            error: "algo",
-            solved: 210
-        }, {
-            id: 2,
-            title: "Переполнение массива",
-            difficulty: "medium",
-            error: "memory",
-            solved: 122
-        }, {
-            id: 3,
-            title: "O(n^2) цикл",
-            difficulty: "hard",
-            error: "time",
-            solved: 48
-        }, {
-            id: 4,
-            title: "Ошибка в формуле площади",
-            difficulty: "easy",
-            error: "math",
-            solved: 301
-        }, {
-            id: 5,
-            title: "Неправильный DFS",
-            difficulty: "hard",
-            error: "algo",
-            solved: 55
-        }];
+        /* ============================
+                                       ЗАГРУЗКА ЗАДАЧ
+                                    ============================ */
+        async function loadProblems() {
+            let list = [];
 
-        function mapError(e) {
-            return {
-                algo: "Алгоритмическая",
-                memory: "Память",
-                time: "Время",
-                math: "Формулы"
-            }[e] || "";
+            let id = 0;
+            while (true) {
+                const url = `tasks/${id}/meta.json`;
+
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) break;
+
+                    const meta = await res.json();
+
+                    list.push({
+                        id: meta.id,
+                        title: meta.title,
+                        difficulty: meta.difficulty,
+                        type: meta.type,
+                        tags: meta.tags || []
+                    });
+
+                } catch (e) {
+                    break;
+                }
+
+                id++;
+            }
+
+            return list;
         }
+
+        let problems = [];
+
+        async function init() {
+            problems = await loadProblems();
+            render();
+        }
+
+        /* ============================
+           ПОДСВЕТКИ
+        ============================ */
+
+        function diffPill(diff) {
+            const map = {
+                easy: "background:#2c7a3f; color:#d6ffd6;",
+                medium: "background:#b59b34; color:#fff8d1;",
+                hard: "background:#8b2c2c; color:#ffd6d6;"
+            };
+            return `<span class="pill" style="${map[diff] || ""}">${diff === "easy" ? "Лёгкая" : diff === "medium" ? "Средняя" : "Сложная"}</span>`;
+        }
+
+        function typePill(type) {
+            return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
+        }
+
+        /* ============================
+           ФИЛЬТРАЦИЯ + РЕНДЕР
+        ============================ */
 
         function render() {
             const diff = document.getElementById("difficulty").value;
@@ -312,7 +342,7 @@
 
             const filtered = problems.filter(p =>
                 (!diff || p.difficulty === diff) &&
-                (!err || p.error === err) &&
+                (!err || p.type === err) &&
                 (!query || p.title.toLowerCase().includes(query))
             );
 
@@ -328,20 +358,22 @@
                 tr.innerHTML = `
                 <td>${p.id}</td>
                 <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a></td>
-                <td>${p.difficulty === "easy" ? "Лёгкая" : p.difficulty === "medium" ? "Средняя" : "Сложная"}</td>
-                <td><span class="pill">${mapError(p.error)}</span></td>
-                <td>${p.solved}</td>
+                <td>${diffPill(p.difficulty)}</td>
+                <td>${typePill(p.type)}</td>
             `;
 
                 tbody.appendChild(tr);
             });
         }
 
+        /* ============================
+           ОБРАБОТЧИКИ
+        ============================ */
         document.getElementById("difficulty").onchange = render;
         document.getElementById("errorType").onchange = render;
         document.getElementById("search").oninput = render;
 
-        render();
+        init();
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", updateNavbar);

@@ -22,7 +22,6 @@
             color: var(--text-main);
             font-family: Inter, sans-serif;
         }
-        /* HEADER */
         
         header {
             height: 56px;
@@ -32,9 +31,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
         
         .logo {
@@ -53,7 +49,6 @@
         nav a:hover {
             color: var(--accent);
         }
-        /* MAIN BLOCK */
         
         .container {
             width: 420px;
@@ -67,7 +62,8 @@
         h1 {
             text-align: center;
             color: var(--accent);
-            margin-bottom: 18px;
+            font-size: 26px;
+            margin-bottom: 25px;
         }
         
         input {
@@ -119,11 +115,6 @@
             font-size: 14px;
         }
         
-        .switch-link:hover {
-            text-decoration: underline;
-        }
-        /* Avatar preview */
-        
         .avatar-preview {
             width: 80px;
             height: 80px;
@@ -137,7 +128,6 @@
             font-weight: 700;
             color: white;
         }
-        /* CAPTCHA */
         
         .captcha {
             background: #0e0e12;
@@ -188,7 +178,7 @@
 
     <div class="container">
 
-        <!-- ========== LOGIN SCREEN ========== -->
+        <!-- LOGIN -->
         <div id="screen-login">
             <h1>Вход</h1>
 
@@ -201,7 +191,7 @@
             <div class="switch-link" onclick="goRegister()">Нет аккаунта? Регистрация</div>
         </div>
 
-        <!-- ========== REGISTER SCREEN ========== -->
+        <!-- REGISTER -->
         <div id="screen-register" style="display:none;">
             <h1>Регистрация</h1>
 
@@ -210,20 +200,21 @@
             <input id="reg-user" type="text" placeholder="Логин" oninput="updateAvatar()">
             <input id="reg-pass" type="password" placeholder="Пароль">
 
-
             <div class="captcha">
-                <span id="captchaText">3 + 4 = ?</span>
+                <span id="captchaText"></span>
                 <input id="captchaAnswer" style="width:60px;">
             </div>
 
-            <div id="reg-error" style="color:#ff4d4d;font-size:13px;height:18px;margin-bottom:12px;"></div>
+            <div id="reg-error" class="error-msg"></div>
 
             <button onclick="register()">Зарегистрироваться</button>
+
+            <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
         </div>
 
     </div>
 
-    <!-- MODAL PASSWORD RECOVERY -->
+    <!-- MODAL -->
     <div id="modal-bg">
         <div id="modal">
             <h3 style="color:var(--accent);margin-top:0;">Забыли пароль?</h3>
@@ -231,19 +222,21 @@
             <button onclick="closeModal()">Ок</button>
         </div>
     </div>
-
-
-    <!-- Firebase -->
+    =
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Auth + Navbar -->
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
     <script src="auth.js"></script>
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
 
     <script>
         updateNavbar();
 
-        /* SWITCH SCREENS */
         function goLogin() {
             document.getElementById("screen-login").style.display = "block";
             document.getElementById("screen-register").style.display = "none";
@@ -254,7 +247,6 @@
             document.getElementById("screen-register").style.display = "block";
         }
 
-        /* MODAL */
         function forgotPassword() {
             document.getElementById("modal-bg").style.display = "flex";
             setTimeout(() => {
@@ -268,6 +260,8 @@
                 document.getElementById("modal-bg").style.display = "none";
             }, 200);
         }
+
+        generateCaptcha();
     </script>
 
 </body>

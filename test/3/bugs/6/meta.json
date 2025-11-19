@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 17,
+    "description": ".reversed в начале ранвно 0 а не 1",
+    "difficulty": "medium",
+    "hint": "",
+    "tags": ["декартовое дерего", "структуры данных"]
+}
