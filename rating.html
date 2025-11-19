@@ -83,6 +83,7 @@
             display: flex;
             align-items: center;
             flex: 1;
+            gap: 12px;
         }
         
         .ava {
@@ -90,7 +91,6 @@
             height: 46px;
             border-radius: 8px;
             object-fit: cover;
-            margin-right: 12px;
             border: 1px solid var(--accent);
         }
         
@@ -107,6 +107,12 @@
         .user-name {
             font-size: 18px;
             font-weight: 600;
+        }
+        
+        .user-rank {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 2px;
         }
         
         .user-exp,
@@ -131,16 +137,38 @@
         <div id="rating-list"></div>
     </div>
 
-    <!-- ===================== Firebase ===================== -->
-
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
     <script src="auth.js"></script>
-
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
     <script>
         updateNavbar();
 
+        /* ======================
+              РАНГИ
+        ====================== */
+        function getRank(exp) {
+            if (exp < 10) return "Новичок";
+            if (exp < 50) return "Мистер WA1";
+            if (exp < 100) return "Знает как отлавливать CE";
+            if (exp < 200) return "Бывалый";
+            if (exp < 300) return "Найдет ошибку в тени";
+            if (exp < 500) return "Повелитель RE";
+            if (exp < 800) return "Охотник за TL";
+            if (exp < 1200) return "Оптимизатор ML";
+            if (exp < 2000) return "Code Wizard";
+            return "Легенда CodeBug";
+        }
+
+        /* ======================
+              ЗАГРУЗКА РЕЙТИНГА
+        ====================== */
         async function loadRating() {
             const snap = await firebase.database().ref("users").get();
             if (!snap.exists()) return;
@@ -150,27 +178,22 @@
 
             let arr = [];
 
-            // формируем массив для сортировки
             for (let login in users) {
                 let u = users[login];
                 let st = u.stats || {};
 
                 arr.push({
-                    login: login,
-                    avatar: u.avatar || null,
+                    login,
+                    avatar: u.avatar || null, // base64 or null
                     exp: st.exp || 0,
                     solved: st.solved || 0
                 });
             }
 
-            // сортировка по exp (убывание)
             arr.sort((a, b) => b.exp - a.exp);
 
-            // вывод
             arr.forEach((u, index) => {
-
-                // аватар или буква
-                let avatar = u.avatar ?
+                let avatarHTML = u.avatar ?
                     `<img class="ava" src="${u.avatar}">` :
                     `<div class="ava default">${u.login[0].toUpperCase()}</div>`;
 
@@ -181,8 +204,11 @@
                 <div class="place">${index + 1}</div>
 
                 <div class="user-block">
-                    ${avatar}
-                    <div class="user-name">${u.login}</div>
+                    ${avatarHTML}
+                    <div>
+                        <div class="user-name">${u.login}</div>
+                        <div class="user-rank">${getRank(u.exp)}</div>
+                    </div>
                 </div>
 
                 <div class="user-exp">${u.exp} EXP</div>

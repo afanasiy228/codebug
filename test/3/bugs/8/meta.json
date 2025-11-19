@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 157,
+    "description": "просто p а не p - 1",
+    "difficulty": "hard",
+    "hint": "insert()",
+    "tags": ["декартовое дерего", "структуры данных"]
+}

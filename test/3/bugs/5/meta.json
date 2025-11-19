@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 103,
+    "description": "в 103 и в 107 нужно добавить update поддерева",
+    "difficulty": "hard",
+    "hint": "merge()",
+    "tags": ["декартовое дерего", "структуры данных"]
+}

@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 174,
+    "description": "-1 для l",
+    "difficulty": "hard",
+    "hint": "revolv()",
+    "tags": ["декартовое дерего", "структуры данных"]
+}

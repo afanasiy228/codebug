@@ -1,0 +1,7 @@
+4
+0 0 0 0
+4
+ADD 1 4 10
+MIN 1 4
+REVERSE 1 4
+MIN 2 3

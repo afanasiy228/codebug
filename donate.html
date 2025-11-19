@@ -203,7 +203,17 @@
 
     </div>
 
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
     <script src="auth.js"></script>
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
 
     <script>
         let selected = null;

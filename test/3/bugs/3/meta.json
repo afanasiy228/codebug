@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 52,
+    "description": "в push() после реверса нужно усатновить .reversed в 0",
+    "difficulty": "hard",
+    "hint": "",
+    "tags": ["декартовое дерего", "структуры данных"]
+}

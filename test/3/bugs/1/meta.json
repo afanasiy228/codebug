@@ -1,0 +1,8 @@
+{
+    "type": "logick",
+    "line": 62,
+    "description": "в update() новой вершины ее cnt это cnt ее детей + 1",
+    "difficulty": "medium-hard",
+    "hint": "ошибка в update()",
+    "tags": ["декартовое дерего", "структуры данных"]
+}
