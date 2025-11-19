@@ -383,6 +383,8 @@
                 return;
             }
 
+            const user = getUser();
+
             const code = editor.getValue();
             console.log("code =", code.substring(0, 100), "...");
             try {
