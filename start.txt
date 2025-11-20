@@ -1,10 +1,8 @@
 
 
 закомитеть проект 
-git init
 git add .
-git commit -m "Новый репозиторий"
-git branch -M main
+git commit -m "text"
 git push -u origin main
 
 
