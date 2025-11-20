@@ -184,12 +184,13 @@
 
                 arr.push({
                     login,
-                    avatar: u.avatar || null, // base64 or null
+                    avatar: u.avatar || null,
                     exp: st.exp || 0,
-                    solved: st.solved || 0
+                    solved: st.solved || {}, // объект решённых
                 });
             }
 
+            // сортировка по опыту
             arr.sort((a, b) => b.exp - a.exp);
 
             arr.forEach((u, index) => {
@@ -197,23 +198,25 @@
                     `<img class="ava" src="${u.avatar}">` :
                     `<div class="ava default">${u.login[0].toUpperCase()}</div>`;
 
+                let solvedCnt = Object.keys(u.solved).length;
+
                 let row = document.createElement("div");
                 row.className = "rating-row";
 
                 row.innerHTML = `
-                <div class="place">${index + 1}</div>
+            <div class="place">${index + 1}</div>
 
-                <div class="user-block">
-                    ${avatarHTML}
-                    <div>
-                        <div class="user-name">${u.login}</div>
-                        <div class="user-rank">${getRank(u.exp)}</div>
-                    </div>
+            <div class="user-block">
+                ${avatarHTML}
+                <div>
+                    <div class="user-name">${u.login}</div>
+                    <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
+            </div>
 
-                <div class="user-exp">${u.exp} EXP</div>
-                <div class="user-solved">${u.cnt} задач</div>
-            `;
+            <div class="user-exp">${u.exp} EXP</div>
+            <div class="user-solved">${solvedCnt} задач</div>
+        `;
 
                 list.appendChild(row);
             });
