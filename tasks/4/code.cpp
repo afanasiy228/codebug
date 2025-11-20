@@ -1,19 +1,12 @@
 #include <iostream>
-#include <vector>
+#include <string>
+#include <algorithm>
 using namespace std;
 
 int main() {
-    int n;
-    cin >> n;
-
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i]; 
-
-    int l, r;
-    cin >> l >> r;
-
-    long long sum = 0;
-    for (int i = l; i < r; i++) sum += a[i]; 
-
-    cout << sum;
+    string a, b;
+    cin >> a;
+    b = a;
+    reverse(a.begin(), a.end());
+    cout << (a == b ? "YES" : "NO");
 }
