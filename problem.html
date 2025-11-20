@@ -343,7 +343,7 @@
             </div>
 
             <div class="ctrl">
-                <button class="btn" onclick="testFirebaseWrite()">TEST SUBMIT</button>
+                <button class="btn" onclick="submitOK(getUser(), getCurrentTaskId())">  TEST SUBMIT </button>
                 <button class="btn" onclick="submitCode()">Отправить</button>
             </div>
         </div>
@@ -511,6 +511,11 @@
             }
         }
 
+        function getCurrentTaskId() {
+            const url = new URL(location.href);
+            return Number(url.searchParams.get("id") || 0);
+        }
+
         /* ============================================================
    LOAD USER SUBMISSIONS (посылки одного пользователя по задаче)
    ============================================================ */
@@ -578,9 +583,12 @@
 
 
         async function submitOK(user, taskId) {
-            console.log("%c[submitOK()] updating stats", "color:#0f0");
+            console.log("%c[submitOK()] → updating user stats", "color:#0f0;");
 
-            if (!user) return;
+            if (!user) {
+                console.error("❌ submitOK: no user");
+                return;
+            }
 
             const ref = firebase.database().ref("users/" + user + "/stats");
 
@@ -589,41 +597,46 @@
                 let data = snap.val();
 
                 if (!data) {
+                    // Если stats пустой — создаём заново
                     data = {
-                        solved: {
-                            "0": -1
-                        },
                         exp: 0,
-                        cnt: 0
+                        cnt: 0,
+                        solved: Array(1000).fill(false)
                     };
                 }
 
-                if (!data.solved) {
-                    data.solved = {
-                        "0": -1
-                    };
+                if (!Array.isArray(data.solved)) {
+                    // Приводим к массиву если криво сохранено
+                    data.solved = Array(1000).fill(false);
                 }
 
-                // Проверяем — уже решал ли эту задачу
-                const solvedList = Object.values(data.solved);
-                if (solvedList.includes(Number(taskId))) {
-                    console.log("✓ submitOK: already solved");
+                // === Если задача уже решена, выходим ===
+                if (data.solved[taskId] === true) {
+                    console.log("✓ submitOK: уже решено, опыт не прибавляем");
                     return;
                 }
 
-                // Находим следующий индекс
-                const nextIndex = Object.keys(data.solved).length;
+                // === Отмечаем как решённую ===
+                data.solved[taskId] = true;
 
-                // Добавляем задачу
-                data.solved[nextIndex] = Number(taskId);
+                // 2. Выбираем XP
+                const xpMap = {
+                    easy: 5,
+                    medium: 15,
+                    hard: 30
+                };
 
-                // Увеличиваем счетчики
-                data.cnt = solvedList.filter(x => x !== -1).length + 1;
-                data.exp = (data.exp || 0) + 10;
+                const addXP = xpMap[difficulty] || 5;
 
+                data.exp += addXP;
+
+                // === Пересчёт количества решённых задач ===
+                data.cnt = data.solved.filter(x => x === true).length;
+
+                // === Сохраняем обновлённые данные ===
                 await ref.set(data);
 
-                console.log("🔥 submitOK: updated:", data);
+                console.log("🔥 submitOK: stats updated:", data);
 
             } catch (e) {
                 console.error("❌ submitOK error:", e);
