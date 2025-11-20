@@ -550,7 +550,7 @@
             }
 
             tbody.innerHTML = "";
-            let i = 1;
+            let i = mine.length;
 
             for (let s of mine) {
                 const verdictColor =
@@ -561,7 +561,7 @@
 
                 tbody.innerHTML += `
         <tr>
-            <td>${i++}</td>
+            <td>${i--}</td>
             <td style="color:${verdictColor}; font-weight:600;">
                 ${s.verdict}
             </td>
