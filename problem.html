@@ -429,10 +429,10 @@
                 console.log("⬅ Вердикт от сервера:", verdict);
 
                 await saveSubmission(user, taskId, verdict.status);
+                alert("Вердикт: " + verdict.status);
                 if (verdict.status == "OK") submitOK(user, taskID);
                 console.log("💾 Firebase сохранено OK");
 
-                alert("Вердикт: " + verdict.status);
             } catch (e) {
                 console.error("🔥 Ошибка submitCode:", e);
             }
@@ -575,11 +575,10 @@
         </tr>`;
             }
         }
-    </script>
 
-    <script>
+
         async function submitOK(user, taskId) {
-            console.log("%c[submitOK()] → updating user stats", "color:#0f0;");
+            console.log("%c[submitOK()] → updating user stats", "color:#0f0; font-weight:bold;");
 
             if (!user) {
                 console.error("❌ submitOK: no user");
@@ -590,32 +589,27 @@
 
             try {
                 const snap = await ref.get();
+                let data = snap.val();
 
-                let data = snap.val() || {
-                    solved: {},
-                    exp: 0,
-                    cnt: 0
-                };
 
-                // Если задача уже отмечена как решённая — ничего не делаем
-                if (data.solved[taskId]) {
-                    console.log("✓ submitOK: task already solved");
+                taskId = String(taskId);
+
+                // Если уже решал — выходим
+                if (data.solved[taskId] === true) {
+                    console.log("✓ submitOK: задача уже отмечена как решённая");
                     return;
                 }
 
-                // Добавляем задачу
+                // Отмечаем как решённую
                 data.solved[taskId] = true;
 
-                // Прирост опыта — можно поменять
+                // Апдейт статистики
                 data.exp = (data.exp || 0) + 10;
+                data.cnt = Object.values(data.solved).filter(x => x === true).length;
 
-                // Количество решённых
-                data.cnt = Object.keys(data.solved).length;
-
-                // Сохраняем в Firebase
                 await ref.set(data);
 
-                console.log("🔥 submitOK: stats updated:", data);
+                console.log("🔥 submitOK: обновлено:", data);
 
             } catch (e) {
                 console.error("❌ submitOK error:", e);
