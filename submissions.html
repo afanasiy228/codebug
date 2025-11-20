@@ -182,75 +182,67 @@
 
     <script src="firebase.js"></script>
     <script src="auth.js"></script>
-
     <script>
-        let allSubs = [];
+        async function fetchTaskTitle(taskId) {
+            try {
+                const meta = await fetch(`tasks/${taskId}/meta.json`).then(r => r.json());
+                return meta.title || ("Задача " + taskId);
+            } catch {
+                return "Задача " + taskId;
+            }
+        }
 
-        async function loadGlobal() {
-            console.log("📡 Загружаем global submissions...");
+        async function loadGlobalSubmissions() {
+            const tbody = document.getElementById("tbody");
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;color:#999;'>Загрузка...</td></tr>";
 
             const snap = await firebase.database().ref("submissions/global").get();
+
             if (!snap.exists()) {
-                document.getElementById("tbody").innerHTML =
-                    "<tr><td colspan='4' class='empty'>Пусто</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;color:#777;'>Пока нет посылок</td></tr>";
                 return;
             }
 
-            const data = snap.val();
-            allSubs = Object.values(data)
-                .sort((a, b) => b.date - a.date);
+            const list = Object.values(snap.val());
 
-            render();
-        }
+            // сортировка по времени (новые → сверху)
+            list.sort((a, b) => b.date - a.date);
 
-        function render() {
-            const tbody = document.getElementById("tbody");
             tbody.innerHTML = "";
 
-            const fUser = document.getElementById("filterUser").value.toLowerCase();
-            const fTask = document.getElementById("filterTask").value.trim();
-            const fVerdict = document.getElementById("filterVerdict").value;
-            const fSearch = document.getElementById("filterSearch").value.toLowerCase();
+            for (const item of list) {
+                const user = item.login || "—";
+                const taskId = item.task || 0;
+                const verdict = item.verdict || "?";
+                const time = new Date(item.date).toLocaleString();
 
-            const filtered = allSubs.filter(s =>
-                (!fUser || s.login.toLowerCase().includes(fUser)) &&
-                (!fTask || s.task == fTask) &&
-                (!fVerdict || s.verdict === fVerdict) &&
-                (!fSearch ||
-                    s.login.toLowerCase().includes(fSearch) ||
-                    String(s.task).includes(fSearch) ||
-                    s.verdict.toLowerCase().includes(fSearch))
-            );
+                // загружаем название задачи
+                const title = await fetchTaskTitle(taskId);
 
-            if (filtered.length === 0) {
-                tbody.innerHTML =
-                    "<tr><td colspan='4' class='empty'>Ничего не найдено…</td></tr>";
-                return;
-            }
+                const color =
+                    verdict === "OK" ? "#7CFF7C" :
+                    verdict === "WA" ? "#FF7C7C" :
+                    verdict === "RE" ? "#FFB37C" :
+                    "#FFD451";
 
-            filtered.forEach(sub => {
                 const tr = document.createElement("tr");
-
                 tr.innerHTML = `
-                <td>${sub.login}</td>
-                <td>${sub.task}</td>
-                <td class="${sub.verdict === 'OK' ? 'ok' : 'wa'}">${sub.verdict}</td>
-                <td>${new Date(sub.date).toLocaleString()}</td>
-            `;
-
+            <td style="text-align:center;">${user}</td>
+            <td style="text-align:center;">
+                <a class="link" href="problem.html?id=${taskId}">
+                    ${title}
+                </a>
+            </td>
+            <td style="text-align:center; color:${color}; font-weight:600;">
+                ${verdict}
+            </td>
+            <td style="text-align:center;">${time}</td>
+        `;
                 tbody.appendChild(tr);
-            });
+            }
         }
-
-        document.getElementById("filterUser").oninput = render;
-        document.getElementById("filterTask").oninput = render;
-        document.getElementById("filterVerdict").onchange = render;
-        document.getElementById("filterSearch").oninput = render;
-
-        loadGlobal();
-        document.addEventListener("DOMContentLoaded", updateNavbar);
+        document.addEventListener("DOMContentLoaded", loadGlobalSubmissions);
     </script>
-
 </body>
 
 </html>
