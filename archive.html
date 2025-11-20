@@ -274,18 +274,24 @@
 
     <script>
         /* ============================
-                                       ЗАГРУЗКА ЗАДАЧ
-                                    ============================ */
+                                                               ЗАГРУЗКА ЗАДАЧ
+                                                            ============================ */
         async function loadProblems() {
-            let list = [];
+            const list = [];
+            const MAX_SEARCH = 5000; // можно увеличить
 
-            let id = 0;
-            while (true) {
+            for (let id = 0; id < MAX_SEARCH; id++) {
                 const url = `tasks/${id}/meta.json`;
 
                 try {
-                    const res = await fetch(url);
-                    if (!res.ok) break;
+                    const res = await fetch(url, {
+                        method: "GET"
+                    });
+
+                    if (!res.ok) {
+                        // файла нет – просто пропускаем
+                        continue;
+                    }
 
                     const meta = await res.json();
 
@@ -298,10 +304,9 @@
                     });
 
                 } catch (e) {
-                    break;
+                    // тоже пропускаем
+                    continue;
                 }
-
-                id++;
             }
 
             return list;
