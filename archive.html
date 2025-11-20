@@ -274,41 +274,43 @@
 
     <script>
         /* ============================
-                                                               ЗАГРУЗКА ЗАДАЧ
-                                                            ============================ */
+                                                                       ЗАГРУЗКА ЗАДАЧ
+                                                                    ============================ */
         async function loadProblems() {
+            console.log("[training] loadProblems() start");
             const list = [];
-            const MAX_SEARCH = 5000; // можно увеличить
+            let id = 0;
 
-            for (let id = 0; id < MAX_SEARCH; id++) {
+            while (true) {
                 const url = `tasks/${id}/meta.json`;
+                console.log("[training] пробую", url);
 
                 try {
-                    const res = await fetch(url, {
-                        method: "GET"
-                    });
-
+                    const res = await fetch(url);
                     if (!res.ok) {
-                        // файла нет – просто пропускаем
-                        continue;
+                        console.log("[training] fetch not ok, break at id =", id, "status =", res.status);
+                        break;
                     }
 
                     const meta = await res.json();
+                    console.log("[training] meta loaded:", meta);
 
                     list.push({
-                        id: meta.id,
-                        title: meta.title,
-                        difficulty: meta.difficulty,
-                        type: meta.type,
+                        id: typeof meta.id === "number" ? meta.id : id,
+                        title: meta.title || ("Задача " + id),
+                        difficulty: meta.difficulty || "",
+                        type: meta.type || "",
                         tags: meta.tags || []
                     });
-
                 } catch (e) {
-                    // тоже пропускаем
-                    continue;
+                    console.log("[training] fetch/meta error at id =", id, e);
+                    break;
                 }
+
+                id++;
             }
 
+            console.log("[training] total problems loaded:", list.length);
             return list;
         }
 
