@@ -582,65 +582,79 @@
         }
 
 
-        async function submitOK(user, taskId) {
-            console.log("%c[submitOK()] → updating user stats", "color:#0f0;");
+        async function submitOK(user, taskId, difficulty) {
+            console.log("%c[submitOK()] START", "color:#0f0; font-weight:bold;");
+            console.log("→ user:", user);
+            console.log("→ taskId:", taskId);
+            console.log("→ difficulty:", difficulty);
 
             if (!user) {
-                console.error("❌ submitOK: no user");
+                console.error("❌ submitOK: user = null");
                 return;
             }
 
-            const ref = firebase.database().ref("users/" + user + "/stats");
+            const path = "users/" + user + "/stats";
+            console.log("→ Firebase path:", path);
+
+            const ref = firebase.database().ref(path);
+
+            let snap;
+            try {
+                snap = await ref.get();
+                console.log("✔ snap loaded:", snap.val());
+            } catch (e) {
+                console.error("🔥 ERROR: cannot load stats:", e);
+                return;
+            }
+
+            let data = snap.val();
+
+            if (!data) {
+                console.warn("⚠ stats did not exist → creating new");
+                data = {
+                    solved: {},
+                    exp: 0,
+                    cnt: 0
+                };
+            }
+
+            // Проверяем, было ли решено
+            console.log("→ Already solved?", !!data.solved[taskId]);
+
+            if (data.solved[taskId]) {
+                console.log("%c✓ submitOK STOP — already solved", "color:#aaa;");
+                return;
+            }
+
+            // Отмечаем как решённую
+            data.solved[taskId] = true;
+            console.log("✔ marked task as solved");
+
+            // XP по сложности
+            let addXP = 0;
+
+            if (difficulty === "easy") addXP = 5;
+            else if (difficulty === "medium") addXP = 15;
+            else if (difficulty === "hard") addXP = 30;
+            else addXP = 5;
+
+            console.log("→ addXP =", addXP);
+
+            data.exp += addXP;
+            console.log("→ new EXP =", data.exp);
+
+            // cnt = количество решённых задач
+            data.cnt = Object.keys(data.solved).length;
+            console.log("→ new CNT =", data.cnt);
 
             try {
-                const snap = await ref.get();
-                let data = snap.val();
-
-                if (!data) {
-                    // Если stats пустой — создаём заново
-                    data = {
-                        exp: 0,
-                        cnt: 0,
-                        solved: Array(1000).fill(false)
-                    };
-                }
-
-                if (!Array.isArray(data.solved)) {
-                    // Приводим к массиву если криво сохранено
-                    data.solved = Array(1000).fill(false);
-                }
-
-                // === Если задача уже решена, выходим ===
-                if (data.solved[taskId] === true) {
-                    console.log("✓ submitOK: уже решено, опыт не прибавляем");
-                    return;
-                }
-
-                // === Отмечаем как решённую ===
-                data.solved[taskId] = true;
-
-                // 2. Выбираем XP
-                const xpMap = {
-                    easy: 5,
-                    medium: 15,
-                    hard: 30
-                };
-
-                const addXP = xpMap[difficulty] || 5;
-
-                data.exp += addXP;
-
-                // === Пересчёт количества решённых задач ===
-                data.cnt = data.solved.filter(x => x === true).length;
-
-                // === Сохраняем обновлённые данные ===
                 await ref.set(data);
-
-                console.log("🔥 submitOK: stats updated:", data);
-
+                console.log("%c🔥 submitOK: stats updated successfully!", "color:#ffd451; font-weight:bold;");
             } catch (e) {
-                console.error("❌ submitOK error:", e);
+                console.error("🔥 ERROR saving stats:", e);
             }
+
+            console.log("%c[submitOK()] END", "color:#0f0;");
         }
     </script>
 
