@@ -503,34 +503,31 @@
                 return;
             }
 
-            tbody.innerHTML = "<tr><td colspan='4' style='color:#999'>Загрузка…</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Загрузка…</td></tr>";
 
-            // загружаем ВСЕ глобальные посылки
             const snap = await firebase.database()
                 .ref("submissions/global")
                 .get();
 
             if (!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='4'>Пока нет посылок…</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='3'>Пока нет посылок…</td></tr>";
                 return;
             }
 
             const all = Object.values(snap.val());
 
-            // ⭐ ВАЖНО: taskId был STRING → фильтр не работал!
-            // Теперь приводим всё к числам.
             const mine = all
                 .filter(s => s.login === user && Number(s.task) === Number(taskId))
                 .sort((a, b) => b.date - a.date);
 
             if (mine.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4'>Пока нет посылок…</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='3'>Пока нет посылок…</td></tr>";
                 return;
             }
 
             tbody.innerHTML = "";
-
             let i = 1;
+
             for (let s of mine) {
                 const verdictColor =
                     s.verdict === "OK" ? "#7fff7f" :
@@ -545,7 +542,6 @@
                 ${s.verdict}
             </td>
             <td>${new Date(s.date).toLocaleTimeString()}</td>
-            <td>—</td>
         </tr>`;
             }
         }
