@@ -417,6 +417,11 @@
 
             const user = getUser();
 
+            if (!user) {
+                alert("зарегстрируйтесь чтобы решать задачи");
+                return;
+            }
+
             const code = editor.getValue();
             console.log("code =", code.substring(0, 100), "...");
             try {
