@@ -430,7 +430,7 @@
 
                 await saveSubmission(user, taskId, verdict.status);
                 alert("Вердикт: " + verdict.status);
-                if (verdict.status == "OK") submitOK(user, taskID);
+                if (verdict.status === "OK") submitOK(user, taskId);
                 console.log("💾 Firebase сохранено OK");
 
             } catch (e) {
