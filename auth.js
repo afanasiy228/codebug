@@ -141,6 +141,7 @@ async function registerUser(login, pass) {
 
     const userObj = {
         login: login,
+        id: userId,
         pass: pass, // В будущем лучше заменить на hash
         created: Date.now(),
 
