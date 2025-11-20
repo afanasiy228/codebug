@@ -1,7 +1,7 @@
 {
     "id": 2,
-    "title": "aplusb",
+    "title": "Минимум трёх чисел",
+    "difficulty": "easy",
     "type": "Алгоритмическая",
-    "difficulty": "hard",
-    "tags": ["сложение"]
+    "tags": ["минимум", "арифметика"]
 }
