@@ -421,7 +421,6 @@
                 loadUserSubmissions();
             } catch (e) {
                 console.error("🔥 Ошибка submitCode:", e);
-                alert("Ошибка отправки");
             }
         }
 
@@ -474,49 +473,30 @@
         }
 
         /* ============================================================
-           SAVE SUBMISSION (Firebase)
-           ============================================================ */
-
-        async function saveSubmission(login, taskId, verdict) {
-            console.log("%c[saveSubmission()] → GLOBAL ONLY", "color:#fa0;");
-
-            const db = firebase.database();
-
-            const globalRef = db.ref("submissions/global");
-
-            const record = {
-                login,
-                task: Number(taskId),
-                verdict,
-                date: Date.now()
-            };
-
-            console.log("Глобальная запись:", record);
-
-            try {
-                await globalRef.push(record);
-                console.log("✔ global push OK");
-            } catch (e) {
-                console.error("🔥 Ошибка сохранения:", e);
-                throw e;
-            }
-        }
-
-        /* ============================================================
-           LOAD USER SUBMISSIONS (таблица в профиле)
-           ============================================================ */
+   LOAD USER SUBMISSIONS (посылки одного пользователя по задаче)
+   ============================================================ */
 
         async function loadMySubsForThisProblem() {
             console.log("%c[loadMySubsForThisProblem()]", "color:#0af;");
 
             const user = getUser();
+            if (!user) {
+                console.warn("⚠ Нет пользователя — таблицу не обновляем");
+                return;
+            }
+
             const url = new URL(location.href);
             const taskId = Number(url.searchParams.get("id"));
 
             const tbody = document.getElementById("subs");
+            if (!tbody) {
+                console.error("❌ tbody #subs не найден!");
+                return;
+            }
 
             tbody.innerHTML = "<tr><td colspan='4' style='color:#999'>Загрузка…</td></tr>";
 
+            // загружаем ВСЕ глобальные посылки
             const snap = await firebase.database()
                 .ref("submissions/global")
                 .get();
@@ -528,8 +508,10 @@
 
             const all = Object.values(snap.val());
 
-            // фильтруем только мои по этой задаче
-            const mine = all.filter(s => s.login === user && s.task === taskId)
+            // ⭐ ВАЖНО: taskId был STRING → фильтр не работал!
+            // Теперь приводим всё к числам.
+            const mine = all
+                .filter(s => s.login === user && Number(s.task) === Number(taskId))
                 .sort((a, b) => b.date - a.date);
 
             if (mine.length === 0) {
@@ -538,19 +520,24 @@
             }
 
             tbody.innerHTML = "";
-            let i = 1;
 
+            let i = 1;
             for (let s of mine) {
+                const verdictColor =
+                    s.verdict === "OK" ? "#7fff7f" :
+                    s.verdict === "WA" ? "#ff7777" :
+                    s.verdict === "RE" ? "#ffb37c" :
+                    "#ffd451";
+
                 tbody.innerHTML += `
-            <tr>
-                <td>${i++}</td>
-                <td style="color:${s.verdict === "OK" ? "#7fff7f" : "#ff7777"}">
-                    ${s.verdict}
-                </td>
-                <td>${new Date(s.date).toLocaleTimeString()}</td>
-                <td>—</td>
-            </tr>
-        `;
+        <tr>
+            <td>${i++}</td>
+            <td style="color:${verdictColor}; font-weight:600;">
+                ${s.verdict}
+            </td>
+            <td>${new Date(s.date).toLocaleTimeString()}</td>
+            <td>—</td>
+        </tr>`;
             }
         }
     </script>
@@ -745,10 +732,8 @@
                     .set(entry);
 
                 console.log("🔥 Firebase TEST ENTRY ADDED:", entry);
-                alert("✔ Firebase запись успешно добавлена!");
             } catch (e) {
                 console.error("❌ Firebase write error:", e);
-                alert("❌ Ошибка записи в Firebase (см. консоль)");
             }
         }
     </script>
