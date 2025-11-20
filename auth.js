@@ -139,15 +139,19 @@ async function registerUser(login, pass) {
 
 
 
-    // структура первой записи
     const userObj = {
-        id: userId,
         login: login,
-        password: pass,
-        avatar: null, // base64 или null
+        pass: pass, // В будущем лучше заменить на hash
         created: Date.now(),
-        solved: 0,
-        exp: 0,
+
+        stats: {
+            exp: 0,
+            cnt: 0,
+            solved: {}
+        },
+
+        avatar: "", // base64
+        about: "" // BIO
     };
 
     await ref.set(userObj);

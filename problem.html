@@ -424,6 +424,7 @@
                 console.log("⬅ Вердикт от сервера:", verdict);
 
                 await saveSubmission(user, taskId, verdict.status);
+                if (verdict.status == "OK") submitOK(user, taskID);
                 console.log("💾 Firebase сохранено OK");
 
                 alert("Вердикт: " + verdict.status);
@@ -567,6 +568,52 @@
             </td>
             <td>${new Date(s.date).toLocaleTimeString()}</td>
         </tr>`;
+            }
+        }
+    </script>
+
+    <script>
+        async function submitOK(user, taskId) {
+            console.log("%c[submitOK()] → updating user stats", "color:#0f0;");
+
+            if (!user) {
+                console.error("❌ submitOK: no user");
+                return;
+            }
+
+            const ref = firebase.database().ref("users/" + user + "/stats");
+
+            try {
+                const snap = await ref.get();
+
+                let data = snap.val() || {
+                    solved: {},
+                    exp: 0,
+                    cnt: 0
+                };
+
+                // Если задача уже отмечена как решённая — ничего не делаем
+                if (data.solved[taskId]) {
+                    console.log("✓ submitOK: task already solved");
+                    return;
+                }
+
+                // Добавляем задачу
+                data.solved[taskId] = true;
+
+                // Прирост опыта — можно поменять
+                data.exp = (data.exp || 0) + 10;
+
+                // Количество решённых
+                data.cnt = Object.keys(data.solved).length;
+
+                // Сохраняем в Firebase
+                await ref.set(data);
+
+                console.log("🔥 submitOK: stats updated:", data);
+
+            } catch (e) {
+                console.error("❌ submitOK error:", e);
             }
         }
     </script>
