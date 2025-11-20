@@ -427,7 +427,6 @@
                 console.log("💾 Firebase сохранено OK");
 
                 alert("Вердикт: " + verdict.status);
-                loadUserSubmissions();
             } catch (e) {
                 console.error("🔥 Ошибка submitCode:", e);
             }
@@ -479,6 +478,31 @@
 
             console.log("📦 JSON:", data);
             return data;
+        }
+
+        async function saveSubmission(login, taskId, verdict) {
+            console.log("%c[saveSubmission()] → GLOBAL ONLY", "color:#fa0;");
+
+            const db = firebase.database();
+
+            const globalRef = db.ref("submissions/global");
+
+            const record = {
+                login,
+                task: Number(taskId),
+                verdict,
+                date: Date.now()
+            };
+
+            console.log("Глобальная запись:", record);
+
+            try {
+                await globalRef.push(record);
+                console.log("✔ global push OK");
+            } catch (e) {
+                console.error("🔥 Ошибка сохранения:", e);
+                throw e;
+            }
         }
 
         /* ============================================================
