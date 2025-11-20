@@ -578,12 +578,9 @@
 
 
         async function submitOK(user, taskId) {
-            console.log("%c[submitOK()] → updating user stats", "color:#0f0; font-weight:bold;");
+            console.log("%c[submitOK()] updating stats", "color:#0f0");
 
-            if (!user) {
-                console.error("❌ submitOK: no user");
-                return;
-            }
+            if (!user) return;
 
             const ref = firebase.database().ref("users/" + user + "/stats");
 
@@ -591,25 +588,42 @@
                 const snap = await ref.get();
                 let data = snap.val();
 
+                if (!data) {
+                    data = {
+                        solved: {
+                            "0": -1
+                        },
+                        exp: 0,
+                        cnt: 0
+                    };
+                }
 
-                taskId = String(taskId);
+                if (!data.solved) {
+                    data.solved = {
+                        "0": -1
+                    };
+                }
 
-                // Если уже решал — выходим
-                if (data.solved[taskId] === true) {
-                    console.log("✓ submitOK: задача уже отмечена как решённая");
+                // Проверяем — уже решал ли эту задачу
+                const solvedList = Object.values(data.solved);
+                if (solvedList.includes(Number(taskId))) {
+                    console.log("✓ submitOK: already solved");
                     return;
                 }
 
-                // Отмечаем как решённую
-                data.solved[taskId] = true;
+                // Находим следующий индекс
+                const nextIndex = Object.keys(data.solved).length;
 
-                // Апдейт статистики
+                // Добавляем задачу
+                data.solved[nextIndex] = Number(taskId);
+
+                // Увеличиваем счетчики
+                data.cnt = solvedList.filter(x => x !== -1).length + 1;
                 data.exp = (data.exp || 0) + 10;
-                data.cnt = Object.values(data.solved).filter(x => x === true).length;
 
                 await ref.set(data);
 
-                console.log("🔥 submitOK: обновлено:", data);
+                console.log("🔥 submitOK: updated:", data);
 
             } catch (e) {
                 console.error("❌ submitOK error:", e);
