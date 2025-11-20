@@ -584,77 +584,61 @@
 
         async function submitOK(user, taskId, difficulty) {
             console.log("%c[submitOK()] START", "color:#0f0; font-weight:bold;");
-            console.log("→ user:", user);
-            console.log("→ taskId:", taskId);
-            console.log("→ difficulty:", difficulty);
+            console.log("→ user:", user, " taskId:", taskId, " difficulty:", difficulty);
 
             if (!user) {
                 console.error("❌ submitOK: user = null");
                 return;
             }
 
-            const path = "users/" + user + "/stats";
-            console.log("→ Firebase path:", path);
-
-            const ref = firebase.database().ref(path);
+            const ref = firebase.database().ref("users/" + user + "/stats");
 
             let snap;
             try {
                 snap = await ref.get();
-                console.log("✔ snap loaded:", snap.val());
             } catch (e) {
-                console.error("🔥 ERROR: cannot load stats:", e);
+                console.error("🔥 ERROR loading stats:", e);
                 return;
             }
 
             let data = snap.val();
+            console.log("✔ Loaded stats:", data);
 
-            if (!data) {
-                console.warn("⚠ stats did not exist → creating new");
-                data = {
-                    solved: {},
-                    exp: 0,
-                    cnt: 0
-                };
-            }
+            // === ГЛАВНОЕ ИСПРАВЛЕНИЕ ===
+            if (!data) data = {};
+            if (!data.solved) data.solved = {};
+            if (!data.exp) data.exp = 0;
+            if (!data.cnt) data.cnt = 0;
 
-            // Проверяем, было ли решено
-            console.log("→ Already solved?", !!data.solved[taskId]);
+            console.log("✔ After fix:", data);
 
+            // уже решена
             if (data.solved[taskId]) {
-                console.log("%c✓ submitOK STOP — already solved", "color:#aaa;");
+                console.log("✓ Task already solved → stop");
                 return;
             }
 
-            // Отмечаем как решённую
+            // отметить как решённую
             data.solved[taskId] = true;
-            console.log("✔ marked task as solved");
 
-            // XP по сложности
+            // XP
             let addXP = 0;
-
             if (difficulty === "easy") addXP = 5;
             else if (difficulty === "medium") addXP = 15;
             else if (difficulty === "hard") addXP = 30;
             else addXP = 5;
 
-            console.log("→ addXP =", addXP);
-
             data.exp += addXP;
-            console.log("→ new EXP =", data.exp);
-
-            // cnt = количество решённых задач
             data.cnt = Object.keys(data.solved).length;
-            console.log("→ new CNT =", data.cnt);
+
+            console.log("🔥 NEW STATS:", data);
 
             try {
                 await ref.set(data);
-                console.log("%c🔥 submitOK: stats updated successfully!", "color:#ffd451; font-weight:bold;");
+                console.log("✔ Stats saved");
             } catch (e) {
                 console.error("🔥 ERROR saving stats:", e);
             }
-
-            console.log("%c[submitOK()] END", "color:#0f0;");
         }
     </script>
 
