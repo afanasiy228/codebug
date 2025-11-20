@@ -286,7 +286,30 @@
                 <textarea id="editor" style="height:100%; width:100%; background:#1e1e1e; color:#f5f5f7;
                              border:none; resize:none; padding:10px; box-sizing:border-box;
                              font-family:monospace; font-size:14px;"></textarea>
+
             </div>
+
+            <script>
+                window.editor = {
+                    getValue: function() {
+                        var el = document.getElementById("editor");
+                        if (!el) return "";
+                        return el.value;
+                    },
+
+                    setValue: function(text) {
+                        var el = document.getElementById("editor");
+                        if (!el) return;
+                        if (text === undefined || text === null) {
+                            el.value = "";
+                        } else {
+                            el.value = text;
+                        }
+                    }
+                };
+
+                console.log("[editor] textarea mode enabled");
+            </script>
 
             <div class="splitter-h" id="hSplit"></div>
 
@@ -454,27 +477,27 @@
            SAVE SUBMISSION (Firebase)
            ============================================================ */
 
-        async function saveSubmission(user, taskId, verdict) {
-            console.log("%c[saveSubmission()] Firebase…", "color:#fa0");
+        async function saveSubmission(login, taskId, verdict) {
+            console.log("%c[saveSubmission()] → GLOBAL ONLY", "color:#fa0;");
 
             const db = firebase.database();
 
-            const entry = {
-                user: user,
+            const globalRef = db.ref("submissions/global");
+
+            const record = {
+                login,
                 task: Number(taskId),
-                verdict: verdict,
+                verdict,
                 date: Date.now()
             };
 
-            console.log("Записываем:", entry);
+            console.log("Глобальная запись:", record);
 
             try {
-                await db.ref("submissions/all").push(entry);
-                await db.ref(`submissions/${user}`).push(entry);
-
-                console.log("✔ Firebase запись добавлена");
+                await globalRef.push(record);
+                console.log("✔ global push OK");
             } catch (e) {
-                console.error("🔥 Firebase error:", e);
+                console.error("🔥 Ошибка сохранения:", e);
                 throw e;
             }
         }
@@ -483,45 +506,53 @@
            LOAD USER SUBMISSIONS (таблица в профиле)
            ============================================================ */
 
-        async function loadUserSubmissions() {
-            console.log("%c[loadUserSubmissions()]", "color:#0ff");
+        async function loadMySubsForThisProblem() {
+            console.log("%c[loadMySubsForThisProblem()]", "color:#0af;");
 
             const user = getUser();
-            if (!user) return;
+            const url = new URL(location.href);
+            const taskId = Number(url.searchParams.get("id"));
 
-            const table = document.getElementById("subs");
-            if (!table) {
-                console.warn("⚠️ Нет таблицы subs");
-                return;
-            }
+            const tbody = document.getElementById("subs");
 
-            table.innerHTML = "<tr><td colspan='4'>Загрузка…</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='4' style='color:#999'>Загрузка…</td></tr>";
 
-            const snap = await firebase.database().ref(`submissions/${user}`).get();
+            const snap = await firebase.database()
+                .ref("submissions/global")
+                .get();
 
             if (!snap.exists()) {
-                table.innerHTML = "<tr><td colspan='4'>Нет посылок</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4'>Пока нет посылок…</td></tr>";
                 return;
             }
 
-            const rows = Object.values(snap.val()).sort((a, b) => b.date - a.date);
+            const all = Object.values(snap.val());
 
-            table.innerHTML = "";
+            // фильтруем только мои по этой задаче
+            const mine = all.filter(s => s.login === user && s.task === taskId)
+                .sort((a, b) => b.date - a.date);
+
+            if (mine.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4'>Пока нет посылок…</td></tr>";
+                return;
+            }
+
+            tbody.innerHTML = "";
             let i = 1;
 
-            for (const s of rows) {
-                table.innerHTML += `
+            for (let s of mine) {
+                tbody.innerHTML += `
             <tr>
                 <td>${i++}</td>
-                <td>${s.task}</td>
-                <td style="color:${s.verdict === "OK" ? "#7fff7f" : "#ff7777"}">${s.verdict}</td>
-                <td>${new Date(s.date).toLocaleString()}</td>
-            </tr>`;
+                <td style="color:${s.verdict === "OK" ? "#7fff7f" : "#ff7777"}">
+                    ${s.verdict}
+                </td>
+                <td>${new Date(s.date).toLocaleTimeString()}</td>
+                <td>—</td>
+            </tr>
+        `;
             }
         }
-
-        /* Автозагрузка */
-        window.addEventListener("DOMContentLoaded", loadUserSubmissions);
     </script>
 
 
