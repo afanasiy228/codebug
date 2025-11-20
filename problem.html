@@ -402,6 +402,8 @@
            SUBMIT CODE (универсальная версия)
            ============================================================ */
 
+        let TASK_DIFFICULTY = "easy";
+
         async function submitCode() {
             console.log("[submitCode] старт");
 
@@ -430,7 +432,7 @@
 
                 await saveSubmission(user, taskId, verdict.status);
                 alert("Вердикт: " + verdict.status);
-                if (verdict.status === "OK") submitOK(user, taskId);
+                if (verdict.status === "OK") submitOK(user, taskId, TASK_DIFFICULTY);
                 console.log("💾 Firebase сохранено OK");
 
             } catch (e) {
@@ -734,6 +736,8 @@
             } catch (e) {
                 document.getElementById("taskTitle").innerText = "Название не найдено";
             }
+            TASK_DIFFICULTY = meta.difficulty; // ← сохраняем сложность
+            console.log("Загружена сложность:", TASK_DIFFICULTY);
 
             // ————————————— STATEMENT.MD ————————————————
             const stmtPath = `tasks/${id}/statement.md`;
