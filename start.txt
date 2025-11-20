@@ -1,0 +1,16 @@
+
+
+закомитеть проект 
+git init
+git add .
+git commit -m "Новый репозиторий"
+git branch -M main
+git push -u origin main
+
+
+запуск виртуального окружения venv          source venv/bin/activate
+запуск сервера питон                        python3 server.py       
+
+запуск тунеля ngrok                         ngrok http 7777
+в problem.html на +- 380 строчке в  SUBMIT_URL  вставить новый forwarding ngrok
+https://3e98a65b3038.ngrok-free.app + /submit
