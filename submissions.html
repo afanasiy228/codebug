@@ -48,7 +48,6 @@
         nav a:hover {
             color: var(--accent);
         }
-        /* PAGE */
         
         .page {
             max-width: 1100px;
@@ -66,7 +65,6 @@
             color: var(--text-muted);
             margin-bottom: 25px;
         }
-        /* FILTERS */
         
         .filters {
             display: flex;
@@ -82,8 +80,8 @@
             border-radius: 8px;
             color: var(--text-main);
             font-size: 14px;
+            width: 100%;
         }
-        /* TABLE */
         
         table {
             width: 100%;
@@ -106,27 +104,45 @@
             padding: 12px;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
-            color: var(--text-main);
         }
         
         tr:hover {
             background: #1a1a21;
         }
         
-        .ok {
-            color: #7fff7f;
-            font-weight: 700;
-        }
-        
-        .wa {
-            color: #ff7777;
-            font-weight: 700;
-        }
-        
         .empty {
             padding: 20px;
             text-align: center;
             color: var(--text-muted);
+        }
+        
+        .task-card {
+            padding: 6px 10px;
+            background: #1e1e24;
+            border-radius: 8px;
+            font-size: 14px;
+            display: inline-block;
+            border: 1px solid #2a2a32;
+        }
+        
+        .verdict-ok {
+            color: #7fff7f;
+            font-weight: 700;
+        }
+        
+        .verdict-wa {
+            color: #ff7777;
+            font-weight: 700;
+        }
+        
+        .verdict-re {
+            color: #ffb37c;
+            font-weight: 700;
+        }
+        
+        .verdict-tl {
+            color: #ffd451;
+            font-weight: 700;
         }
     </style>
 </head>
@@ -141,12 +157,12 @@
     <div class="page">
 
         <h1>Глобальные посылки</h1>
-        <div class="subtitle">Все отправленные решения всех пользователей.</div>
+        <div class="subtitle">Все решения всех пользователей. Всегда отсортировано по дате (новые сверху).</div>
 
         <!-- FILTERS -->
         <div class="filters">
-            <input id="filterUser" type="text" placeholder="Пользователь...">
-            <input id="filterTask" type="number" placeholder="Задача...">
+            <input id="filterUser" type="text" placeholder="Пользователь…">
+            <input id="filterTask" type="text" placeholder="Название задачи…">
             <select id="filterVerdict">
             <option value="">Любой вердикт</option>
             <option value="OK">OK</option>
@@ -154,7 +170,6 @@
             <option value="RE">RE</option>
             <option value="TL">TL</option>
         </select>
-            <input id="filterSearch" type="text" placeholder="Поиск...">
         </div>
 
         <!-- TABLE -->
@@ -182,66 +197,120 @@
 
     <script src="firebase.js"></script>
     <script src="auth.js"></script>
+
     <script>
-        async function fetchTaskTitle(taskId) {
+        // ===== КЭШ ДЛЯ НАЗВАНИЙ ЗАДАЧ =====
+        const titleCache = {};
+
+        async function getTaskTitle(id) {
+            if (titleCache[id]) return titleCache[id];
+
             try {
-                const meta = await fetch(`tasks/${taskId}/meta.json`).then(r => r.json());
-                return meta.title || ("Задача " + taskId);
+                const meta = await fetch(`tasks/${id}/meta.json`).then(r => r.json());
+                titleCache[id] = meta.title;
+                return meta.title;
             } catch {
-                return "Задача " + taskId;
+                return "Задача " + id;
             }
         }
 
+        // ===== ГЛОБАЛЬНЫЕ ПОСЫЛКИ =====
+
+        let submissions = []; // оригинал
+        let rendered = []; // отфильтрованное
+
         async function loadGlobalSubmissions() {
             const tbody = document.getElementById("tbody");
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;color:#999;'>Загрузка...</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='4' class='empty'>Загрузка...</td></tr>";
 
             const snap = await firebase.database().ref("submissions/global").get();
 
             if (!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;color:#777;'>Пока нет посылок</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4' class='empty'>Пока нет посылок</td></tr>";
                 return;
             }
 
-            const list = Object.values(snap.val());
+            submissions = Object.values(snap.val());
 
-            // сортировка по времени (новые → сверху)
-            list.sort((a, b) => b.date - a.date);
+            // Сортировка по дате (сначала новые)
+            submissions.sort((a, b) => b.date - a.date);
+
+            await render();
+        }
+
+
+        // ===== РЕНДЕР С УЧЁТОМ ФИЛЬТРОВ =====
+
+        async function render() {
+            const tbody = document.getElementById("tbody");
+
+            const userF = document.getElementById("filterUser").value.toLowerCase();
+            const taskF = document.getElementById("filterTask").value.toLowerCase();
+            const verdictF = document.getElementById("filterVerdict").value;
 
             tbody.innerHTML = "";
 
-            for (const item of list) {
-                const user = item.login || "—";
-                const taskId = item.task || 0;
-                const verdict = item.verdict || "?";
-                const time = new Date(item.date).toLocaleString();
+            rendered = [];
 
-                // загружаем название задачи
-                const title = await fetchTaskTitle(taskId);
+            for (let s of submissions) {
 
-                const color =
-                    verdict === "OK" ? "#7CFF7C" :
-                    verdict === "WA" ? "#FF7C7C" :
-                    verdict === "RE" ? "#FFB37C" :
-                    "#FFD451";
+                // Попробовать подтянуть название задачи
+                const title = await getTaskTitle(s.task);
 
+                // Проверяем фильтры
+                if (userF && !s.login.toLowerCase().includes(userF)) continue;
+                if (taskF && !title.toLowerCase().includes(taskF)) continue;
+                if (verdictF && verdictF !== s.verdict) continue;
+
+                rendered.push({...s,
+                    title
+                });
+            }
+
+            if (rendered.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' class='empty'>Ничего не найдено…</td></tr>";
+                return;
+            }
+
+            for (let s of rendered) {
                 const tr = document.createElement("tr");
+
+                const cls =
+                    s.verdict === "OK" ? "verdict-ok" :
+                    s.verdict === "WA" ? "verdict-wa" :
+                    s.verdict === "RE" ? "verdict-re" :
+                    "verdict-tl";
+
                 tr.innerHTML = `
-            <td style="text-align:center;">${user}</td>
-            <td style="text-align:center;">
-                <a class="link" href="problem.html?id=${taskId}">
-                    ${title}
+            <td>${s.login}</td>
+
+            <td>
+                <a href="problem.html?id=${s.task}" style="text-decoration:none;color:var(--text-main);">
+                    <div class="task-card">${s.title}</div>
                 </a>
             </td>
-            <td style="text-align:center; color:${color}; font-weight:600;">
-                ${verdict}
-            </td>
-            <td style="text-align:center;">${time}</td>
+
+            <td class="${cls}">${s.verdict}</td>
+
+            <td>${new Date(s.date).toLocaleString()}</td>
         `;
+
                 tbody.appendChild(tr);
             }
         }
+
+
+        // ===== ФИЛЬТРЫ =====
+
+        document.getElementById("filterUser").oninput = render;
+        document.getElementById("filterTask").oninput = render;
+        document.getElementById("filterVerdict").onchange = render;
+
         document.addEventListener("DOMContentLoaded", loadGlobalSubmissions);
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", updateNavbar);
     </script>
 </body>
 
