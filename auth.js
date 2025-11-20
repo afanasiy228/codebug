@@ -144,9 +144,7 @@ async function registerUser(login, pass) {
         stats: {
             exp: 0,
             cnt: 0,
-            solved: {
-                "0": -1
-            }
+            solved: {}
         },
 
         avatar: "",
