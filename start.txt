@@ -3,6 +3,7 @@
 закомитеть проект 
 git add .
 git commit -m "text"
+git branch -M main   
 git push -u origin main
 
 
