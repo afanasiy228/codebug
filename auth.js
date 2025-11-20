@@ -134,25 +134,28 @@ async function registerUser(login, pass) {
         return { ok: false, error: "Логин уже занят" };
     }
 
-    // внутренний UID
+    // Генерируем UID
     const userId = "uid_" + Math.random().toString(36).substring(2, 10);
 
-
+    // Готовим solved: { "0": false, "1": false, ... }
+    const solved = {};
+    for (let i = 0; i < 1000; i++) {
+        solved[String(i)] = false;
+    }
 
     const userObj = {
         login: login,
         id: userId,
-        pass: pass, // В будущем лучше заменить на hash
+        pass: pass,
         created: Date.now(),
 
         stats: {
             exp: 0,
             cnt: 0,
-            solved: {}
+            solved: solved
         },
 
-        avatar: "", // base64
-        about: "" // BIO
+        avatar: "",
     };
 
     await ref.set(userObj);
