@@ -1,7 +1,6 @@
-Task 1
-Test 1: OK
-Test 2: OK
-Test 3: OK
-Test 4: OK
-Test 5: OK
-Final verdict: OK
+Compilation Error
+Undefined symbols for architecture arm64:
+  "_main", referenced from:
+      <initial-undefines>
+ld: symbol(s) not found for architecture arm64
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)

@@ -732,12 +732,14 @@
 
                 const meta = await res.json();
 
+                TASK_DIFFICULTY = meta.difficulty;
+                console.log("Загружена сложность:", TASK_DIFFICULTY);
+
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
             } catch (e) {
                 document.getElementById("taskTitle").innerText = "Название не найдено";
             }
-            TASK_DIFFICULTY = meta.difficulty; // ← сохраняем сложность
-            console.log("Загружена сложность:", TASK_DIFFICULTY);
+
 
             // ————————————— STATEMENT.MD ————————————————
             const stmtPath = `tasks/${id}/statement.md`;
