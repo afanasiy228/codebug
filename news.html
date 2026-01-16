@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Новости — CodeBug</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f1e7;
+      --bg-strong: #f0e6d8;
+      --ink: #1a1612;
+      --muted: #5f5b54;
+      --accent: #0f766e;
+      --accent-strong: #0b5f59;
+      --warm: #f3b562;
+      --card: #fffaf2;
+      --stroke: #e2d6c4;
+      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg-strong));
+      min-height: 100vh;
+    }
+
+    header {
+      height: 72px;
+      background: rgba(255, 250, 242, 0.8);
+      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      padding: 0 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+    }
+
+    .logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--ink);
+    }
+
+    nav a {
+      margin-left: 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .container {
+      width: min(1000px, 92vw);
+      margin: 40px auto 80px;
+    }
+
+    .page-title {
+      font-size: 34px;
+      font-weight: 700;
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0 0 12px;
+    }
+
+    .page-subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .news-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .news-card {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .news-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .news-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .news-text {
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .news-empty {
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--stroke);
+      background: rgba(255, 250, 242, 0.7);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .news-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+  </style>
+  <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">CodeBug</div>
+    <nav id="nav-links"></nav>
+  </header>
+
+  <main class="container">
+    <h1 class="page-title">Новости</h1>
+    <p class="page-subtitle">Все анонсы от админов — в одном месте.</p>
+
+    <section id="newsList" class="news-grid"></section>
+    <div id="newsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="firebase.js"></script>
+  <script src="auth.js"></script>
+
+  <script>
+    updateNavbar();
+
+    function formatDate(ts) {
+      if (!ts) return "—";
+      const d = new Date(ts);
+      return d.toLocaleString();
+    }
+
+    function renderNews(items) {
+      const list = document.getElementById("newsList");
+      const empty = document.getElementById("newsEmpty");
+      list.innerHTML = "";
+
+      if (!items.length) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      items.forEach((item, idx) => {
+        const card = document.createElement("article");
+        card.className = "news-card";
+        card.innerHTML = `
+          ${idx === 0 ? '<div class="news-badge">Новое</div>' : ""}
+          <div class="news-title">${item.title || "Анонс"}</div>
+          <div class="news-meta">Автор: ${item.author || "admin"} · ${formatDate(item.created)}</div>
+          <div class="news-text">${item.text || ""}</div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    async function loadNews() {
+      const items = [];
+      try {
+        const latestSnap = await db.ref("site/announcement").get();
+        if (latestSnap.exists()) {
+          items.push({
+            ...latestSnap.val(),
+            created: latestSnap.val().created || 0
+          });
+        }
+      } catch (err) {
+        console.warn("Latest announcement not loaded", err);
+      }
+
+      try {
+        const listSnap = await db.ref("site/announcements").get();
+        if (listSnap.exists()) {
+          const data = listSnap.val();
+          Object.keys(data).forEach(key => {
+            items.push({
+              id: key,
+              ...data[key]
+            });
+          });
+        }
+      } catch (err) {
+        console.warn("Announcements list not loaded", err);
+      }
+
+      items.sort((a, b) => (b.created || 0) - (a.created || 0));
+      const unique = [];
+      const seen = new Set();
+      for (const item of items) {
+        const fingerprint = `${item.text}|${item.created}|${item.author}`;
+        if (seen.has(fingerprint)) continue;
+        seen.add(fingerprint);
+        unique.push(item);
+      }
+      renderNews(unique);
+    }
+
+    loadNews();
+  </script>
+</body>
+
+</html>

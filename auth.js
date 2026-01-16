@@ -37,6 +37,7 @@ function updateNavbar() {
             <a href="train.html">Тренировка</a>
             <a href="rating.html">Рейтинг</a>
             <a href="submissions.html">Посылки</a>
+            <a href="news.html">Новости</a>
             <a href="donate.html">Донат</a>
             <a href="faq.html">Помощь</a>
             <a href="profile.html">${user}</a>
@@ -49,6 +50,7 @@ function updateNavbar() {
             <a href="train.html">Тренировка</a>
             <a href="rating.html">Рейтинг</a>
             <a href="donate.html">Донат</a>
+            <a href="news.html">Новости</a>
             <a href="faq.html">Помощь</a>
             <a href="auth.html">Войти / Регистрация</a>
         `;

@@ -387,11 +387,18 @@
 
     async function adminSaveAnnouncement() {
       const text = document.getElementById("adminAnnouncement").value.trim();
-      await db.ref("site/announcement").set({
+      if (!text) {
+        setAdminLog("Введите текст анонса.");
+        return;
+      }
+      const payload = {
+        title: "Анонс",
         text,
         author: user,
         created: Date.now()
-      });
+      };
+      await db.ref("site/announcement").set(payload);
+      await db.ref("site/announcements").push(payload);
       setAdminLog("Анонс сохранен.");
     }
 
