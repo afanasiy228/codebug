@@ -435,7 +435,9 @@
 </head>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script src="firebase.js"></script>
@@ -968,6 +970,14 @@
 
     <!-- ===================== LOAD TASK (meta + tests) ===================== -->
     <script>
+        function renderMarkdown(md) {
+            if (window.marked && window.DOMPurify) {
+                const html = marked.parse(md || "");
+                return DOMPurify.sanitize(html);
+            }
+            return (md || "").replace(/\n/g, "<br>");
+        }
+
         async function loadTask() {
 
             const url = new URL(location.href);
@@ -999,7 +1009,7 @@
 
                 const md = await res.text();
 
-                document.getElementById("taskStatement").innerHTML = md.replace(/\n/g, "<br>");
+                document.getElementById("taskStatement").innerHTML = renderMarkdown(md);
             } catch (e) {
                 document.getElementById("taskStatement").innerText = "statement.md не найден";
             }
@@ -1010,7 +1020,7 @@
                 const res = await fetch(helpPath);
                 const md = await res.text();
 
-                document.getElementById("taskHelp").innerHTML = md.replace(/\n/g, "<br>");
+                document.getElementById("taskHelp").innerHTML = renderMarkdown(md);
             } catch (e) {
                 document.getElementById("taskHelp").innerText = "help.md не найден";
             }

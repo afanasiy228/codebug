@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Админ-панель — CodeBug</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f1e7;
+      --bg-strong: #f0e6d8;
+      --ink: #1a1612;
+      --muted: #5f5b54;
+      --accent: #0f766e;
+      --accent-strong: #0b5f59;
+      --warm: #f3b562;
+      --card: #fffaf2;
+      --stroke: #e2d6c4;
+      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg-strong));
+    }
+
+    header {
+      height: 72px;
+      background: rgba(255, 250, 242, 0.8);
+      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      padding: 0 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+    }
+
+    .logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--ink);
+    }
+
+    nav a {
+      margin-left: 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 40px auto 80px;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0 0 12px;
+    }
+
+    .page-subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .admin-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .admin-box {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .admin-box h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .admin-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .admin-input,
+    .admin-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      font-size: 14px;
+      font-family: "IBM Plex Sans", sans-serif;
+    }
+
+    .admin-textarea {
+      min-height: 200px;
+      resize: vertical;
+      font-size: 13px;
+    }
+
+    button {
+      padding: 10px 18px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 14px 32px rgba(15, 118, 110, 0.25);
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+    }
+
+    .admin-log {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(12, 18, 27, 0.12);
+      font-size: 13px;
+      color: var(--muted);
+      max-height: 180px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .admin-locked {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .admin-locked strong {
+      color: var(--accent);
+    }
+
+    @media (max-width: 720px) {
+      header {
+        padding: 0 20px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">CodeBug</div>
+    <nav id="nav-links"></nav>
+  </header>
+
+  <main class="container">
+    <h1 class="page-title">Админ-панель</h1>
+    <p class="page-subtitle">Доступна только для администраторов. Все действия пишутся в лог.</p>
+
+    <section id="adminLocked" class="admin-locked" style="display:none;">
+      Нет доступа. Вернись в <a href="profile.html"><strong>профиль</strong></a> или попроси админа.
+    </section>
+
+    <section id="adminPanel" class="admin-grid" style="display:none;">
+      <div class="admin-box">
+        <h3>Firebase: обзор и правка</h3>
+        <p class="admin-note">Загрузить текущее состояние базы, отредактировать JSON и сохранить назад.</p>
+        <textarea id="adminDbDump" class="admin-textarea" placeholder="Здесь появится JSON всей базы..."></textarea>
+        <div class="admin-actions">
+          <button type="button" onclick="adminLoadDb()">Загрузить базу</button>
+          <button type="button" onclick="adminSaveDb()">Сохранить базу</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Загрузка задач папкой</h3>
+        <p class="admin-note">Файлы будут сохранены в Firebase в разделе uploads.</p>
+        <input id="adminTaskFolder" class="admin-input" type="file" webkitdirectory multiple>
+        <div class="admin-actions">
+          <button type="button" onclick="adminUploadTasks()">Загрузить папку</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Управление доступом</h3>
+        <p class="admin-note">Добавь логин в белый список админов.</p>
+        <input id="adminGrantUser" class="admin-input" type="text" placeholder="Логин пользователя">
+        <div class="admin-actions">
+          <button type="button" onclick="adminGrant()">Выдать доступ</button>
+          <button type="button" onclick="adminRevoke()">Снять доступ</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Анонс на сайте</h3>
+        <p class="admin-note">Сообщение будет храниться в Firebase: site/announcement.</p>
+        <input id="adminAnnouncement" class="admin-input" type="text" placeholder="Короткий анонс">
+        <div class="admin-actions">
+          <button type="button" onclick="adminSaveAnnouncement()">Сохранить анонс</button>
+          <button type="button" onclick="adminClearAnnouncement()">Очистить анонс</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Логи админа</h3>
+        <div id="adminLog" class="admin-log">Готов к работе.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="firebase.js"></script>
+  <script src="auth.js"></script>
+
+  <script>
+    updateNavbar();
+
+    const user = getUser();
+    if (!user) window.location.href = "auth.html";
+
+    const ADMIN_USERS = ["afanasy"];
+
+    function setAdminLog(message) {
+      const log = document.getElementById("adminLog");
+      if (!log) return;
+      const time = new Date().toLocaleTimeString();
+      log.textContent = `[${time}] ${message}\n` + log.textContent;
+    }
+
+    async function checkAdminAccess() {
+      if (!user) return false;
+      if (ADMIN_USERS.includes(user)) return true;
+      try {
+        const snap = await db.ref("admins/" + user).get();
+        return snap.exists() && snap.val() === true;
+      } catch (err) {
+        console.warn("Admin check failed", err);
+        return false;
+      }
+    }
+
+    async function initAdminPanel() {
+      const panel = document.getElementById("adminPanel");
+      const locked = document.getElementById("adminLocked");
+      const isAdmin = await checkAdminAccess();
+      panel.style.display = isAdmin ? "grid" : "none";
+      locked.style.display = isAdmin ? "none" : "block";
+      if (isAdmin) setAdminLog("Админ-доступ активирован.");
+    }
+
+    async function adminLoadDb() {
+      try {
+        const snap = await db.ref("/").get();
+        const data = snap.exists() ? snap.val() : {};
+        document.getElementById("adminDbDump").value = JSON.stringify(shrinkBase64(data), null, 2);
+        setAdminLog("База загружена.");
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка при загрузке базы.");
+      }
+    }
+
+    async function adminSaveDb() {
+      const raw = document.getElementById("adminDbDump").value.trim();
+      if (!raw) {
+        setAdminLog("Нет данных для сохранения.");
+        return;
+      }
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        setAdminLog("JSON невалидный.");
+        return;
+      }
+      data = restoreBase64(data);
+      if (!confirm("Перезаписать всю базу Firebase? Это действие необратимо.")) return;
+      try {
+        await db.ref("/").set(data);
+        setAdminLog("База сохранена.");
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка при сохранении базы.");
+      }
+    }
+
+    async function adminUploadTasks() {
+      const input = document.getElementById("adminTaskFolder");
+      const files = Array.from(input.files || []);
+      if (!files.length) {
+        setAdminLog("Папка не выбрана.");
+        return;
+      }
+
+      const bundleId = "upload_" + Date.now();
+      const baseRef = db.ref("uploads/" + bundleId);
+      const allowed = /\.(md|json|cpp|in|out|txt)$/i;
+
+      let uploaded = 0;
+      let skipped = 0;
+
+      for (const file of files) {
+        if (!allowed.test(file.name)) {
+          skipped += 1;
+          continue;
+        }
+        const path = file.webkitRelativePath || file.name;
+        try {
+          const content = await file.text();
+          await baseRef.child("files").child(path).set(content);
+          uploaded += 1;
+        } catch (err) {
+          console.error(err);
+          skipped += 1;
+        }
+      }
+
+      await baseRef.child("meta").set({
+        uploader: user,
+        created: Date.now(),
+        totalFiles: files.length,
+        uploadedFiles: uploaded
+      });
+
+      setAdminLog(`Загрузка завершена. Успешно: ${uploaded}, пропущено: ${skipped}.`);
+    }
+
+    async function adminGrant() {
+      const login = document.getElementById("adminGrantUser").value.trim();
+      if (!login) {
+        setAdminLog("Введите логин.");
+        return;
+      }
+      await db.ref("admins/" + login).set(true);
+      setAdminLog(`Доступ выдан: ${login}`);
+    }
+
+    async function adminRevoke() {
+      const login = document.getElementById("adminGrantUser").value.trim();
+      if (!login) {
+        setAdminLog("Введите логин.");
+        return;
+      }
+      await db.ref("admins/" + login).remove();
+      setAdminLog(`Доступ снят: ${login}`);
+    }
+
+    async function adminSaveAnnouncement() {
+      const text = document.getElementById("adminAnnouncement").value.trim();
+      await db.ref("site/announcement").set({
+        text,
+        author: user,
+        created: Date.now()
+      });
+      setAdminLog("Анонс сохранен.");
+    }
+
+    async function adminClearAnnouncement() {
+      await db.ref("site/announcement").remove();
+      setAdminLog("Анонс очищен.");
+    }
+
+    const base64Map = {};
+    let base64Counter = 0;
+    const base64Pattern = /^data:image\/[a-z0-9.+-]+;base64,/i;
+
+    function shrinkBase64(value) {
+      if (Array.isArray(value)) {
+        return value.map(shrinkBase64);
+      }
+      if (value && typeof value === "object") {
+        const result = {};
+        for (const key of Object.keys(value)) {
+          result[key] = shrinkBase64(value[key]);
+        }
+        return result;
+      }
+      if (typeof value === "string" && base64Pattern.test(value) && value.length > 200) {
+        const token = `__BASE64__${base64Counter++}__`;
+        base64Map[token] = value;
+        return `${value.slice(0, 120)}...(${value.length} chars)__${token}__`;
+      }
+      return value;
+    }
+
+    function restoreBase64(value) {
+      if (Array.isArray(value)) {
+        return value.map(restoreBase64);
+      }
+      if (value && typeof value === "object") {
+        const result = {};
+        for (const key of Object.keys(value)) {
+          result[key] = restoreBase64(value[key]);
+        }
+        return result;
+      }
+      if (typeof value === "string") {
+        const match = value.match(/__BASE64__\d+__/);
+        if (match && base64Map[match[0]]) {
+          return base64Map[match[0]];
+        }
+      }
+      return value;
+    }
+
+    initAdminPanel();
+  </script>
+</body>
+
+</html>

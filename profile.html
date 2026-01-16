@@ -262,6 +262,34 @@
             font-size: 14px;
         }
 
+        .admin-panel {
+            margin-top: 28px;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--stroke);
+            background: var(--card);
+            box-shadow: var(--shadow);
+        }
+
+        .admin-panel h3 {
+            margin: 0 0 12px;
+            font-size: 20px;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .admin-note {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
         .reveal {
             opacity: 0;
             transform: translateY(18px);
@@ -334,6 +362,15 @@
 
             <div id="emptyLast" class="empty-last" style="display:none;">Пока нет попыток…</div>
 
+            <section id="adminPanel" class="admin-panel" style="display:none;">
+                <h3>Админ-панель</h3>
+                <p class="admin-note">Полная панель доступна на отдельной странице.</p>
+                <div class="admin-actions">
+                    <a href="admin.html" style="text-decoration:none;">
+                        <button type="button">Открыть админ-панель</button>
+                    </a>
+                </div>
+            </section>
         </div>
 
         <!-- RIGHT COLUMN (AVATAR) -->
@@ -448,6 +485,32 @@
                 document.getElementById("avatar-error").innerText = "Ошибка загрузки";
             }
         }
+
+        /* ============================
+           ADMIN PANEL
+        ============================ */
+        const ADMIN_USERS = ["afanasy"];
+
+        async function checkAdminAccess() {
+            if (!user) return false;
+            if (ADMIN_USERS.includes(user)) return true;
+            try {
+                const snap = await db.ref("admins/" + user).get();
+                return snap.exists() && snap.val() === true;
+            } catch (err) {
+                console.warn("Admin check failed", err);
+                return false;
+            }
+        }
+
+        async function initAdminPanel() {
+            const panel = document.getElementById("adminPanel");
+            if (!panel) return;
+            const isAdmin = await checkAdminAccess();
+            panel.style.display = isAdmin ? "block" : "none";
+        }
+
+        initAdminPanel();
     </script>
 </body>
 
