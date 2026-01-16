@@ -86,6 +86,13 @@ def submit():
     print("User =", login)
 
     submission_ref = None
+    firebase_error = None
+    firebase_saved = False
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+
     if FIREBASE_READY:
         record = {
             "login": str(login),
@@ -94,9 +101,16 @@ def submit():
             "date": int(time.time() * 1000),
             "contestId": contest_id or None
         }
-        submission_ref = db.reference("submissions/global").push()
-        submission_ref.set(record)
-        submission_ref.update({"verdict": "TESTING"})
+        try:
+            submission_ref = db.reference("submissions/global").push()
+            submission_ref.set(record)
+            submission_ref.update({"verdict": "TESTING"})
+            firebase_saved = True
+        except Exception as e:
+            firebase_error = f"firebase_write_error: {e}"
+            print(firebase_error)
+    else:
+        firebase_error = "firebase_not_ready"
 
     # --- записываем sol.cpp ---
     try:
@@ -138,12 +152,18 @@ def submit():
 
     print("Final verdict =", final)
     if submission_ref is not None:
-        submission_ref.update({"verdict": final})
+        try:
+            submission_ref.update({"verdict": final})
+        except Exception as e:
+            firebase_error = f"firebase_update_error: {e}"
+            print(firebase_error)
 
     return jsonify({
         "status": final,
         "log": log_text,
-        "submissionId": submission_ref.key if submission_ref is not None else None
+        "submissionId": submission_ref.key if submission_ref is not None else None,
+        "firebaseSaved": firebase_saved,
+        "firebaseError": firebase_error
     })
     
 

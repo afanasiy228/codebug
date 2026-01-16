@@ -681,7 +681,11 @@
 
                 clearTimeout(queueTimer);
                 updateSubmissionRow(pendingRow, verdict.status || "ERROR");
-                loadMySubsForThisProblem();
+                if (verdict.firebaseSaved === false) {
+                    console.warn("Firebase save failed:", verdict.firebaseError);
+                } else {
+                    loadMySubsForThisProblem();
+                }
                 if (verdict.status === "OK") submitOK(user, taskId, TASK_DIFFICULTY);
                 console.log("💾 Firebase сохранено OK");
 
