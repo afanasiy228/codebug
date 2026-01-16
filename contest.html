@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Соревнование — CodeBug</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f1e7;
+      --bg-strong: #f0e6d8;
+      --ink: #1a1612;
+      --muted: #5f5b54;
+      --accent: #0f766e;
+      --accent-strong: #0b5f59;
+      --warm: #f3b562;
+      --card: #fffaf2;
+      --stroke: #e2d6c4;
+      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg-strong));
+      min-height: 100vh;
+    }
+
+    header {
+      height: 72px;
+      background: rgba(255, 250, 242, 0.8);
+      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      padding: 0 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+    }
+
+    .logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--ink);
+    }
+
+    nav a {
+      margin-left: 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .container {
+      width: min(1100px, 92vw);
+      margin: 40px auto 80px;
+    }
+
+    .contest-hero {
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .contest-title {
+      font-size: 30px;
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0;
+    }
+
+    .contest-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      width: fit-content;
+    }
+
+    .contest-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 14px 32px rgba(15, 118, 110, 0.25);
+    }
+
+    button.secondary {
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-color: rgba(15, 118, 110, 0.4);
+      box-shadow: 0 12px 30px rgba(15, 118, 110, 0.12);
+    }
+
+    .panel {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .tasks-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--stroke);
+      background: rgba(15, 118, 110, 0.06);
+    }
+
+    .task-title {
+      font-weight: 600;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table th,
+    .table td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+      text-align: left;
+    }
+
+    .table th {
+      background: rgba(226, 214, 196, 0.4);
+    }
+
+    .empty {
+      color: var(--muted);
+    }
+  </style>
+  <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">CodeBug</div>
+    <nav id="nav-links"></nav>
+  </header>
+
+  <main class="container">
+    <section class="contest-hero">
+      <div class="badge" id="contestStatus">Статус</div>
+      <h1 class="contest-title" id="contestTitle">Загрузка...</h1>
+      <div class="contest-meta">
+        <span id="contestStart">Старт: —</span>
+        <span id="contestEnd">Финиш: —</span>
+        <span id="contestAuthors">Авторы: —</span>
+      </div>
+      <div class="contest-actions">
+        <button id="registerBtn" onclick="registerForContest()">Зарегистрироваться</button>
+        <button class="secondary" onclick="goToContests()">Все соревнования</button>
+      </div>
+      <div class="contest-meta" id="contestHint"></div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="tasksTabBtn" onclick="openTab('tasks')">Задачи</button>
+      <button class="tab-btn" id="tableTabBtn" onclick="openTab('table')">Таблица</button>
+    </div>
+
+    <section id="tasksPanel" class="panel">
+      <div id="tasksList" class="tasks-grid"></div>
+      <div id="tasksEmpty" class="empty" style="display:none;">Задачи будут доступны после старта.</div>
+    </section>
+
+    <section id="tablePanel" class="panel" style="display:none;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Пользователь</th>
+            <th>Решено</th>
+            <th>Штраф</th>
+          </tr>
+        </thead>
+        <tbody id="standingsBody"></tbody>
+      </table>
+      <div id="standingsEmpty" class="empty" style="display:none;">Нет зарегистрированных участников.</div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="firebase.js"></script>
+  <script src="auth.js"></script>
+
+  <script>
+    updateNavbar();
+
+    const user = getUser();
+    const url = new URL(location.href);
+    const contestId = url.searchParams.get("id");
+
+    let contestData = null;
+    let isRegistered = false;
+    let contestStatus = "upcoming";
+
+    function formatUtc(ts) {
+      if (!ts) return "—";
+      return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
+    }
+
+    function getStatus(start, end) {
+      const now = Date.now();
+      if (now < start) return "upcoming";
+      if (now >= start && now <= end) return "ongoing";
+      return "finished";
+    }
+
+    function statusLabel(status) {
+      if (status === "upcoming") return "Скоро";
+      if (status === "ongoing") return "Идет";
+      return "Завершен";
+    }
+
+    function openTab(tab) {
+      const tasksPanel = document.getElementById("tasksPanel");
+      const tablePanel = document.getElementById("tablePanel");
+      document.getElementById("tasksTabBtn").classList.toggle("active", tab === "tasks");
+      document.getElementById("tableTabBtn").classList.toggle("active", tab === "table");
+      tasksPanel.style.display = tab === "tasks" ? "block" : "none";
+      tablePanel.style.display = tab === "table" ? "block" : "none";
+    }
+
+    function goToContests() {
+      window.location.href = "contests.html";
+    }
+
+    async function registerForContest() {
+      if (!user) {
+        alert("Войдите, чтобы зарегистрироваться.");
+        window.location.href = "auth.html";
+        return;
+      }
+      await db.ref(`contest_regs/${contestId}/${user}`).set({
+        login: user,
+        registeredAt: Date.now()
+      });
+      isRegistered = true;
+      updateRegisterButton();
+      renderTasks(contestStatus);
+      loadStandings();
+    }
+
+    function updateRegisterButton() {
+      const btn = document.getElementById("registerBtn");
+      btn.textContent = isRegistered ? "Вы зарегистрированы" : "Зарегистрироваться";
+      btn.disabled = isRegistered;
+    }
+
+    async function loadContest() {
+      if (!contestId) {
+        document.getElementById("contestTitle").innerText = "Соревнование не найдено";
+        return;
+      }
+
+      const snap = await db.ref(`contests/${contestId}`).get();
+      if (!snap.exists()) {
+        document.getElementById("contestTitle").innerText = "Соревнование не найдено";
+        return;
+      }
+
+      contestData = snap.val();
+      contestStatus = getStatus(contestData.start, contestData.end);
+      document.getElementById("contestStatus").innerText = statusLabel(contestStatus);
+      document.getElementById("contestTitle").innerText = contestData.title || "Соревнование";
+      document.getElementById("contestStart").innerText = `Старт: ${formatUtc(contestData.start)}`;
+      document.getElementById("contestEnd").innerText = `Финиш: ${formatUtc(contestData.end)}`;
+      document.getElementById("contestAuthors").innerText = `Авторы: ${(contestData.authors || []).join(", ") || "—"}`;
+
+      const hint = document.getElementById("contestHint");
+      if (contestStatus === "upcoming") {
+        hint.textContent = "Соревнование еще не началось. Задачи появятся в момент старта.";
+      } else if (contestStatus === "finished") {
+        hint.textContent = "Соревнование завершено. Дорешивание доступно.";
+      } else {
+        hint.textContent = "Соревнование идет прямо сейчас.";
+      }
+
+      if (user) {
+        const regSnap = await db.ref(`contest_regs/${contestId}/${user}`).get();
+        isRegistered = regSnap.exists();
+      }
+      updateRegisterButton();
+
+      renderTasks(contestStatus);
+      loadStandings();
+    }
+
+    async function renderTasks(status) {
+      const tasksList = document.getElementById("tasksList");
+      const tasksEmpty = document.getElementById("tasksEmpty");
+      tasksList.innerHTML = "";
+
+      if (!contestData || !contestData.tasks) {
+        tasksEmpty.textContent = "Задачи недоступны.";
+        tasksEmpty.style.display = "block";
+        return;
+      }
+
+      if (status === "upcoming") {
+        tasksEmpty.textContent = "Задачи будут доступны после старта.";
+        tasksEmpty.style.display = "block";
+        return;
+      }
+
+      if (!isRegistered) {
+        tasksEmpty.textContent = "Зарегистрируйтесь, чтобы открыть задачи.";
+        tasksEmpty.style.display = "block";
+        return;
+      }
+
+      tasksEmpty.style.display = "none";
+
+      for (const taskId of contestData.tasks) {
+        let title = `Задача #${taskId}`;
+        try {
+          const res = await fetch(`tasks/${taskId}/meta.json`);
+          const meta = await res.json();
+          title = meta.title || title;
+        } catch (e) {}
+
+        const row = document.createElement("div");
+        row.className = "task-row";
+        row.innerHTML = `
+          <div class="task-title">${title}</div>
+          <button onclick="openTask(${taskId})">Открыть</button>
+        `;
+        tasksList.appendChild(row);
+      }
+    }
+
+    function openTask(taskId) {
+      window.location.href = `problem.html?id=${taskId}&contest=${contestId}`;
+    }
+
+    function calcPenalty(attempts) {
+      let solved = 0;
+      let penalty = 0;
+      attempts.forEach(item => {
+        if (!item.okTime) return;
+        solved += 1;
+        penalty += item.okTime + item.wrongCount * 20;
+      });
+      return { solved, penalty };
+    }
+
+    async function loadStandings() {
+      const body = document.getElementById("standingsBody");
+      const empty = document.getElementById("standingsEmpty");
+      body.innerHTML = "";
+
+      if (!contestData) return;
+
+      const regsSnap = await db.ref(`contest_regs/${contestId}`).get();
+      if (!regsSnap.exists()) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      const regs = Object.values(regsSnap.val());
+      const regUsers = regs.map(r => r.login);
+
+      const submissionsSnap = await db.ref("submissions/global").get();
+      const subs = submissionsSnap.exists() ? Object.values(submissionsSnap.val()) : [];
+
+      const start = contestData.start;
+      const end = contestData.end;
+      const tasks = contestData.tasks || [];
+
+      const attemptsByUser = {};
+      regUsers.forEach(login => {
+        attemptsByUser[login] = {};
+        tasks.forEach(taskId => {
+          attemptsByUser[login][taskId] = { wrongCount: 0, okTime: null };
+        });
+      });
+
+      subs.forEach(sub => {
+        if (!sub || sub.contestId !== contestId) return;
+        if (!regUsers.includes(sub.login)) return;
+        if (!tasks.includes(Number(sub.task))) return;
+        if (sub.date < start || sub.date > end) return;
+
+        const taskId = Number(sub.task);
+        const entry = attemptsByUser[sub.login][taskId];
+        if (!entry || entry.okTime !== null) return;
+
+        if (sub.verdict === "OK") {
+          entry.okTime = Math.floor((sub.date - start) / 60000);
+        } else {
+          entry.wrongCount += 1;
+        }
+      });
+
+      const table = regUsers.map(login => {
+        const attempts = Object.values(attemptsByUser[login]);
+        const result = calcPenalty(attempts);
+        return {
+          login,
+          solved: result.solved,
+          penalty: result.penalty
+        };
+      });
+
+      table.sort((a, b) => {
+        if (b.solved !== a.solved) return b.solved - a.solved;
+        return a.penalty - b.penalty;
+      });
+
+      table.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${row.login}</td>
+          <td>${row.solved}</td>
+          <td>${row.penalty}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    loadContest();
+  </script>
+</body>
+
+</html>

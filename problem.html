@@ -670,17 +670,24 @@
 
             const code = editor.getValue();
             console.log("code =", code.substring(0, 100), "...");
+            let pendingRow = null;
             try {
+                pendingRow = addPendingSubmissionRow();
+                const queueTimer = setTimeout(() => {
+                    updateSubmissionRow(pendingRow, "Тестируется", "#c9c9c9");
+                }, 800);
                 const verdict = await sendToJudge(taskId, code);
                 console.log("⬅ Вердикт от сервера:", verdict);
 
-                await saveSubmission(user, taskId, verdict.status);
-                alert("Вердикт: " + verdict.status);
+                clearTimeout(queueTimer);
+                updateSubmissionRow(pendingRow, verdict.status || "ERROR");
+                loadMySubsForThisProblem();
                 if (verdict.status === "OK") submitOK(user, taskId, TASK_DIFFICULTY);
                 console.log("💾 Firebase сохранено OK");
 
             } catch (e) {
                 console.error("🔥 Ошибка submitCode:", e);
+                updateSubmissionRow(pendingRow, "ERROR");
             }
         }
 
@@ -693,13 +700,16 @@
 
             const payload = {
                 task: taskId,
-                code: code
+                code: code,
+                user: getUser(),
+                contestId: new URL(location.href).searchParams.get("contest")
             };
 
             console.log("Payload JSON:", payload);
 
             let res;
             try {
+                console.log("[sendToJudge] POST", SUBMIT_URL);
                 res = await fetch(SUBMIT_URL, {
                     method: "POST",
                     headers: {
@@ -732,34 +742,48 @@
             return data;
         }
 
-        async function saveSubmission(login, taskId, verdict) {
-            console.log("%c[saveSubmission()] → GLOBAL ONLY", "color:#fa0;");
-
-            const db = firebase.database();
-
-            const globalRef = db.ref("submissions/global");
-
-            const record = {
-                login,
-                task: Number(taskId),
-                verdict,
-                date: Date.now()
-            };
-
-            console.log("Глобальная запись:", record);
-
-            try {
-                await globalRef.push(record);
-                console.log("✔ global push OK");
-            } catch (e) {
-                console.error("🔥 Ошибка сохранения:", e);
-                throw e;
-            }
-        }
+        // Firebase verdict updates now handled by server.
 
         function getCurrentTaskId() {
             const url = new URL(location.href);
             return Number(url.searchParams.get("id") || 0);
+        }
+
+        function addPendingSubmissionRow() {
+            const tbody = document.getElementById("subs");
+            if (!tbody) return null;
+
+            if (tbody.querySelector("td") && tbody.textContent.includes("Пока нет посылок")) {
+                tbody.innerHTML = "";
+            }
+
+            const tr = document.createElement("tr");
+            const time = new Date().toLocaleTimeString();
+            tr.innerHTML = `
+                <td>—</td>
+                <td style="color:#c9c9c9; font-weight:600;">В очереди</td>
+                <td>${time}</td>
+            `;
+            tbody.prepend(tr);
+            return tr;
+        }
+
+        function updateSubmissionRow(row, verdict, colorOverride) {
+            if (!row) return;
+            const verdictColor = colorOverride || (
+                verdict === "OK" ? "#7fff7f" :
+                verdict === "WA" ? "#ff7777" :
+                verdict === "RE" ? "#ffb37c" :
+                verdict === "QUEUE" ? "#c9c9c9" :
+                verdict === "TESTING" ? "#c9c9c9" :
+                verdict === "ERROR" ? "#ffb37c" :
+                "#ffd451"
+            );
+            const cell = row.children[1];
+            if (cell) {
+                cell.textContent = verdict;
+                cell.style.color = verdictColor;
+            }
         }
 
         /* ============================================================
@@ -814,13 +838,22 @@
                     s.verdict === "OK" ? "#7fff7f" :
                     s.verdict === "WA" ? "#ff7777" :
                     s.verdict === "RE" ? "#ffb37c" :
+                    s.verdict === "QUEUE" ? "#c9c9c9" :
+                    s.verdict === "TESTING" ? "#c9c9c9" :
+                    s.verdict === "ERROR" ? "#ffb37c" :
                     "#ffd451";
+
+                const verdictLabel =
+                    s.verdict === "QUEUE" ? "В очереди" :
+                    s.verdict === "TESTING" ? "Тестируется" :
+                    s.verdict === "ERROR" ? "Ошибка" :
+                    s.verdict;
 
                 tbody.innerHTML += `
         <tr>
             <td>${i--}</td>
             <td style="color:${verdictColor}; font-weight:600;">
-                ${s.verdict}
+                ${verdictLabel}
             </td>
             <td>${new Date(s.date).toLocaleTimeString()}</td>
         </tr>`;

@@ -1,14 +1,54 @@
 import os
+import json
 import subprocess
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import time
+
+import firebase_admin
+from firebase_admin import credentials, db
 
 app = Flask(__name__)
 CORS(app)  # разрешаем CORS всем источникам
 
 JUDGE_SCRIPT = "judge.py"
 SOL_FILE = "sol.cpp"
+
+FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
+FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc/secrets/serviceAccountKey.json")
+
+
+def init_firebase():
+    if firebase_admin._apps:
+        return True
+    if not FIREBASE_DB_URL:
+        print("FIREBASE_DB_URL не задан")
+        return False
+
+    cred_data = None
+    if FIREBASE_SERVICE_ACCOUNT:
+        try:
+            cred_data = json.loads(FIREBASE_SERVICE_ACCOUNT)
+        except json.JSONDecodeError:
+            print("FIREBASE_SERVICE_ACCOUNT невалидный JSON")
+            return False
+    elif os.path.exists(FIREBASE_SERVICE_ACCOUNT_FILE):
+        with open(FIREBASE_SERVICE_ACCOUNT_FILE, "r") as f:
+            cred_data = json.load(f)
+    else:
+        print("Ключ Firebase не найден")
+        return False
+
+    cred = credentials.Certificate(cred_data)
+    firebase_admin.initialize_app(cred, {
+        "databaseURL": FIREBASE_DB_URL
+    })
+    print("Firebase Admin init OK")
+    return True
+
+
+FIREBASE_READY = init_firebase()
 
 
 @app.route("/submit", methods=["POST", "OPTIONS"])
@@ -32,15 +72,31 @@ def submit():
 
     task = str(data.get("task"))
     code = data.get("code")
+    login = data.get("user")
+    contest_id = data.get("contestId")
 
-    if not task or not code:
+    if not task or not code or not login:
         return jsonify({
-            "error": "task / code missing",
+            "error": "task / code / user missing",
             "status": "BAD_REQUEST"
         }), 400
 
     print(f"Task = {task}")
     print("Code length:", len(code))
+    print("User =", login)
+
+    submission_ref = None
+    if FIREBASE_READY:
+        record = {
+            "login": str(login),
+            "task": int(task),
+            "verdict": "QUEUE",
+            "date": int(time.time() * 1000),
+            "contestId": contest_id or None
+        }
+        submission_ref = db.reference("submissions/global").push()
+        submission_ref.set(record)
+        submission_ref.update({"verdict": "TESTING"})
 
     # --- записываем sol.cpp ---
     try:
@@ -61,6 +117,8 @@ def submit():
             timeout=20
         )
     except subprocess.TimeoutExpired:
+        if submission_ref is not None:
+            submission_ref.update({"verdict": "TL"})
         return jsonify({"status": "JUDGE_TIMEOUT"}), 500
 
     print("judge.py завершён")
@@ -79,10 +137,13 @@ def submit():
             final = line.split(":")[1].strip()
 
     print("Final verdict =", final)
+    if submission_ref is not None:
+        submission_ref.update({"verdict": final})
 
     return jsonify({
         "status": final,
-        "log": log_text
+        "log": log_text,
+        "submissionId": submission_ref.key if submission_ref is not None else None
     })
     
 

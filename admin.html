@@ -241,6 +241,19 @@
       </div>
 
       <div class="admin-box">
+        <h3>Создать соревнование</h3>
+        <p class="admin-note">Укажи время в UTC в формате ISO, например: 2025-01-20T18:00:00Z</p>
+        <input id="contestTitle" class="admin-input" type="text" placeholder="Название соревнования">
+        <input id="contestAuthors" class="admin-input" type="text" placeholder="Авторы (через запятую)">
+        <input id="contestTasks" class="admin-input" type="text" placeholder="Задачи (ID через запятую, например 12, 45, 78)">
+        <input id="contestStart" class="admin-input" type="text" placeholder="Время начала (UTC ISO)">
+        <input id="contestEnd" class="admin-input" type="text" placeholder="Время конца (UTC ISO)">
+        <div class="admin-actions">
+          <button type="button" onclick="createContest()">Создать соревнование</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
         <h3>Логи админа</h3>
         <div id="adminLog" class="admin-log">Готов к работе.</div>
       </div>
@@ -405,6 +418,59 @@
     async function adminClearAnnouncement() {
       await db.ref("site/announcement").remove();
       setAdminLog("Анонс очищен.");
+    }
+
+    async function createContest() {
+      const title = document.getElementById("contestTitle").value.trim();
+      const authorsRaw = document.getElementById("contestAuthors").value.trim();
+      const tasksRaw = document.getElementById("contestTasks").value.trim();
+      const startRaw = document.getElementById("contestStart").value.trim();
+      const endRaw = document.getElementById("contestEnd").value.trim();
+
+      if (!title || !tasksRaw || !startRaw || !endRaw) {
+        setAdminLog("Заполни название, задачи и время.");
+        return;
+      }
+
+      const start = Date.parse(startRaw);
+      const end = Date.parse(endRaw);
+      if (Number.isNaN(start) || Number.isNaN(end)) {
+        setAdminLog("Неверный формат даты. Используй UTC ISO.");
+        return;
+      }
+      if (end <= start) {
+        setAdminLog("Время конца должно быть позже старта.");
+        return;
+      }
+
+      const tasks = tasksRaw.split(",")
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(item => Number(item))
+        .filter(item => !Number.isNaN(item));
+
+      if (!tasks.length) {
+        setAdminLog("Список задач пустой.");
+        return;
+      }
+
+      const authors = authorsRaw
+        ? authorsRaw.split(",").map(item => item.trim()).filter(Boolean)
+        : [user];
+
+      const payload = {
+        title,
+        authors,
+        tasks,
+        start,
+        end,
+        createdBy: user,
+        createdAt: Date.now()
+      };
+
+      const ref = db.ref("contests").push();
+      await ref.set(payload);
+      setAdminLog(`Соревнование создано: ${ref.key}`);
     }
 
     const base64Map = {};
