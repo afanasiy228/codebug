@@ -1,0 +1,10 @@
+{
+  "id": 56,
+  "title": "Кратчайший путь 0-1",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graph",
+    "shortest path"
+  ]
+}

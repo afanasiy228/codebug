@@ -1,0 +1,9 @@
+{
+  "id": 53,
+  "title": "Минимальный максимум сегмента",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "binary search"
+  ]
+}

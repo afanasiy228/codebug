@@ -1,0 +1,10 @@
+{
+  "id": 31,
+  "title": "Длина границы",
+  "difficulty": "casual",
+  "type": "Алгоритмическая",
+  "tags": [
+    "string",
+    "prefix"
+  ]
+}

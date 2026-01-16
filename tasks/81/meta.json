@@ -1,0 +1,9 @@
+{
+  "id": 81,
+  "title": "Подотрезки с суммой ≤ k",
+  "difficulty": "hard",
+  "type": "Алгоритмическая",
+  "tags": [
+    "two pointers"
+  ]
+}

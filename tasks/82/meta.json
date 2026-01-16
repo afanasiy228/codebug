@@ -1,0 +1,10 @@
+{
+  "id": 82,
+  "title": "Кратчайший путь BFS",
+  "difficulty": "hard",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graph",
+    "bfs"
+  ]
+}

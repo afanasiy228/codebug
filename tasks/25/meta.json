@@ -1,0 +1,10 @@
+{
+  "id": 25,
+  "title": "Сумма с обновлениями",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "fenwick",
+    "range"
+  ]
+}

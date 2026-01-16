@@ -1,0 +1,10 @@
+9
+push 5
+push 1
+min
+push 1
+min
+pop
+min
+pop
+min

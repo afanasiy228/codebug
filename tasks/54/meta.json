@@ -1,0 +1,10 @@
+{
+  "id": 54,
+  "title": "Кратчайший путь в DAG",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graph",
+    "dp"
+  ]
+}

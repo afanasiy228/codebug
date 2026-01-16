@@ -1,0 +1,10 @@
+{
+  "id": 100,
+  "title": "Минимальный отрезок",
+  "difficulty": "extreme",
+  "type": "Время",
+  "tags": [
+    "two pointers",
+    "array"
+  ]
+}

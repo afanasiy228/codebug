@@ -1,0 +1,10 @@
+{
+  "id": 115,
+  "title": "Самое частое",
+  "difficulty": "ultra",
+  "type": "Память",
+  "tags": [
+    "hash map",
+    "frequency"
+  ]
+}

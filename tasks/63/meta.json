@@ -1,0 +1,10 @@
+{
+  "id": 63,
+  "title": "Разбиение с мин. разницей",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "dp",
+    "combinatorics"
+  ]
+}

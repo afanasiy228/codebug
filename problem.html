@@ -4,46 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <title>CodeBug — Задача</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
          :root {
-            --bg: #0f0f11;
-            --bg2: #141417;
-            --bg3: #1b1b20;
-            --border: #262631;
-            --text: #f5f5f7;
-            --text2: #b5b5c0;
-            --accent: #ffd451;
+            --bg: #f7f1e7;
+            --bg-strong: #f0e6d8;
+            --ink: #1a1612;
+            --muted: #5f5b54;
+            --accent: #0f766e;
+            --accent-strong: #0b5f59;
+            --warm: #f3b562;
+            --card: #fffaf2;
+            --stroke: #e2d6c4;
+            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --radius-lg: 22px;
+            --radius-md: 14px;
         }
         
         body {
             margin: 0;
-            background: var(--bg);
-            color: var(--text);
-            font-family: Inter, sans-serif;
+            color: var(--ink);
+            font-family: "IBM Plex Sans", sans-serif;
             overflow: hidden;
+            background: radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%), radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%), linear-gradient(180deg, var(--bg), var(--bg-strong));
+        }
+        
+         ::selection {
+            background: rgba(15, 118, 110, 0.2);
+        }
+        
+        * {
+            box-sizing: border-box;
         }
         /* HEADER */
         
         header {
-            padding: 12px 30px;
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
+            height: 72px;
+            padding: 0 4vw;
+            background: rgba(255, 250, 242, 0.8);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
         
         .logo {
+            font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
-            font-weight: 800;
-            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--ink);
         }
         
         nav a {
             margin-left: 20px;
-            color: var(--text2);
+            color: var(--muted);
             text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
         }
         
         nav a:hover {
@@ -63,14 +87,14 @@
         
         .split-v {
             display: flex;
-            height: calc(100vh - 58px);
+            height: calc(100vh - 72px);
             width: 100%;
             overflow: hidden;
         }
         
         .io-block {
-            background: #0f0f12;
-            border: 1px solid var(--border);
+            background: #fff;
+            border: 1px solid var(--stroke);
             padding: 10px;
             border-radius: 8px;
             white-space: pre-wrap;
@@ -83,16 +107,23 @@
             min-width: 260px;
             max-width: 70%;
             padding: 20px;
-            background: var(--bg2);
-            border-right: 1px solid var(--border);
+            background: var(--card);
+            border-right: 1px solid rgba(226, 214, 196, 0.8);
             overflow-y: auto;
             flex-shrink: 0;
+        }
+        
+        .section-title {
+            font-family: "Space Grotesk", sans-serif;
+            margin: 22px 0 10px;
+            font-size: 18px;
+            color: var(--ink);
         }
         
         .splitter-v {
             width: 6px;
             cursor: col-resize;
-            background: #2d2d33;
+            background: rgba(226, 214, 196, 0.9);
             flex-shrink: 0;
         }
         
@@ -104,24 +135,96 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: var(--bg3);
+            background: rgba(255, 250, 242, 0.7);
             overflow: hidden;
         }
         
         #editorArea {
             flex: 1;
             overflow: hidden;
+            padding: 18px 18px 0;
+        }
+        
+        .editor-wrap {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            background: #0b1119;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        
+        #editorHighlight {
+            position: absolute;
+            inset: 0;
+            margin: 0;
+            padding: 14px;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 14px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #e6edf3;
+            pointer-events: none;
+            overflow: auto;
+            scrollbar-width: none;
+        }
+        
+        #editorHighlight::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+        
+        #editorHighlight .hl-keyword {
+            color: #7dd3fc;
+        }
+        
+        #editorHighlight .hl-type {
+            color: #c4b5fd;
+        }
+        
+        #editorHighlight .hl-number {
+            color: #fbbf24;
+        }
+        
+        #editorHighlight .hl-string {
+            color: #86efac;
+        }
+        
+        #editorHighlight .hl-comment {
+            color: #64748b;
+            font-style: italic;
+        }
+        
+        #editorHighlight .hl-prep {
+            color: #f472b6;
         }
         
         #editor {
             height: 100%;
             width: 100%;
+            background: transparent;
+            color: transparent;
+            resize: none;
+            padding: 14px;
+            box-sizing: border-box;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 14px;
+            line-height: 1.45;
+            border: none;
+            caret-color: #e6edf3;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #editor::selection {
+            background: rgba(124, 255, 167, 0.2);
         }
         
         .splitter-h {
             height: 6px;
             cursor: row-resize;
-            background: #2d2d33;
+            background: rgba(226, 214, 196, 0.9);
         }
         
         .splitter-h:hover {
@@ -132,38 +235,52 @@
         #testsPanel {
             height: 240px;
             min-height: 120px;
-            background: var(--bg2);
-            border-top: 1px solid var(--border);
-            padding: 15px;
+            background: var(--card);
+            border-top: 1px solid rgba(226, 214, 196, 0.8);
+            padding: 16px 18px;
             overflow-y: auto;
+        }
+        
+        .panel-title {
+            margin: 0 0 10px;
+            color: var(--ink);
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 16px;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            color: var(--text);
+            color: var(--ink);
         }
         
         th,
         td {
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.8);
             padding: 8px;
             font-size: 14px;
         }
         
         th {
-            color: var(--accent);
+            color: var(--ink);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
         
         .ctrl {
             display: flex;
             gap: 12px;
-            padding: 10px;
-            background: #0d0d0f;
-            border-top: 1px solid var(--border);
+            padding: 12px 18px 18px;
+            background: rgba(255, 250, 242, 0.7);
+            border-top: 1px solid rgba(226, 214, 196, 0.8);
         }
         
         #taskStatement {
+            font-size: 16.5px;
+            line-height: 1.45;
+        }
+        
+        #taskHelp {
             font-size: 16.5px;
             line-height: 1.45;
         }
@@ -172,22 +289,23 @@
             padding: 8px 16px;
             background: var(--accent);
             border: none;
-            border-radius: 6px;
-            font-weight: 700;
+            border-radius: 12px;
+            font-weight: 600;
             cursor: pointer;
-            color: black;
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(15, 118, 110, 0.25);
         }
         
         .btn:hover {
-            background: #ffe17e;
+            background: var(--accent-strong);
         }
         
         .testcase {
             margin-bottom: 12px;
-            background: #0f0f12;
+            background: #fff;
             padding: 10px;
             border-radius: 10px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--stroke);
             white-space: pre-wrap;
         }
         
@@ -199,12 +317,12 @@
             font-weight: 700;
             margin-bottom: 6px;
             font-size: 16px;
-            color: var(--accent);
+            color: var(--ink);
         }
         
         .kf-io {
-            background: #0f0f11;
-            border: 1px solid var(--border);
+            background: #fff;
+            border: 1px solid var(--stroke);
             border-radius: 8px;
             padding: 0;
             margin-bottom: 22px;
@@ -215,17 +333,17 @@
             position: absolute;
             right: 10px;
             top: 10px;
-            background: #1f1f22;
-            border: 1px solid var(--border);
+            background: #f8f1e6;
+            border: 1px solid var(--stroke);
             padding: 4px 10px;
             font-size: 12px;
             border-radius: 6px;
             cursor: pointer;
-            color: var(--text);
+            color: var(--ink);
         }
         
         .kf-copy:hover {
-            background: #2a2a2e;
+            border-color: var(--accent);
         }
         
         .kf-pre {
@@ -235,7 +353,8 @@
             font-family: monospace;
             font-size: 15px;
             line-height: 1.35;
-            color: var(--text);
+            color: var(--ink);
+            background: transparent;
         }
         
         .kf-pre {
@@ -248,7 +367,71 @@
             margin-bottom: 70px;
             /* ровно один маленький отступ */
         }
+        
+        #taskTitle {
+            font-family: "Space Grotesk", sans-serif;
+            margin-top: 0;
+        }
+        
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp 0.7s ease forwards;
+            animation-delay: var(--delay, 0s);
+        }
+        
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 980px) {
+            body {
+                overflow: auto;
+            }
+            .split-v {
+                flex-direction: column;
+                height: auto;
+            }
+            .left {
+                width: 100%;
+                max-width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+            }
+            .splitter-v,
+            .splitter-h {
+                display: none;
+            }
+            #editorArea {
+                padding: 16px;
+            }
+            #testsPanel {
+                height: auto;
+                min-height: 160px;
+            }
+            .ctrl {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <!-- Firebase -->
@@ -279,27 +462,86 @@
     <div class="split-v">
 
         <!-- LEFT -->
-        <div class="left" id="leftPanel">
+        <div class="left reveal" id="leftPanel" style="--delay: 0s;">
             <h1 id="taskTitle">...</h1>
             <div id="taskStatement">Загружаю условие…</div>
-
-            <h2 style="color:var(--accent); margin-top:25px;">Примеры тестов</h2>
+            <h2 class="section-title">Примеры тестов</h2>
             <div id="examples"></div>
+            <h3 class="section-title">Пояснение</h3>
+            <div id="taskHelp">загружаю Пояснение</div>
         </div>
 
         <div class="splitter-v" id="vSplit"></div>
 
         <!-- RIGHT -->
-        <div class="right">
+        <div class="right reveal" style="--delay: 0.08s;">
             <div id="editorArea">
                 <!-- обычный текстовый редактор -->
-                <textarea id="editor" style="height:100%; width:100%; background:#1e1e1e; color:#f5f5f7;
-                             border:none; resize:none; padding:10px; box-sizing:border-box;
-                             font-family:monospace; font-size:14px;"></textarea>
+                <div class="editor-wrap">
+                    <pre id="editorHighlight" aria-hidden="true"></pre>
+                    <textarea id="editor" spellcheck="false"></textarea>
+                </div>
 
             </div>
 
             <script>
+                function escapeHtml(str) {
+                    return str
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;");
+                }
+
+                function highlightCpp(code) {
+                    let text = escapeHtml(code);
+                    const stash = [];
+
+                    const stashToken = (regex, cls) => {
+                        text = text.replace(regex, (match) => {
+                            const id = stash.length;
+                            stash.push(`<span class="${cls}">${match}</span>`);
+                            return `{{{${id}}}}`;
+                        });
+                    };
+
+                    stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
+                    stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
+                    stashToken(/\/\*[\s\S]*?\*\//g, "hl-comment");
+                    stashToken(/\/\/.*$/gm, "hl-comment");
+                    stashToken(/^\s*#.*$/gm, "hl-prep");
+
+                    const parts = text.split(/{{{(\d+)}}}/g);
+                    for (let i = 0; i < parts.length; i++) {
+                        if (i % 2 === 0) {
+                            let segment = parts[i];
+                            segment = segment.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '<span class="hl-number">$&</span>');
+                            segment = segment.replace(/\b(?:int|long|double|float|bool|char|void|string|size_t|auto|const|constexpr|signed|unsigned|short)\b/g, '<span class="hl-type">$&</span>');
+                            segment = segment.replace(/\b(?:if|else|for|while|do|switch|case|break|continue|return|struct|public|private|protected|template|typename|using|namespace|try|catch|throw|new|delete|this|static|inline|virtual|override|final|sizeof|typedef)\b/g, '<span class="hl-keyword">$&</span>');
+                            parts[i] = segment;
+                        } else {
+                            parts[i] = stash[Number(parts[i])] || "";
+                        }
+                    }
+
+                    return parts.join("");
+                }
+
+                function syncHighlight() {
+                    const input = document.getElementById("editor");
+                    const highlight = document.getElementById("editorHighlight");
+                    if (!input || !highlight) return;
+                    highlight.scrollTop = input.scrollTop;
+                    highlight.scrollLeft = input.scrollLeft;
+                }
+
+                function updateHighlight() {
+                    const input = document.getElementById("editor");
+                    const highlight = document.getElementById("editorHighlight");
+                    if (!input || !highlight) return;
+                    highlight.innerHTML = highlightCpp(input.value) + "\n";
+                    syncHighlight();
+                }
+
                 window.editor = {
                     getValue: function() {
                         var el = document.getElementById("editor");
@@ -315,6 +557,7 @@
                         } else {
                             el.value = text;
                         }
+                        updateHighlight();
                     }
                 };
 
@@ -324,7 +567,7 @@
             <div class="splitter-h" id="hSplit"></div>
 
             <div id="testsPanel">
-                <h3 style="margin:0 0 10px; color:var(--accent);">Посылки</h3>
+                <h3 class="panel-title">Посылки</h3>
 
                 <table>
                     <thead>
@@ -336,7 +579,7 @@
                     </thead>
                     <tbody id="subs">
                         <tr>
-                            <td colspan="4" style="color:var(--text2);text-align:center;">Пока нет посылок</td>
+                            <td colspan="4" style="color:var(--muted);text-align:center;">Пока нет посылок</td>
                         </tr>
                     </tbody>
                 </table>
@@ -625,9 +868,16 @@
 
             // XP
             let addXP = 0;
-            if (difficulty === "easy") addXP = 5;
-            else if (difficulty === "medium") addXP = 15;
-            else if (difficulty === "hard") addXP = 30;
+            if (difficulty === "tutorial") addXP = 2;
+            else if (difficulty === "easy") addXP = 4;
+            else if (difficulty === "casual") addXP = 7;
+            else if (difficulty === "normal") addXP = 12;
+            else if (difficulty === "hard") addXP = 20;
+            else if (difficulty === "insane") addXP = 30;
+            else if (difficulty === "extreme") addXP = 45;
+            else if (difficulty === "ultra") addXP = 60;
+            else if (difficulty === "impossible") addXP = 80;
+            else if (difficulty === "tourist") addXP = 110;
             else addXP = 5;
 
             data.exp += addXP;
@@ -754,6 +1004,18 @@
                 document.getElementById("taskStatement").innerText = "statement.md не найден";
             }
 
+            const helpPath = `tasks/${id}/help.md`;
+
+            try {
+                const res = await fetch(helpPath);
+                const md = await res.text();
+
+                document.getElementById("taskHelp").innerHTML = md.replace(/\n/g, "<br>");
+            } catch (e) {
+                document.getElementById("taskHelp").innerText = "help.md не найден";
+            }
+
+
             // ————————————— CODE.CPP ————————————————
             const codePath = `tasks/${id}/code.cpp`;
 
@@ -772,6 +1034,7 @@
 
             // ————————————— PRIMITIVES TESTS ————————————————
             const examples = document.getElementById("examples");
+            examples.innerHTML = "";
 
             for (let i = 1; i <= 2; i++) {
                 console.log(`📄 test ${i}`);
@@ -863,6 +1126,9 @@
             editor = {
                 setValue(text) {
                     el.value = text ? text : "";
+                    if (typeof updateHighlight === "function") {
+                        updateHighlight();
+                    }
                 },
                 getValue() {
                     return el.value;
@@ -871,6 +1137,16 @@
 
             // начальное содержимое
             el.value = "// Загружаю code.cpp...";
+            if (typeof updateHighlight === "function") {
+                updateHighlight();
+            }
+
+            if (typeof updateHighlight === "function") {
+                el.addEventListener("input", updateHighlight);
+            }
+            if (typeof syncHighlight === "function") {
+                el.addEventListener("scroll", syncHighlight);
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {

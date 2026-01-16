@@ -1,0 +1,10 @@
+{
+  "id": 113,
+  "title": "Сумма по координатам",
+  "difficulty": "ultra",
+  "type": "Память",
+  "tags": [
+    "compression",
+    "prefix sums"
+  ]
+}

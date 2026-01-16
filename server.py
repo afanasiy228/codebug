@@ -88,5 +88,6 @@ def submit():
 
 if __name__ == "__main__":
     print("=== LOCAL JUDGE SERVER ===")
-    print("Запуск на http://127.0.0.1:7777")
-    app.run(host="0.0.0.0", port=7777)
+    port = int(os.getenv("PORT", "7777"))
+    print(f"Запуск на http://127.0.0.1:{port}")
+    app.run(host="0.0.0.0", port=port)

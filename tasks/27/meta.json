@@ -1,0 +1,10 @@
+{
+  "id": 27,
+  "title": "Связность DSU",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "dsu",
+    "set"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": 59,
+  "title": "Скользящий максимум",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "deque",
+    "array"
+  ]
+}

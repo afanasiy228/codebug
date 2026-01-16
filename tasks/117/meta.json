@@ -1,0 +1,11 @@
+{
+  "id": 117,
+  "title": "Кольцевой маршрут",
+  "difficulty": "tourist",
+  "type": "Алгоритмическая",
+  "tags": [
+    "dp",
+    "bitmask",
+    "tsp"
+  ]
+}

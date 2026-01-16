@@ -1,0 +1,10 @@
+{
+  "id": 99,
+  "title": "K-й предок",
+  "difficulty": "insane",
+  "type": "Алгоритмическая",
+  "tags": [
+    "tree",
+    "binary lifting"
+  ]
+}

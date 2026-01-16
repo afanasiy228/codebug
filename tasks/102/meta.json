@@ -1,0 +1,10 @@
+{
+  "id": 102,
+  "title": "Следующий больший",
+  "difficulty": "ultra",
+  "type": "Время",
+  "tags": [
+    "stack",
+    "array"
+  ]
+}

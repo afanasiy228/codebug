@@ -1,0 +1,9 @@
+{
+  "id": 21,
+  "title": "Нижняя граница",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "binary search"
+  ]
+}

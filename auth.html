@@ -4,75 +4,160 @@
 <head>
     <meta charset="UTF-8">
     <title>CodeBug — Авторизация</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-         :root {
-            --bg: #0f0f11;
-            --bg-card: #151518;
-            --border: #2a2a33;
-            --text-main: #f5f5f7;
-            --text-muted: #9b9ba5;
-            --accent: #ffd451;
-            --accent-hover: #ffe38a;
+        :root {
+            --bg: #f7f1e7;
+            --bg-strong: #f0e6d8;
+            --ink: #1a1612;
+            --muted: #5f5b54;
+            --accent: #0f766e;
+            --accent-strong: #0b5f59;
+            --warm: #f3b562;
+            --card: #fffaf2;
+            --stroke: #e2d6c4;
+            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
         }
         
         body {
             margin: 0;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: Inter, sans-serif;
+            color: var(--ink);
+            font-family: "IBM Plex Sans", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 20% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+                radial-gradient(900px 500px at 80% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background: rgba(15, 118, 110, 0.2);
         }
         
         header {
-            height: 56px;
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
+            height: 72px;
+            background: rgba(255, 250, 242, 0.8);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            padding: 0 4vw;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
         
         .logo {
+            font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
             font-weight: 700;
-            color: var(--accent);
+            letter-spacing: 0.4px;
+            color: var(--ink);
         }
         
         nav a {
             margin-left: 20px;
-            color: var(--text-muted);
+            color: var(--muted);
             text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
         }
         
         nav a:hover {
             color: var(--accent);
         }
         
-        .container {
-            width: 420px;
-            margin: 80px auto;
-            padding: 20px 30px 40px;
-            background: var(--bg-card);
+        .auth-shell {
+            max-width: 980px;
+            margin: 50px auto 90px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 420px;
+            gap: 30px;
+            align-items: stretch;
+        }
+
+        .auth-aside {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.2), rgba(243, 181, 98, 0.18));
+            border-radius: 22px;
+            border: 1px solid rgba(226, 214, 196, 0.8);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .auth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(15, 118, 110, 0.12);
+            padding: 6px 12px;
+            border-radius: 999px;
+            width: fit-content;
+        }
+
+        .auth-aside h2 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 32px;
+        }
+
+        .auth-aside p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .auth-steps {
+            display: grid;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .auth-step {
+            background: rgba(255, 250, 242, 0.7);
+            border: 1px solid rgba(226, 214, 196, 0.8);
             border-radius: 14px;
-            border: 1px solid var(--border);
+            padding: 12px 14px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .container {
+            width: 100%;
+            padding: 26px 30px 40px;
+            background: var(--card);
+            border-radius: 22px;
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
         }
         
         h1 {
             text-align: center;
-            color: var(--accent);
+            color: var(--ink);
             font-size: 26px;
             margin-bottom: 25px;
+            font-family: "Space Grotesk", sans-serif;
         }
         
         input {
             width: 100%;
             padding: 12px;
-            background: #0e0e12;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-main);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: var(--ink);
             margin-bottom: 14px;
             font-size: 14px;
         }
@@ -80,7 +165,7 @@
         input:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
         }
         
         button {
@@ -88,19 +173,20 @@
             padding: 12px;
             margin-top: 12px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             background: var(--accent);
-            font-weight: 700;
-            color: #111;
+            font-weight: 600;
+            color: #fff;
             cursor: pointer;
+            box-shadow: 0 16px 32px rgba(15, 118, 110, 0.25);
         }
         
         button:hover {
-            background: var(--accent-hover);
+            background: var(--accent-strong);
         }
         
         .error-msg {
-            color: #ff4d4d;
+            color: #c0392b;
             font-size: 13px;
             height: 18px;
             margin-top: -6px;
@@ -113,30 +199,36 @@
             color: var(--accent);
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
         }
         
         .avatar-preview {
             width: 80px;
             height: 80px;
             margin: 0 auto 15px;
-            background: #333;
+            background: #fff;
+            border: 1px solid var(--stroke);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 34px;
             font-weight: 700;
-            color: white;
+            color: var(--ink);
         }
         
         .captcha {
-            background: #0e0e12;
-            border-radius: 10px;
-            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
             padding: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .captcha input {
+            margin-bottom: 0;
         }
         /* MODAL */
         
@@ -153,9 +245,9 @@
         #modal {
             width: 280px;
             padding: 20px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--accent);
+            background: var(--card);
+            border-radius: 14px;
+            border: 1px solid var(--stroke);
             text-align: center;
             opacity: 0;
             transform: scale(0.7);
@@ -166,7 +258,42 @@
             opacity: 1;
             transform: scale(1);
         }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp 0.7s ease forwards;
+            animation-delay: var(--delay, 0s);
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 980px) {
+            .auth-shell {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -176,7 +303,19 @@
         <nav id="nav-links"></nav>
     </header>
 
-    <div class="container">
+    <div class="auth-shell">
+        <div class="auth-aside reveal" style="--delay: 0s;">
+            <div class="auth-badge">CodeBug Lab</div>
+            <h2>Добро пожаловать в мастерскую дебага</h2>
+            <p>Собери привычку искать ошибку быстро и уверенно. Мы ведем тебя от первых багов к олимпиадным решениям.</p>
+            <div class="auth-steps">
+                <div class="auth-step">1. Авторизуйся или создай аккаунт.</div>
+                <div class="auth-step">2. Выбери задачу и почини код.</div>
+                <div class="auth-step">3. Закрепи результат в рейтинге.</div>
+            </div>
+        </div>
+
+        <div class="container reveal" style="--delay: 0.1s;">
 
         <!-- LOGIN -->
         <div id="screen-login">
@@ -212,17 +351,18 @@
             <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
         </div>
 
+        </div>
     </div>
 
     <!-- MODAL -->
     <div id="modal-bg">
         <div id="modal">
             <h3 style="color:var(--accent);margin-top:0;">Забыли пароль?</h3>
-            <p style="color:var(--text-muted);">Вспоминай 😎</p>
+            <p style="color:var(--muted);">Вспоминай 😎</p>
             <button onclick="closeModal()">Ок</button>
         </div>
     </div>
-    =
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 

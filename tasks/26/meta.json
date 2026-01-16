@@ -1,0 +1,9 @@
+{
+  "id": 26,
+  "title": "Минимум с обновлениями",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "segment tree"
+  ]
+}

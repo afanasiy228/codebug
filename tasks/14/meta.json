@@ -1,0 +1,10 @@
+{
+  "id": 14,
+  "title": "Проверка скобок",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "stack",
+    "string"
+  ]
+}

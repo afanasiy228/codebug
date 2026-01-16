@@ -1,0 +1,11 @@
+{
+  "id": 89,
+  "title": "Инверсии в массиве",
+  "difficulty": "extreme",
+  "type": "Время",
+  "tags": [
+    "fenwick",
+    "inversions",
+    "array"
+  ]
+}
