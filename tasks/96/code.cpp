@@ -56,7 +56,7 @@ int main() {
 
     while (q--) {
         int u, v; cin >> u >> v; --u; --v;
-        cout << lca(u, v) + 2 << "\n"; // off by one
+        cout << lca(u, v) + 2 << "\n";
     }
     return 0;
 }

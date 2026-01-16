@@ -1,13 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-
 int main()  {
 
     ios::sync_with_stdio(false);
 
     cin.tie(nullptr);
-
 
     int n;
 
@@ -16,7 +14,6 @@ int main()  {
     vector<long long> a(n);
 
     for (int i = 0; i < n; ++i) cin >> a[i];
-
 
     long long best = 0;
 
@@ -29,7 +26,6 @@ int main()  {
         best = max(best, cur);
 
     }
-
 
     cout << best << "\n";
 

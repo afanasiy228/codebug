@@ -23,7 +23,7 @@ int main()  {
     long long sum = 0;
 
     for (int i = l; i < r; i++) sum += a[i];
-    // TODO: wrong bounds (should include r and 1-based)
+    // Подсказка: границы суммы неверные: индексы 1-based и r включается.
 
 
     cout << sum;

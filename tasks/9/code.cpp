@@ -26,7 +26,7 @@ int main()  {
 
 
     long long f0 = 0;
-    // TODO: base case for n=0/1 is wrong
+    // Подсказка: базовые значения для Фибоначчи заданы неверно.
 
     long long f1 = 1;
 

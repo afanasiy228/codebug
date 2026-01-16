@@ -34,6 +34,6 @@ int main() {
         }
     }
 
-    cout << dist[s] << "\n"; // wrong target
+    cout << dist[s] << "\n";
     return 0;
 }

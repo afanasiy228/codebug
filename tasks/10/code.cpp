@@ -16,7 +16,7 @@ int main()  {
 
 
     long long x = (l ^ r);
-    // TODO: xor popcount is not total over range
+    // Подсказка: XOR l^r не даёт суммарное число единиц на отрезке.
 
     long long ans = 0;
 

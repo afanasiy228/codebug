@@ -115,7 +115,7 @@ int main() {
             res += st.query(1, 0, n - 1, pos[head[a]], pos[a]);
             a = parent[head[a]];
         }
-        // ошибка: не проверяем порядок позиций
+
         res += st.query(1, 0, n - 1, pos[a], pos[b]);
         return res;
     };

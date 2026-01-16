@@ -29,7 +29,7 @@ int main() {
         cin >> a >> b;
         int u = id(a);
         int v = id(b);
-        // неверные импликации
+
         add_edge(u, v);
         add_edge(v, u);
     }

@@ -24,7 +24,7 @@ int main()  {
 
 
     string res = s.substr(k) + s.substr(0, k);
-    // TODO: left shift instead of right shift
+    // Подсказка: здесь получился сдвиг влево, нужен вправо.
 
     cout << res << "\n";
 

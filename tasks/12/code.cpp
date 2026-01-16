@@ -18,7 +18,7 @@ int main()  {
 
 
     for (size_t i = 0; i + 1 < s.size(); ++i)  {
-    // TODO: last digit skipped
+    // Подсказка: цикл должен учитывать последний символ.
 
         sum += s[i] - '0';
 

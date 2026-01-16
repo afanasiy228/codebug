@@ -12,7 +12,7 @@ int main() {
 
     long long res = 1 % m;
     for (long long i = 1; i < n; ++i) {
-        res = (res * i) % m; // misses n
+        res = (res * i) % m;
     }
 
     cout << res << "\n";

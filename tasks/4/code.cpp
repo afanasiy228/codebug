@@ -9,7 +9,7 @@ int main()  {
     string a, b;
 
     cin >> a;
-    // TODO: should ignore leading '-' for negative numbers
+    // Подсказка: для отрицательных чисел нужно игнорировать ведущий '-'.
 
     b = a;
 

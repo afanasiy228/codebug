@@ -12,7 +12,7 @@ int main() {
 
     long long sum = 0;
     while (n > 0) {
-        sum += n % 10; // uses base 10
+        sum += n % 10;
         n /= b;
     }
 

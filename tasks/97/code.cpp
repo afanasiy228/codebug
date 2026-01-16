@@ -11,7 +11,7 @@ int main() {
     for (int i = 0; i < m; ++i) {
         int u, v; cin >> u >> v; --u; --v;
         g[u].push_back(v);
-        g[v].push_back(u); // wrong reverse graph
+        g[v].push_back(u);
     }
 
     vector<int> order;

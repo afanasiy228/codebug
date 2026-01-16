@@ -81,7 +81,7 @@ int main()  {
 
 
             if (dist[nx][ny] == -1)  {
-            // TODO: need to skip walls (#)
+            // Подсказка: в BFS нужно пропускать стены '#'.
 
                 dist[nx][ny] = dist[x][y] + 1;
 

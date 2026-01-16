@@ -54,7 +54,7 @@ int main() {
     while (q--) {
         int i, j;
         cin >> i >> j;
-        // ошибки в индексах: используем 1-based как 0-based
+
         cout << lcp(i, j) << "
 ";
     }

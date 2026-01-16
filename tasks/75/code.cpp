@@ -12,7 +12,7 @@ int main() {
     for (int i = 0; i < n; ++i) {
         long long x;
         cin >> x;
-        g = gcdll(g, x + 1); // wrong
+        g = gcdll(g, x + 1);
     }
     cout << g << "\n";
     return 0;

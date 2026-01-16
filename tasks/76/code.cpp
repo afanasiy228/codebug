@@ -14,7 +14,7 @@ int main() {
         cin >> x;
         if (x <= best) {
             best = x;
-            pos = i; // last minimum instead of first
+            pos = i;
         }
     }
     cout << pos << "\n";

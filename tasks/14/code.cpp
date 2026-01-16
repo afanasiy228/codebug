@@ -1,13 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-
 int main()  {
 
     ios::sync_with_stdio(false);
 
     cin.tie(nullptr);
-
 
     string s;
 
@@ -32,7 +30,6 @@ int main()  {
             char t = st.back();
 
             st.pop_back();
-
 
             if ((c == ')' && t != '[') || (c == ']' && t != '('))  {
 
