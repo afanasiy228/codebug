@@ -30,7 +30,6 @@ int main() {
         for(int to:g[v]) if(--indeg[to]==0) q.push(to);
     }
 
-
     for(int i=0;i<n;i++) cout<<order[i]+1<<" ";
     cout<<"\n";
 

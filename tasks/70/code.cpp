@@ -16,7 +16,7 @@ int main() {
     }
 
     for (int i = 0; i < n / 2; ++i) {
-        swap(a[i], a[n - i]); // off by one
+        swap(a[i], a[n - i]);
     }
 
     for (int i = 0; i < n; ++i) {

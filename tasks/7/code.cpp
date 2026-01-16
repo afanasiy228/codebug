@@ -22,7 +22,7 @@ int main()  {
     long long ans = LLONG_MAX;
 
     for (int i = 0; i + 1 < n; ++i)  {
-    // TODO: need sort before comparing neighbors
+    // Подсказка: перед сравнением соседей массив нужно отсортировать.
 
         ans = min(ans, llabs(a[i] - a[i + 1]));
 

@@ -38,7 +38,7 @@ int main()  {
 
 
         long long ans = pref[r - 1] - pref[l - 1];
-        // TODO: should use pref[r]
+        // Подсказка: формула должна брать pref[r], а не pref[r - 1].
 
         cout << ans << "\n";
 

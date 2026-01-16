@@ -29,7 +29,7 @@ int main() {
     while (q--) {
         int v, k; cin >> v >> k; --v;
         while (k-- > 0) {
-            v = parent[parent[v]]; // skip levels
+            v = parent[parent[v]];
         }
         cout << v + 1 << "\n";
     }

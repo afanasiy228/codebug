@@ -10,7 +10,7 @@ int main() {
         return 0;
     }
 
-    long long best = 0; // fails on all negatives
+    long long best = 0;
     for (int i = 0; i < n; ++i) {
         long long x;
         cin >> x;

@@ -34,7 +34,7 @@ int main() {
                 }
             }
         }
-        break; // stops early
+        break;
     }
 
     cout << cnt << "\n";

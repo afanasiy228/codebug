@@ -20,6 +20,6 @@ int main() {
         }
     }
 
-    cout << dp[n - 1][m - 1] << "\n"; // wrong cell
+    cout << dp[n - 1][m - 1] << "\n";
     return 0;
 }

@@ -24,7 +24,6 @@ int main() {
     vector<long long> d(n, INF);
     d[0]=0;
 
-
     for(int v=0; v<n; v++) for(auto [to,w]: g[v]) d[to]=min(d[to], d[v]+w);
 
     cout<<(d[n-1]>=INF?-1:d[n-1])<<"\n";

@@ -7,7 +7,7 @@ int main()  {
     int a, b;
 
     cin >> a;
-    // TODO: missing input for b
+    // Подсказка: забыли считать b из ввода.
 
     cout << a + b;
 

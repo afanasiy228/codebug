@@ -15,7 +15,7 @@ int main() {
         long long x;
         cin >> x;
         if (x > 0) {
-            sum += x; // ignores negatives
+            sum += x;
         }
     }
 

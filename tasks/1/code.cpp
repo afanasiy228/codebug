@@ -7,7 +7,7 @@ int main()  {
     int a, b, c;
 
     cin >> a >> b;
-    // TODO: missing input for c
+    // Подсказка: переменная c не считывается из ввода.
 
 
     int mn = a;

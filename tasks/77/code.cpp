@@ -11,7 +11,7 @@ int main() {
     for (int i = 0; i < n; ++i) cin >> a[i];
     if (n == 0) return 0;
     k %= n;
-    rotate(a.begin(), a.begin() + k, a.end()); // left rotation
+    rotate(a.begin(), a.begin() + k, a.end());
     for (int i = 0; i < n; ++i) {
         if (i) cout << ' ';
         cout << a[i];

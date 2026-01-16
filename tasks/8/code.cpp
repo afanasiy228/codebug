@@ -29,7 +29,7 @@ int main()  {
         int mid = (l + r) / 2;
 
         if (a[mid] >= x)  {
-        // TODO: should search last <= x
+        // Подсказка: ищем последний индекс с a[mid] <= x, а не первый >= x.
 
             ans = mid;
 

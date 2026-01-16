@@ -17,7 +17,7 @@ int main() {
         if (i == 0) {
             best = x;
         } else {
-            best = x; // resets
+            best = x;
         }
         if (i) cout << ' ';
         cout << best;

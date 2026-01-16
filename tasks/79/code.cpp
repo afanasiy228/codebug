@@ -16,7 +16,7 @@ int main() {
     int i = 0, j = 0;
     while (i < n && j < m) {
         if (a[i] < b[j]) {
-            out.push_back(a[j]); // wrong index
+            out.push_back(a[j]);
             i++;
         } else {
             out.push_back(b[j]);
