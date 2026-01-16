@@ -89,7 +89,7 @@ async function loginUser(login, pass) {
 
     const data = snapshot.val();
 
-    if (data.password !== pass) {
+    if (data.pass !== pass) {
         return { ok: false, error: "Неверный пароль" };
     }
 
