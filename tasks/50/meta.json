@@ -1,0 +1,9 @@
+{
+  "id": 50,
+  "title": "XOR на отрезке",
+  "difficulty": "casual",
+  "type": "Алгоритмическая",
+  "tags": [
+    "range queries"
+  ]
+}

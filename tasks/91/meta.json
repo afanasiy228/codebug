@@ -1,0 +1,10 @@
+{
+  "id": 91,
+  "title": "Много сумм",
+  "difficulty": "extreme",
+  "type": "Время",
+  "tags": [
+    "prefix sums",
+    "queries"
+  ]
+}

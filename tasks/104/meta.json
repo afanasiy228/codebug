@@ -1,0 +1,10 @@
+{
+  "id": 104,
+  "title": "Кратчайший путь",
+  "difficulty": "ultra",
+  "type": "Время",
+  "tags": [
+    "dijkstra",
+    "graph"
+  ]
+}

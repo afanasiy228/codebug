@@ -1,0 +1,11 @@
+{
+  "id": 105,
+  "title": "Палиндромные запросы",
+  "difficulty": "ultra",
+  "type": "Время",
+  "tags": [
+    "hashing",
+    "string",
+    "queries"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": 90,
+  "title": "Количество вхождений",
+  "difficulty": "extreme",
+  "type": "Время",
+  "tags": [
+    "kmp",
+    "string",
+    "pattern"
+  ]
+}

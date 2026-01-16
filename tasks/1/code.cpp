@@ -1,12 +1,25 @@
 #include <iostream>
 using namespace std;
 
-int main() {
+
+int main()  {
+
     int a, b, c;
-    cin >> a >> b; 
-    
+
+    cin >> a >> b;
+    // TODO: missing input for c
+
+
     int mn = a;
+
     if (b < mn) mn = b;
+
     if (c < mn) mn = c;
+
     cout << mn;
+
 }
+
+/* ANSWER:
+Ответ: см. описание решения в help.md.
+*/

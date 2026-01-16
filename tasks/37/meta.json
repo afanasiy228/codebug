@@ -1,0 +1,10 @@
+{
+  "id": 37,
+  "title": "Непересекающиеся отрезки",
+  "difficulty": "casual",
+  "type": "Алгоритмическая",
+  "tags": [
+    "greedy",
+    "sorting"
+  ]
+}

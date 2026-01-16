@@ -1,0 +1,10 @@
+{
+  "id": 35,
+  "title": "0/1 Рюкзак",
+  "difficulty": "casual",
+  "type": "Алгоритмическая",
+  "tags": [
+    "dp",
+    "knapsack"
+  ]
+}

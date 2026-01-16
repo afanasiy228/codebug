@@ -1,0 +1,11 @@
+{
+  "id": 123,
+  "title": "Суммы на путях",
+  "difficulty": "impossible",
+  "type": "Алгоритмическая",
+  "tags": [
+    "hld",
+    "segment tree",
+    "tree"
+  ]
+}

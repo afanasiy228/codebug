@@ -1,0 +1,6 @@
+5 5
+union 1 2
+check 1 2
+check 2 3
+union 2 3
+check 1 3

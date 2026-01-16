@@ -1,0 +1,11 @@
+{
+  "id": 111,
+  "title": "Пути в DAG",
+  "difficulty": "ultra",
+  "type": "Память",
+  "tags": [
+    "dag",
+    "dp",
+    "graph"
+  ]
+}

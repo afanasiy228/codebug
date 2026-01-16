@@ -1,0 +1,10 @@
+{
+  "id": 24,
+  "title": "Различные на отрезке",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "range queries",
+    "set"
+  ]
+}

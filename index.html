@@ -4,165 +4,393 @@
 <head>
     <meta charset="UTF-8">
     <title>CodeBug — Учись находить ошибки</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-         :root {
-            --bg: #0f0f11;
-            --bg-card: #151518;
-            --border: #2a2a33;
-            --text-main: #f5f5f7;
-            --text-muted: #a3a3b8;
-            --accent: #ffd451;
-            --accent-hover: #ffe494;
-            --soft: #1b1b20;
+        :root {
+            --bg: #f7f1e7;
+            --bg-strong: #f0e6d8;
+            --ink: #1a1612;
+            --muted: #5f5b54;
+            --accent: #0f766e;
+            --accent-strong: #0b5f59;
+            --warm: #f3b562;
+            --card: #fffaf2;
+            --stroke: #e2d6c4;
+            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --radius-lg: 28px;
+            --radius-md: 18px;
         }
-        
+
         body {
             margin: 0;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: Inter, sans-serif;
+            color: var(--ink);
+            font-family: "IBM Plex Sans", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+        }
+
+        ::selection {
+            background: rgba(15, 118, 110, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .container {
+            width: min(1100px, 92vw);
+            margin: 0 auto;
         }
         /* HEADER */
-        
+
         header {
-            height: 56px;
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
+            height: 72px;
+            background: rgba(255, 250, 242, 0.8);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 10;
+            backdrop-filter: blur(12px);
+            padding: 0 4vw;
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
-        
+
         .logo {
+            font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
             font-weight: 700;
-            color: var(--accent);
+            letter-spacing: 0.5px;
+            color: var(--ink);
         }
-        
+
         nav a {
             margin-left: 20px;
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 14px;
             text-decoration: none;
+            font-weight: 600;
         }
-        
+
         nav a:hover {
             color: var(--accent);
         }
         /* HERO BLOCK */
-        
+
         .hero {
-            padding: 80px 24px 100px;
-            text-align: center;
-            max-width: 900px;
-            margin: 0 auto;
+            padding: 80px 0 100px;
         }
-        
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            align-items: center;
+        }
+
         .hero h1 {
-            font-size: 44px;
-            font-weight: 900;
-            margin-bottom: 16px;
-            color: var(--text-main);
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(34px, 4vw, 52px);
+            font-weight: 700;
+            margin: 0 0 18px;
+            color: var(--ink);
         }
-        
+
         .hero p {
             font-size: 17px;
-            color: var(--text-muted);
-            margin-bottom: 34px;
+            color: var(--muted);
+            margin: 0 0 26px;
             line-height: 1.7;
         }
-        
-        .btn-main {
-            display: inline-block;
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            box-shadow: 0 10px 24px rgba(26, 22, 18, 0.08);
+        }
+
+        .hero-tag span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             background: var(--accent);
-            color: #111;
-            padding: 14px 28px;
+            color: #fff;
+            font-size: 11px;
             font-weight: 700;
-            border-radius: 10px;
+            border-radius: 999px;
+            padding: 4px 8px;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn-main {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: #fff;
+            padding: 14px 26px;
+            font-weight: 600;
+            border-radius: 14px;
             font-size: 16px;
             text-decoration: none;
-            margin-right: 12px;
+            box-shadow: 0 16px 40px rgba(15, 118, 110, 0.25);
+            transition: transform 0.2s ease, background 0.2s ease;
         }
-        
+
         .btn-main:hover {
-            background: var(--accent-hover);
+            background: var(--accent-strong);
+            transform: translateY(-1px);
         }
-        
+
         .btn-faq {
-            display: inline-block;
-            border: 1px solid var(--accent);
-            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+            background: rgba(255, 250, 242, 0.7);
             padding: 14px 24px;
-            font-weight: 700;
-            border-radius: 10px;
+            font-weight: 600;
+            border-radius: 14px;
             text-decoration: none;
             font-size: 16px;
+            transition: transform 0.2s ease, border 0.2s ease;
         }
-        
+
         .btn-faq:hover {
-            background: rgba(255, 212, 81, 0.15);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .hero-card {
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            color: var(--accent);
+            background: rgba(15, 118, 110, 0.12);
+            border-radius: 999px;
+            padding: 6px 10px;
+            margin-bottom: 14px;
+        }
+
+        .hero-card::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(15, 118, 110, 0.2), transparent 70%);
+            top: -60px;
+            right: -40px;
+        }
+
+        .hero-card h3 {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 20px;
+            margin: 0 0 14px;
+        }
+
+        .hero-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .hero-list li {
+            background: #fff;
+            border: 1px solid rgba(226, 214, 196, 0.7);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-list strong {
+            color: var(--ink);
+        }
+
+        .hero-stat {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .stat {
+            background: rgba(15, 118, 110, 0.08);
+            border-radius: 16px;
+            padding: 14px;
+            text-align: left;
+        }
+
+        .stat span {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .stat p {
+            margin: 6px 0 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .section-title {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(24px, 3vw, 32px);
+            margin: 0 0 16px;
+        }
+
+        .section-lead {
+            color: var(--muted);
+            margin: 0 0 32px;
+            line-height: 1.6;
+        }
+
+        .why {
+            padding: 10px 0 80px;
         }
         /* WHY BLOCK */
-        
-        .why {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 40px 24px 70px;
-        }
-        
-        .why h2 {
-            font-size: 30px;
-            margin-bottom: 25px;
-            color: var(--accent);
-            text-align: center;
-        }
-        
+
         .why-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            gap: 22px;
         }
-        
+
         .why-item {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+            background: var(--card);
+            border: 1px solid var(--stroke);
             padding: 22px;
-            border-radius: 14px;
-            transition: 0.2s;
+            border-radius: var(--radius-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
+
         .why-item:hover {
-            background: var(--soft);
-            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
         }
-        
+
         .why-item h3 {
             margin: 0 0 10px;
             font-size: 18px;
-            color: var(--accent);
+            font-family: "Space Grotesk", sans-serif;
         }
-        
+
         .why-item p {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 14px;
             line-height: 1.6;
         }
+
+        .cta {
+            margin: 40px 0 80px;
+            background: linear-gradient(120deg, rgba(15, 118, 110, 0.12), rgba(243, 181, 98, 0.2));
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            border: 1px solid rgba(226, 214, 196, 0.7);
+            display: grid;
+            gap: 18px;
+        }
+
+        .cta h2 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(24px, 3vw, 32px);
+        }
+
+        .cta p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp 0.7s ease forwards;
+            animation-delay: var(--delay, 0s);
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* FOOTER */
-        
+
         footer {
             margin-top: 60px;
             padding: 20px;
             text-align: center;
             font-size: 13px;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border);
+            color: var(--muted);
+            border-top: 1px solid rgba(226, 214, 196, 0.7);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 0 20px;
+            }
+
+            .hero {
+                padding: 50px 0 60px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
         }
     </style>
+    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -172,46 +400,75 @@
         <nav id="nav-links"></nav>
     </header>
 
-    <section class="hero">
-        <h1>Учись находить и исправлять ошибки в C++</h1>
-
-        <p>
-            CodeBug — тренировочная платформа, где школьники учатся дебажить код, исправлять реальные ошибки и готовиться к олимпиадам по информатике. Всё как на LeetCode и Codeforces, только под реальные баги.
-        </p>
-
-        <a href="train.html" class="btn-main">Начать обучение</a>
-        <a href="faq.html" class="btn-faq">FAQ</a>
-    </section>
-
-    <section class="why">
-        <h2>Почему CodeBug?</h2>
-
-        <div class="why-grid">
-            <div class="why-item">
-                <h3>🔍 Реальные ошибки</h3>
-                <p>Более 1000 настоящих CE/RE/WA ошибок из олимпиадных программ.</p>
+    <main class="container">
+        <section class="hero">
+            <div class="hero-grid">
+                <div class="reveal" style="--delay: 0s;">
+                    <div class="hero-tag"><span>NEW</span> Практика, похожая на реальные баги</div>
+                    <h1>Учись находить и исправлять ошибки в C++</h1>
+                    <p>
+                        CodeBug — тренировочная платформа, где школьники учатся дебажить код, исправлять реальные ошибки и готовиться к олимпиадам по информатике. Всё как на LeetCode и Codeforces, только под реальные баги.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="train.html" class="btn-main">Начать обучение</a>
+                        <a href="faq.html" class="btn-faq">FAQ</a>
+                    </div>
+                </div>
+                <div class="hero-card reveal" style="--delay: 0.12s;">
+                    <div class="hero-label">Режим практики</div>
+                    <h3>Тренируйся по сценарию разработчика</h3>
+                    <ul class="hero-list">
+                        <li>Разбери проблему и <strong>найди баг</strong></li>
+                        <li>Почини решение и <strong>сдай тесты</strong></li>
+                        <li>Сравни с эталоном и <strong>вырасти в рейтинге</strong></li>
+                    </ul>
+                    <div class="hero-stat">
+                        <div class="stat">
+                            <span>120+</span>
+                            <p>задач с реальными ошибками</p>
+                        </div>
+                        <div class="stat">
+                            <span>7 дней</span>
+                            <p>новые подборки каждую неделю</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </section>
 
-            <div class="why-item">
-                <h3>⚙️ Автотесты</h3>
-                <p>Каждое исправление проверяется системой тестов — как в настоящем онлайн-джадже.</p>
+        <section class="why reveal" style="--delay: 0.18s;">
+            <h2 class="section-title">Почему CodeBug работает</h2>
+            <p class="section-lead">Собрали то, что обычно скрыто в разборе олимпиадных решений: ошибки, причины и путь исправления.</p>
+            <div class="why-grid">
+                <div class="why-item">
+                    <h3>Практика на ошибках</h3>
+                    <p>Не просто решай, а именно исправляй чужой код — так формируется настоящий навык дебага.</p>
+                </div>
+                <div class="why-item">
+                    <h3>Обратная связь сразу</h3>
+                    <p>Ты видишь результат по тестам и узнаёшь, где логика дала сбой и почему.</p>
+                </div>
+                <div class="why-item">
+                    <h3>Структурный рост</h3>
+                    <p>Рейтинги, подборки и уровни сложности помогают идти от базовых багов к олимпиадным.</p>
+                </div>
+                <div class="why-item">
+                    <h3>Фокус на C++</h3>
+                    <p>Все задания заточены под стиль олимпиадного кода и типовые ошибки школьников.</p>
+                </div>
             </div>
+        </section>
 
-            <div class="why-item">
-                <h3>📚 Практика, а не теория</h3>
-                <p>Нет подсказок: только условие, код и тесты. Всё как в реальности.</p>
+        <section class="cta reveal" style="--delay: 0.24s;">
+            <h2>Готов прокачать дебаг как суперсилу?</h2>
+            <p>Открой тренировки или уточни детали в FAQ. Начни с первых задач уже сегодня.</p>
+            <div class="hero-actions">
+                <a href="train.html" class="btn-main">Перейти к задачам</a>
+                <a href="faq.html" class="btn-faq">Что внутри платформы</a>
             </div>
+        </section>
+    </main>
 
-            <div class="why-item">
-                <h3>🏆 Подготовка к олимпиадам</h3>
-                <p>Подходит для 9–11 классов, регионального и всероссийского уровня.</p>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        CodeBug © 2025 — тренировочная платформа по поиску ошибок
-    </footer>
 
     <!-- подключение навигации -->
 

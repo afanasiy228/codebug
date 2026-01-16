@@ -1,0 +1,10 @@
+{
+  "id": 103,
+  "title": "Сколько простых",
+  "difficulty": "ultra",
+  "type": "Время",
+  "tags": [
+    "sieve",
+    "math"
+  ]
+}

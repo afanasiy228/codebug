@@ -4,48 +4,70 @@
 <head>
     <meta charset="UTF-8" />
     <title>CodeBug — Донат</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-         :root {
-            --bg: #0f0f11;
-            --bg-card: #141417;
-            --border: #2a2a33;
-            --border-light: #3a3a46;
-            --text-main: #f5f5f7;
-            --text-muted: #a0a0ad;
-            --accent: #ffd451;
-            --accent-hover: #ffe38a;
+        :root {
+            --bg: #f7f1e7;
+            --bg-strong: #f0e6d8;
+            --ink: #1a1612;
+            --muted: #5f5b54;
+            --accent: #0f766e;
+            --accent-strong: #0b5f59;
+            --warm: #f3b562;
+            --card: #fffaf2;
+            --stroke: #e2d6c4;
+            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
         }
         
         body {
             margin: 0;
-            background: var(--bg);
-            font-family: Inter, sans-serif;
-            color: var(--text-main);
+            color: var(--ink);
+            font-family: "IBM Plex Sans", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background: rgba(15, 118, 110, 0.2);
         }
         /* HEADER */
         
         header {
-            height: 56px;
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
+            height: 72px;
+            background: rgba(255, 250, 242, 0.8);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            padding: 0 4vw;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
         
         .logo {
+            font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
             font-weight: 700;
-            color: var(--accent);
+            letter-spacing: 0.4px;
+            color: var(--ink);
         }
         
         nav a {
             margin-left: 20px;
-            color: var(--text-muted);
+            color: var(--muted);
             text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
         }
         
         nav a:hover {
@@ -59,16 +81,39 @@
             padding: 0 20px 80px;
         }
         
+        .donate-hero {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.18), rgba(243, 181, 98, 0.2));
+            border-radius: 22px;
+            border: 1px solid rgba(226, 214, 196, 0.8);
+            padding: 28px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .donate-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(15, 118, 110, 0.12);
+            margin-bottom: 12px;
+        }
+
         h1 {
             font-size: 32px;
-            color: var(--accent);
-            margin-bottom: 10px;
+            color: var(--ink);
+            margin: 0 0 10px;
+            font-family: "Space Grotesk", sans-serif;
         }
         
         p.sub {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 15px;
-            margin-bottom: 40px;
+            margin: 0;
         }
         /* DONATE OPTIONS */
         
@@ -81,18 +126,24 @@
         .box {
             flex: 1;
             min-width: 240px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
+            background: var(--card);
+            border: 1px solid var(--stroke);
             padding: 20px;
-            border-radius: 14px;
+            border-radius: 16px;
             text-align: center;
             cursor: pointer;
             transition: 0.2s;
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
         
         .box:hover {
             border-color: var(--accent);
-            background: #1b1b20;
+            transform: translateY(-2px);
+        }
+
+        .box.active {
+            border-color: var(--accent);
+            box-shadow: 0 20px 45px rgba(15, 118, 110, 0.2);
         }
         
         .price {
@@ -102,7 +153,7 @@
         }
         
         .desc {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 13px;
             margin-top: 6px;
         }
@@ -110,25 +161,27 @@
         
         .custom-block {
             margin-top: 30px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
+            background: var(--card);
+            border: 1px solid var(--stroke);
             padding: 20px;
-            border-radius: 14px;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
         }
         
         .custom-block h3 {
             margin: 0;
             margin-bottom: 10px;
-            color: var(--accent);
+            color: var(--ink);
+            font-family: "Space Grotesk", sans-serif;
         }
         
         input {
             width: 100%;
             padding: 12px;
-            background: #0e0e12;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            border-radius: 10px;
+            background: #fff;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+            border-radius: 12px;
             font-size: 15px;
         }
         
@@ -137,18 +190,26 @@
             width: 100%;
             padding: 12px;
             background: var(--accent);
-            color: #111;
-            border-radius: 10px;
-            font-weight: 700;
+            color: #fff;
+            border-radius: 12px;
+            font-weight: 600;
             border: none;
             cursor: pointer;
             font-size: 16px;
+            box-shadow: 0 16px 32px rgba(15, 118, 110, 0.25);
         }
         
         .btn:hover {
-            background: var(--accent-hover);
+            background: var(--accent-strong);
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
         }
     </style>
+    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -159,35 +220,37 @@
     </header>
 
     <div class="container">
-        <h1>Поддержать проект</h1>
-
-        <p class="sub">
-            CodeBug — бесплатная тренировочная платформа. Если хочешь ускорить развитие — можно поддержать разработку 🙂
-        </p>
+        <div class="donate-hero">
+            <div class="donate-badge">Поддержка сообщества</div>
+            <h1>Поддержать проект</h1>
+            <p class="sub">
+                CodeBug — бесплатная тренировочная платформа. Если хочешь ускорить развитие — можно поддержать разработку 🙂
+            </p>
+        </div>
 
         <!-- DONATE BOXES -->
         <div class="donate-options">
 
             <!-- 100 ₽ -->
-            <div class="box" onclick="selectDonate(100)">
+            <div class="box" data-amount="100" onclick="selectDonate(100)">
                 <div class="price">100 ₽</div>
                 <div class="desc">Спасибо! 💛</div>
             </div>
 
             <!-- 300 ₽ -->
-            <div class="box" onclick="selectDonate(300)">
+            <div class="box" data-amount="300" onclick="selectDonate(300)">
                 <div class="price">300 ₽</div>
                 <div class="desc">На энергетик разработчику ⚡</div>
             </div>
 
             <!-- 1000 ₽ -->
-            <div class="box" onclick="selectDonate(1000)">
+            <div class="box" data-amount="1000" onclick="selectDonate(1000)">
                 <div class="price">1 000 ₽</div>
                 <div class="desc">На кофе и печеньки ☕🍪</div>
             </div>
 
             <!-- 10 000 ₽ -->
-            <div class="box" onclick="selectDonate(10000)">
+            <div class="box" data-amount="10000" onclick="selectDonate(10000)">
                 <div class="price">10 000 ₽</div>
                 <div class="desc">На кальян разработчикам 😎🔥</div>
             </div>
@@ -221,6 +284,9 @@
         function selectDonate(amount) {
             selected = amount;
             document.getElementById("customInput").value = amount;
+            document.querySelectorAll(".box").forEach(box => {
+                box.classList.toggle("active", Number(box.dataset.amount) === amount);
+            });
         }
 
         function donateNow() {
@@ -231,7 +297,7 @@
             }
 
             // Здесь просто имитация
-            alert("Спасибо за поддержку! (фронтенд)");
+            alert("Спасибо за поддержку! вы можете превести денги на 2200701363587285");
         }
     </script>
 

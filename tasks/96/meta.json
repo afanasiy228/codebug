@@ -1,0 +1,10 @@
+{
+  "id": 96,
+  "title": "LCA бинарным подъёмом",
+  "difficulty": "insane",
+  "type": "Алгоритмическая",
+  "tags": [
+    "tree",
+    "lca"
+  ]
+}

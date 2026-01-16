@@ -1,0 +1,10 @@
+{
+  "id": 23,
+  "title": "Число инверсий",
+  "difficulty": "easy",
+  "type": "Алгоритмическая",
+  "tags": [
+    "sorting",
+    "fenwick"
+  ]
+}

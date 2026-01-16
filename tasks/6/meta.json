@@ -1,0 +1,10 @@
+{
+  "id": 6,
+  "title": "Сдвиг строки",
+  "difficulty": "tutorial",
+  "type": "Алгоритмическая",
+  "tags": [
+    "string",
+    "rotation"
+  ]
+}

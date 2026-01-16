@@ -1,0 +1,9 @@
+{
+  "id": 40,
+  "title": "Биномиальный коэффициент",
+  "difficulty": "casual",
+  "type": "Модулярная арифметика",
+  "tags": [
+    "combinatorics"
+  ]
+}

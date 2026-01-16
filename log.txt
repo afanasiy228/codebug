@@ -1,6 +1,7 @@
-Task 2
+Task 0
 Test 1: OK
 Test 2: OK
-Test 3: WA
+Test 3: OK
 Test 4: OK
-Final verdict: WA
+Test 5: OK
+Final verdict: OK

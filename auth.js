@@ -38,7 +38,7 @@ function updateNavbar() {
             <a href="rating.html">Рейтинг</a>
             <a href="submissions.html">Посылки</a>
             <a href="donate.html">Донат</a>
-            <a href="faq.html">FAQ</a>
+            <a href="faq.html">Помощь</a>
             <a href="profile.html">${user}</a>
             <a onclick="logout()" style="cursor:pointer;color:#ffd451;">Выйти</a>
         `;
@@ -49,7 +49,7 @@ function updateNavbar() {
             <a href="train.html">Тренировка</a>
             <a href="rating.html">Рейтинг</a>
             <a href="donate.html">Донат</a>
-            <a href="faq.html">FAQ</a>
+            <a href="faq.html">Помощь</a>
             <a href="auth.html">Войти / Регистрация</a>
         `;
     }
@@ -206,10 +206,14 @@ async function saveAvatar(login, base64) {
 function generateCaptcha() {
     const a = Math.floor(Math.random() * 5 + 1);
     const b = Math.floor(Math.random() * 5 + 1);
-    document.getElementById("captchaText").innerText = `${a} + ${b} = ?`;
+    const el = document.getElementById("captchaText");
+    if (!el) return;
+    el.innerText = `${a} + ${b} = ?`;
     window.correctCaptcha = a + b;
 }
-generateCaptcha();
+if (document.getElementById("captchaText")) {
+    generateCaptcha();
+}
 
 
 /* ============================

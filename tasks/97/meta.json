@@ -1,0 +1,10 @@
+{
+  "id": 97,
+  "title": "Количество КСС",
+  "difficulty": "ultra",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graph",
+    "scc"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": 120,
+  "title": "LCP запросы",
+  "difficulty": "impossible",
+  "type": "Алгоритмическая",
+  "tags": [
+    "suffix array",
+    "lcp",
+    "string"
+  ]
+}

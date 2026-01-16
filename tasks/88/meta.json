@@ -1,0 +1,11 @@
+{
+  "id": 88,
+  "title": "Пары не больше K",
+  "difficulty": "extreme",
+  "type": "Время",
+  "tags": [
+    "two pointers",
+    "sorting",
+    "pairs"
+  ]
+}

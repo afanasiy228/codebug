@@ -1,0 +1,9 @@
+{
+  "id": 98,
+  "title": "Диапазон: add/min",
+  "difficulty": "insane",
+  "type": "Алгоритмическая",
+  "tags": [
+    "segment tree"
+  ]
+}

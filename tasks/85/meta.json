@@ -1,0 +1,10 @@
+{
+  "id": 85,
+  "title": "Анаграммы в строке",
+  "difficulty": "hard",
+  "type": "Алгоритмическая",
+  "tags": [
+    "string",
+    "sliding window"
+  ]
+}

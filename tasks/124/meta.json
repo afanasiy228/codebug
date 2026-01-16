@@ -1,0 +1,10 @@
+{
+  "id": 124,
+  "title": "Красные вершины",
+  "difficulty": "impossible",
+  "type": "Алгоритмическая",
+  "tags": [
+    "centroid decomposition",
+    "tree"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": 119,
+  "title": "Различные подстроки",
+  "difficulty": "impossible",
+  "type": "Алгоритмическая",
+  "tags": [
+    "suffix automaton",
+    "string"
+  ]
+}

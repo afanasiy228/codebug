@@ -1,0 +1,10 @@
+{
+  "id": 8,
+  "title": "Последний не больше",
+  "difficulty": "tutorial",
+  "type": "Алгоритмическая",
+  "tags": [
+    "binary search",
+    "array"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": 55,
+  "title": "Цикл в орграфе",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graph",
+    "dfs"
+  ]
+}

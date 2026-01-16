@@ -1,0 +1,10 @@
+{
+  "id": 5,
+  "title": "Сумма на отрезке",
+  "difficulty": "tutorial",
+  "type": "Алгоритмическая",
+  "tags": [
+    "prefix",
+    "array"
+  ]
+}

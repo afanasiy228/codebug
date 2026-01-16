@@ -1,0 +1,10 @@
+{
+  "id": 114,
+  "title": "Подстроки-палиндромы",
+  "difficulty": "impossible",
+  "type": "Память",
+  "tags": [
+    "manacher",
+    "string"
+  ]
+}

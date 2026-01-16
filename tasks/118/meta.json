@@ -1,0 +1,10 @@
+{
+  "id": 118,
+  "title": "Расстояние в корневом дереве",
+  "difficulty": "extreme",
+  "type": "Алгоритмическая",
+  "tags": [
+    "lca",
+    "rooted tree"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": 107,
+  "title": "Сумма по значениям",
+  "difficulty": "ultra",
+  "type": "Память",
+  "tags": [
+    "sorting",
+    "prefix sums"
+  ]
+}

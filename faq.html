@@ -4,50 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <title>CodeBug — FAQ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-         :root {
-            --bg: #0f0f11;
-            --bg-card: #141417;
-            --border: #2a2a33;
-            --text-main: #f5f5f7;
-            --text-muted: #b0b0b9;
-            --accent: #ffd451;
-            --accent-hover: #ffe38a;
+        :root {
+            --bg: #f7f1e7;
+            --bg-strong: #f0e6d8;
+            --ink: #1a1612;
+            --muted: #5f5b54;
+            --accent: #0f766e;
+            --accent-strong: #0b5f59;
+            --warm: #f3b562;
+            --card: #fffaf2;
+            --stroke: #e2d6c4;
+            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
         }
         
         body {
             margin: 0;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: Inter, sans-serif;
+            color: var(--ink);
+            font-family: "IBM Plex Sans", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background: rgba(15, 118, 110, 0.2);
         }
         /* HEADER */
         
         header {
-            height: 56px;
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
+            height: 72px;
+            background: rgba(255, 250, 242, 0.8);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            padding: 0 4vw;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 10;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
         
         .logo {
+            font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
             font-weight: 700;
-            color: var(--accent);
+            letter-spacing: 0.4px;
+            color: var(--ink);
         }
         
         nav a {
             margin-left: 20px;
-            color: var(--text-muted);
+            color: var(--muted);
             text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
         }
         
         nav a:hover {
@@ -59,43 +79,65 @@
             max-width: 900px;
             margin: 40px auto 80px;
             padding: 0 20px;
+            counter-reset: faq;
         }
         
         h1 {
-            color: var(--accent);
+            color: var(--ink);
             font-size: 32px;
             margin-bottom: 12px;
+            font-family: "Space Grotesk", sans-serif;
         }
         
         p.sub {
-            color: var(--text-muted);
+            color: var(--muted);
             margin-bottom: 30px;
             font-size: 15px;
         }
         /* FAQ BLOCKS */
         
         .faq-block {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 14px;
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            padding: 20px 20px 20px 60px;
+            border-radius: 16px;
             margin-bottom: 20px;
             transition: 0.2s;
+            position: relative;
+            box-shadow: var(--shadow);
         }
         
         .faq-block:hover {
             border-color: var(--accent);
         }
+
+        .faq-block::before {
+            counter-increment: faq;
+            content: counter(faq, decimal-leading-zero);
+            position: absolute;
+            left: 18px;
+            top: 18px;
+            width: 28px;
+            height: 28px;
+            border-radius: 10px;
+            background: rgba(15, 118, 110, 0.12);
+            color: var(--accent);
+            font-weight: 700;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+        }
         
         .faq-question {
             font-size: 20px;
-            color: var(--accent);
+            color: var(--ink);
             margin-bottom: 10px;
             font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
         }
         
         .faq-answer {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 15px;
             line-height: 1.7;
         }
@@ -106,13 +148,42 @@
         }
         
         pre {
-            background: #1c1c22;
+            background: #fff;
             padding: 10px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
             overflow-x: auto;
         }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp 0.7s ease forwards;
+            animation-delay: var(--delay, 0s);
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -124,11 +195,13 @@
 
     <div class="container">
 
-        <h1>FAQ</h1>
-        <p class="sub">Ответы на самые частые вопросы о платформе CodeBug.</p>
+        <div class="reveal" style="--delay: 0s;">
+            <h1>Помощь</h1>
+            <p class="sub">Ответы на самые частые вопросы о платформе CodeBug.</p>
+        </div>
 
         <!-- FAQ BLOCK 1 -->
-        <div class="faq-block">
+        <div class="faq-block reveal" style="--delay: 0.05s;">
             <div class="faq-question">Что такое CodeBug?</div>
             <div class="faq-answer">
                 CodeBug — это тренировочная платформа, где школьники учатся находить и исправлять ошибки в C++. Всё работает как в настоящем онлайн-джадже: решение запускается на тестах, выдаёт вердикт, и нужно исправить ошибку самостоятельно.
@@ -136,40 +209,79 @@
         </div>
 
         <!-- FAQ BLOCK 2 -->
-        <div class="faq-block">
-            <div class="faq-question">Что означают CE, RE, WA?</div>
+        <div class="faq-block reveal" style="--delay: 0.08s;">
+            <div class="faq-question">Чем задачи отличаются от обычных олимпиадных?</div>
             <div class="faq-answer">
-                <b>CE</b> — ошибка компиляции.<br>
-                <b>RE</b> — аварийное завершение программы.<br>
-                <b>WA</b> — программа выдала неверный ответ.
+                В задачах уже есть готовое решение с ошибкой. Ты не пишешь с нуля, а ищешь и исправляешь баг, как в реальном коде.
             </div>
         </div>
 
         <!-- FAQ BLOCK 3 -->
-        <div class="faq-block">
-            <div class="faq-question">Почему задача не проходит тесты?</div>
+        <div class="faq-block reveal" style="--delay: 0.11s;">
+            <div class="faq-question">Какие типы ошибок встречаются?</div>
             <div class="faq-answer">
-                Наиболее частые причины:
-                <ul>
-                    <li>выход за границы массива</li>
-                    <li>переполнение памяти</li>
-                    <li>ошибка один шаг (i &lt;= n вместо i &lt; n)</li>
-                    <li>неверный формат ввода</li>
-                    <li>необработанные случаи</li>
-                </ul>
+                Логические, граничные случаи, неверная асимптотика (TL), превышение памяти (ML), ошибки индексов и ввода/вывода.
             </div>
         </div>
 
         <!-- FAQ BLOCK 4 -->
-        <div class="faq-block">
-            <div class="faq-question">Почему вы не показываете где ошибка?</div>
+        <div class="faq-block reveal" style="--delay: 0.14s;">
+            <div class="faq-question">Как понять, что я исправил правильно?</div>
             <div class="faq-answer">
-                Это принципиальная концепция CodeBug. Ты учишься как настоящий специалист — самостоятельно находить баги в реальном коде.
+                После отправки код прогоняется по тестам. Если все тесты прошли, получаешь OK и опыт за задачу.
             </div>
         </div>
 
         <!-- FAQ BLOCK 5 -->
-        <div class="faq-block">
+        <div class="faq-block reveal" style="--delay: 0.17s;">
+            <div class="faq-question">Можно ли посмотреть эталонное решение?</div>
+            <div class="faq-answer">
+                Да, но лучше сначала попытаться найти ошибку самому. Так быстрее развивается навык дебага.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 6 -->
+        <div class="faq-block reveal" style="--delay: 0.2s;">
+            <div class="faq-question">Как выбрать уровень сложности?</div>
+            <div class="faq-answer">
+                Используй фильтры: учебная, лёгкая, средняя, сложная и ультра. Начинай с учебных и постепенно повышай уровень.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 7 -->
+        <div class="faq-block reveal" style="--delay: 0.23s;">
+            <div class="faq-question">Почему решение даёт TL или ML?</div>
+            <div class="faq-answer">
+                Обычно это неправильная асимптотика или лишние структуры данных. Исправь алгоритм и оптимизируй память.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 8 -->
+        <div class="faq-block reveal" style="--delay: 0.26s;">
+            <div class="faq-question">Нужно ли знать алгоритмы заранее?</div>
+            <div class="faq-answer">
+                Базовые структуры данных и понимание асимптотики очень помогают. В учебных задачах всё объясняется по шагам.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 9 -->
+        <div class="faq-block reveal" style="--delay: 0.29s;">
+            <div class="faq-question">Можно ли тренироваться без регистрации?</div>
+            <div class="faq-answer">
+                Да, ты можешь читать условия и код. Но для отправки решений и сохранения прогресса нужен вход.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 10 -->
+        <div class="faq-block reveal" style="--delay: 0.32s;">
+            <div class="faq-question">Как начисляется опыт и рейтинг?</div>
+            <div class="faq-answer">
+                Опыт зависит от сложности исправления ошибки. За ультра-задачи даётся больше всего баллов.
+            </div>
+        </div>
+
+        <!-- FAQ BLOCK 5 -->
+        <div class="faq-block reveal" style="--delay: 0.35s;">
             <div class="faq-question">Можно ли предложить свою задачу?</div>
             <div class="faq-answer">
                 Да! Напиши на почту или в Telegram. Мы добавим твою задачу в будущие обновления.
@@ -177,7 +289,7 @@
         </div>
 
         <!-- FAQ BLOCK 6 -->
-        <div class="faq-block">
+        <div class="faq-block reveal" style="--delay: 0.38s;">
             <div class="faq-question">Будет ли поддержка других языков?</div>
             <div class="faq-answer">
                 Пока что CodeBug целиком сфокусирован на C++. В будущем возможна поддержка Python или Java.

@@ -1,0 +1,11 @@
+{
+  "id": 11,
+  "title": "Кратчайший путь в лабиринте",
+  "difficulty": "tutorial",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graph",
+    "bfs",
+    "grid"
+  ]
+}

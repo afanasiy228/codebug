@@ -1,0 +1,10 @@
+{
+  "id": 121,
+  "title": "Суммы по подмаскам",
+  "difficulty": "ultra",
+  "type": "Алгоритмическая",
+  "tags": [
+    "bitmask",
+    "sos dp"
+  ]
+}

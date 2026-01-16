@@ -4,46 +4,76 @@
 <head>
     <meta charset="UTF-8">
     <title>CodeBug — Тренировка</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-         :root {
-            --bg: #0f0f11;
-            --bg-card: #141417;
-            --bg-soft: #1b1b20;
-            --border: #262631;
-            --border-light: #3a3a44;
-            --text-main: #f5f5f7;
-            --text-muted: #a3a3b8;
-            --accent: #ffd451;
+        :root {
+            --bg: #f7f1e7;
+            --bg-strong: #f0e6d8;
+            --ink: #1a1612;
+            --muted: #5f5b54;
+            --accent: #0f766e;
+            --accent-strong: #0b5f59;
+            --warm: #f3b562;
+            --card: #fffaf2;
+            --stroke: #e2d6c4;
+            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --radius-lg: 22px;
+            --radius-md: 16px;
         }
         
         body {
             margin: 0;
-            background: var(--bg);
-            font-family: Inter, sans-serif;
-            color: var(--text-main);
+            color: var(--ink);
+            font-family: "IBM Plex Sans", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 10% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+                radial-gradient(900px 500px at 90% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+        }
+
+        ::selection {
+            background: rgba(15, 118, 110, 0.2);
         }
         
+        * {
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: min(1200px, 92vw);
+            margin: 0 auto;
+        }
+
         header {
-            background: #0d0d0f;
-            border-bottom: 1px solid var(--border);
-            padding: 12px 40px;
+            height: 72px;
+            background: rgba(255, 250, 242, 0.8);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            padding: 0 4vw;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
         }
         
         .logo {
+            font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
-            font-weight: 800;
-            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--ink);
         }
         
         nav a {
-            color: var(--text-muted);
+            color: var(--muted);
             margin-left: 25px;
             text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
         }
         
         nav a:hover {
@@ -51,34 +81,58 @@
         }
         
         .page {
-            max-width: 1300px;
-            margin: 40px auto;
+            margin: 40px auto 80px;
             display: grid;
             grid-template-columns: 280px 1fr;
             gap: 40px;
-            padding: 0 30px;
         }
         /* SIDEBAR */
         
         .filters {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            padding: 22px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 92px;
+            align-self: start;
+        }
+
+        .filters::after {
+            content: "";
+            position: absolute;
+            inset: -30px -30px auto auto;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(243, 181, 98, 0.35), transparent 70%);
+            pointer-events: none;
         }
         
         .filters h2 {
             margin: 0;
-            color: var(--accent);
-            font-size: 21px;
+            color: var(--ink);
+            font-size: 22px;
+            font-family: "Space Grotesk", sans-serif;
         }
         
         label {
             display: block;
-            color: var(--text-muted);
+            color: var(--muted);
             margin-top: 18px;
             margin-bottom: 6px;
             font-size: 14px;
+            font-weight: 600;
+        }
+
+        .filter-tip {
+            margin-top: 18px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(15, 118, 110, 0.08);
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
         }
         /* SELECT */
         
@@ -90,12 +144,13 @@
             width: 100%;
             padding: 10px;
             padding-right: 40px;
-            background: #0f0f13;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            color: var(--text-main);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: var(--ink);
             appearance: none;
             cursor: pointer;
+            font-weight: 600;
         }
         
         .select::after {
@@ -111,17 +166,17 @@
         .select select:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
         }
         /* SEARCH */
         
         input[type="text"] {
             width: 100%;
             padding: 10px;
-            background: #0f0f13;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            color: var(--text-main);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: var(--ink);
             font-size: 14px;
             box-sizing: border-box;
         }
@@ -129,19 +184,38 @@
         input[type="text"]:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(255, 212, 81, 0.25);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
         }
         /* MAIN */
         
-        h1 {
-            color: var(--accent);
-            font-size: 30px;
-            margin-top: 0;
+        .page-head {
+            margin-bottom: 18px;
         }
-        
+
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(15, 118, 110, 0.12);
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            color: var(--ink);
+            font-size: 32px;
+            margin: 0 0 10px;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
         .subtitle {
-            color: var(--text-muted);
-            margin-bottom: 20px;
+            color: var(--muted);
+            margin-bottom: 0;
+            line-height: 1.6;
         }
         
         .top-row {
@@ -152,10 +226,10 @@
         }
         
         .daily-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--accent);
-            padding: 16px 18px;
+            background: linear-gradient(120deg, rgba(15, 118, 110, 0.16), rgba(243, 181, 98, 0.22));
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(226, 214, 196, 0.9);
+            padding: 18px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -171,6 +245,7 @@
         .daily-caption {
             font-size: 14px;
             color: var(--accent);
+            font-weight: 700;
         }
         
         .daily-title {
@@ -180,18 +255,19 @@
         
         .btn-small {
             background: var(--accent);
-            border-radius: 10px;
+            border-radius: 12px;
             border: none;
             padding: 8px 16px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
-            color: #111;
+            color: #fff;
             font-size: 14px;
             white-space: nowrap;
+            box-shadow: 0 12px 28px rgba(15, 118, 110, 0.25);
         }
         
         .btn-small:hover {
-            filter: brightness(1.05);
+            background: var(--accent-strong);
         }
         
         .random-row {
@@ -200,58 +276,65 @@
         }
         
         .btn-random {
-            background: var(--accent);
-            border: none;
+            background: #fff;
+            border: 1px solid var(--stroke);
             padding: 8px 16px;
-            border-radius: 10px;
-            color: #111;
-            font-weight: 700;
+            border-radius: 12px;
+            color: var(--ink);
+            font-weight: 600;
             cursor: pointer;
             font-size: 14px;
+            box-shadow: 0 10px 24px rgba(26, 22, 18, 0.08);
         }
         
         .btn-random:hover {
-            filter: brightness(1.05);
+            border-color: var(--accent);
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
             overflow: hidden;
+            box-shadow: var(--shadow);
         }
         
         th {
-            background: var(--bg-soft);
+            background: rgba(226, 214, 196, 0.4);
             padding: 14px;
             text-align: left;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--stroke);
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         
         td {
             padding: 14px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(226, 214, 196, 0.7);
             font-size: 14px;
         }
         
         tr:hover {
-            background: #1a1a21;
+            background: rgba(15, 118, 110, 0.06);
         }
         /* PILL TAGS */
         
         .pill {
             padding: 3px 8px;
             border-radius: 999px;
-            border: 1px solid var(--border);
+            border: 1px solid rgba(226, 214, 196, 0.8);
             font-size: 12px;
-            background: #232327;
+            background: #fff;
+            color: var(--muted);
         }
         
         .link {
             color: var(--accent);
             text-decoration: none;
+            font-weight: 600;
         }
         
         .link:hover {
@@ -260,14 +343,62 @@
         
         .empty {
             padding: 30px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
             text-align: center;
             margin-top: 20px;
-            color: var(--text-muted);
+            color: var(--muted);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp 0.7s ease forwards;
+            animation-delay: var(--delay, 0s);
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 960px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                position: static;
+            }
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
+
+            .page {
+                margin-top: 24px;
+            }
+
+            .daily-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
         }
     </style>
+    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -277,19 +408,26 @@
         <nav id="nav-links"></nav>
     </header>
 
-    <div class="page">
+    <main class="page container">
 
         <!-- SIDEBAR -->
-        <div class="filters">
+        <div class="filters reveal" style="--delay: 0s;">
             <h2>Фильтры</h2>
 
             <label>Сложность</label>
             <div class="select">
                 <select id="difficulty">
                 <option value="">Любая</option>
+                <option value="tutorial">Учебная</option>
                 <option value="easy">Лёгкая</option>
-                <option value="medium">Средняя</option>
+                <option value="casual">Casual</option>
+                <option value="normal">Нормальная</option>
                 <option value="hard">Сложная</option>
+                <option value="insane">Безумная</option>
+                <option value="extreme">Экстремальная</option>
+                <option value="ultra">Ультра</option>
+                <option value="impossible">Невозможная</option>
+                <option value="tourist">Турист</option>
             </select>
             </div>
 
@@ -305,17 +443,21 @@
             </div>
 
             <label>Поиск</label>
-            <input type="text" id="search" placeholder="например: SuperMemo, DFS, формула…">
+            <input type="text" id="search">
+            <div class="filter-tip">Совет: начни с фильтра «Лёгкая» и закрепи основу перед олимпиадным уровнем.</div>
         </div>
 
         <!-- MAIN -->
         <main>
-            <h1>Тренировка</h1>
-            <div class="subtitle">Подберите задачу по сложности или типу ошибки, выберите задачу дня или возьмите рандом.</div>
+            <div class="page-head reveal" style="--delay: 0.05s;">
+                <div class="page-badge">Тренировочный режим</div>
+                <h1>Тренировка</h1>
+                <div class="subtitle">Подберите задачу по сложности или типу ошибки, выберите задачу дня или возьмите рандом.</div>
+            </div>
 
             <div class="top-row">
                 <!-- Задача дня -->
-                <div class="daily-card" id="daily-card">
+                <div class="daily-card reveal" id="daily-card" style="--delay: 0.1s;">
                     <div class="daily-main">
                         <div class="daily-caption">🔥 Задача дня</div>
                         <div class="daily-title" id="daily-title">Загружаю…</div>
@@ -324,12 +466,12 @@
                 </div>
 
                 <!-- Рандомная задача -->
-                <div class="random-row">
+                <div class="random-row reveal" style="--delay: 0.14s;">
                     <button class="btn-random" onclick="openRandom()">🎲 Случайная задача</button>
                 </div>
             </div>
 
-            <table>
+            <table class="reveal" style="--delay: 0.18s;">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -344,7 +486,7 @@
             <div id="empty" class="empty" style="display:none;">Задачи не найдены…</div>
         </main>
 
-    </div>
+    </main>
 
     <script src="auth.js"></script>
 
@@ -421,14 +563,28 @@
 
         function diffPill(diff) {
             const map = {
-                easy: "background:#2c7a3f; color:#d6ffd6;",
-                medium: "background:#b59b34; color:#fff8d1;",
-                hard: "background:#8b2c2c; color:#ffd6d6;"
+                tutorial: "background:#9aa3ad; color:#111318;",
+                easy: "background:#8fe7a1; color:#0b2314;",
+                casual: "background:#45d1c2; color:#052b26;",
+                normal: "background:#4d7cff; color:#0b1329;",
+                hard: "background:#8b5cf6; color:#1a0c2f;",
+                insane: "background:#ffb66d; color:#2a1600;",
+                extreme: "background:#ff8a3d; color:#2a1200;",
+                ultra: "background:#ff8585; color:#2a0b0b;",
+                impossible: "background:#ff4d4d; color:#2a0606;",
+                tourist: "background:#b8141b; color:#2b0506;"
             };
             let text = diff;
-            if (diff === "easy") text = "Лёгкая";
-            else if (diff === "medium") text = "Средняя";
+            if (diff === "tutorial") text = "Учебная";
+            else if (diff === "easy") text = "Лёгкая";
+            else if (diff === "casual") text = "Casual";
+            else if (diff === "normal") text = "Нормальная";
             else if (diff === "hard") text = "Сложная";
+            else if (diff === "insane") text = "Безумная";
+            else if (diff === "extreme") text = "Экстремальная";
+            else if (diff === "ultra") text = "Ультра";
+            else if (diff === "impossible") text = "Невозможная";
+            else if (diff === "tourist") text = "Турист";
 
             return `<span class="pill" style="${map[diff] || ""}">${text || "-"}</span>`;
         }

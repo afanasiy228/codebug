@@ -1,0 +1,10 @@
+{
+  "id": 51,
+  "title": "Суммы в матрице",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "range queries",
+    "prefix"
+  ]
+}
