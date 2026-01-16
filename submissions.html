@@ -179,6 +179,11 @@
             font-weight: 700;
         }
 
+        .verdict-queue {
+            color: #7b8794;
+            font-weight: 700;
+        }
+
         @media (max-width: 740px) {
             .filters {
                 flex-direction: column;
@@ -216,6 +221,8 @@
             <option value="WA">WA</option>
             <option value="RE">RE</option>
             <option value="TL">TL</option>
+            <option value="QUEUE">В очереди</option>
+            <option value="TESTING">Тестируется</option>
         </select>
         </div>
 
@@ -326,7 +333,14 @@
                     s.verdict === "OK" ? "verdict-ok" :
                     s.verdict === "WA" ? "verdict-wa" :
                     s.verdict === "RE" ? "verdict-re" :
+                    s.verdict === "QUEUE" ? "verdict-queue" :
+                    s.verdict === "TESTING" ? "verdict-queue" :
                     "verdict-tl";
+
+                const verdictLabel =
+                    s.verdict === "QUEUE" ? "В очереди" :
+                    s.verdict === "TESTING" ? "Тестируется" :
+                    s.verdict;
 
                 tr.innerHTML = `
             <td>${s.login}</td>
@@ -337,7 +351,7 @@
                 </a>
             </td>
 
-            <td class="${cls}">${s.verdict}</td>
+            <td class="${cls}">${verdictLabel}</td>
 
             <td>${new Date(s.date).toLocaleString()}</td>
         `;

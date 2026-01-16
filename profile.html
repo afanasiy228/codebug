@@ -351,12 +351,14 @@
             <div class="info-row">Дата регистрации: <span id="created">—</span></div>
             <div class="info-row">Опыт: <span id="exp">0</span></div>
             <div class="info-row">Решено задач: <span id="solved">0</span></div>
+            <div class="info-row">Рейтинг: <span id="rating">0</span></div>
 
             <div class="section-title">Статистика</div>
 
             <div class="stats-box">
                 <div class="stat-item">Решено: <span id="solved2">0</span></div>
                 <div class="stat-item">Опыт: <span id="exp2">0</span></div>
+                <div class="stat-item">Рейтинг: <span id="rating2">0</span></div>
             </div>
 
 
@@ -437,6 +439,8 @@
             document.getElementById("solved2").innerText = stats.cnt || 0;
             document.getElementById("exp").innerText = stats.exp || 0;
             document.getElementById("exp2").innerText = stats.exp || 0;
+            document.getElementById("rating").innerText = stats.rating || 0;
+            document.getElementById("rating2").innerText = stats.rating || 0;
 
             // ---- RANK ----
             document.getElementById("rank").innerText = getRank(stats.exp || 0);

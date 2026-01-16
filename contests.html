@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Соревнования — CodeBug</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f1e7;
+      --bg-strong: #f0e6d8;
+      --ink: #1a1612;
+      --muted: #5f5b54;
+      --accent: #0f766e;
+      --accent-strong: #0b5f59;
+      --warm: #f3b562;
+      --card: #fffaf2;
+      --stroke: #e2d6c4;
+      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg-strong));
+      min-height: 100vh;
+    }
+
+    header {
+      height: 72px;
+      background: rgba(255, 250, 242, 0.8);
+      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      padding: 0 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+    }
+
+    .logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--ink);
+    }
+
+    nav a {
+      margin-left: 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .container {
+      width: min(1100px, 92vw);
+      margin: 40px auto 80px;
+    }
+
+    .page-title {
+      font-size: 34px;
+      font-weight: 700;
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0 0 10px;
+    }
+
+    .page-subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section h2 {
+      font-size: 22px;
+      margin: 0 0 14px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .contest-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .contest-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 10px;
+    }
+
+    .contest-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .contest-meta {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .contest-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    button {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 14px 32px rgba(15, 118, 110, 0.25);
+    }
+
+    button.secondary {
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+    }
+
+    .empty {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--stroke);
+      color: var(--muted);
+    }
+  </style>
+  <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">CodeBug</div>
+    <nav id="nav-links"></nav>
+  </header>
+
+  <main class="container">
+    <h1 class="page-title">Соревнования</h1>
+    <p class="page-subtitle">Идущие, предстоящие и прошедшие соревнования. Регистрация обязательна для участия.</p>
+
+    <section class="section">
+      <h2>Идут сейчас</h2>
+      <div id="ongoingList" class="contest-grid"></div>
+      <div id="ongoingEmpty" class="empty" style="display:none;">Сейчас нет активных соревнований.</div>
+    </section>
+
+    <section class="section">
+      <h2>Предстоящие</h2>
+      <div id="upcomingList" class="contest-grid"></div>
+      <div id="upcomingEmpty" class="empty" style="display:none;">Нет запланированных соревнований.</div>
+    </section>
+
+    <section class="section">
+      <h2>Прошедшие</h2>
+      <div id="finishedList" class="contest-grid"></div>
+      <div id="finishedEmpty" class="empty" style="display:none;">Пока нет прошедших соревнований.</div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="firebase.js"></script>
+  <script src="auth.js"></script>
+
+  <script>
+    updateNavbar();
+
+    const user = getUser();
+
+    function formatUtc(ts) {
+      if (!ts) return "—";
+      return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
+    }
+
+    function statusFromTimes(start, end) {
+      const now = Date.now();
+      if (now < start) return "upcoming";
+      if (now >= start && now <= end) return "ongoing";
+      return "finished";
+    }
+
+    async function registerContest(contestId) {
+      if (!user) {
+        alert("Войдите, чтобы зарегистрироваться.");
+        window.location.href = "auth.html";
+        return;
+      }
+      await db.ref(`contest_regs/${contestId}/${user}`).set({
+        login: user,
+        registeredAt: Date.now()
+      });
+      loadContests();
+    }
+
+    async function renderList(list, containerId, emptyId) {
+      const container = document.getElementById(containerId);
+      const empty = document.getElementById(emptyId);
+      container.innerHTML = "";
+      if (!list.length) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      for (const contest of list) {
+        let registered = false;
+        if (user) {
+          const regSnap = await db.ref(`contest_regs/${contest.id}/${user}`).get();
+          registered = regSnap.exists();
+        }
+
+        const card = document.createElement("div");
+        card.className = "contest-card";
+        card.innerHTML = `
+          <div class="badge">${contest.statusLabel}</div>
+          <h3 class="contest-title">${contest.title}</h3>
+          <div class="contest-meta">
+            <span>Старт: ${formatUtc(contest.start)}</span>
+            <span>Финиш: ${formatUtc(contest.end)}</span>
+            <span>Автор(ы): ${(contest.authors || []).join(", ") || "—"}</span>
+          </div>
+          <div class="contest-actions">
+            <button onclick="openContest('${contest.id}')">Открыть</button>
+            <button class="secondary" onclick="registerContest('${contest.id}')">
+              ${registered ? "Вы зарегистрированы" : "Зарегистрироваться"}
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    function openContest(id) {
+      window.location.href = `contest.html?id=${id}`;
+    }
+
+    async function loadContests() {
+      const snap = await db.ref("contests").get();
+      const contests = [];
+      if (snap.exists()) {
+        const data = snap.val();
+        Object.keys(data).forEach(id => {
+          const item = data[id];
+          contests.push({
+            id,
+            ...item
+          });
+        });
+      }
+
+      const now = Date.now();
+      const ongoing = [];
+      const upcoming = [];
+      const finished = [];
+
+      contests.forEach(contest => {
+        const status = statusFromTimes(contest.start, contest.end);
+        const statusLabel = status === "ongoing" ? "Идет" : status === "upcoming" ? "Скоро" : "Завершен";
+        const entry = { ...contest, status, statusLabel };
+        if (status === "ongoing") ongoing.push(entry);
+        else if (status === "upcoming") upcoming.push(entry);
+        else finished.push(entry);
+      });
+
+      ongoing.sort((a, b) => a.end - b.end);
+      upcoming.sort((a, b) => a.start - b.start);
+      finished.sort((a, b) => b.end - a.end);
+
+      await renderList(ongoing, "ongoingList", "ongoingEmpty");
+      await renderList(upcoming, "upcomingList", "upcomingEmpty");
+      await renderList(finished, "finishedList", "finishedEmpty");
+    }
+
+    loadContests();
+  </script>
+</body>
+
+</html>
