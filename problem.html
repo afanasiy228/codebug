@@ -284,14 +284,14 @@
             font-size: 16.5px;
             line-height: 1.45;
         }
-
+        
         .task-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin: 12px 0 18px;
         }
-
+        
         .task-tag {
             padding: 4px 10px;
             border-radius: 999px;
@@ -452,9 +452,9 @@
 </head>
 
 <!-- Firebase -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script src="firebase.js"></script>
@@ -1080,9 +1080,9 @@
                 const tagsRoot = document.getElementById("taskTags");
                 if (tagsRoot) {
                     const tags = Array.isArray(meta.tags) ? meta.tags : [];
-                    tagsRoot.innerHTML = tags.length
-                        ? tags.map(tag => `<span class="task-tag">${tag}</span>`).join("")
-                        : "";
+                    tagsRoot.innerHTML = tags.length ?
+                        tags.map(tag => `<span class="task-tag">${tag}</span>`).join("") :
+                        "";
                 }
             } catch (e) {
                 document.getElementById("taskTitle").innerText = "Название не найдено";

@@ -318,7 +318,7 @@
       <div class="admin-box">
         <h3>Анонс на сайте</h3>
         <p class="admin-note">Сообщение будет храниться в Firebase: site/announcement.</p>
-        <input id="adminAnnouncement" class="admin-input" type="text" placeholder="Короткий анонс">
+        <textarea id="adminAnnouncement" class="admin-textarea" placeholder="Текст анонса"></textarea>
         <div class="admin-actions">
           <button type="button" onclick="adminSaveAnnouncement()">Сохранить анонс</button>
           <button type="button" onclick="adminClearAnnouncement()">Очистить анонс</button>
@@ -630,7 +630,8 @@
     }
 
     async function adminSaveAnnouncement() {
-      const text = document.getElementById("adminAnnouncement").value.trim();
+      const raw = document.getElementById("adminAnnouncement").value;
+      const text = raw.trim();
       if (!text) {
         setAdminLog("Введите текст анонса.");
         return;

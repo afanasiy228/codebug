@@ -21,6 +21,130 @@ function logout() {
 }
 
 /* ============================
+   MOBILE NAV (BURGER)
+============================ */
+function ensureMobileNavStyles() {
+    if (document.getElementById("mobile-nav-style")) return;
+    const style = document.createElement("style");
+    style.id = "mobile-nav-style";
+    style.textContent = `
+#nav-links {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+#nav-links .nav-shell {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+#nav-links .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+#nav-links .nav-burger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 20px;
+    cursor: pointer;
+}
+#nav-links .nav-drawer {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 280px;
+    height: 100%;
+    background: #fffaf2;
+    padding: 80px 20px 24px;
+    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.12);
+    z-index: 1001;
+    gap: 12px;
+    flex-direction: column;
+    transition: right 0.25s ease;
+}
+#nav-links .nav-drawer a {
+    margin: 0;
+}
+#nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1000;
+}
+body.nav-open #nav-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+body.nav-open #nav-links .nav-drawer {
+    right: 0;
+}
+@media (max-width: 900px) {
+    #nav-links .nav-links {
+        display: none;
+    }
+    #nav-links .nav-burger {
+        display: inline-flex;
+    }
+    #nav-links .nav-drawer {
+        display: flex;
+    }
+}
+`;
+    document.head.appendChild(style);
+}
+
+function ensureNavOverlay() {
+    let overlay = document.getElementById("nav-overlay");
+    if (overlay) return overlay;
+    overlay = document.createElement("div");
+    overlay.id = "nav-overlay";
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function bindMobileNav(nav) {
+    const burger = nav.querySelector(".nav-burger");
+    const drawer = nav.querySelector(".nav-drawer");
+    const overlay = ensureNavOverlay();
+    if (!burger || !drawer) return;
+
+    const closeMenu = () => {
+        document.body.classList.remove("nav-open");
+        burger.setAttribute("aria-expanded", "false");
+        drawer.setAttribute("aria-hidden", "true");
+    };
+
+    const toggleMenu = () => {
+        const isOpen = document.body.classList.toggle("nav-open");
+        burger.setAttribute("aria-expanded", String(isOpen));
+        drawer.setAttribute("aria-hidden", String(!isOpen));
+    };
+
+    burger.onclick = toggleMenu;
+    overlay.onclick = closeMenu;
+    drawer.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", closeMenu);
+    });
+    window.addEventListener("resize", () => {
+        if (window.innerWidth > 900) closeMenu();
+    });
+    closeMenu();
+}
+
+/* ============================
    ADMIN ACCESS
 ============================ */
 async function checkAdminAccess() {
@@ -44,34 +168,39 @@ function updateNavbar() {
     if (!nav) return;
 
     const user = getUser();
+    ensureMobileNavStyles();
 
-    if (user) {
-        nav.innerHTML = `
-            <a href="index.html">Главная</a>
-            <a href="archive.html">Архив</a>
-            <a href="train.html">Тренировка</a>
-            <a href="contests.html">Соревнования</a>
-            <a href="rating.html">Рейтинг</a>
-            <a href="submissions.html">Посылки</a>
-            <a href="news.html">Новости</a>
-            <a href="donate.html">Донат</a>
-            <a href="faq.html">Помощь</a>
-            <a href="profile.html">${user}</a>
-            <a onclick="logout()" style="cursor:pointer;color:#ffd451;">Выйти</a>
-        `;
-    } else {
-        nav.innerHTML = `
-            <a href="index.html">Главная</a>
-            <a href="archive.html">Архив</a>
-            <a href="train.html">Тренировка</a>
-            <a href="contests.html">Соревнования</a>
-            <a href="rating.html">Рейтинг</a>
-            <a href="donate.html">Донат</a>
-            <a href="news.html">Новости</a>
-            <a href="faq.html">Помощь</a>
-            <a href="auth.html">Войти / Регистрация</a>
-        `;
-    }
+    const commonLinks = `
+        <a href="index.html">Главная</a>
+        <a href="archive.html">Архив</a>
+        <a href="train.html">Тренировка</a>
+        <a href="contests.html">Соревнования</a>
+        <a href="rating.html">Рейтинг</a>
+        <a href="donate.html">Донат</a>
+        <a href="news.html">Новости</a>
+        <a href="faq.html">Помощь</a>
+    `;
+
+    const userLinks = user
+        ? `${commonLinks}
+           <a href="submissions.html">Посылки</a>
+           <a href="profile.html">${user}</a>
+           <a data-action="logout" style="cursor:pointer;color:#ffd451;">Выйти</a>`
+        : `${commonLinks}
+           <a href="auth.html">Войти / Регистрация</a>`;
+
+    nav.innerHTML = `
+        <div class="nav-shell">
+            <div class="nav-links">${userLinks}</div>
+            <button class="nav-burger" type="button" aria-label="Меню" aria-expanded="false">☰</button>
+        </div>
+        <div class="nav-drawer" aria-hidden="true">${userLinks}</div>
+    `;
+
+    nav.querySelectorAll("[data-action='logout']").forEach(link => {
+        link.addEventListener("click", logout);
+    });
+    bindMobileNav(nav);
 }
 
 /* ============================
