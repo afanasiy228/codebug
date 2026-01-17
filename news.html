@@ -121,6 +121,21 @@
       white-space: pre-wrap;
     }
 
+    .news-delete {
+      margin-top: 14px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(160, 80, 80, 0.35);
+      background: rgba(160, 80, 80, 0.12);
+      color: #8a2c2c;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .news-delete:hover {
+      background: rgba(160, 80, 80, 0.2);
+    }
+
     .news-empty {
       padding: 24px;
       border-radius: var(--radius-lg);
@@ -173,6 +188,35 @@
       return d.toLocaleString();
     }
 
+    function escapeHtml(text) {
+      return (text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatAnnouncementText(text) {
+      return escapeHtml(text).replace(/\n/g, "<br>");
+    }
+
+    let isAdmin = false;
+
+    async function deleteAnnouncement(item) {
+      if (!isAdmin) return;
+      if (!confirm("Удалить этот анонс?")) return;
+      const tasks = [];
+      if (item.source === "latest") {
+        tasks.push(db.ref("site/announcement").remove());
+      }
+      if (item.id) {
+        tasks.push(db.ref("site/announcements/" + item.id).remove());
+      }
+      await Promise.all(tasks);
+      await loadNews();
+    }
+
     function renderNews(items) {
       const list = document.getElementById("newsList");
       const empty = document.getElementById("newsEmpty");
@@ -187,22 +231,35 @@
       items.forEach((item, idx) => {
         const card = document.createElement("article");
         card.className = "news-card";
+        const deleteBtn = isAdmin
+          ? `<button class="news-delete" type="button" data-id="${item.id || ""}">Удалить</button>`
+          : "";
         card.innerHTML = `
           ${idx === 0 ? '<div class="news-badge">Новое</div>' : ""}
           <div class="news-title">${item.title || "Анонс"}</div>
           <div class="news-meta">Автор: ${item.author || "admin"} · ${formatDate(item.created)}</div>
-          <div class="news-text">${item.text || ""}</div>
+          <div class="news-text">${formatAnnouncementText(item.text || "")}</div>
+          ${deleteBtn}
         `;
         list.appendChild(card);
+        if (isAdmin && deleteBtn) {
+          const btn = card.querySelector(".news-delete");
+          if (btn) {
+            btn.addEventListener("click", () => deleteAnnouncement(item));
+          }
+        }
       });
     }
 
     async function loadNews() {
       const items = [];
+      isAdmin = await checkAdminAccess();
+
       try {
         const latestSnap = await db.ref("site/announcement").get();
         if (latestSnap.exists()) {
           items.push({
+            source: "latest",
             ...latestSnap.val(),
             created: latestSnap.val().created || 0
           });
@@ -218,6 +275,7 @@
           Object.keys(data).forEach(key => {
             items.push({
               id: key,
+              source: "list",
               ...data[key]
             });
           });
