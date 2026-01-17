@@ -1,0 +1,9 @@
+{
+  "id": 128,
+  "title": "Сумма на отрезке",
+  "difficulty": "normal",
+  "type": "Алгоритмическая",
+  "tags": [
+    "prefix sums"
+  ]
+}

@@ -362,6 +362,7 @@
                         <th>Название</th>
                         <th>Сложность</th>
                         <th>Тип ошибки</th>
+                        <th>Теги</th>
                     </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
@@ -426,10 +427,27 @@
             return list;
         }
 
+        async function loadHiddenMap() {
+            try {
+                const snap = await db.ref("tasksHidden").get();
+                return snap.exists() ? snap.val() : {};
+            } catch (err) {
+                console.warn("[archive] hidden map load failed", err);
+                return {};
+            }
+        }
+
         let problems = [];
+        let hiddenMap = {};
+        let isAdmin = false;
 
         async function init() {
             problems = await loadProblems();
+            hiddenMap = await loadHiddenMap();
+            isAdmin = await checkAdminAccess();
+            if (!isAdmin) {
+                problems = problems.filter(p => !hiddenMap[p.id]);
+            }
             render();
         }
 
@@ -468,6 +486,11 @@
             return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
         }
 
+        function tagsPill(tags) {
+            if (!Array.isArray(tags) || !tags.length) return `<span class="pill">—</span>`;
+            return tags.map(tag => `<span class="pill">${tag}</span>`).join(" ");
+        }
+
         /* ============================
            ФИЛЬТРАЦИЯ + РЕНДЕР
         ============================ */
@@ -491,12 +514,16 @@
 
             filtered.forEach(p => {
                 const tr = document.createElement("tr");
+                const hiddenBadge = isAdmin && hiddenMap[p.id]
+                    ? `<span class="pill" style="background:#3b1d1d; color:#ffb3b3;">Скрыта</span>`
+                    : "";
 
                 tr.innerHTML = `
                 <td>${p.id}</td>
-                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a></td>
+                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a> ${hiddenBadge}</td>
                 <td>${diffPill(p.difficulty)}</td>
                 <td>${typePill(p.type)}</td>
+                <td>${tagsPill(p.tags)}</td>
             `;
 
                 tbody.appendChild(tr);

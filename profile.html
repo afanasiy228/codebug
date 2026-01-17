@@ -290,6 +290,13 @@
             line-height: 1.5;
         }
 
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
         .reveal {
             opacity: 0;
             transform: translateY(18px);
@@ -352,6 +359,12 @@
             <div class="info-row">Опыт: <span id="exp">0</span></div>
             <div class="info-row">Решено задач: <span id="solved">0</span></div>
             <div class="info-row">Рейтинг: <span id="rating">0</span></div>
+            <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
+            <div class="profile-actions">
+                <a href="friends.html" style="text-decoration:none;">
+                    <button type="button">Друзья</button>
+                </a>
+            </div>
 
             <div class="section-title">Статистика</div>
 
@@ -399,8 +412,9 @@
     <script>
         updateNavbar();
 
-        const user = getUser();
-        if (!user) window.location.href = "auth.html";
+        const currentUser = getUser();
+        if (!currentUser) window.location.href = "auth.html";
+        const viewedUser = new URL(location.href).searchParams.get("user") || currentUser;
 
         /* ============================
            RANK SYSTEM
@@ -422,7 +436,7 @@
            LOAD PROFILE DATA
         ============================ */
         async function loadProfile() {
-            const snap = await db.ref("users/" + user).get();
+            const snap = await db.ref("users/" + viewedUser).get();
             if (!snap.exists()) return;
 
             const data = snap.val();
@@ -461,16 +475,120 @@
                     "data:image/svg+xml;base64," + btoa(svg);
             }
 
+            if (viewedUser !== currentUser) {
+                document.getElementById("avatar-file").style.display = "none";
+                document.querySelector(".avatar-block button").style.display = "none";
+            }
+
+        }
+
+        async function loadLastActivity() {
+            const lastActiveEl = document.getElementById("lastActive");
+            if (!lastActiveEl) return;
+            try {
+                const snap = await db.ref("users/" + viewedUser + "/presence").get();
+                if (!snap.exists()) {
+                    lastActiveEl.innerText = "—";
+                    return;
+                }
+
+                const presence = snap.val();
+                if (presence.online) {
+                    lastActiveEl.innerText = "В сети";
+                    return;
+                }
+
+                lastActiveEl.innerText = presence.lastSeen
+                    ? new Date(presence.lastSeen).toLocaleString()
+                    : "—";
+            } catch (e) {
+                lastActiveEl.innerText = "—";
+            }
         }
 
 
 
         loadProfile();
+        loadLastActivity();
+        startPresence();
+
+        async function searchFriend() {
+            const input = document.getElementById("friendSearch");
+            const result = document.getElementById("friendSearchResult");
+            const login = input.value.trim();
+            if (!login) {
+                result.textContent = "Введите логин.";
+                return;
+            }
+            if (login === user) {
+                result.textContent = "Это ваш логин.";
+                return;
+            }
+            const snap = await db.ref("users/" + login).get();
+            if (!snap.exists()) {
+                result.textContent = "Пользователь не найден.";
+                return;
+            }
+            result.innerHTML = `Найден: <strong>${login}</strong> <button type="button" onclick="addFriend('${login}')">Добавить</button>`;
+        }
+
+        async function addFriend(login) {
+            await db.ref("users/" + user + "/friends/" + login).set({
+                addedAt: Date.now()
+            });
+            document.getElementById("friendSearchResult").textContent = "Добавлено в друзья.";
+            loadFriends();
+        }
+
+        async function removeFriend(login) {
+            await db.ref("users/" + user + "/friends/" + login).remove();
+            loadFriends();
+        }
+
+        async function loadFriends() {
+            const list = document.getElementById("friendsList");
+            const empty = document.getElementById("friendsEmpty");
+            list.innerHTML = "";
+
+            const snap = await db.ref("users/" + user + "/friends").get();
+            if (!snap.exists()) {
+                empty.style.display = "block";
+                return;
+            }
+            empty.style.display = "none";
+
+            const friends = Object.keys(snap.val());
+            for (const login of friends) {
+                let statusText = "не в сети";
+                try {
+                    const pSnap = await db.ref("users/" + login + "/presence").get();
+                    if (pSnap.exists() && pSnap.val().online) {
+                        statusText = "в сети";
+                    }
+                } catch {}
+
+                const card = document.createElement("div");
+                card.className = "friend-card";
+                card.innerHTML = `
+                    <div>
+                        <div class="friend-name">${login}</div>
+                        <div class="friend-status">${statusText}</div>
+                    </div>
+                    <div class="friend-actions">
+                        <button type="button" onclick="removeFriend('${login}')">Удалить</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        loadFriends();
 
         /* ============================
            CHANGE AVATAR
         ============================ */
         async function changeAvatar() {
+            if (viewedUser !== currentUser) return;
             const file = document.getElementById("avatar-file").files[0];
             if (!file) {
                 document.getElementById("avatar-error").innerText = "Выберите файл";
@@ -478,8 +596,8 @@
             }
 
             try {
-                const base64 = await uploadAvatarBase64(user, file);
-                await saveAvatar(user, base64);
+                const base64 = await uploadAvatarBase64(currentUser, file);
+                await saveAvatar(currentUser, base64);
 
                 document.getElementById("avatar").src = base64;
                 document.getElementById("avatar-error").innerText = "";
@@ -493,25 +611,11 @@
         /* ============================
            ADMIN PANEL
         ============================ */
-        const ADMIN_USERS = ["afanasy"];
-
-        async function checkAdminAccess() {
-            if (!user) return false;
-            if (ADMIN_USERS.includes(user)) return true;
-            try {
-                const snap = await db.ref("admins/" + user).get();
-                return snap.exists() && snap.val() === true;
-            } catch (err) {
-                console.warn("Admin check failed", err);
-                return false;
-            }
-        }
-
         async function initAdminPanel() {
             const panel = document.getElementById("adminPanel");
             if (!panel) return;
             const isAdmin = await checkAdminAccess();
-            panel.style.display = isAdmin ? "block" : "none";
+            panel.style.display = isAdmin && viewedUser === currentUser ? "block" : "none";
         }
 
         initAdminPanel();

@@ -1,0 +1,10 @@
+{
+  "id": 130,
+  "title": "Пути в DAG",
+  "difficulty": "hard",
+  "type": "Алгоритмическая",
+  "tags": [
+    "graphs",
+    "dp"
+  ]
+}

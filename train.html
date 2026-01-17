@@ -478,6 +478,7 @@
                         <th>Название</th>
                         <th>Сложность</th>
                         <th>Тип ошибки</th>
+                        <th>Теги</th>
                     </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
@@ -488,6 +489,9 @@
 
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase.js"></script>
     <script src="auth.js"></script>
 
     <script>
@@ -533,23 +537,39 @@
             return list;
         }
 
+        async function loadHiddenMap() {
+            try {
+                const snap = await db.ref("tasksHidden").get();
+                return snap.exists() ? snap.val() : {};
+            } catch (err) {
+                console.warn("[training] hidden map load failed", err);
+                return {};
+            }
+        }
+
         let problems = [];
+        let visibleProblems = [];
+        let hiddenMap = {};
+        let isAdmin = false;
         let dailyProblem = null;
 
         async function initTraining() {
             console.log("[training] initTraining()");
 
             problems = await loadProblems();
+            hiddenMap = await loadHiddenMap();
+            isAdmin = await checkAdminAccess();
+            visibleProblems = problems.filter(p => !hiddenMap[p.id]);
 
-            if (problems.length === 0) {
+            if (visibleProblems.length === 0) {
                 document.getElementById("daily-title").innerText = "Задачи не найдены";
                 document.getElementById("daily-card").style.opacity = "0.6";
             } else {
                 // задача дня — детерминированно по дате
                 const today = new Date();
                 const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-                const idx = seed % problems.length;
-                dailyProblem = problems[idx];
+                const idx = seed % visibleProblems.length;
+                dailyProblem = visibleProblems[idx];
 
                 document.getElementById("daily-title").innerText = dailyProblem.title;
             }
@@ -594,6 +614,11 @@
             return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
         }
 
+        function tagsPill(tags) {
+            if (!Array.isArray(tags) || !tags.length) return `<span class="pill">—</span>`;
+            return tags.map(tag => `<span class="pill">${tag}</span>`).join(" ");
+        }
+
         function renderTable() {
             console.log("[training] renderTable()");
 
@@ -601,7 +626,8 @@
             const err = document.getElementById("errorType").value;
             const query = document.getElementById("search").value.toLowerCase();
 
-            const filtered = problems.filter(p =>
+            const baseList = isAdmin ? problems : visibleProblems;
+            const filtered = baseList.filter(p =>
                 (!diff || p.difficulty === diff) &&
                 (!err || p.type === err) &&
                 (!query || p.title.toLowerCase().includes(query))
@@ -615,11 +641,15 @@
 
             filtered.forEach(p => {
                 const tr = document.createElement("tr");
+                const hiddenBadge = isAdmin && hiddenMap[p.id]
+                    ? `<span class="pill" style="background:#3b1d1d; color:#ffb3b3;">Скрыта</span>`
+                    : "";
                 tr.innerHTML = `
                 <td>${p.id}</td>
-                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a></td>
+                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a> ${hiddenBadge}</td>
                 <td>${diffPill(p.difficulty)}</td>
                 <td>${typePill(p.type)}</td>
+                <td>${tagsPill(p.tags)}</td>
             `;
                 tbody.appendChild(tr);
             });
@@ -640,12 +670,12 @@
 
         function openRandom() {
             console.log("[training] openRandom()");
-            if (!problems.length) {
+            if (!visibleProblems.length) {
                 alert("Нет доступных задач");
                 return;
             }
-            const idx = Math.floor(Math.random() * problems.length);
-            const p = problems[idx];
+            const idx = Math.floor(Math.random() * visibleProblems.length);
+            const p = visibleProblems[idx];
             window.location.href = "problem.html?id=" + p.id;
         }
 

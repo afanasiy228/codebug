@@ -1,0 +1,13 @@
+{
+  "id": 135,
+  "title": "Количество путей в DAG",
+  "difficulty": "ultra",
+  "type": "Время",
+  "tags": [
+    "graphs",
+    "dag",
+    "dp",
+    "toposort",
+    "debug"
+  ]
+}

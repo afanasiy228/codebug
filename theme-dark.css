@@ -91,6 +91,13 @@ textarea::placeholder {
   color: rgba(152, 162, 179, 0.8);
 }
 
+.pill,
+.task-tag {
+  background: rgba(124, 255, 167, 0.14) !important;
+  border-color: rgba(31, 42, 55, 0.9) !important;
+  color: var(--ink) !important;
+}
+
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
