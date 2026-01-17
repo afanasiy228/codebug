@@ -1,0 +1,10 @@
+{
+  "id": 132,
+  "title": "Динамическая сумма на отрезке",
+  "difficulty": "insane",
+  "type": "Время",
+  "tags": [
+    "segment tree",
+    "data structures"
+  ]
+}

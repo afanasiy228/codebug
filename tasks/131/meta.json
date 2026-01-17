@@ -1,0 +1,10 @@
+{
+  "id": 131,
+  "title": "Равенство подстрок",
+  "difficulty": "extreme",
+  "type": "Алгоритмическая",
+  "tags": [
+    "strings",
+    "hashing"
+  ]
+}

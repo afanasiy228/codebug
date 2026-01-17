@@ -177,6 +177,74 @@
       color: var(--accent);
     }
 
+    .task-visibility-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .task-visibility-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: var(--card);
+    }
+
+    .task-row.task-hidden {
+      background: rgba(15, 118, 110, 0.08);
+    }
+
+    .task-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .task-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .task-id {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .task-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(15, 118, 110, 0.15);
+      color: var(--accent-strong);
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle input {
+      accent-color: var(--accent);
+    }
+
     @media (max-width: 720px) {
       header {
         padding: 0 20px;
@@ -218,6 +286,23 @@
         <div class="admin-actions">
           <button type="button" onclick="adminUploadTasks()">Загрузить папку</button>
         </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Скрытие задач</h3>
+        <p class="admin-note">Скрытые задачи не отображаются в архиве и тренировке.</p>
+        <div class="admin-actions">
+          <button type="button" id="taskListToggleBtn" onclick="toggleTaskList()">Показать список</button>
+          <button type="button" onclick="adminReloadTasks()">Обновить список</button>
+        </div>
+        <div class="task-visibility-toolbar">
+          <label class="toggle">
+            <input type="checkbox" id="showHiddenOnly" onchange="renderTaskVisibility()">
+            Показать только скрытые
+          </label>
+          <div id="hiddenSummary" class="admin-note"></div>
+        </div>
+        <div id="taskVisibilityList" class="task-visibility-list"></div>
       </div>
 
       <div class="admin-box">
@@ -271,25 +356,11 @@
     const user = getUser();
     if (!user) window.location.href = "auth.html";
 
-    const ADMIN_USERS = ["afanasy"];
-
     function setAdminLog(message) {
       const log = document.getElementById("adminLog");
       if (!log) return;
       const time = new Date().toLocaleTimeString();
       log.textContent = `[${time}] ${message}\n` + log.textContent;
-    }
-
-    async function checkAdminAccess() {
-      if (!user) return false;
-      if (ADMIN_USERS.includes(user)) return true;
-      try {
-        const snap = await db.ref("admins/" + user).get();
-        return snap.exists() && snap.val() === true;
-      } catch (err) {
-        console.warn("Admin check failed", err);
-        return false;
-      }
     }
 
     async function initAdminPanel() {
@@ -298,7 +369,10 @@
       const isAdmin = await checkAdminAccess();
       panel.style.display = isAdmin ? "grid" : "none";
       locked.style.display = isAdmin ? "none" : "block";
-      if (isAdmin) setAdminLog("Админ-доступ активирован.");
+      if (isAdmin) {
+        setAdminLog("Админ-доступ активирован.");
+        await adminReloadTasks();
+      }
     }
 
     async function adminLoadDb() {
@@ -376,6 +450,163 @@
       });
 
       setAdminLog(`Загрузка завершена. Успешно: ${uploaded}, пропущено: ${skipped}.`);
+    }
+
+    let adminTasks = [];
+    let hiddenTasksMap = {};
+    let isTaskListOpen = false;
+
+    async function loadHiddenMap() {
+      try {
+        const snap = await db.ref("tasksHidden").get();
+        return snap.exists() ? snap.val() : {};
+      } catch (err) {
+        console.warn("Hidden tasks load failed", err);
+        return {};
+      }
+    }
+
+    async function loadTaskList() {
+      const list = [];
+      let id = 0;
+
+      while (true) {
+        const url = `tasks/${id}/meta.json`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) break;
+          const meta = await res.json();
+          list.push({
+            id: typeof meta.id === "number" ? meta.id : id,
+            title: meta.title || ("Задача " + id)
+          });
+        } catch (err) {
+          console.warn("Task meta fetch failed", err);
+          break;
+        }
+        id += 1;
+      }
+
+      return list;
+    }
+
+    async function adminReloadTasks() {
+      setAdminLog("Загружаю список задач...");
+      adminTasks = await loadTaskList();
+      hiddenTasksMap = await loadHiddenMap();
+      renderTaskVisibility();
+      setAdminLog(`Задачи загружены: ${adminTasks.length}.`);
+    }
+
+    async function setTaskHidden(taskId, hidden) {
+      try {
+        if (hidden) {
+          await db.ref("tasksHidden/" + taskId).set(true);
+        } else {
+          await db.ref("tasksHidden/" + taskId).remove();
+        }
+        hiddenTasksMap[String(taskId)] = hidden ? true : undefined;
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка при обновлении скрытия.");
+      }
+    }
+
+    function renderTaskVisibility() {
+      const list = document.getElementById("taskVisibilityList");
+      const summary = document.getElementById("hiddenSummary");
+      if (!list) return;
+
+      const onlyHidden = document.getElementById("showHiddenOnly")?.checked;
+      const hiddenIds = new Set(
+        Object.keys(hiddenTasksMap || {}).filter(key => hiddenTasksMap[key])
+      );
+
+      if (summary) {
+        if (!adminTasks.length) {
+          summary.textContent = "Задачи не найдены.";
+        } else {
+          summary.textContent = `Скрытые: ${hiddenIds.size} из ${adminTasks.length}`;
+        }
+      }
+
+      list.style.display = isTaskListOpen ? "grid" : "none";
+      list.innerHTML = "";
+      const visibleTasks = adminTasks.filter(task => {
+        const isHidden = hiddenIds.has(String(task.id));
+        return onlyHidden ? isHidden : true;
+      });
+
+      if (!visibleTasks.length) {
+        const empty = document.createElement("div");
+        empty.className = "admin-note";
+        empty.textContent = "Список пуст.";
+        list.appendChild(empty);
+        return;
+      }
+
+      if (!isTaskListOpen) {
+        return;
+      }
+
+      visibleTasks.forEach(task => {
+        const isHidden = hiddenIds.has(String(task.id));
+        const row = document.createElement("div");
+        row.className = "task-row" + (isHidden ? " task-hidden" : "");
+
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+
+        const title = document.createElement("div");
+        title.className = "task-title";
+        title.textContent = task.title;
+
+        const idLine = document.createElement("div");
+        idLine.className = "task-id";
+        idLine.textContent = `ID ${task.id}`;
+
+        meta.appendChild(title);
+        meta.appendChild(idLine);
+
+        if (isHidden) {
+          const tag = document.createElement("span");
+          tag.className = "task-tag";
+          tag.textContent = "Скрыта";
+          meta.appendChild(tag);
+        }
+
+        const toggle = document.createElement("label");
+        toggle.className = "toggle";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = isHidden;
+        checkbox.addEventListener("change", async () => {
+          const nextHidden = checkbox.checked;
+          await setTaskHidden(task.id, nextHidden);
+          renderTaskVisibility();
+          setAdminLog(
+            `Задача ${task.id} ${nextHidden ? "скрыта" : "открыта"}.`
+          );
+        });
+        const label = document.createElement("span");
+        label.textContent = "Скрыть";
+
+        toggle.appendChild(checkbox);
+        toggle.appendChild(label);
+
+        row.appendChild(meta);
+        row.appendChild(toggle);
+        list.appendChild(row);
+      });
+    }
+
+    function toggleTaskList() {
+      isTaskListOpen = !isTaskListOpen;
+      const btn = document.getElementById("taskListToggleBtn");
+      if (btn) {
+        btn.textContent = isTaskListOpen ? "Скрыть список" : "Показать список";
+      }
+      renderTaskVisibility();
     }
 
     async function adminGrant() {

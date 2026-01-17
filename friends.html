@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Друзья — CodeBug</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f1e7;
+      --bg-strong: #f0e6d8;
+      --ink: #1a1612;
+      --muted: #5f5b54;
+      --accent: #0f766e;
+      --accent-strong: #0b5f59;
+      --warm: #f3b562;
+      --card: #fffaf2;
+      --stroke: #e2d6c4;
+      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg-strong));
+      min-height: 100vh;
+    }
+
+    header {
+      height: 72px;
+      background: rgba(255, 250, 242, 0.8);
+      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      padding: 0 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+    }
+
+    .logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--ink);
+    }
+
+    nav a {
+      margin-left: 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .container {
+      width: min(1000px, 92vw);
+      margin: 40px auto 80px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0 0 12px;
+    }
+
+    .friends-box {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .friends-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .friend-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--stroke);
+      background: rgba(15, 118, 110, 0.08);
+    }
+
+    .friend-name {
+      font-weight: 600;
+    }
+
+    .friend-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .friend-link {
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .friend-link:hover .friend-name {
+      color: var(--accent);
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 14px;
+    }
+  </style>
+  <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">CodeBug</div>
+    <nav id="nav-links"></nav>
+  </header>
+
+  <main class="container">
+    <h1 class="page-title">Друзья</h1>
+    <div class="friends-box">
+      <div id="friendsList" class="friends-list"></div>
+      <div id="friendsEmpty" class="empty" style="display:none;">Пока нет друзей…</div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="firebase.js"></script>
+  <script src="auth.js"></script>
+
+  <script>
+    updateNavbar();
+    const user = getUser();
+    if (!user) window.location.href = "auth.html";
+    startPresence();
+
+    async function loadFriends() {
+      const list = document.getElementById("friendsList");
+      const empty = document.getElementById("friendsEmpty");
+      list.innerHTML = "";
+
+      const snap = await db.ref("users/" + user + "/friends").get();
+      if (!snap.exists()) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      const friends = Object.keys(snap.val());
+      const rows = [];
+
+      for (const login of friends) {
+        const userSnap = await db.ref("users/" + login).get();
+        const stats = userSnap.exists() ? (userSnap.val().stats || {}) : {};
+        const rating = stats.rating || 0;
+        rows.push({ login, rating });
+      }
+
+      rows.sort((a, b) => b.rating - a.rating);
+
+      for (const row of rows) {
+        const card = document.createElement("div");
+        card.className = "friend-card";
+        card.innerHTML = `
+          <a class="friend-link" href="profile.html?user=${encodeURIComponent(row.login)}">
+            <div class="friend-name">${row.login}</div>
+            <div class="friend-meta">Рейтинг: ${row.rating}</div>
+          </a>
+        `;
+        list.appendChild(card);
+      }
+    }
+
+    loadFriends();
+  </script>
+</body>
+
+</html>

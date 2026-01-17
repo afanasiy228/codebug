@@ -145,7 +145,7 @@ def submit():
         log_text = "(log.txt не найден)"
 
     # --- определение финального вердикта ---
-    final = "UNKNOWN"
+    final = "CE"
     for line in log_text.splitlines():
         if line.startswith("Final verdict:"):
             final = line.split(":")[1].strip()

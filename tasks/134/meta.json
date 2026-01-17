@@ -1,0 +1,12 @@
+{
+  "id": 134,
+  "title": "Сумма в поддереве",
+  "difficulty": "tourist",
+  "type": "Время",
+  "tags": [
+    "trees",
+    "dfs order",
+    "fenwick",
+    "debug"
+  ]
+}

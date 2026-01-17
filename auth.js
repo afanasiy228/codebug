@@ -20,6 +20,21 @@ function logout() {
     window.location.href = "auth.html";
 }
 
+/* ============================
+   ADMIN ACCESS
+============================ */
+async function checkAdminAccess() {
+    const user = getUser();
+    if (!user) return false;
+    try {
+        const snap = await db.ref("admins/" + user).get();
+        return snap.exists();
+    } catch (err) {
+        console.warn("Admin check failed", err);
+        return false;
+    }
+}
+
 
 /* ============================
    NAVIGATION BAR
@@ -56,6 +71,36 @@ function updateNavbar() {
             <a href="faq.html">Помощь</a>
             <a href="auth.html">Войти / Регистрация</a>
         `;
+    }
+}
+
+/* ============================
+   PRESENCE (ONLINE / LAST SEEN)
+============================ */
+function startPresence() {
+    const user = getUser();
+    if (!user || !window.firebase) return;
+
+    const ref = firebase.database().ref("users/" + user + "/presence");
+    const now = Date.now();
+
+    ref.update({
+        online: true,
+        lastSeen: now
+    });
+
+    ref.onDisconnect().update({
+        online: false,
+        lastSeen: Date.now()
+    });
+
+    if (!window.__presenceTimer) {
+        window.__presenceTimer = setInterval(() => {
+            ref.update({
+                online: true,
+                lastSeen: Date.now()
+            });
+        }, 30000);
     }
 }
 
@@ -234,3 +279,4 @@ window.getUser = getUser;
 window.db = db;
 window.uploadAvatarBase64 = uploadAvatarBase64;
 window.saveAvatar = saveAvatar;
+window.startPresence = startPresence;

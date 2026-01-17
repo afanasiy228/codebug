@@ -1,0 +1,10 @@
+{
+  "id": 129,
+  "title": "Минимальный квадрат",
+  "difficulty": "hard",
+  "type": "Алгоритмическая",
+  "tags": [
+    "binary search",
+    "math"
+  ]
+}

@@ -271,8 +271,8 @@
             display: flex;
             gap: 12px;
             padding: 12px 18px 18px;
-            background: rgba(255, 250, 242, 0.7);
-            border-top: 1px solid rgba(226, 214, 196, 0.8);
+            background: var(--card);
+            border-top: 1px solid var(--stroke);
         }
         
         #taskStatement {
@@ -283,6 +283,23 @@
         #taskHelp {
             font-size: 16.5px;
             line-height: 1.45;
+        }
+
+        .task-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0 18px;
+        }
+
+        .task-tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(226, 214, 196, 0.8);
+            background: rgba(15, 118, 110, 0.12);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
         }
         
         .btn {
@@ -466,6 +483,7 @@
         <!-- LEFT -->
         <div class="left reveal" id="leftPanel" style="--delay: 0s;">
             <h1 id="taskTitle">...</h1>
+            <div id="taskTags" class="task-tags"></div>
             <div id="taskStatement">Загружаю условие…</div>
             <h2 class="section-title">Примеры тестов</h2>
             <div id="examples"></div>
@@ -1014,11 +1032,38 @@
             return (md || "").replace(/\n/g, "<br>");
         }
 
+        async function loadHiddenMap() {
+            try {
+                const snap = await db.ref("tasksHidden").get();
+                return snap.exists() ? snap.val() : {};
+            } catch (err) {
+                console.warn("[problem] hidden map load failed", err);
+                return {};
+            }
+        }
+
         async function loadTask() {
 
             const url = new URL(location.href);
             const id = url.searchParams.get("id") || "0";
 
+            const hiddenMap = await loadHiddenMap();
+            const isHidden = hiddenMap && hiddenMap[id];
+            const isAdmin = await checkAdminAccess();
+            if (isHidden && !isAdmin) {
+                document.getElementById("taskTitle").innerText = "Задача скрыта";
+                document.getElementById("taskStatement").innerText = "Доступ к этой задаче есть только у администраторов.";
+                document.getElementById("taskHelp").innerText = "";
+                if (window.editor) editor.setValue("// Недоступно");
+                const examples = document.getElementById("examples");
+                if (examples) examples.innerHTML = "";
+                const submitBtn = document.querySelector(".btn");
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Недоступно";
+                }
+                return;
+            }
 
             // ————————————— META.JSON ————————————————
             const metaPath = `tasks/${id}/meta.json`;
@@ -1032,6 +1077,13 @@
                 console.log("Загружена сложность:", TASK_DIFFICULTY);
 
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
+                const tagsRoot = document.getElementById("taskTags");
+                if (tagsRoot) {
+                    const tags = Array.isArray(meta.tags) ? meta.tags : [];
+                    tagsRoot.innerHTML = tags.length
+                        ? tags.map(tag => `<span class="task-tag">${tag}</span>`).join("")
+                        : "";
+                }
             } catch (e) {
                 document.getElementById("taskTitle").innerText = "Название не найдено";
             }

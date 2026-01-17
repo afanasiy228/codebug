@@ -1,0 +1,11 @@
+{
+  "id": 133,
+  "title": "Сумма в бесконечной таблице",
+  "difficulty": "impossible",
+  "type": "Память",
+  "tags": [
+    "prefix sums",
+    "2d",
+    "debug"
+  ]
+}
