@@ -396,7 +396,7 @@
 
       <div class="admin-box">
         <h3>Добавление задачи</h3>
-        <p class="admin-note">Заполни мета-данные и файлы задачи. Результат сохраняется в Firebase: uploads.</p>
+        <p class="admin-note">Заполни мета-данные и файлы задачи. Задача сразу сохранится в репозиторий.</p>
         <input id="taskMetaTitle" class="admin-input" type="text" placeholder="Название">
         <input id="taskMetaAuthor" class="admin-input" type="text" placeholder="Автор">
         <input id="taskMetaDifficulty" type="hidden" value="">
@@ -573,24 +573,6 @@
       }
     }
 
-    function encodePathSegment(segment) {
-      return segment
-        .replace(/\./g, "_dot_")
-        .replace(/#/g, "_hash_")
-        .replace(/\$/g, "_dollar_")
-        .replace(/\[/g, "_lb_")
-        .replace(/\]/g, "_rb_");
-    }
-
-    function buildFilesRef(baseRef, path) {
-      const parts = path.split("/").filter(Boolean).map(encodePathSegment);
-      let ref = baseRef.child("files");
-      parts.forEach(part => {
-        ref = ref.child(part);
-      });
-      return ref;
-    }
-
     async function adminUploadTaskFromForm() {
       const title = document.getElementById("taskMetaTitle").value.trim();
       const author = document.getElementById("taskMetaAuthor").value.trim() || user || "admin";
@@ -619,11 +601,6 @@
       const generatorText = document.getElementById("taskGeneratorText").value;
       const tests = window.taskTests || [];
 
-      const bundleId = `task_${id}_${Date.now()}`;
-      const baseRef = db.ref("uploads/" + bundleId);
-      let uploaded = 0;
-      let skipped = 0;
-
       const meta = {
         id,
         title,
@@ -633,46 +610,38 @@
         tags
       };
 
-      try {
-        await buildFilesRef(baseRef, `tasks/${id}/meta.json`).set(JSON.stringify(meta, null, 2));
-        uploaded += 1;
-      } catch (err) {
-        console.error(err);
-        setAdminLog("Не удалось сохранить meta.json.");
-        return;
-      }
-
-      const uploadText = async (content, path) => {
-        if (!content || !content.trim()) return;
-        try {
-          await buildFilesRef(baseRef, path).set(content);
-          uploaded += 1;
-        } catch (err) {
-          console.error(err);
-          skipped += 1;
-        }
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const payload = {
+        meta,
+        files: {
+          statement: statementText,
+          help: helpText,
+          code: codeText,
+          generator: generatorText
+        },
+        tests
       };
 
-      await uploadText(statementText, `tasks/${id}/statement.md`);
-      await uploadText(helpText, `tasks/${id}/help.md`);
-      await uploadText(codeText, `tasks/${id}/code.cpp`);
-      await uploadText(generatorText, `tasks/${id}/generator.cpp`);
-
-      for (let i = 0; i < tests.length; i++) {
-        const t = tests[i];
-        await uploadText(t.input, `tasks/${id}/tests/${i + 1}.in`);
-        await uploadText(t.output, `tasks/${id}/tests/${i + 1}.out`);
+      try {
+        const res = await fetch(`${base}/tasks/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setAdminLog(`Ошибка сохранения: ${err.error || res.status}`);
+          return;
+        }
+        const data = await res.json();
+        setAdminLog(`Задача сохранена в репозиторий. ID: ${data.id}`);
+        adminTasks = await loadTaskList();
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка соединения с сервером.");
       }
-
-      await baseRef.child("meta").set({
-        uploader: user,
-        created: Date.now(),
-        taskId: id,
-        totalFiles: 4 + tests.length * 2 + (generatorText.trim() ? 1 : 0),
-        uploadedFiles: uploaded
-      });
-
-      setAdminLog(`Задача сохранена в uploads/${bundleId}. Успешно: ${uploaded}, пропущено: ${skipped}.`);
     }
 
     window.taskTests = [];

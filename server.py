@@ -17,6 +17,8 @@ TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "git@github.com:afanasiy228/tasksco
 TASKS_REPO_DIR = os.getenv("TASKS_REPO_DIR", "tasks")
 TASKS_REPO_KEY_FILE = os.getenv("TASKS_REPO_KEY_FILE", "/etc/secrets/codebug_tasks_deploy")
 TASKS_SYNC_TTL = int(os.getenv("TASKS_SYNC_TTL", "300"))
+TASKS_COMMIT_NAME = os.getenv("TASKS_COMMIT_NAME", "CodeBug Admin")
+TASKS_COMMIT_EMAIL = os.getenv("TASKS_COMMIT_EMAIL", "admin@codebug.local")
 LAST_TASKS_SYNC = 0.0
 
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
@@ -144,6 +146,40 @@ def list_tasks():
             print(f"Meta load failed for {name}:", e)
     tasks.sort(key=lambda x: int(x.get("id", 0)))
     return tasks
+
+
+def _ensure_git_identity():
+    try:
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "config", "user.name", TASKS_COMMIT_NAME],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "config", "user.email", TASKS_COMMIT_EMAIL],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+    except Exception as e:
+        print("Git identity config failed:", e)
+
+
+def _next_task_id():
+    existing = []
+    if not os.path.isdir(TASKS_REPO_DIR):
+        return 0
+    for name in os.listdir(TASKS_REPO_DIR):
+        if name.isdigit():
+            existing.append(int(name))
+    return (max(existing) + 1) if existing else 0
+
+
+def _write_text(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 @app.route("/submit", methods=["POST", "OPTIONS"])
@@ -277,6 +313,73 @@ def tasks_file(task_id, filename):
     if not path:
         return abort(404)
     return send_file(path)
+
+
+@app.route("/tasks/create", methods=["POST"])
+def tasks_create():
+    if not sync_tasks_repo():
+        return jsonify({"error": "tasks_sync_failed"}), 500
+
+    data = request.get_json(silent=True) or {}
+    meta = data.get("meta") or {}
+    files = data.get("files") or {}
+    tests = data.get("tests") or []
+
+    task_id = meta.get("id")
+    if not isinstance(task_id, int):
+        task_id = _next_task_id()
+        meta["id"] = task_id
+
+    title = meta.get("title")
+    if not title:
+        return jsonify({"error": "title_required"}), 400
+
+    task_path = task_dir(task_id)
+    _write_text(os.path.join(task_path, "meta.json"), json.dumps(meta, ensure_ascii=False, indent=2))
+
+    if files.get("statement"):
+        _write_text(os.path.join(task_path, "statement.md"), files["statement"])
+    if files.get("help"):
+        _write_text(os.path.join(task_path, "help.md"), files["help"])
+    if files.get("code"):
+        _write_text(os.path.join(task_path, "code.cpp"), files["code"])
+    if files.get("generator"):
+        _write_text(os.path.join(task_path, "generator.cpp"), files["generator"])
+
+    tests_path = os.path.join(task_path, "tests")
+    for idx, t in enumerate(tests, start=1):
+        inp = t.get("input", "")
+        out = t.get("output", "")
+        _write_text(os.path.join(tests_path, f"{idx}.in"), inp)
+        _write_text(os.path.join(tests_path, f"{idx}.out"), out)
+
+    _ensure_git_identity()
+    try:
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "add", f"{task_id}"],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "commit", "-m", f\"Add task {task_id}\"],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_env()
+        )
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "push"],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_env()
+        )
+    except Exception as e:
+        print("Task create git failed:", e)
+        return jsonify({"error": "git_failed"}), 500
+
+    return jsonify({"status": "ok", "id": task_id})
     
 
 if __name__ == "__main__":
