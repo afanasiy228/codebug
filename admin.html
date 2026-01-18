@@ -279,6 +279,25 @@
       white-space: pre-wrap;
     }
 
+    .admin-log-box {
+      position: fixed;
+      left: 24px;
+      top: 120px;
+      width: min(320px, 90vw);
+      z-index: 20;
+      box-shadow: 0 18px 40px rgba(12, 16, 24, 0.25);
+    }
+
+    @media (max-width: 900px) {
+      .admin-log-box {
+        left: 16px;
+        right: 16px;
+        top: auto;
+        bottom: 16px;
+        width: auto;
+      }
+    }
+
     .admin-locked {
       padding: 20px;
       border-radius: var(--radius-lg);
@@ -577,7 +596,7 @@
         </div>
       </div>
 
-      <div class="admin-box">
+      <div class="admin-box admin-log-box">
         <h3>Логи админа</h3>
         <div id="adminLog" class="admin-log">Готов к работе.</div>
       </div>
@@ -710,6 +729,7 @@
       };
 
       try {
+        setAdminLog("Сохранение задачи. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/create`, {
           method: "POST",
           headers: {
@@ -948,6 +968,7 @@
       }
 
       const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      setAdminLog("Начал генерацию тестов. Не перезагружай страницу.");
       try {
         const res = await fetch(`${base}/tasks/generate-tests`, {
           method: "POST",
@@ -1031,6 +1052,7 @@
       };
 
       try {
+        setAdminLog("Сохранение изменений. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1066,6 +1088,7 @@
 
       const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
       try {
+        setAdminLog("Удаление задачи. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/delete`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
