@@ -442,6 +442,9 @@
             </select>
             </div>
 
+            <label>Автор</label>
+            <input type="text" id="authorFilter" placeholder="Логин автора">
+
             <label>Поиск</label>
             <input type="text" id="search">
             <div class="filter-tip">Совет: начни с фильтра «Лёгкая» и закрепи основу перед олимпиадным уровнем.</div>
@@ -477,6 +480,7 @@
                         <th>ID</th>
                         <th>Название</th>
                         <th>Сложность</th>
+                        <th>Автор</th>
                         <th>Тип ошибки</th>
                         <th>Теги</th>
                     </tr>
@@ -513,6 +517,7 @@
                 return list.map(meta => ({
                     id: typeof meta.id === "number" ? meta.id : Number(meta.id),
                     title: meta.title || ("Задача " + meta.id),
+                    author: meta.author || "",
                     difficulty: meta.difficulty || "",
                     type: meta.type || "",
                     tags: meta.tags || []
@@ -611,12 +616,14 @@
             const diff = document.getElementById("difficulty").value;
             const err = document.getElementById("errorType").value;
             const query = document.getElementById("search").value.toLowerCase();
+            const authorQuery = document.getElementById("authorFilter").value.toLowerCase();
 
             const baseList = isAdmin ? problems : visibleProblems;
             const filtered = baseList.filter(p =>
                 (!diff || p.difficulty === diff) &&
                 (!err || p.type === err) &&
-                (!query || p.title.toLowerCase().includes(query))
+                (!query || p.title.toLowerCase().includes(query)) &&
+                (!authorQuery || (p.author || "").toLowerCase().includes(authorQuery))
             );
 
             const tbody = document.getElementById("tbody");
@@ -634,6 +641,7 @@
                 <td>${p.id}</td>
                 <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a> ${hiddenBadge}</td>
                 <td>${diffPill(p.difficulty)}</td>
+                <td>${p.author || "—"}</td>
                 <td>${typePill(p.type)}</td>
                 <td>${tagsPill(p.tags)}</td>
             `;
@@ -681,6 +689,7 @@
             // фильтры
             document.getElementById("difficulty").addEventListener("change", renderTable);
             document.getElementById("errorType").addEventListener("change", renderTable);
+            document.getElementById("authorFilter").addEventListener("input", renderTable);
             document.getElementById("search").addEventListener("input", renderTable);
 
             // загрузка задач

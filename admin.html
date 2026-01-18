@@ -397,7 +397,6 @@
       <div class="admin-box">
         <h3>Добавление задачи</h3>
         <p class="admin-note">Заполни мета-данные и файлы задачи. Результат сохраняется в Firebase: uploads.</p>
-        <input id="taskMetaId" class="admin-input" type="number" placeholder="ID задачи">
         <input id="taskMetaTitle" class="admin-input" type="text" placeholder="Название">
         <input id="taskMetaAuthor" class="admin-input" type="text" placeholder="Автор">
         <input id="taskMetaDifficulty" type="hidden" value="">
@@ -574,22 +573,39 @@
       }
     }
 
+    function encodePathSegment(segment) {
+      return segment
+        .replace(/\./g, "_dot_")
+        .replace(/#/g, "_hash_")
+        .replace(/\$/g, "_dollar_")
+        .replace(/\[/g, "_lb_")
+        .replace(/\]/g, "_rb_");
+    }
+
+    function buildFilesRef(baseRef, path) {
+      const parts = path.split("/").filter(Boolean).map(encodePathSegment);
+      let ref = baseRef.child("files");
+      parts.forEach(part => {
+        ref = ref.child(part);
+      });
+      return ref;
+    }
+
     async function adminUploadTaskFromForm() {
-      const idRaw = document.getElementById("taskMetaId").value.trim();
       const title = document.getElementById("taskMetaTitle").value.trim();
       const author = document.getElementById("taskMetaAuthor").value.trim() || user || "admin";
       const difficulty = document.getElementById("taskMetaDifficulty").value.trim();
       const type = document.getElementById("taskMetaType").value.trim();
       const tagsRaw = document.getElementById("taskMetaTags").value.trim();
 
-      if (!idRaw || !title) {
-        setAdminLog("Укажи ID и название задачи.");
+      if (!title) {
+        setAdminLog("Укажи название задачи.");
         return;
       }
 
-      const id = Number(idRaw);
+      const id = await getNextTaskId();
       if (!Number.isFinite(id)) {
-        setAdminLog("Некорректный ID задачи.");
+        setAdminLog("Не удалось определить ID задачи.");
         return;
       }
 
@@ -618,7 +634,7 @@
       };
 
       try {
-        await baseRef.child("files").child(`tasks/${id}/meta.json`).set(JSON.stringify(meta, null, 2));
+        await buildFilesRef(baseRef, `tasks/${id}/meta.json`).set(JSON.stringify(meta, null, 2));
         uploaded += 1;
       } catch (err) {
         console.error(err);
@@ -629,7 +645,7 @@
       const uploadText = async (content, path) => {
         if (!content || !content.trim()) return;
         try {
-          await baseRef.child("files").child(path).set(content);
+          await buildFilesRef(baseRef, path).set(content);
           uploaded += 1;
         } catch (err) {
           console.error(err);
@@ -733,6 +749,20 @@
       document.addEventListener("click", () => {
         root.classList.remove("open");
       });
+    }
+
+    async function getNextTaskId() {
+      try {
+        if (!adminTasks.length) {
+          adminTasks = await loadTaskList();
+        }
+        if (!adminTasks.length) return 0;
+        const maxId = Math.max(...adminTasks.map(t => Number(t.id) || 0));
+        return maxId + 1;
+      } catch (err) {
+        console.error(err);
+        return NaN;
+      }
     }
 
     let adminTasks = [];
