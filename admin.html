@@ -449,6 +449,64 @@
       </div>
 
       <div class="admin-box">
+        <h3>Редактирование задачи</h3>
+        <p class="admin-note">Загрузи задачу, внеси правки и сохрани. Тесты можно добавлять вручную.</p>
+        <div class="admin-actions">
+          <select id="editTaskSelect" class="admin-input"></select>
+        </div>
+        <input id="editMetaTitle" class="admin-input" type="text" placeholder="Название">
+        <input id="editMetaAuthor" class="admin-input" type="text" placeholder="Автор">
+        <input id="editMetaDifficulty" type="hidden" value="">
+        <div class="select-shell" id="editDifficultySelect" data-target="editMetaDifficulty">
+          <button type="button" class="select-trigger">Сложность</button>
+          <div class="select-options">
+            <button type="button" data-value="tutorial">tutorial</button>
+            <button type="button" data-value="easy">easy</button>
+            <button type="button" data-value="casual">casual</button>
+            <button type="button" data-value="normal">normal</button>
+            <button type="button" data-value="hard">hard</button>
+            <button type="button" data-value="insane">insane</button>
+            <button type="button" data-value="extreme">extreme</button>
+            <button type="button" data-value="ultra">ultra</button>
+            <button type="button" data-value="impossible">impossible</button>
+            <button type="button" data-value="tourist">tourist</button>
+          </div>
+        </div>
+        <input id="editMetaType" type="hidden" value="">
+        <div class="select-shell" id="editTypeSelect" data-target="editMetaType">
+          <button type="button" class="select-trigger">Тип ошибки</button>
+          <div class="select-options">
+            <button type="button" data-value="Алгоритмическая">Алгоритмическая</button>
+            <button type="button" data-value="Формулы">Формулы</button>
+            <button type="button" data-value="Время">Время</button>
+            <button type="button" data-value="Память">Память</button>
+            <button type="button" data-value="Логика">Логика</button>
+            <button type="button" data-value="Другое">Другое</button>
+          </div>
+        </div>
+        <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <div class="admin-note">Условие</div>
+        <textarea id="editStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
+        <div class="admin-note">Пояснение</div>
+        <textarea id="editHelpText" class="admin-textarea" placeholder="help.md"></textarea>
+        <div class="admin-note">Код</div>
+        <textarea id="editCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
+        <div class="admin-note">Тесты</div>
+        <div class="test-form">
+          <textarea id="editTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
+          <textarea id="editTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
+          <button type="button" class="admin-secondary" onclick="addEditTestCase()">Добавить тест</button>
+          <button type="button" class="admin-secondary" onclick="clearEditTests()">Очистить тесты</button>
+        </div>
+        <div id="editTestList" class="test-list"></div>
+        <div class="admin-note">Генератор (C++)</div>
+        <textarea id="editGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
+        <div class="admin-actions">
+          <button type="button" onclick="adminUpdateTaskFromForm()">Сохранить изменения</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
         <h3>Скрытие задач</h3>
         <p class="admin-note">Скрытые задачи не отображаются в архиве и тренировке.</p>
         <div class="admin-actions">
@@ -533,7 +591,13 @@
         setAdminLog("Админ-доступ активирован.");
         initCustomSelect("difficultySelect");
         initCustomSelect("typeSelect");
+        initCustomSelect("editDifficultySelect");
+        initCustomSelect("editTypeSelect");
         await adminReloadTasks();
+        const editSelect = document.getElementById("editTaskSelect");
+        if (editSelect) {
+          editSelect.addEventListener("change", loadTaskForEdit);
+        }
       }
     }
 
@@ -682,6 +746,222 @@
       renderTestCases();
     }
 
+    window.editTaskTests = [];
+
+    function renderEditTaskSelect() {
+      const select = document.getElementById("editTaskSelect");
+      if (!select) return;
+      select.innerHTML = "";
+      adminTasks.forEach(task => {
+        const opt = document.createElement("option");
+        opt.value = task.id;
+        opt.textContent = `${task.id} — ${task.title}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function setCustomSelectValue(selectId, value, labelFallback) {
+      const root = document.getElementById(selectId);
+      if (!root) return;
+      const targetId = root.getAttribute("data-target");
+      const target = document.getElementById(targetId);
+      const trigger = root.querySelector(".select-trigger");
+      const options = root.querySelectorAll(".select-options button");
+      if (!target || !trigger || !options.length) return;
+      target.value = value || "";
+      let matched = false;
+      options.forEach(btn => {
+        const val = btn.getAttribute("data-value") || "";
+        if (val === value) {
+          btn.classList.add("active");
+          trigger.textContent = btn.textContent;
+          matched = true;
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      if (!matched) {
+        trigger.textContent = labelFallback || "Выбрать";
+      }
+    }
+
+    async function loadTextFile(url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return "";
+        return await res.text();
+      } catch (err) {
+        return "";
+      }
+    }
+
+    async function loadTextFileWithStatus(url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return { ok: false, text: "" };
+        return { ok: true, text: await res.text() };
+      } catch (err) {
+        return { ok: false, text: "" };
+      }
+    }
+
+    async function loadTaskForEdit() {
+      const select = document.getElementById("editTaskSelect");
+      if (!select || !select.value) {
+        setAdminLog("Выбери задачу для редактирования.");
+        return;
+      }
+      const id = Number(select.value);
+      if (!Number.isFinite(id)) {
+        setAdminLog("Некорректный ID задачи.");
+        return;
+      }
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      try {
+        const metaRes = await fetch(`${base}/tasks/${id}/meta.json`);
+        const meta = metaRes.ok ? await metaRes.json() : {};
+        document.getElementById("editMetaTitle").value = meta.title || "";
+        document.getElementById("editMetaAuthor").value = meta.author || "";
+        document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
+        setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
+        setCustomSelectValue("editTypeSelect", meta.type || "", "Тип ошибки");
+
+        document.getElementById("editStatementText").value = await loadTextFile(`${base}/tasks/${id}/statement.md`);
+        document.getElementById("editHelpText").value = await loadTextFile(`${base}/tasks/${id}/help.md`);
+        document.getElementById("editCodeText").value = await loadTextFile(`${base}/tasks/${id}/code.cpp`);
+        document.getElementById("editGeneratorText").value = await loadTextFile(`${base}/tasks/${id}/generator.cpp`);
+
+        window.editTaskTests = [];
+        let idx = 1;
+        while (true) {
+          const inRes = await loadTextFileWithStatus(`${base}/tasks/${id}/tests/${idx}.in`);
+          const outRes = await loadTextFileWithStatus(`${base}/tasks/${id}/tests/${idx}.out`);
+          if (!inRes.ok && !outRes.ok) break;
+          if (inRes.text || outRes.text) {
+            window.editTaskTests.push({ input: inRes.text, output: outRes.text });
+          }
+          idx += 1;
+        }
+        renderEditTestCases();
+
+        setAdminLog(`Задача ${id} загружена для редактирования.`);
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка загрузки задачи.");
+      }
+    }
+
+    function renderEditTestCases() {
+      const list = document.getElementById("editTestList");
+      if (!list) return;
+      list.innerHTML = "";
+      window.editTaskTests.forEach((t, idx) => {
+        const row = document.createElement("div");
+        row.className = "test-row";
+        row.innerHTML = `
+          <div class="test-index">Тест ${idx + 1}</div>
+          <button type="button" class="admin-secondary" data-index="${idx}">Удалить</button>
+        `;
+        row.querySelector("button").addEventListener("click", (e) => {
+          const i = Number(e.currentTarget.getAttribute("data-index"));
+          window.editTaskTests.splice(i, 1);
+          renderEditTestCases();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function addEditTestCase() {
+      const input = document.getElementById("editTestInput");
+      const output = document.getElementById("editTestOutput");
+      if (!input || !output) return;
+      const inp = input.value;
+      const out = output.value;
+      if (!inp.trim() && !out.trim()) {
+        setAdminLog("Пустой тест не добавлен.");
+        return;
+      }
+      window.editTaskTests.push({ input: inp, output: out });
+      input.value = "";
+      output.value = "";
+      renderEditTestCases();
+    }
+
+    function clearEditTests() {
+      window.editTaskTests = [];
+      renderEditTestCases();
+    }
+
+    async function adminUpdateTaskFromForm() {
+      const select = document.getElementById("editTaskSelect");
+      if (!select || !select.value) {
+        setAdminLog("Выбери задачу для сохранения.");
+        return;
+      }
+      const id = Number(select.value);
+      if (!Number.isFinite(id)) {
+        setAdminLog("Некорректный ID задачи.");
+        return;
+      }
+
+      const title = document.getElementById("editMetaTitle").value.trim();
+      const author = document.getElementById("editMetaAuthor").value.trim() || user || "admin";
+      const difficulty = document.getElementById("editMetaDifficulty").value.trim();
+      const type = document.getElementById("editMetaType").value.trim();
+      const tagsRaw = document.getElementById("editMetaTags").value.trim();
+      const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
+
+      if (!title) {
+        setAdminLog("Название задачи не заполнено.");
+        return;
+      }
+
+      const statement = document.getElementById("editStatementText").value;
+      const help = document.getElementById("editHelpText").value;
+      const code = document.getElementById("editCodeText").value;
+      const generator = document.getElementById("editGeneratorText").value;
+      const tests = window.editTaskTests || [];
+
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const payload = {
+        meta: {
+          id,
+          title,
+          author,
+          difficulty,
+          type,
+          tags
+        },
+        files: {
+          statement,
+          help,
+          code,
+          generator
+        },
+        tests
+      };
+
+      try {
+        const res = await fetch(`${base}/tasks/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setAdminLog(`Ошибка сохранения: ${err.error || res.status}`);
+          return;
+        }
+        const data = await res.json();
+        setAdminLog(`Задача ${data.id} обновлена.`);
+        adminTasks = await loadTaskList();
+        renderEditTaskSelect();
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка соединения с сервером.");
+      }
+    }
+
     function initCustomSelect(selectId) {
       const root = document.getElementById(selectId);
       if (!root) return;
@@ -769,6 +1049,7 @@
       adminTasks = await loadTaskList();
       hiddenTasksMap = await loadHiddenMap();
       renderTaskVisibility();
+      renderEditTaskSelect();
       setAdminLog(`Задачи загружены: ${adminTasks.length}.`);
     }
 
