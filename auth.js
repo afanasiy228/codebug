@@ -172,7 +172,6 @@ function updateNavbar() {
 
     const commonLinks = `
         <a href="index.html">Главная</a>
-        <a href="archive.html">Архив</a>
         <a href="train.html">Тренировка</a>
         <a href="contests.html">Соревнования</a>
         <a href="rating.html">Рейтинг</a>
