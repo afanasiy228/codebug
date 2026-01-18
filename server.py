@@ -1,6 +1,7 @@
 import os
 import json
 import subprocess
+import tempfile
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
@@ -20,6 +21,7 @@ TASKS_SYNC_TTL = int(os.getenv("TASKS_SYNC_TTL", "300"))
 TASKS_COMMIT_NAME = os.getenv("TASKS_COMMIT_NAME", "CodeBug Admin")
 TASKS_COMMIT_EMAIL = os.getenv("TASKS_COMMIT_EMAIL", "admin@codebug.local")
 LAST_TASKS_SYNC = 0.0
+MAX_GENERATED_TESTS = int(os.getenv("MAX_GENERATED_TESTS", "200"))
 
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
@@ -180,6 +182,15 @@ def _write_text(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
+
+
+def _compile_cpp(src_path, out_path):
+    result = subprocess.run(
+        ["g++", "-std=c++17", "-O2", src_path, "-o", out_path],
+        capture_output=True,
+        text=True
+    )
+    return result
 
 
 @app.route("/submit", methods=["POST", "OPTIONS"])
@@ -343,6 +354,8 @@ def tasks_create():
         _write_text(os.path.join(task_path, "help.md"), files["help"])
     if files.get("code"):
         _write_text(os.path.join(task_path, "code.cpp"), files["code"])
+    if files.get("solution"):
+        _write_text(os.path.join(task_path, "sol.cpp"), files["solution"])
     if files.get("generator"):
         _write_text(os.path.join(task_path, "generator.cpp"), files["generator"])
 
@@ -380,6 +393,134 @@ def tasks_create():
         return jsonify({"error": "git_failed"}), 500
 
     return jsonify({"status": "ok", "id": task_id})
+
+
+@app.route("/tasks/delete", methods=["POST"])
+def tasks_delete():
+    if not sync_tasks_repo():
+        return jsonify({"error": "tasks_sync_failed"}), 500
+
+    data = request.get_json(silent=True) or {}
+    task_id = data.get("id")
+    if not isinstance(task_id, int):
+        return jsonify({"error": "id_required"}), 400
+
+    task_path = task_dir(task_id)
+    if not os.path.isdir(task_path):
+        return jsonify({"error": "not_found"}), 404
+
+    try:
+        subprocess.run(
+            ["rm", "-rf", task_path],
+            check=True
+        )
+    except Exception as e:
+        print("Task delete failed:", e)
+        return jsonify({"error": "delete_failed"}), 500
+
+    _ensure_git_identity()
+    try:
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "add", "-A"],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "commit", "-m", f"Delete task {task_id}"],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_env()
+        )
+        subprocess.run(
+            ["git", "-C", TASKS_REPO_DIR, "push"],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_env()
+        )
+    except Exception as e:
+        print("Task delete git failed:", e)
+        return jsonify({"error": "git_failed"}), 500
+
+    return jsonify({"status": "ok", "id": task_id})
+
+
+@app.route("/tasks/generate-tests", methods=["POST"])
+def tasks_generate_tests():
+    data = request.get_json(silent=True) or {}
+    generator_code = data.get("generator", "")
+    solution_code = data.get("solution", "")
+    count = data.get("count", 0)
+
+    if not isinstance(count, int) or count <= 0:
+        return jsonify({"error": "count_required"}), 400
+    if count > MAX_GENERATED_TESTS:
+        return jsonify({"error": "count_too_large"}), 400
+    if not generator_code.strip():
+        return jsonify({"error": "generator_required"}), 400
+    if not solution_code.strip():
+        return jsonify({"error": "solution_required"}), 400
+
+    with tempfile.TemporaryDirectory() as tmp:
+        gen_src = os.path.join(tmp, "generator.cpp")
+        sol_src = os.path.join(tmp, "solution.cpp")
+        gen_bin = os.path.join(tmp, "gen")
+        sol_bin = os.path.join(tmp, "sol")
+
+        _write_text(gen_src, generator_code)
+        _write_text(sol_src, solution_code)
+
+        gen_compile = _compile_cpp(gen_src, gen_bin)
+        if gen_compile.returncode != 0:
+            return jsonify({
+                "error": "generator_compile_failed",
+                "details": gen_compile.stderr
+            }), 400
+
+        sol_compile = _compile_cpp(sol_src, sol_bin)
+        if sol_compile.returncode != 0:
+            return jsonify({
+                "error": "solution_compile_failed",
+                "details": sol_compile.stderr
+            }), 400
+
+        tests = []
+        for i in range(1, count + 1):
+            gen_run = subprocess.run(
+                [gen_bin, str(i)],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if gen_run.returncode != 0:
+                return jsonify({
+                    "error": "generator_runtime_failed",
+                    "details": gen_run.stderr,
+                    "index": i
+                }), 400
+
+            inp = gen_run.stdout
+            sol_run = subprocess.run(
+                [sol_bin],
+                input=inp,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if sol_run.returncode != 0:
+                return jsonify({
+                    "error": "solution_runtime_failed",
+                    "details": sol_run.stderr,
+                    "index": i
+                }), 400
+            tests.append({
+                "input": inp,
+                "output": sol_run.stdout
+            })
+
+        return jsonify({"tests": tests})
     
 
 if __name__ == "__main__":
