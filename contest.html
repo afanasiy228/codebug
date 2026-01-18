@@ -393,7 +393,8 @@
       for (const taskId of contestData.tasks) {
         let title = `Задача #${taskId}`;
         try {
-          const res = await fetch(`tasks/${taskId}/meta.json`);
+          const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+          const res = await fetch(`${base}/tasks/${taskId}/meta.json`);
           const meta = await res.json();
           title = meta.title || title;
         } catch (e) {}

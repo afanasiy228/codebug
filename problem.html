@@ -1046,6 +1046,7 @@
 
             const url = new URL(location.href);
             const id = url.searchParams.get("id") || "0";
+            const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
 
             const hiddenMap = await loadHiddenMap();
             const isHidden = hiddenMap && hiddenMap[id];
@@ -1066,7 +1067,7 @@
             }
 
             // ————————————— META.JSON ————————————————
-            const metaPath = `tasks/${id}/meta.json`;
+            const metaPath = `${base}/tasks/${id}/meta.json`;
 
             try {
                 const res = await fetch(metaPath);
@@ -1090,7 +1091,7 @@
 
 
             // ————————————— STATEMENT.MD ————————————————
-            const stmtPath = `tasks/${id}/statement.md`;
+            const stmtPath = `${base}/tasks/${id}/statement.md`;
 
             try {
                 const res = await fetch(stmtPath);
@@ -1102,7 +1103,7 @@
                 document.getElementById("taskStatement").innerText = "statement.md не найден";
             }
 
-            const helpPath = `tasks/${id}/help.md`;
+            const helpPath = `${base}/tasks/${id}/help.md`;
 
             try {
                 const res = await fetch(helpPath);
@@ -1115,7 +1116,7 @@
 
 
             // ————————————— CODE.CPP ————————————————
-            const codePath = `tasks/${id}/code.cpp`;
+            const codePath = `${base}/tasks/${id}/code.cpp`;
 
             try {
                 const res = await fetch(codePath);
@@ -1137,8 +1138,8 @@
             for (let i = 1; i <= 2; i++) {
                 console.log(`📄 test ${i}`);
 
-                const inPath = `tasks/${id}/tests/${i}.in`;
-                const outPath = `tasks/${id}/tests/${i}.out`;
+                const inPath = `${base}/tasks/${id}/tests/${i}.in`;
+                const outPath = `${base}/tasks/${id}/tests/${i}.out`;
 
                 try {
                     const inpRes = await fetch(inPath);

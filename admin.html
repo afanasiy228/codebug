@@ -131,10 +131,125 @@
       font-family: "IBM Plex Sans", sans-serif;
     }
 
+    .admin-box .admin-input + .admin-input,
+    .admin-box .admin-input + .select-shell,
+    .admin-box .select-shell + .admin-input,
+    .admin-box .select-shell + .select-shell,
+    .admin-box .admin-textarea + .admin-note,
+    .admin-box .admin-input + .admin-note {
+      margin-top: 10px;
+    }
+
+    .admin-box .admin-note + .admin-textarea,
+    .admin-box .admin-note + .admin-input,
+    .admin-box .admin-note + .select-shell {
+      margin-top: 6px;
+    }
+
     .admin-textarea {
       min-height: 200px;
       resize: vertical;
       font-size: 13px;
+    }
+
+    .select-shell {
+      position: relative;
+      margin-bottom: 6px;
+    }
+
+    .select-trigger {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(135deg, #1a1512, #221a15);
+      color: #f5efe6;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .select-options {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: linear-gradient(160deg, #16110f, #221915);
+      border: 1px solid rgba(245, 239, 230, 0.2);
+      border-radius: 12px;
+      padding: 6px;
+      display: none;
+      z-index: 5;
+      box-shadow: 0 14px 32px rgba(15, 118, 110, 0.15);
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .select-shell.open .select-options {
+      display: grid;
+      gap: 4px;
+    }
+
+    .select-shell.open .select-trigger {
+      background: #171411;
+      color: #f5efe6;
+      border-color: rgba(245, 239, 230, 0.2);
+    }
+
+    .select-options button {
+      text-align: left;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      color: #f5efe6;
+      box-shadow: none;
+    }
+
+    .select-options button:hover,
+    .select-options button.active {
+      border-color: rgba(255, 213, 81, 0.6);
+      background: rgba(255, 213, 81, 0.15);
+      color: #ffe8a0;
+    }
+
+    .test-form {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .test-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .test-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(15, 118, 110, 0.05);
+    }
+
+    .test-index {
+      font-weight: 600;
+    }
+
+    .admin-secondary {
+      border: 1px solid var(--stroke);
+      background: rgba(15, 118, 110, 0.08);
+      color: var(--ink);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: none;
     }
 
     button {
@@ -280,11 +395,57 @@
       </div>
 
       <div class="admin-box">
-        <h3>Загрузка задач папкой</h3>
-        <p class="admin-note">Файлы будут сохранены в Firebase в разделе uploads.</p>
-        <input id="adminTaskFolder" class="admin-input" type="file" webkitdirectory multiple>
+        <h3>Добавление задачи</h3>
+        <p class="admin-note">Заполни мета-данные и файлы задачи. Результат сохраняется в Firebase: uploads.</p>
+        <input id="taskMetaId" class="admin-input" type="number" placeholder="ID задачи">
+        <input id="taskMetaTitle" class="admin-input" type="text" placeholder="Название">
+        <input id="taskMetaAuthor" class="admin-input" type="text" placeholder="Автор">
+        <input id="taskMetaDifficulty" type="hidden" value="">
+        <div class="select-shell" id="difficultySelect" data-target="taskMetaDifficulty">
+          <button type="button" class="select-trigger">Сложность</button>
+          <div class="select-options">
+            <button type="button" data-value="tutorial">tutorial</button>
+            <button type="button" data-value="easy">easy</button>
+            <button type="button" data-value="casual">casual</button>
+            <button type="button" data-value="normal">normal</button>
+            <button type="button" data-value="hard">hard</button>
+            <button type="button" data-value="insane">insane</button>
+            <button type="button" data-value="extreme">extreme</button>
+            <button type="button" data-value="ultra">ultra</button>
+            <button type="button" data-value="impossible">impossible</button>
+            <button type="button" data-value="tourist">tourist</button>
+          </div>
+        </div>
+        <input id="taskMetaType" type="hidden" value="">
+        <div class="select-shell" id="typeSelect" data-target="taskMetaType">
+          <button type="button" class="select-trigger">Тип ошибки</button>
+          <div class="select-options">
+            <button type="button" data-value="Алгоритмическая">Алгоритмическая</button>
+            <button type="button" data-value="Формулы">Формулы</button>
+            <button type="button" data-value="Время">Время</button>
+            <button type="button" data-value="Память">Память</button>
+            <button type="button" data-value="Логика">Логика</button>
+            <button type="button" data-value="Другое">Другое</button>
+          </div>
+        </div>
+        <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <div class="admin-note">Условие</div>
+        <textarea id="taskStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
+        <div class="admin-note">Пояснение</div>
+        <textarea id="taskHelpText" class="admin-textarea" placeholder="help.md"></textarea>
+        <div class="admin-note">Код</div>
+        <textarea id="taskCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
+        <div class="admin-note">Тесты</div>
+        <div class="test-form">
+          <textarea id="taskTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
+          <textarea id="taskTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
+          <button type="button" class="admin-secondary" onclick="addTestCase()">Добавить тест</button>
+        </div>
+        <div id="testList" class="test-list"></div>
+        <div class="admin-note">Генератор (C++)</div>
+        <textarea id="taskGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
-          <button type="button" onclick="adminUploadTasks()">Загрузить папку</button>
+          <button type="button" onclick="adminUploadTaskFromForm()">Сохранить задачу</button>
         </div>
       </div>
 
@@ -371,6 +532,8 @@
       locked.style.display = isAdmin ? "none" : "block";
       if (isAdmin) {
         setAdminLog("Админ-доступ активирован.");
+        initCustomSelect("difficultySelect");
+        initCustomSelect("typeSelect");
         await adminReloadTasks();
       }
     }
@@ -411,45 +574,165 @@
       }
     }
 
-    async function adminUploadTasks() {
-      const input = document.getElementById("adminTaskFolder");
-      const files = Array.from(input.files || []);
-      if (!files.length) {
-        setAdminLog("Папка не выбрана.");
+    async function adminUploadTaskFromForm() {
+      const idRaw = document.getElementById("taskMetaId").value.trim();
+      const title = document.getElementById("taskMetaTitle").value.trim();
+      const author = document.getElementById("taskMetaAuthor").value.trim() || user || "admin";
+      const difficulty = document.getElementById("taskMetaDifficulty").value.trim();
+      const type = document.getElementById("taskMetaType").value.trim();
+      const tagsRaw = document.getElementById("taskMetaTags").value.trim();
+
+      if (!idRaw || !title) {
+        setAdminLog("Укажи ID и название задачи.");
         return;
       }
 
-      const bundleId = "upload_" + Date.now();
-      const baseRef = db.ref("uploads/" + bundleId);
-      const allowed = /\.(md|json|cpp|in|out|txt)$/i;
+      const id = Number(idRaw);
+      if (!Number.isFinite(id)) {
+        setAdminLog("Некорректный ID задачи.");
+        return;
+      }
 
+      const tags = tagsRaw
+        ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean)
+        : [];
+
+      const statementText = document.getElementById("taskStatementText").value;
+      const helpText = document.getElementById("taskHelpText").value;
+      const codeText = document.getElementById("taskCodeText").value;
+      const generatorText = document.getElementById("taskGeneratorText").value;
+      const tests = window.taskTests || [];
+
+      const bundleId = `task_${id}_${Date.now()}`;
+      const baseRef = db.ref("uploads/" + bundleId);
       let uploaded = 0;
       let skipped = 0;
 
-      for (const file of files) {
-        if (!allowed.test(file.name)) {
-          skipped += 1;
-          continue;
-        }
-        const path = file.webkitRelativePath || file.name;
+      const meta = {
+        id,
+        title,
+        author,
+        difficulty,
+        type,
+        tags
+      };
+
+      try {
+        await baseRef.child("files").child(`tasks/${id}/meta.json`).set(JSON.stringify(meta, null, 2));
+        uploaded += 1;
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Не удалось сохранить meta.json.");
+        return;
+      }
+
+      const uploadText = async (content, path) => {
+        if (!content || !content.trim()) return;
         try {
-          const content = await file.text();
           await baseRef.child("files").child(path).set(content);
           uploaded += 1;
         } catch (err) {
           console.error(err);
           skipped += 1;
         }
+      };
+
+      await uploadText(statementText, `tasks/${id}/statement.md`);
+      await uploadText(helpText, `tasks/${id}/help.md`);
+      await uploadText(codeText, `tasks/${id}/code.cpp`);
+      await uploadText(generatorText, `tasks/${id}/generator.cpp`);
+
+      for (let i = 0; i < tests.length; i++) {
+        const t = tests[i];
+        await uploadText(t.input, `tasks/${id}/tests/${i + 1}.in`);
+        await uploadText(t.output, `tasks/${id}/tests/${i + 1}.out`);
       }
 
       await baseRef.child("meta").set({
         uploader: user,
         created: Date.now(),
-        totalFiles: files.length,
+        taskId: id,
+        totalFiles: 4 + tests.length * 2 + (generatorText.trim() ? 1 : 0),
         uploadedFiles: uploaded
       });
 
-      setAdminLog(`Загрузка завершена. Успешно: ${uploaded}, пропущено: ${skipped}.`);
+      setAdminLog(`Задача сохранена в uploads/${bundleId}. Успешно: ${uploaded}, пропущено: ${skipped}.`);
+    }
+
+    window.taskTests = [];
+
+    function renderTestCases() {
+      const list = document.getElementById("testList");
+      if (!list) return;
+      list.innerHTML = "";
+      window.taskTests.forEach((t, idx) => {
+        const row = document.createElement("div");
+        row.className = "test-row";
+        row.innerHTML = `
+          <div class="test-index">Тест ${idx + 1}</div>
+          <button type="button" class="admin-secondary" data-index="${idx}">Удалить</button>
+        `;
+        row.querySelector("button").addEventListener("click", (e) => {
+          const i = Number(e.currentTarget.getAttribute("data-index"));
+          window.taskTests.splice(i, 1);
+          renderTestCases();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function addTestCase() {
+      const input = document.getElementById("taskTestInput");
+      const output = document.getElementById("taskTestOutput");
+      if (!input || !output) return;
+      const inp = input.value;
+      const out = output.value;
+      if (!inp.trim() && !out.trim()) {
+        setAdminLog("Пустой тест не добавлен.");
+        return;
+      }
+      window.taskTests.push({ input: inp, output: out });
+      input.value = "";
+      output.value = "";
+      renderTestCases();
+    }
+
+    function initCustomSelect(selectId) {
+      const root = document.getElementById(selectId);
+      if (!root) return;
+      const targetId = root.getAttribute("data-target");
+      const target = document.getElementById(targetId);
+      const trigger = root.querySelector(".select-trigger");
+      const options = root.querySelectorAll(".select-options button");
+      if (!target || !trigger || !options.length) return;
+
+      const closeAll = () => {
+        document.querySelectorAll(".select-shell.open").forEach(item => {
+          item.classList.remove("open");
+        });
+      };
+
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = root.classList.contains("open");
+        closeAll();
+        if (!isOpen) root.classList.add("open");
+      });
+
+      options.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const value = btn.getAttribute("data-value") || "";
+          target.value = value;
+          trigger.textContent = btn.textContent;
+          options.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          root.classList.remove("open");
+        });
+      });
+
+      document.addEventListener("click", () => {
+        root.classList.remove("open");
+      });
     }
 
     let adminTasks = [];
@@ -467,27 +750,19 @@
     }
 
     async function loadTaskList() {
-      const list = [];
-      let id = 0;
-
-      while (true) {
-        const url = `tasks/${id}/meta.json`;
-        try {
-          const res = await fetch(url);
-          if (!res.ok) break;
-          const meta = await res.json();
-          list.push({
-            id: typeof meta.id === "number" ? meta.id : id,
-            title: meta.title || ("Задача " + id)
-          });
-        } catch (err) {
-          console.warn("Task meta fetch failed", err);
-          break;
-        }
-        id += 1;
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      try {
+        const res = await fetch(`${base}/tasks/list`);
+        if (!res.ok) return [];
+        const list = await res.json();
+        return list.map(meta => ({
+          id: typeof meta.id === "number" ? meta.id : Number(meta.id),
+          title: meta.title || ("Задача " + meta.id)
+        }));
+      } catch (err) {
+        console.warn("Task list fetch failed", err);
+        return [];
       }
-
-      return list;
     }
 
     async function adminReloadTasks() {

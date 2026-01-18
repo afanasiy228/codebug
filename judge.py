@@ -10,7 +10,8 @@ BINARY = "sol"         # бинарник
 LOG_FILE = "log.txt"   # вывод для просмотра
 
 def task_dir(task):
-    return os.path.join("tasks", task)
+    base = os.getenv("TASKS_REPO_DIR", "tasks")
+    return os.path.join(base, task)
 
 def compile_cpp():
     if not os.path.exists(SOURCE):
