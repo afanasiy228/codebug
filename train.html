@@ -496,45 +496,31 @@
 
     <script>
         // ============================
-        // ЗАГРУЗКА ЗАДАЧ ИЗ tasks/<id>/meta.json
+        // ЗАГРУЗКА ЗАДАЧ ИЗ API
         // ============================
 
         async function loadProblems() {
             console.log("[training] loadProblems() start");
-            const list = [];
-            let id = 0;
-
-            while (true) {
-                const url = `tasks/${id}/meta.json`;
-                console.log("[training] пробую", url);
-
-                try {
-                    const res = await fetch(url);
-                    if (!res.ok) {
-                        console.log("[training] fetch not ok, break at id =", id, "status =", res.status);
-                        break;
-                    }
-
-                    const meta = await res.json();
-                    console.log("[training] meta loaded:", meta);
-
-                    list.push({
-                        id: typeof meta.id === "number" ? meta.id : id,
-                        title: meta.title || ("Задача " + id),
-                        difficulty: meta.difficulty || "",
-                        type: meta.type || "",
-                        tags: meta.tags || []
-                    });
-                } catch (e) {
-                    console.log("[training] fetch/meta error at id =", id, e);
-                    break;
+            const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+            try {
+                const res = await fetch(`${base}/tasks/list`);
+                if (!res.ok) {
+                    console.log("[training] fetch list failed, status =", res.status);
+                    return [];
                 }
-
-                id++;
+                const list = await res.json();
+                console.log("[training] total problems loaded:", list.length);
+                return list.map(meta => ({
+                    id: typeof meta.id === "number" ? meta.id : Number(meta.id),
+                    title: meta.title || ("Задача " + meta.id),
+                    difficulty: meta.difficulty || "",
+                    type: meta.type || "",
+                    tags: meta.tags || []
+                }));
+            } catch (e) {
+                console.log("[training] fetch/meta error", e);
+                return [];
             }
-
-            console.log("[training] total problems loaded:", list.length);
-            return list;
         }
 
         async function loadHiddenMap() {

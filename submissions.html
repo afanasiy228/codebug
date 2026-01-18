@@ -260,7 +260,8 @@
             if (titleCache[id]) return titleCache[id];
 
             try {
-                const meta = await fetch(`tasks/${id}/meta.json`).then(r => r.json());
+                const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+                const meta = await fetch(`${base}/tasks/${id}/meta.json`).then(r => r.json());
                 titleCache[id] = meta.title;
                 return meta.title;
             } catch {

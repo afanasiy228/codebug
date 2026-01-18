@@ -19,5 +19,8 @@ firebase.initializeApp(firebaseConfig);
 // Глобальная переменная DB
 window.db = firebase.database();
 window.firebase = firebase;
+window.TASKS_API_BASE = window.TASKS_API_BASE || (
+    location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com"
+);
 
 console.log("Firebase INIT OK, db =", window.db);

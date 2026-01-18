@@ -495,7 +495,8 @@
 
             // meta.json
             try {
-                const meta = await fetch(`tasks/${id}/meta.json`).then(r => r.json());
+                const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+                const meta = await fetch(`${base}/tasks/${id}/meta.json`).then(r => r.json());
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
             } catch {
                 document.getElementById("taskTitle").innerText = "Название не найдено";
@@ -503,7 +504,7 @@
 
             // statement.md
             try {
-                const md = await fetch(`tasks/${id}/statement.md`).then(r => r.text());
+                const md = await fetch(`${base}/tasks/${id}/statement.md`).then(r => r.text());
                 document.getElementById("taskStatement").innerHTML = md.replace(/\n/g, "<br>");
             } catch {
                 document.getElementById("taskStatement").innerText = "statement.md не найден";
@@ -511,7 +512,7 @@
 
             // code.cpp
             try {
-                const code = await fetch(`tasks/${id}/code.cpp`).then(r => r.text());
+                const code = await fetch(`${base}/tasks/${id}/code.cpp`).then(r => r.text());
                 editor.setValue(code);
             } catch {
                 editor.setValue("// code.cpp не найден");
@@ -521,8 +522,8 @@
             const examples = document.getElementById("examples");
             for (let i = 1; i <= 2; i++) {
                 try {
-                    const inp = await fetch(`tasks/${id}/tests/${i}.in`).then(r => r.text());
-                    const out = await fetch(`tasks/${id}/tests/${i}.out`).then(r => r.text());
+                    const inp = await fetch(`${base}/tasks/${id}/tests/${i}.in`).then(r => r.text());
+                    const out = await fetch(`${base}/tasks/${id}/tests/${i}.out`).then(r => r.text());
 
                     examples.innerHTML += `
                         <div class="testcase-block">
