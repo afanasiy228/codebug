@@ -432,8 +432,10 @@
         <textarea id="taskStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
         <div class="admin-note">Пояснение</div>
         <textarea id="taskHelpText" class="admin-textarea" placeholder="help.md"></textarea>
-        <div class="admin-note">Код</div>
+        <div class="admin-note">Код (ошибочный)</div>
         <textarea id="taskCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
+        <div class="admin-note">Правильное решение (опционально)</div>
+        <textarea id="taskSolutionText" class="admin-textarea" placeholder="sol.cpp"></textarea>
         <div class="admin-note">Тесты</div>
         <div class="test-form">
           <textarea id="taskTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
@@ -443,6 +445,10 @@
         <div id="testList" class="test-list"></div>
         <div class="admin-note">Генератор (C++)</div>
         <textarea id="taskGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
+        <div class="admin-actions">
+          <input id="taskGeneratorCount" class="admin-input" type="number" min="1" max="200" placeholder="Сколько тестов сгенерировать">
+          <button type="button" class="admin-secondary" onclick="generateTestsFromGenerator('create')">Сгенерировать тесты</button>
+        </div>
         <div class="admin-actions">
           <button type="button" onclick="adminUploadTaskFromForm()">Сохранить задачу</button>
         </div>
@@ -489,8 +495,10 @@
         <textarea id="editStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
         <div class="admin-note">Пояснение</div>
         <textarea id="editHelpText" class="admin-textarea" placeholder="help.md"></textarea>
-        <div class="admin-note">Код</div>
+        <div class="admin-note">Код (ошибочный)</div>
         <textarea id="editCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
+        <div class="admin-note">Правильное решение (опционально)</div>
+        <textarea id="editSolutionText" class="admin-textarea" placeholder="sol.cpp"></textarea>
         <div class="admin-note">Тесты</div>
         <div class="test-form">
           <textarea id="editTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
@@ -502,7 +510,20 @@
         <div class="admin-note">Генератор (C++)</div>
         <textarea id="editGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
+          <input id="editGeneratorCount" class="admin-input" type="number" min="1" max="200" placeholder="Сколько тестов сгенерировать">
+          <button type="button" class="admin-secondary" onclick="generateTestsFromGenerator('edit')">Сгенерировать тесты</button>
+        </div>
+        <div class="admin-actions">
           <button type="button" onclick="adminUpdateTaskFromForm()">Сохранить изменения</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Удаление задачи</h3>
+        <p class="admin-note">Выбери задачу и подтверди удаление. Действие необратимо.</p>
+        <div class="admin-actions">
+          <select id="deleteTaskSelect" class="admin-input"></select>
+          <button type="button" class="admin-secondary" onclick="adminDeleteTask()">Удалить задачу</button>
         </div>
       </div>
 
@@ -662,6 +683,7 @@
       const statementText = document.getElementById("taskStatementText").value;
       const helpText = document.getElementById("taskHelpText").value;
       const codeText = document.getElementById("taskCodeText").value;
+      const solutionText = document.getElementById("taskSolutionText").value;
       const generatorText = document.getElementById("taskGeneratorText").value;
       const tests = window.taskTests || [];
 
@@ -681,6 +703,7 @@
           statement: statementText,
           help: helpText,
           code: codeText,
+          solution: solutionText,
           generator: generatorText
         },
         tests
@@ -758,6 +781,16 @@
         opt.textContent = `${task.id} — ${task.title}`;
         select.appendChild(opt);
       });
+      const delSelect = document.getElementById("deleteTaskSelect");
+      if (delSelect) {
+        delSelect.innerHTML = "";
+        adminTasks.forEach(task => {
+          const opt = document.createElement("option");
+          opt.value = task.id;
+          opt.textContent = `${task.id} — ${task.title}`;
+          delSelect.appendChild(opt);
+        });
+      }
     }
 
     function setCustomSelectValue(selectId, value, labelFallback) {
@@ -829,6 +862,7 @@
         document.getElementById("editStatementText").value = await loadTextFile(`${base}/tasks/${id}/statement.md`);
         document.getElementById("editHelpText").value = await loadTextFile(`${base}/tasks/${id}/help.md`);
         document.getElementById("editCodeText").value = await loadTextFile(`${base}/tasks/${id}/code.cpp`);
+        document.getElementById("editSolutionText").value = await loadTextFile(`${base}/tasks/${id}/sol.cpp`);
         document.getElementById("editGeneratorText").value = await loadTextFile(`${base}/tasks/${id}/generator.cpp`);
 
         window.editTaskTests = [];
@@ -892,6 +926,59 @@
       renderEditTestCases();
     }
 
+    async function generateTestsFromGenerator(mode) {
+      const isEdit = mode === "edit";
+      const generator = document.getElementById(isEdit ? "editGeneratorText" : "taskGeneratorText").value;
+      const solution = document.getElementById(isEdit ? "editSolutionText" : "taskSolutionText").value
+        || document.getElementById(isEdit ? "editCodeText" : "taskCodeText").value;
+      const countRaw = document.getElementById(isEdit ? "editGeneratorCount" : "taskGeneratorCount").value;
+      const count = Number(countRaw);
+
+      if (!generator.trim()) {
+        setAdminLog("Генератор не заполнен.");
+        return;
+      }
+      if (!solution.trim()) {
+        setAdminLog("Код решения не заполнен.");
+        return;
+      }
+      if (!Number.isFinite(count) || count <= 0) {
+        setAdminLog("Укажи количество тестов.");
+        return;
+      }
+
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      try {
+        const res = await fetch(`${base}/tasks/generate-tests`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            generator,
+            solution,
+            count
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setAdminLog(`Ошибка генерации: ${err.error || res.status}`);
+          return;
+        }
+        const data = await res.json();
+        const tests = Array.isArray(data.tests) ? data.tests : [];
+        if (isEdit) {
+          window.editTaskTests = window.editTaskTests.concat(tests);
+          renderEditTestCases();
+        } else {
+          window.taskTests = window.taskTests.concat(tests);
+          renderTestCases();
+        }
+        setAdminLog(`Сгенерировано тестов: ${tests.length}.`);
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка соединения с сервером.");
+      }
+    }
+
     async function adminUpdateTaskFromForm() {
       const select = document.getElementById("editTaskSelect");
       if (!select || !select.value) {
@@ -919,6 +1006,7 @@
       const statement = document.getElementById("editStatementText").value;
       const help = document.getElementById("editHelpText").value;
       const code = document.getElementById("editCodeText").value;
+      const solution = document.getElementById("editSolutionText").value;
       const generator = document.getElementById("editGeneratorText").value;
       const tests = window.editTaskTests || [];
 
@@ -936,6 +1024,7 @@
           statement,
           help,
           code,
+          solution,
           generator
         },
         tests
@@ -954,6 +1043,40 @@
         }
         const data = await res.json();
         setAdminLog(`Задача ${data.id} обновлена.`);
+        adminTasks = await loadTaskList();
+        renderEditTaskSelect();
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка соединения с сервером.");
+      }
+    }
+
+    async function adminDeleteTask() {
+      const select = document.getElementById("deleteTaskSelect");
+      if (!select || !select.value) {
+        setAdminLog("Выбери задачу для удаления.");
+        return;
+      }
+      const id = Number(select.value);
+      if (!Number.isFinite(id)) {
+        setAdminLog("Некорректный ID задачи.");
+        return;
+      }
+      if (!confirm(`Удалить задачу ${id}? Это необратимо.`)) return;
+
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      try {
+        const res = await fetch(`${base}/tasks/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setAdminLog(`Ошибка удаления: ${err.error || res.status}`);
+          return;
+        }
+        setAdminLog(`Задача ${id} удалена.`);
         adminTasks = await loadTaskList();
         renderEditTaskSelect();
       } catch (err) {
