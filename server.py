@@ -362,7 +362,7 @@ def tasks_create():
             text=True
         )
         subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "commit", "-m", f\"Add task {task_id}\"],
+            ["git", "-C", TASKS_REPO_DIR, "commit", "-m", f"Add task {task_id}"],
             check=True,
             capture_output=True,
             text=True,
