@@ -537,9 +537,14 @@ def tasks_generate_tests():
         return jsonify({"tests": tests})
 
 
-@app.route("/ping", methods=["GET"])
+@app.route("/ping", methods=["GET", "HEAD"])
 def ping():
     return jsonify({"status": "ok", "ts": int(time.time())})
+
+
+@app.route("/", methods=["GET", "HEAD"])
+def root():
+    return jsonify({"status": "ok"})
     
 
 if __name__ == "__main__":
