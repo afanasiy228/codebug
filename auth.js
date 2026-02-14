@@ -58,6 +58,11 @@ function ensureMobileNavStyles() {
     border-radius: 999px;
     border: 1px solid rgba(0, 0, 0, 0.15);
     background: rgba(255, 255, 255, 0.65);
+    color: var(--ink) !important;
+    font-weight: 700;
+}
+#nav-links .nav-account .nav-profile:hover {
+    color: var(--accent) !important;
 }
 #nav-links .nav-burger {
     display: none;
