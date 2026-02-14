@@ -488,12 +488,19 @@ def tasks_generate_tests():
 
         tests = []
         for i in range(1, count + 1):
-            gen_run = subprocess.run(
-                [gen_bin, str(i)],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            try:
+                gen_run = subprocess.run(
+                    [gen_bin, str(i)],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+            except subprocess.TimeoutExpired:
+                return jsonify({
+                    "error": "generator_timeout",
+                    "index": i
+                }), 400
+
             if gen_run.returncode != 0:
                 return jsonify({
                     "error": "generator_runtime_failed",
@@ -502,13 +509,20 @@ def tasks_generate_tests():
                 }), 400
 
             inp = gen_run.stdout
-            sol_run = subprocess.run(
-                [sol_bin],
-                input=inp,
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            try:
+                sol_run = subprocess.run(
+                    [sol_bin],
+                    input=inp,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+            except subprocess.TimeoutExpired:
+                return jsonify({
+                    "error": "solution_timeout",
+                    "index": i
+                }), 400
+
             if sol_run.returncode != 0:
                 return jsonify({
                     "error": "solution_runtime_failed",
@@ -521,6 +535,11 @@ def tasks_generate_tests():
             })
 
         return jsonify({"tests": tests})
+
+
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"status": "ok", "ts": int(time.time())})
     
 
 if __name__ == "__main__":

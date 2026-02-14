@@ -200,6 +200,22 @@ function updateNavbar() {
         link.addEventListener("click", logout);
     });
     bindMobileNav(nav);
+    startKeepAlive();
+}
+
+/* ============================
+   KEEP ALIVE (Render)
+============================ */
+function startKeepAlive() {
+    if (window.__keepAliveTimer) return;
+    const base = window.TASKS_API_BASE || "";
+    if (!base) return;
+    const interval = 9 * 60 * 1000; // 9 minutes
+    const ping = () => {
+        fetch(`${base}/ping`, { method: "GET", cache: "no-store" }).catch(() => {});
+    };
+    ping();
+    window.__keepAliveTimer = setInterval(ping, interval);
 }
 
 /* ============================
