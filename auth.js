@@ -31,12 +31,14 @@ function ensureMobileNavStyles() {
 #nav-links {
     display: flex;
     align-items: center;
+    margin-left: auto;
     gap: 16px;
 }
 #nav-links .nav-shell {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: flex-end;
+    gap: 24px;
     width: 100%;
 }
 #nav-links .nav-links {
@@ -44,6 +46,18 @@ function ensureMobileNavStyles() {
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
+}
+#nav-links .nav-primary {
+    justify-content: flex-end;
+}
+#nav-links .nav-account {
+    gap: 12px;
+}
+#nav-links .nav-account .nav-profile {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.65);
 }
 #nav-links .nav-burger {
     display: none;
@@ -176,29 +190,26 @@ function updateNavbar() {
         <a href="contests.html">Соревнования</a>
         <a href="rating.html">Рейтинг</a>
         <a href="donate.html">Донат</a>
-        <a href="news.html">Новости</a>
         <a href="faq.html">Помощь</a>
     `;
 
-    const userLinks = user
-        ? `${commonLinks}
+    const accountLinks = user
+        ? `
            <a href="submissions.html">Посылки</a>
-           <a href="profile.html">${user}</a>
-           <a data-action="logout" style="cursor:pointer;color:#ffd451;">Выйти</a>`
-        : `${commonLinks}
-           <a href="auth.html">Войти / Регистрация</a>`;
+           <a href="profile.html" class="nav-profile">${user}</a>`
+        : `<a href="auth.html">Войти / Регистрация</a>`;
+
+    const drawerLinks = `${commonLinks}${accountLinks}`;
 
     nav.innerHTML = `
         <div class="nav-shell">
-            <div class="nav-links">${userLinks}</div>
+            <div class="nav-links nav-primary">${commonLinks}</div>
+            <div class="nav-links nav-account">${accountLinks}</div>
             <button class="nav-burger" type="button" aria-label="Меню" aria-expanded="false">☰</button>
         </div>
-        <div class="nav-drawer" aria-hidden="true">${userLinks}</div>
+        <div class="nav-drawer" aria-hidden="true">${drawerLinks}</div>
     `;
 
-    nav.querySelectorAll("[data-action='logout']").forEach(link => {
-        link.addEventListener("click", logout);
-    });
     bindMobileNav(nav);
     startKeepAlive();
 }

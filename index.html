@@ -273,6 +273,98 @@
             color: var(--muted);
         }
 
+        .news-home {
+            padding: 10px 0 30px;
+        }
+
+        .news-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 280px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .news-stream {
+            display: grid;
+            gap: 16px;
+        }
+
+        .news-entry {
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            padding: 20px 22px;
+            box-shadow: 0 14px 40px rgba(26, 22, 18, 0.08);
+        }
+
+        .news-entry-title {
+            margin: 0 0 10px;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(22px, 2.7vw, 34px);
+            line-height: 1.22;
+            color: #3b5998;
+        }
+
+        .news-entry-meta {
+            margin: 0 0 16px;
+            color: var(--ink);
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .news-author {
+            color: #163ccf;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .news-entry-body {
+            border-left: 6px solid rgba(95, 91, 84, 0.35);
+            padding-left: 16px;
+            color: var(--ink);
+            line-height: 1.68;
+            font-size: 16px;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .news-side {
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            box-shadow: 0 14px 40px rgba(26, 22, 18, 0.08);
+            display: grid;
+            gap: 14px;
+            position: sticky;
+            top: 92px;
+        }
+
+        .news-side h3 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 18px;
+        }
+
+        .news-side p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .news-link {
+            width: 100%;
+        }
+
+        .news-empty {
+            border: 1px dashed var(--stroke);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.45);
+        }
+
         .section-title {
             font-family: "Space Grotesk", sans-serif;
             font-size: clamp(24px, 3vw, 32px);
@@ -380,6 +472,14 @@
                 flex-direction: column;
                 align-items: stretch;
             }
+
+            .news-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .news-side {
+                position: static;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -436,6 +536,22 @@
             </div>
         </section>
 
+        <section class="news-home reveal" style="--delay: 0.12s;">
+            <div class="news-layout">
+                <div>
+                    <h2 class="section-title">Новости платформы</h2>
+                    <p class="section-lead">Свежие анонсы теперь прямо на главной: автор, время публикации и короткий текст обновления.</p>
+                    <div id="homeNewsList" class="news-stream"></div>
+                    <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
+                </div>
+                <aside class="news-side">
+                    <h3>Что публикуем</h3>
+                    <p>Анонсы раундов, обновления задач, изменения платформы и важные организационные сообщения.</p>
+                    <a href="news.html" class="btn-faq news-link">Открыть архив новостей</a>
+                </aside>
+            </div>
+        </section>
+
         <section class="why reveal" style="--delay: 0.18s;">
             <h2 class="section-title">Почему CodeBug работает</h2>
             <p class="section-lead">Собрали то, что обычно скрыто в разборе олимпиадных решений: ошибки, причины и путь исправления.</p>
@@ -484,7 +600,117 @@
     <script src="submit.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", updateNavbar);
+        function escapeHtml(text) {
+            return (text || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function pluralRu(value, one, few, many) {
+            const mod10 = value % 10;
+            const mod100 = value % 100;
+            if (mod10 === 1 && mod100 !== 11) return one;
+            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+            return many;
+        }
+
+        function formatRelativeTime(ts) {
+            if (!ts) return "недавно";
+            const now = Date.now();
+            const diff = Math.max(0, now - Number(ts));
+            const hour = Math.floor(diff / (60 * 60 * 1000));
+            if (hour < 1) return "только что";
+            if (hour < 24) return `${hour} ${pluralRu(hour, "час", "часа", "часов")} назад`;
+            const days = Math.floor(hour / 24);
+            return `${days} ${pluralRu(days, "день", "дня", "дней")} назад`;
+        }
+
+        function trimText(text, limit) {
+            if (!text) return "";
+            if (text.length <= limit) return text;
+            return text.slice(0, limit).trimEnd() + "...";
+        }
+
+        function formatAnnouncementText(text) {
+            return escapeHtml(text).replace(/\n/g, "<br>");
+        }
+
+        function renderHomeNews(items) {
+            const list = document.getElementById("homeNewsList");
+            const empty = document.getElementById("homeNewsEmpty");
+            list.innerHTML = "";
+
+            if (!items.length) {
+                empty.style.display = "block";
+                return;
+            }
+            empty.style.display = "none";
+
+            items.slice(0, 3).forEach(item => {
+                const article = document.createElement("article");
+                article.className = "news-entry";
+                const title = item.title || "Обновление CodeBug";
+                const author = item.author || "admin";
+                const body = trimText(item.text || "", 680);
+                article.innerHTML = `
+                    <h3 class="news-entry-title">${escapeHtml(title)}</h3>
+                    <p class="news-entry-meta">Автор <span class="news-author">${escapeHtml(author)}</span>, ${formatRelativeTime(item.created)}</p>
+                    <div class="news-entry-body">${formatAnnouncementText(body)}</div>
+                `;
+                list.appendChild(article);
+            });
+        }
+
+        async function loadHomeNews() {
+            const items = [];
+            try {
+                const latestSnap = await db.ref("site/announcement").get();
+                if (latestSnap.exists()) {
+                    items.push({
+                        source: "latest",
+                        ...latestSnap.val(),
+                        created: latestSnap.val().created || 0
+                    });
+                }
+            } catch (err) {
+                console.warn("Latest announcement not loaded", err);
+            }
+
+            try {
+                const listSnap = await db.ref("site/announcements").get();
+                if (listSnap.exists()) {
+                    const data = listSnap.val();
+                    Object.keys(data).forEach(key => {
+                        items.push({
+                            id: key,
+                            source: "list",
+                            ...data[key]
+                        });
+                    });
+                }
+            } catch (err) {
+                console.warn("Announcements list not loaded", err);
+            }
+
+            items.sort((a, b) => (b.created || 0) - (a.created || 0));
+            const unique = [];
+            const seen = new Set();
+            for (const item of items) {
+                const fingerprint = `${item.title || ""}|${item.text || ""}|${item.created || 0}|${item.author || ""}`;
+                if (seen.has(fingerprint)) continue;
+                seen.add(fingerprint);
+                unique.push(item);
+            }
+            renderHomeNews(unique);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updateNavbar();
+            loadHomeNews();
+        });
     </script>
 </body>
 
