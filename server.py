@@ -5,6 +5,8 @@ import tempfile
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
+import platform
+import resource
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -191,6 +193,86 @@ def _compile_cpp(src_path, out_path):
         text=True
     )
     return result
+
+
+def _format_memory_mb(kb_value):
+    if kb_value is None:
+        return None
+    if platform.system().lower() == "darwin":
+        return round(kb_value / (1024 * 1024), 2)
+    return round(kb_value / 1024, 2)
+
+
+def _run_cpp_single(code, input_data):
+    with tempfile.TemporaryDirectory() as tmp:
+        src_path = os.path.join(tmp, "main.cpp")
+        bin_path = os.path.join(tmp, "main")
+        _write_text(src_path, code)
+
+        compile_res = _compile_cpp(src_path, bin_path)
+        if compile_res.returncode != 0:
+            return {
+                "status": "CE",
+                "output": "",
+                "details": compile_res.stderr.strip() or "compile_error"
+            }
+
+        time_cmd = "/usr/bin/time"
+        mem_kb = None
+        start = time.perf_counter()
+        try:
+            if os.path.exists(time_cmd):
+                mem_file = os.path.join(tmp, "mem.txt")
+                run_res = subprocess.run(
+                    [time_cmd, "-f", "%M", "-o", mem_file, bin_path],
+                    input=input_data,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                try:
+                    with open(mem_file, "r") as mf:
+                        mem_kb = int(mf.read().strip() or "0")
+                except Exception:
+                    mem_kb = None
+            else:
+                before = resource.getrusage(resource.RUSAGE_CHILDREN)
+                run_res = subprocess.run(
+                    [bin_path],
+                    input=input_data,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                after = resource.getrusage(resource.RUSAGE_CHILDREN)
+                delta = max(0, after.ru_maxrss - before.ru_maxrss)
+                mem_kb = delta or after.ru_maxrss
+        except subprocess.TimeoutExpired:
+            elapsed_ms = int((time.perf_counter() - start) * 1000)
+            return {
+                "status": "TL",
+                "output": "",
+                "timeMs": elapsed_ms,
+                "memoryMb": _format_memory_mb(mem_kb),
+                "details": "timeout"
+            }
+
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        if run_res.returncode != 0:
+            return {
+                "status": "RE",
+                "output": run_res.stdout,
+                "timeMs": elapsed_ms,
+                "memoryMb": _format_memory_mb(mem_kb),
+                "details": (run_res.stderr or "").strip() or "runtime_error"
+            }
+
+        return {
+            "status": "OK",
+            "output": run_res.stdout,
+            "timeMs": elapsed_ms,
+            "memoryMb": _format_memory_mb(mem_kb)
+        }
 
 
 @app.route("/submit", methods=["POST", "OPTIONS"])
@@ -535,6 +617,19 @@ def tasks_generate_tests():
             })
 
         return jsonify({"tests": tests})
+
+
+@app.route("/run-single", methods=["POST"])
+def run_single():
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "")
+    input_data = data.get("input", "")
+
+    if not code or not code.strip():
+        return jsonify({"error": "code_required"}), 400
+
+    result = _run_cpp_single(code, input_data)
+    return jsonify(result)
 
 
 @app.route("/ping", methods=["GET", "HEAD"])
