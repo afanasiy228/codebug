@@ -128,6 +128,16 @@
       gap: 10px;
     }
 
+    .profile-link {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .profile-link:hover {
+      text-decoration: underline;
+    }
+
     .contest-actions {
       display: flex;
       flex-wrap: wrap;
@@ -215,6 +225,24 @@
       return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function profileLink(login) {
+      const safeLogin = escapeHtml(login);
+      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${safeLogin}</a>`;
+    }
+
+    function renderAuthorLinks(authors) {
+      return (authors || []).map(profileLink).join(", ") || "—";
+    }
+
     function statusFromTimes(start, end) {
       const now = Date.now();
       if (now < start) return "upcoming";
@@ -260,7 +288,7 @@
           <div class="contest-meta">
             <span>Старт: ${formatUtc(contest.start)}</span>
             <span>Финиш: ${formatUtc(contest.end)}</span>
-            <span>Автор(ы): ${(contest.authors || []).join(", ") || "—"}</span>
+            <span>Автор(ы): ${renderAuthorLinks(contest.authors)}</span>
           </div>
           <div class="contest-actions">
             <button onclick="openContest('${contest.id}')">Открыть</button>

@@ -747,17 +747,17 @@
 
             console.log("Ответ RAW:", res);
 
-            if (!res.ok) {
-                console.error("❌ HTTP ошибка:", res.status);
-                throw new Error("HTTP " + res.status);
-            }
-
             let data;
             try {
                 data = await res.json();
             } catch (e) {
                 console.error("❌ Ошибка JSON:", e);
                 throw new Error("Невалидный JSON");
+            }
+
+            if (!res.ok && !data.status) {
+                console.error("❌ HTTP ошибка:", res.status);
+                throw new Error("HTTP " + res.status);
             }
 
             console.log("📦 JSON:", data);
@@ -856,20 +856,21 @@
             let i = mine.length;
 
             for (let s of mine) {
+                const verdict = s.verdict || s.status || "ERROR";
                 const verdictColor =
-                    s.verdict === "OK" ? "#7fff7f" :
-                    s.verdict === "WA" ? "#ff7777" :
-                    s.verdict === "RE" ? "#ffb37c" :
-                    s.verdict === "QUEUE" ? "#c9c9c9" :
-                    s.verdict === "TESTING" ? "#c9c9c9" :
-                    s.verdict === "ERROR" ? "#ffb37c" :
+                    verdict === "OK" ? "#7fff7f" :
+                    verdict === "WA" ? "#ff7777" :
+                    verdict === "RE" ? "#ffb37c" :
+                    verdict === "QUEUE" ? "#c9c9c9" :
+                    verdict === "TESTING" ? "#c9c9c9" :
+                    verdict === "ERROR" ? "#ffb37c" :
                     "#ffd451";
 
                 const verdictLabel =
-                    s.verdict === "QUEUE" ? "В очереди" :
-                    s.verdict === "TESTING" ? "Тестируется" :
-                    s.verdict === "ERROR" ? "Ошибка" :
-                    s.verdict;
+                    verdict === "QUEUE" ? "В очереди" :
+                    verdict === "TESTING" ? "Тестируется" :
+                    verdict === "ERROR" ? "Ошибка" :
+                    verdict;
 
                 tbody.innerHTML += `
         <tr>

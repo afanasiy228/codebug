@@ -274,6 +274,28 @@
         let submissions = []; // оригинал
         let rendered = []; // отфильтрованное
 
+        function getSubmissionLogin(submission) {
+            return submission.login || submission.user || "anonymous";
+        }
+
+        function getSubmissionVerdict(submission) {
+            return submission.verdict || submission.status || "ERROR";
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function profileLink(login) {
+            const safeLogin = escapeHtml(login);
+            return `<a href="profile.html?user=${encodeURIComponent(login)}" style="color:var(--accent);font-weight:700;text-decoration:none;">${safeLogin}</a>`;
+        }
+
         async function loadGlobalSubmissions() {
             const tbody = document.getElementById("tbody");
             tbody.innerHTML = "<tr><td colspan='4' class='empty'>Загрузка...</td></tr>";
@@ -313,12 +335,17 @@
                 const title = await getTaskTitle(s.task);
 
                 // Проверяем фильтры
-                if (userF && !s.login.toLowerCase().includes(userF)) continue;
+                const login = getSubmissionLogin(s);
+                const verdict = getSubmissionVerdict(s);
+
+                if (userF && !login.toLowerCase().includes(userF)) continue;
                 if (taskF && !title.toLowerCase().includes(taskF)) continue;
-                if (verdictF && verdictF !== s.verdict) continue;
+                if (verdictF && verdictF !== verdict) continue;
 
                 rendered.push({...s,
-                    title
+                    title,
+                    login,
+                    verdict
                 });
             }
 
@@ -336,19 +363,21 @@
                     s.verdict === "RE" ? "verdict-re" :
                     s.verdict === "QUEUE" ? "verdict-queue" :
                     s.verdict === "TESTING" ? "verdict-queue" :
+                    s.verdict === "ERROR" ? "verdict-re" :
                     "verdict-tl";
 
                 const verdictLabel =
                     s.verdict === "QUEUE" ? "В очереди" :
                     s.verdict === "TESTING" ? "Тестируется" :
+                    s.verdict === "ERROR" ? "Ошибка" :
                     s.verdict;
 
                 tr.innerHTML = `
-            <td>${s.login}</td>
+            <td>${profileLink(s.login)}</td>
 
             <td>
                 <a href="problem.html?id=${s.task}" style="text-decoration:none;color:var(--ink);">
-                    <div class="task-card">${s.title}</div>
+                    <div class="task-card">${escapeHtml(s.title)}</div>
                 </a>
             </td>
 

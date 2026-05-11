@@ -357,7 +357,13 @@ def submit():
     except subprocess.TimeoutExpired:
         if submission_ref is not None:
             submission_ref.update({"verdict": "TL"})
-        return jsonify({"status": "JUDGE_TIMEOUT"}), 500
+        return jsonify({
+            "status": "TL",
+            "log": "Judge timeout",
+            "submissionId": submission_ref.key if submission_ref is not None else None,
+            "firebaseSaved": firebase_saved,
+            "firebaseError": firebase_error
+        })
 
     print("judge.py завершён")
 

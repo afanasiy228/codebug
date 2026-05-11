@@ -101,6 +101,16 @@
       font-size: 13px;
     }
 
+    .profile-link {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .profile-link:hover {
+      text-decoration: underline;
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -278,6 +288,24 @@
       return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function profileLink(login) {
+      const safeLogin = escapeHtml(login);
+      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${safeLogin}</a>`;
+    }
+
+    function renderAuthorLinks(authors) {
+      return (authors || []).map(profileLink).join(", ") || "—";
+    }
+
     function getStatus(start, end) {
       const now = Date.now();
       if (now < start) return "upcoming";
@@ -344,7 +372,7 @@
       document.getElementById("contestTitle").innerText = contestData.title || "Соревнование";
       document.getElementById("contestStart").innerText = `Старт: ${formatUtc(contestData.start)}`;
       document.getElementById("contestEnd").innerText = `Финиш: ${formatUtc(contestData.end)}`;
-      document.getElementById("contestAuthors").innerText = `Авторы: ${(contestData.authors || []).join(", ") || "—"}`;
+      document.getElementById("contestAuthors").innerHTML = `Авторы: ${renderAuthorLinks(contestData.authors)}`;
 
       const hint = document.getElementById("contestHint");
       if (contestStatus === "upcoming") {
@@ -417,7 +445,7 @@
       let solved = 0;
       let penalty = 0;
       attempts.forEach(item => {
-        if (!item.okTime) return;
+        if (item.okTime === null) return;
         solved += 1;
         penalty += item.okTime + item.wrongCount * 20;
       });
@@ -492,7 +520,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${idx + 1}</td>
-          <td>${row.login}</td>
+          <td>${profileLink(row.login)}</td>
           <td>${row.solved}</td>
           <td>${row.penalty}</td>
         `;

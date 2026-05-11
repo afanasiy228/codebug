@@ -179,6 +179,15 @@
             font-size: 18px;
             font-weight: 600;
         }
+
+        .user-name a {
+            color: var(--ink);
+            text-decoration: none;
+        }
+
+        .user-name a:hover {
+            color: var(--accent);
+        }
         
         .user-rank {
             font-size: 14px;
@@ -258,6 +267,15 @@
             return "Легенда CodeBug";
         }
 
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         /* ======================
               ЗАГРУЗКА РЕЙТИНГА
         ====================== */
@@ -286,9 +304,11 @@
             arr.sort((a, b) => b.exp - a.exp);
 
             arr.forEach((u, index) => {
+                const profileUrl = `profile.html?user=${encodeURIComponent(u.login)}`;
+                const safeLogin = escapeHtml(u.login);
                 let avatarHTML = u.avatar ?
-                    `<img class="ava" src="${u.avatar}">` :
-                    `<div class="ava default">${u.login[0].toUpperCase()}</div>`;
+                    `<a href="${profileUrl}"><img class="ava" src="${u.avatar}"></a>` :
+                    `<a href="${profileUrl}" style="text-decoration:none;"><div class="ava default">${safeLogin[0].toUpperCase()}</div></a>`;
 
                 let solvedCnt = Object.keys(u.solved).length;
 
@@ -304,7 +324,7 @@
             <div class="user-block">
                 ${avatarHTML}
                 <div>
-                    <div class="user-name">${u.login}</div>
+                    <div class="user-name"><a href="${profileUrl}">${safeLogin}</a></div>
                     <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
             </div>

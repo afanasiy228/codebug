@@ -364,6 +364,7 @@
                 <a href="friends.html" style="text-decoration:none;">
                     <button type="button">Друзья</button>
                 </a>
+                <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
                 <button type="button" onclick="logout()">Выйти из аккаунта</button>
             </div>
 
@@ -416,6 +417,7 @@
         const currentUser = getUser();
         if (!currentUser) window.location.href = "auth.html";
         const viewedUser = new URL(location.href).searchParams.get("user") || currentUser;
+        const user = currentUser;
 
         /* ============================
            RANK SYSTEM
@@ -479,8 +481,29 @@
             if (viewedUser !== currentUser) {
                 document.getElementById("avatar-file").style.display = "none";
                 document.querySelector(".avatar-block button").style.display = "none";
+                setupViewedFriendButton();
             }
 
+        }
+
+        async function setupViewedFriendButton() {
+            const btn = document.getElementById("addViewedFriendBtn");
+            if (!btn || viewedUser === currentUser) return;
+            btn.style.display = "inline-block";
+
+            const friendSnap = await db.ref("users/" + currentUser + "/friends/" + viewedUser).get();
+            if (friendSnap.exists()) {
+                btn.textContent = "Уже в друзьях";
+                btn.disabled = true;
+                return;
+            }
+
+            btn.textContent = "Добавить в друзья";
+            btn.onclick = async () => {
+                await addFriend(viewedUser);
+                btn.textContent = "Уже в друзьях";
+                btn.disabled = true;
+            };
         }
 
         async function loadLastActivity() {
@@ -534,24 +557,26 @@
         }
 
         async function addFriend(login) {
-            await db.ref("users/" + user + "/friends/" + login).set({
+            await db.ref("users/" + currentUser + "/friends/" + login).set({
                 addedAt: Date.now()
             });
-            document.getElementById("friendSearchResult").textContent = "Добавлено в друзья.";
+            const result = document.getElementById("friendSearchResult");
+            if (result) result.textContent = "Добавлено в друзья.";
             loadFriends();
         }
 
         async function removeFriend(login) {
-            await db.ref("users/" + user + "/friends/" + login).remove();
+            await db.ref("users/" + currentUser + "/friends/" + login).remove();
             loadFriends();
         }
 
         async function loadFriends() {
             const list = document.getElementById("friendsList");
             const empty = document.getElementById("friendsEmpty");
+            if (!list || !empty) return;
             list.innerHTML = "";
 
-            const snap = await db.ref("users/" + user + "/friends").get();
+            const snap = await db.ref("users/" + currentUser + "/friends").get();
             if (!snap.exists()) {
                 empty.style.display = "block";
                 return;
