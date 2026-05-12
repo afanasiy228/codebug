@@ -269,6 +269,16 @@
             }
         }
 
+        async function preloadTaskTitles(subs) {
+            const uniqueTaskIds = [...new Set(
+                subs
+                .map(s => s.task)
+                .filter(taskId => taskId !== undefined && taskId !== null)
+            )];
+
+            await Promise.all(uniqueTaskIds.map(id => getTaskTitle(id)));
+        }
+
         // ===== ГЛОБАЛЬНЫЕ ПОСЫЛКИ =====
 
         let submissions = []; // оригинал
@@ -299,20 +309,26 @@
         async function loadGlobalSubmissions() {
             const tbody = document.getElementById("tbody");
             tbody.innerHTML = "<tr><td colspan='4' class='empty'>Загрузка...</td></tr>";
+            try {
+                const snap = await firebase.database().ref("submissions/global").get();
 
-            const snap = await firebase.database().ref("submissions/global").get();
+                if (!snap.exists()) {
+                    tbody.innerHTML = "<tr><td colspan='4' class='empty'>Пока нет посылок</td></tr>";
+                    return;
+                }
 
-            if (!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='4' class='empty'>Пока нет посылок</td></tr>";
-                return;
+                submissions = Object.values(snap.val());
+
+                // Сортировка по дате (сначала новые)
+                submissions.sort((a, b) => b.date - a.date);
+
+                // Важно: грузим названия задач параллельно, иначе рендер может зависать.
+                await preloadTaskTitles(submissions);
+                await render();
+            } catch (err) {
+                console.error("[submissions] load error:", err);
+                tbody.innerHTML = "<tr><td colspan='4' class='empty'>Ошибка загрузки посылок</td></tr>";
             }
-
-            submissions = Object.values(snap.val());
-
-            // Сортировка по дате (сначала новые)
-            submissions.sort((a, b) => b.date - a.date);
-
-            await render();
         }
 
 
@@ -330,9 +346,7 @@
             rendered = [];
 
             for (let s of submissions) {
-
-                // Попробовать подтянуть название задачи
-                const title = await getTaskTitle(s.task);
+                const title = titleCache[s.task] || ("Задача " + s.task);
 
                 // Проверяем фильтры
                 const login = getSubmissionLogin(s);
@@ -398,7 +412,11 @@
         document.getElementById("filterTask").oninput = render;
         document.getElementById("filterVerdict").onchange = render;
 
-        document.addEventListener("DOMContentLoaded", loadGlobalSubmissions);
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", loadGlobalSubmissions);
+        } else {
+            loadGlobalSubmissions();
+        }
     </script>
 
     <script>
