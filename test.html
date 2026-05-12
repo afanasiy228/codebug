@@ -2,344 +2,393 @@
 <html lang="ru">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeBug — Test</title>
-  <style>
-    :root {
-      --bg: #050b18;
-      --card: #0a162b;
-      --card-2: #0e1e38;
-      --stroke: #1e3656;
-      --text: #dbe8ff;
-      --muted: #9bb0cf;
-      --accent: #2ad07f;
-      --accent-strong: #1caf68;
-      --danger: #ff7a7a;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      height: 100%;
-      background:
-        radial-gradient(1000px 500px at 10% -10%, rgba(42, 208, 127, 0.12), transparent 60%),
-        radial-gradient(900px 500px at 90% -10%, rgba(48, 122, 255, 0.16), transparent 60%),
-        var(--bg);
-      color: var(--text);
-      font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .page {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 18px;
-      min-height: 100%;
-      display: grid;
-      grid-template-rows: auto 1fr;
-      gap: 12px;
-    }
-
-    .top {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-      gap: 12px;
-      min-height: 62vh;
-    }
-
-    .panel {
-      border: 1px solid var(--stroke);
-      border-radius: 14px;
-      background: linear-gradient(180deg, var(--card), var(--card-2));
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
-      overflow: hidden;
-      min-height: 0;
-    }
-
-    .panel-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--stroke);
-      background: rgba(7, 15, 30, 0.7);
-    }
-
-    .title {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .editor-wrap {
-      position: relative;
-      height: calc(100% - 45px);
-      min-height: 420px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 15px;
-      line-height: 1.55;
-    }
-
-    #editorHighlight,
-    #editor {
-      position: absolute;
-      inset: 0;
-      margin: 0;
-      padding: 14px 16px;
-      border: 0;
-      outline: 0;
-      resize: none;
-      white-space: pre;
-      overflow: auto;
-      font: inherit;
-      line-height: inherit;
-      tab-size: 4;
-    }
-
-    #editorHighlight {
-      color: #c8d8f6;
-      pointer-events: none;
-    }
-
-    #editor {
-      background: transparent;
-      color: transparent;
-      caret-color: #f0f6ff;
-    }
-
-    #editor::selection {
-      background: rgba(131, 163, 214, 0.3);
-      color: transparent;
-    }
-
-    .hl-keyword {
-      color: #7ec8ff;
-      font-weight: 700;
-    }
-
-    .hl-type {
-      color: #ffcb7b;
-    }
-
-    .hl-number {
-      color: #92f3ff;
-    }
-
-    .hl-string {
-      color: #b4f7b4;
-    }
-
-    .hl-comment {
-      color: #7f96b8;
-      font-style: italic;
-    }
-
-    .hl-prep {
-      color: #f48bd8;
-    }
-
-    #inputData {
-      width: 100%;
-      height: calc(100% - 45px);
-      min-height: 420px;
-      border: 0;
-      outline: 0;
-      resize: none;
-      padding: 14px 16px;
-      background: transparent;
-      color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 15px;
-      line-height: 1.55;
-    }
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBug — Test</title>
+    <style>
+         :root {
+            --bg: #050b18;
+            --card: #0a162b;
+            --card-2: #0e1e38;
+            --stroke: #1e3656;
+            --text: #dbe8ff;
+            --muted: #9bb0cf;
+            --accent: #2ad07f;
+            --accent-strong: #1caf68;
+            --danger: #ff7a7a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: radial-gradient(1000px 500px at 10% -10%, rgba(42, 208, 127, 0.12), transparent 60%), radial-gradient(900px 500px at 90% -10%, rgba(48, 122, 255, 0.16), transparent 60%), var(--bg);
+            color: var(--text);
+            font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        
+        .page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 18px;
+            min-height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 12px;
+        }
+        
+        .top {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+            gap: 12px;
+            min-height: 62vh;
+        }
+        
+        .panel {
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+            background: linear-gradient(180deg, var(--card), var(--card-2));
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--stroke);
+            background: rgba(7, 15, 30, 0.7);
+        }
+        
+        .title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--muted);
+            font-weight: 700;
+        }
+        
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+        }
+        
+        .editor-wrap {
+            position: relative;
+            height: calc(100% - 45px);
+            min-height: 420px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+        
+        #editorHighlight,
+        #editor {
+            position: absolute;
+            inset: 0;
+            margin: 0;
+            padding: 14px 16px;
+            border: 0;
+            outline: 0;
+            resize: none;
+            white-space: pre;
+            overflow: auto;
+            font: inherit;
+            line-height: inherit;
+            tab-size: 4;
+        }
+        
+        #editorHighlight {
+            color: #c8d8f6;
+            pointer-events: none;
+        }
+        
+        #editor {
+            background: transparent;
+            color: transparent;
+            caret-color: #f0f6ff;
+        }
+        
+        #editor::selection {
+            background: rgba(131, 163, 214, 0.3);
+            color: transparent;
+        }
+        
+        .hl-keyword {
+            color: #7ec8ff;
+            font-weight: 700;
+        }
+        
+        .hl-type {
+            color: #ffcb7b;
+        }
+        
+        .hl-number {
+            color: #92f3ff;
+        }
+        
+        .hl-string {
+            color: #b4f7b4;
+        }
+        
+        .hl-comment {
+            color: #7f96b8;
+            font-style: italic;
+        }
+        
+        .hl-prep {
+            color: #f48bd8;
+        }
+        
+        #inputData {
+            width: 100%;
+            height: calc(100% - 45px);
+            min-height: 420px;
+            border: 0;
+            outline: 0;
+            resize: none;
+            padding: 14px 16px;
+            background: transparent;
+            color: var(--text);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+        
     .bottom {
       display: grid;
       grid-template-rows: auto 1fr;
       min-height: 220px;
     }
 
+    .bottom-body {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .bottom-col {
+      min-height: 0;
+    }
+
+    .bottom-col + .bottom-col {
+      border-left: 1px solid var(--stroke);
+    }
+
     .run-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .run-btn {
-      border: 0;
-      border-radius: 10px;
-      padding: 8px 14px;
-      background: var(--accent);
-      color: #032112;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .run-btn:hover {
-      background: var(--accent-strong);
-    }
-
-    .stat {
-      border: 1px solid var(--stroke);
-      border-radius: 10px;
-      padding: 6px 10px;
-      color: var(--muted);
-      font-size: 13px;
-      min-width: 108px;
-      text-align: center;
-      background: rgba(6, 12, 22, 0.45);
-    }
-
-    .status {
-      min-width: 140px;
-    }
-
-    .status.bad {
-      color: var(--danger);
-    }
-
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .run-btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 8px 14px;
+            background: var(--accent);
+            color: #032112;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        
+        .run-btn:hover {
+            background: var(--accent-strong);
+        }
+        
+        .stat {
+            border: 1px solid var(--stroke);
+            border-radius: 10px;
+            padding: 6px 10px;
+            color: var(--muted);
+            font-size: 13px;
+            min-width: 108px;
+            text-align: center;
+            background: rgba(6, 12, 22, 0.45);
+        }
+        
+        .status {
+            min-width: 140px;
+        }
+        
+        .status.bad {
+            color: var(--danger);
+        }
+        
     #outputData {
       width: 100%;
+      height: 100%;
+      border: 0;
+      outline: 0;
+      resize: none;
+            padding: 14px 16px;
+            background: transparent;
+            color: #c6f0c6;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 14px;
+      line-height: 1.55;
+    }
+
+    #runLog {
+      width: 100%;
+      height: 100%;
       border: 0;
       outline: 0;
       resize: none;
       padding: 14px 16px;
       background: transparent;
-      color: #c6f0c6;
+      color: var(--muted);
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 14px;
-      line-height: 1.55;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     @media (max-width: 980px) {
       .top {
         grid-template-columns: 1fr;
       }
-
       .editor-wrap,
       #inputData {
         min-height: 320px;
       }
+
+      .bottom-body {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-col + .bottom-col {
+        border-left: 0;
+        border-top: 1px solid var(--stroke);
+      }
     }
-  </style>
+    </style>
 </head>
 
 <body>
-  <main class="page">
-    <section class="top">
-      <div class="panel">
-        <div class="panel-head">
-          <div class="title">Код C++</div>
-          <div class="hint">Ctrl/Cmd + Enter для запуска</div>
-        </div>
-        <div class="editor-wrap">
-          <pre id="editorHighlight" aria-hidden="true"></pre>
-          <textarea id="editor" spellcheck="false"></textarea>
-        </div>
-      </div>
+    <main class="page">
+        <section class="top">
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="title">Код C++</div>
+                    <div class="hint">Ctrl/Cmd + Enter для запуска</div>
+                </div>
+                <div class="editor-wrap">
+                    <pre id="editorHighlight" aria-hidden="true"></pre>
+                    <textarea id="editor" spellcheck="false"></textarea>
+                </div>
+            </div>
 
-      <div class="panel">
-        <div class="panel-head">
-          <div class="title">Тест (stdin)</div>
-        </div>
-        <textarea id="inputData" spellcheck="false" placeholder="Ввод для программы"></textarea>
-      </div>
-    </section>
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="title">Тест (stdin)</div>
+                </div>
+                <textarea id="inputData" spellcheck="false" placeholder="Ввод для программы"></textarea>
+            </div>
+        </section>
 
     <section class="panel bottom">
       <div class="panel-head">
         <div class="title">Результат</div>
-        <div class="run-row">
-          <button id="runBtn" class="run-btn" type="button">Запустить</button>
-          <div id="status" class="stat status">Готово</div>
-          <div id="time" class="stat">— ms</div>
+                <div class="run-row">
+                    <button id="runBtn" class="run-btn" type="button">Запустить</button>
+                    <div id="status" class="stat status">Готово</div>
+                    <div id="time" class="stat">— ms</div>
           <div id="memory" class="stat">— MB</div>
         </div>
       </div>
-      <textarea id="outputData" readonly placeholder="Вывод программы"></textarea>
+      <div class="bottom-body">
+        <div class="bottom-col">
+          <textarea id="outputData" readonly placeholder="Вывод программы"></textarea>
+        </div>
+        <div class="bottom-col">
+          <textarea id="runLog" readonly placeholder="Лог запусков"></textarea>
+        </div>
+      </div>
     </section>
   </main>
 
-  <script>
-    function escapeHtml(str) {
-      return String(str ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    }
-
-    function highlightCpp(code) {
-      let text = escapeHtml(code);
-      const stash = [];
-
-      const stashToken = (regex, cls) => {
-        text = text.replace(regex, (match) => {
-          const id = stash.length;
-          stash.push(`<span class="${cls}">${match}</span>`);
-          return `{{{${id}}}}`;
-        });
-      };
-
-      stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
-      stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
-      stashToken(/\/\*[\s\S]*?\*\//g, "hl-comment");
-      stashToken(/\/\/.*$/gm, "hl-comment");
-      stashToken(/^\s*#.*$/gm, "hl-prep");
-
-      const parts = text.split(/{{{(\d+)}}}/g);
-      for (let i = 0; i < parts.length; i++) {
-        if (i % 2 === 0) {
-          let segment = parts[i];
-          segment = segment.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '<span class="hl-number">$&</span>');
-          segment = segment.replace(/\b(?:int|long|double|float|bool|char|void|string|size_t|auto|const|constexpr|signed|unsigned|short)\b/g, '<span class="hl-type">$&</span>');
-          segment = segment.replace(/\b(?:if|else|for|while|do|switch|case|break|continue|return|struct|public|private|protected|template|typename|using|namespace|try|catch|throw|new|delete|this|static|inline|virtual|override|final|sizeof|typedef)\b/g, '<span class="hl-keyword">$&</span>');
-          parts[i] = segment;
-        } else {
-          parts[i] = stash[Number(parts[i])] || "";
+    <script>
+        function escapeHtml(str) {
+            return String(str ? ? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
         }
-      }
 
-      return parts.join("");
-    }
+        function highlightCpp(code) {
+            let text = escapeHtml(code);
+            const stash = [];
 
-    function syncHighlight() {
-      const input = document.getElementById("editor");
-      const highlight = document.getElementById("editorHighlight");
-      highlight.scrollTop = input.scrollTop;
-      highlight.scrollLeft = input.scrollLeft;
-    }
+            const stashToken = (regex, cls) => {
+                text = text.replace(regex, (match) => {
+                    const id = stash.length;
+                    stash.push(`<span class="${cls}">${match}</span>`);
+                    return `{{{${id}}}}`;
+                });
+            };
 
-    function updateHighlight() {
-      const input = document.getElementById("editor");
-      const highlight = document.getElementById("editorHighlight");
-      highlight.innerHTML = highlightCpp(input.value) + "\n";
-      syncHighlight();
-    }
+            stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
+            stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
+            stashToken(/\/\*[\s\S]*?\*\//g, "hl-comment");
+            stashToken(/\/\/.*$/gm, "hl-comment");
+            stashToken(/^\s*#.*$/gm, "hl-prep");
+
+            const parts = text.split(/{{{(\d+)}}}/g);
+            for (let i = 0; i < parts.length; i++) {
+                if (i % 2 === 0) {
+                    let segment = parts[i];
+                    segment = segment.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '<span class="hl-number">$&</span>');
+                    segment = segment.replace(/\b(?:int|long|double|float|bool|char|void|string|size_t|auto|const|constexpr|signed|unsigned|short)\b/g, '<span class="hl-type">$&</span>');
+                    segment = segment.replace(/\b(?:if|else|for|while|do|switch|case|break|continue|return|struct|public|private|protected|template|typename|using|namespace|try|catch|throw|new|delete|this|static|inline|virtual|override|final|sizeof|typedef)\b/g, '<span class="hl-keyword">$&</span>');
+                    parts[i] = segment;
+                } else {
+                    parts[i] = stash[Number(parts[i])] || "";
+                }
+            }
+
+            return parts.join("");
+        }
+
+        function syncHighlight() {
+            const input = document.getElementById("editor");
+            const highlight = document.getElementById("editorHighlight");
+            highlight.scrollTop = input.scrollTop;
+            highlight.scrollLeft = input.scrollLeft;
+        }
+
+        function updateHighlight() {
+            const input = document.getElementById("editor");
+            const highlight = document.getElementById("editorHighlight");
+            highlight.innerHTML = highlightCpp(input.value) + "\n";
+            syncHighlight();
+        }
 
     async function runSingle() {
-      const code = document.getElementById("editor").value;
-      const input = document.getElementById("inputData").value;
+            const code = document.getElementById("editor").value;
+            const input = document.getElementById("inputData").value;
       const outputEl = document.getElementById("outputData");
+      const logEl = document.getElementById("runLog");
       const statusEl = document.getElementById("status");
       const timeEl = document.getElementById("time");
       const memoryEl = document.getElementById("memory");
+      const nowText = new Date().toLocaleTimeString();
+
+      const appendRunLog = (message) => {
+        if (!logEl) return;
+        logEl.value = `[${new Date().toLocaleTimeString()}] ${message}\n` + logEl.value;
+      };
 
       if (!code.trim()) {
         statusEl.textContent = "Код пустой";
         statusEl.classList.add("bad");
+        appendRunLog("Запуск отменён: код пустой");
         return;
       }
 
@@ -348,50 +397,59 @@
       timeEl.textContent = "— ms";
       memoryEl.textContent = "— MB";
       outputEl.value = "";
+      appendRunLog(`Старт запуска (${nowText})`);
 
       const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
       try {
-        const res = await fetch(`${base}/run-single`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, input })
-        });
-        const data = await res.json().catch(() => ({}));
+                const res = await fetch(`${base}/run-single`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        code,
+                        input
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           statusEl.textContent = data.error || `Ошибка ${res.status}`;
           statusEl.classList.add("bad");
           outputEl.value = data.details || "";
+          appendRunLog(`Ошибка запуска: ${statusEl.textContent}`);
           return;
         }
 
-        outputEl.value = data.output || "";
-        statusEl.textContent = data.status ? `Статус: ${data.status}` : "Готово";
-        statusEl.classList.toggle("bad", data.status && data.status !== "OK");
-        timeEl.textContent = Number.isFinite(data.timeMs) ? `${data.timeMs} ms` : "— ms";
-        memoryEl.textContent = Number.isFinite(data.memoryMb) ? `${data.memoryMb} MB` : "— MB";
+                outputEl.value = data.output || "";
+                statusEl.textContent = data.status ? `Статус: ${data.status}` : "Готово";
+                statusEl.classList.toggle("bad", data.status && data.status !== "OK");
+                timeEl.textContent = Number.isFinite(data.timeMs) ? `${data.timeMs} ms` : "— ms";
+                memoryEl.textContent = Number.isFinite(data.memoryMb) ? `${data.memoryMb} MB` : "— MB";
         if (data.details) {
           outputEl.value = (outputEl.value ? outputEl.value + "\n\n" : "") + data.details;
         }
+        appendRunLog(`Финиш: ${statusEl.textContent}, ${timeEl.textContent}, ${memoryEl.textContent}`);
       } catch (err) {
         statusEl.textContent = "Сервер недоступен";
         statusEl.classList.add("bad");
         outputEl.value = "";
+        appendRunLog("Ошибка: сервер недоступен");
       }
     }
 
-    document.getElementById("runBtn").addEventListener("click", runSingle);
+        document.getElementById("runBtn").addEventListener("click", runSingle);
 
-    const editor = document.getElementById("editor");
-    editor.addEventListener("input", updateHighlight);
-    editor.addEventListener("scroll", syncHighlight);
-    editor.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
-        runSingle();
-      }
-    });
+        const editor = document.getElementById("editor");
+        editor.addEventListener("input", updateHighlight);
+        editor.addEventListener("scroll", syncHighlight);
+        editor.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                runSingle();
+            }
+        });
 
-    editor.value = `#include <bits/stdc++.h>
+        editor.value = `#include <bits/stdc++.h>
 using namespace std;
 
 int main() {
@@ -405,6 +463,7 @@ int main() {
 }`;
     document.getElementById("inputData").value = "2 3\n";
     updateHighlight();
+    document.getElementById("runLog").value = `[${new Date().toLocaleTimeString()}] Готово к запуску\n`;
   </script>
 </body>
 
