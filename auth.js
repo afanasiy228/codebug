@@ -285,6 +285,57 @@ function generateId() {
     return "uid-" + Math.random().toString(36).substring(2, 10);
 }
 
+/* ============================
+   PASSWORD HASHING
+============================ */
+const PASS_HASH_ALGO = "sha256-v1";
+
+function canHashPasswords() {
+    return typeof window !== "undefined" &&
+        window.crypto &&
+        window.crypto.subtle &&
+        typeof window.crypto.subtle.digest === "function";
+}
+
+async function sha256Hex(text) {
+    if (!canHashPasswords()) return null;
+    const normalized = String(text ?? "");
+    const bytes = new TextEncoder().encode(normalized);
+    const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+    const arr = Array.from(new Uint8Array(digest));
+    return arr.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function verifyPassword(inputPass, data) {
+    const input = String(inputPass ?? "");
+
+    // Новый формат: только хеш.
+    if (data && typeof data.passHash === "string" && data.passHash.length > 0) {
+        const inputHash = await sha256Hex(input);
+        if (!inputHash) return false;
+        return inputHash === data.passHash;
+    }
+
+    // Легаси-формат: plaintext.
+    if (data && typeof data.pass === "string") {
+        return data.pass === input;
+    }
+
+    return false;
+}
+
+async function ensurePasswordHashForLegacyUser(login, inputPass, data) {
+    if (!data || data.passHash) return;
+    if (typeof data.pass !== "string" || data.pass !== String(inputPass ?? "")) return;
+    const hash = await sha256Hex(inputPass);
+    if (!hash) return;
+    await db.ref("users/" + login).update({
+        passHash: hash,
+        passAlgo: PASS_HASH_ALGO,
+        passMigratedAt: Date.now()
+    });
+}
+
 
 /* ============================
    LOGIN
@@ -298,8 +349,16 @@ async function loginUser(login, pass) {
 
     const data = snapshot.val();
 
-    if (data.pass !== pass) {
+    const passwordOk = await verifyPassword(pass, data);
+    if (!passwordOk) {
         return { ok: false, error: "Неверный пароль" };
+    }
+
+    // Мягкая миграция: старые plaintext-аккаунты получают passHash после первого входа.
+    try {
+        await ensurePasswordHashForLegacyUser(login, pass, data);
+    } catch (err) {
+        console.warn("Password migration failed for user:", login, err);
     }
 
     return { ok: true };
@@ -343,11 +402,16 @@ async function registerUser(login, pass) {
     }
 
     const userId = "uid_" + Math.random().toString(36).substring(2, 10);
+    const passHash = await sha256Hex(pass);
+    if (!passHash) {
+        return { ok: false, error: "Браузер не поддерживает безопасное хеширование пароля" };
+    }
 
     const userObj = {
         login: login,
         id: userId,
-        pass: pass,
+        passHash: passHash,
+        passAlgo: PASS_HASH_ALGO,
         created: Date.now(),
 
         stats: {
