@@ -553,7 +553,19 @@
                 result.textContent = "Пользователь не найден.";
                 return;
             }
-            result.innerHTML = `Найден: <strong>${login}</strong> <button type="button" onclick="addFriend('${login}')">Добавить</button>`;
+            result.textContent = "";
+            const label = document.createElement("span");
+            label.textContent = "Найден: ";
+            const strong = document.createElement("strong");
+            strong.textContent = login;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = "Добавить";
+            button.addEventListener("click", () => addFriend(login));
+            result.appendChild(label);
+            result.appendChild(strong);
+            result.appendChild(document.createTextNode(" "));
+            result.appendChild(button);
         }
 
         async function addFriend(login) {
@@ -595,15 +607,26 @@
 
                 const card = document.createElement("div");
                 card.className = "friend-card";
-                card.innerHTML = `
-                    <div>
-                        <div class="friend-name">${login}</div>
-                        <div class="friend-status">${statusText}</div>
-                    </div>
-                    <div class="friend-actions">
-                        <button type="button" onclick="removeFriend('${login}')">Удалить</button>
-                    </div>
-                `;
+                const info = document.createElement("div");
+                const name = document.createElement("div");
+                name.className = "friend-name";
+                name.textContent = login;
+                const status = document.createElement("div");
+                status.className = "friend-status";
+                status.textContent = statusText;
+                info.appendChild(name);
+                info.appendChild(status);
+
+                const actions = document.createElement("div");
+                actions.className = "friend-actions";
+                const removeBtn = document.createElement("button");
+                removeBtn.type = "button";
+                removeBtn.textContent = "Удалить";
+                removeBtn.addEventListener("click", () => removeFriend(login));
+                actions.appendChild(removeBtn);
+
+                card.appendChild(info);
+                card.appendChild(actions);
                 list.appendChild(card);
             }
         }

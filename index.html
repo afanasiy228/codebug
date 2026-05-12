@@ -547,7 +547,7 @@
                 <aside class="news-side">
                     <h3>Что публикуем</h3>
                     <p>Анонсы раундов, обновления задач, изменения платформы и важные организационные сообщения.</p>
-                    <a href="news.html" class="btn-faq news-link">Открыть архив новостей</a>
+                    <a href="news.html" class="btn-faq news-link" id="homeNewsArchiveLink">Открыть архив новостей</a>
                 </aside>
             </div>
         </section>
@@ -641,13 +641,16 @@
         function renderHomeNews(items) {
             const list = document.getElementById("homeNewsList");
             const empty = document.getElementById("homeNewsEmpty");
+            const archiveLink = document.getElementById("homeNewsArchiveLink");
             list.innerHTML = "";
 
             if (!items.length) {
                 empty.style.display = "block";
+                if (archiveLink) archiveLink.style.display = "none";
                 return;
             }
             empty.style.display = "none";
+            if (archiveLink) archiveLink.style.display = "inline-flex";
 
             items.slice(0, 3).forEach(item => {
                 const article = document.createElement("article");

@@ -225,6 +225,15 @@
       return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
     }
 
+    function formatContestEnd(contest) {
+      if (!contest?.end) return "—";
+      const durationMs = Math.max(0, Number(contest.end) - Number(contest.start || 0));
+      if (durationMs > 1000 * 60 * 60 * 24 * 365) {
+        return "Без ограничения времени";
+      }
+      return formatUtc(contest.end);
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -250,10 +259,14 @@
       return "finished";
     }
 
-    async function registerContest(contestId) {
+    async function registerContest(contestId, status) {
       if (!user) {
         alert("Войдите, чтобы зарегистрироваться.");
         window.location.href = "auth.html";
+        return;
+      }
+      if (status === "finished") {
+        alert("Регистрация на завершённый контест закрыта.");
         return;
       }
       await db.ref(`contest_regs/${contestId}/${user}`).set({
@@ -282,18 +295,22 @@
 
         const card = document.createElement("div");
         card.className = "contest-card";
+        const registerDisabled = contest.status === "finished" || registered;
+        const registerLabel = contest.status === "finished"
+          ? "Регистрация закрыта"
+          : (registered ? "Вы зарегистрированы" : "Зарегистрироваться");
         card.innerHTML = `
           <div class="badge">${contest.statusLabel}</div>
           <h3 class="contest-title">${contest.title}</h3>
           <div class="contest-meta">
             <span>Старт: ${formatUtc(contest.start)}</span>
-            <span>Финиш: ${formatUtc(contest.end)}</span>
+            <span>Финиш: ${formatContestEnd(contest)}</span>
             <span>Автор(ы): ${renderAuthorLinks(contest.authors)}</span>
           </div>
           <div class="contest-actions">
             <button onclick="openContest('${contest.id}')">Открыть</button>
-            <button class="secondary" onclick="registerContest('${contest.id}')">
-              ${registered ? "Вы зарегистрированы" : "Зарегистрироваться"}
+            <button class="secondary" onclick="registerContest('${contest.id}', '${contest.status}')" ${registerDisabled ? "disabled" : ""}>
+              ${registerLabel}
             </button>
           </div>
         `;
