@@ -430,24 +430,6 @@
       </aside>
 
       <div class="admin-grid">
-      <div class="admin-box">
-        <h3>Проверка кода (1 тест)</h3>
-        <p class="admin-note">Вставь C++ код и один тест. Получишь вывод, время и память. Без привязки к задаче.</p>
-        <div class="admin-note">Код</div>
-        <textarea id="runCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
-        <div class="admin-note">Ввод</div>
-        <textarea id="runInputText" class="admin-textarea" placeholder="Ввод"></textarea>
-        <div class="admin-actions">
-          <button type="button" onclick="adminRunSingleTest()">Запустить</button>
-        </div>
-        <div class="admin-note">Вывод</div>
-        <textarea id="runOutputText" class="admin-textarea" placeholder="Вывод" readonly></textarea>
-        <div class="admin-actions">
-          <input id="runTimeMs" class="admin-input" type="text" placeholder="Время (мс)" readonly>
-          <input id="runMemoryMb" class="admin-input" type="text" placeholder="Память (МБ)" readonly>
-        </div>
-        <div id="runStatusNote" class="admin-note"></div>
-      </div>
 
       <div class="admin-box">
         <h3>Firebase: обзор и правка</h3>
@@ -693,54 +675,6 @@
       } catch (err) {
         console.error(err);
         setAdminLog("Ошибка при загрузке базы.");
-      }
-    }
-
-    async function adminRunSingleTest() {
-      const code = document.getElementById("runCodeText").value;
-      const input = document.getElementById("runInputText").value;
-      const outputEl = document.getElementById("runOutputText");
-      const timeEl = document.getElementById("runTimeMs");
-      const memEl = document.getElementById("runMemoryMb");
-      const statusEl = document.getElementById("runStatusNote");
-
-      if (!code.trim()) {
-        setAdminLog("Код не заполнен.");
-        return;
-      }
-
-      outputEl.value = "";
-      timeEl.value = "";
-      memEl.value = "";
-      statusEl.textContent = "";
-
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
-      try {
-        setAdminLog("Запускаю код на одном тесте...");
-        const res = await fetch(`${base}/run-single`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, input })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          statusEl.textContent = data.error || `Ошибка: ${res.status}`;
-          return;
-        }
-        outputEl.value = data.output || "";
-        if (Number.isFinite(data.timeMs)) {
-          timeEl.value = `${data.timeMs} ms`;
-        }
-        if (Number.isFinite(data.memoryMb)) {
-          memEl.value = `${data.memoryMb} MB`;
-        }
-        statusEl.textContent = data.status ? `Статус: ${data.status}` : "";
-        if (data.details) {
-          statusEl.textContent += ` — ${data.details}`;
-        }
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Ошибка соединения с сервером.";
       }
     }
 
