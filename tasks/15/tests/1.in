@@ -1,8 +1,0 @@
-7
-push 3
-push 5
-min
-push 2
-min
-pop
-min
