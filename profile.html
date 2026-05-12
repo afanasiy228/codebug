@@ -361,11 +361,11 @@
             <div class="info-row">Рейтинг: <span id="rating">0</span></div>
             <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
             <div class="profile-actions">
-                <a href="friends.html" style="text-decoration:none;">
+                <a id="friendsLinkBtn" href="friends.html" style="text-decoration:none;">
                     <button type="button">Друзья</button>
                 </a>
                 <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
-                <button type="button" onclick="logout()">Выйти из аккаунта</button>
+                <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
             </div>
 
             <div class="section-title">Статистика</div>
@@ -481,6 +481,10 @@
             if (viewedUser !== currentUser) {
                 document.getElementById("avatar-file").style.display = "none";
                 document.querySelector(".avatar-block button").style.display = "none";
+                const friendsLinkBtn = document.getElementById("friendsLinkBtn");
+                const logoutBtn = document.getElementById("logoutBtn");
+                if (friendsLinkBtn) friendsLinkBtn.style.display = "none";
+                if (logoutBtn) logoutBtn.style.display = "none";
                 setupViewedFriendButton();
             }
 
