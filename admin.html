@@ -602,6 +602,16 @@
       </div>
 
       <div class="admin-box">
+        <h3>Добавить решённые задачи</h3>
+        <p class="admin-note">Введи логин и ID задач через пробел/запятую/новую строку. Обновятся solved, cnt и exp.</p>
+        <input id="solvedUserLogin" class="admin-input" type="text" placeholder="Логин, например: foxserg">
+        <textarea id="solvedTaskIds" class="admin-textarea" placeholder="ID задач, например: 3 4 5 6 7 23 43"></textarea>
+        <div class="admin-actions">
+          <button type="button" onclick="adminAddSolvedTasks()">Добавить решённые</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
         <h3>Анонс на сайте</h3>
         <p class="admin-note">Сообщение будет храниться в Firebase: site/announcement.</p>
         <textarea id="adminAnnouncement" class="admin-textarea" placeholder="Текст анонса"></textarea>
@@ -1207,7 +1217,8 @@
         const list = await res.json();
         return list.map(meta => ({
           id: typeof meta.id === "number" ? meta.id : Number(meta.id),
-          title: meta.title || ("Задача " + meta.id)
+          title: meta.title || ("Задача " + meta.id),
+          difficulty: meta.difficulty || ""
         }));
       } catch (err) {
         console.warn("Task list fetch failed", err);
@@ -1353,6 +1364,93 @@
       }
       await db.ref("admins/" + login).remove();
       setAdminLog(`Доступ снят: ${login}`);
+    }
+
+    function xpForDifficulty(difficulty) {
+      if (difficulty === "tutorial") return 2;
+      if (difficulty === "easy") return 4;
+      if (difficulty === "casual") return 7;
+      if (difficulty === "normal") return 12;
+      if (difficulty === "hard") return 20;
+      if (difficulty === "insane") return 30;
+      if (difficulty === "extreme") return 45;
+      if (difficulty === "ultra") return 60;
+      if (difficulty === "impossible") return 80;
+      if (difficulty === "tourist") return 110;
+      return 5;
+    }
+
+    function parseTaskIds(raw) {
+      return [...new Set(
+        String(raw || "")
+          .split(/[\s,;]+/g)
+          .map(item => Number(item.trim()))
+          .filter(item => Number.isFinite(item) && item >= 0)
+      )];
+    }
+
+    async function getTaskDifficulty(taskId) {
+      const fromList = adminTasks.find(t => Number(t.id) === Number(taskId));
+      if (fromList && fromList.difficulty) {
+        return fromList.difficulty;
+      }
+      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      try {
+        const res = await fetch(`${base}/tasks/${taskId}/meta.json`);
+        if (!res.ok) return "";
+        const meta = await res.json();
+        return String(meta?.difficulty || "");
+      } catch (err) {
+        return "";
+      }
+    }
+
+    async function adminAddSolvedTasks() {
+      const login = document.getElementById("solvedUserLogin").value.trim();
+      const idsRaw = document.getElementById("solvedTaskIds").value;
+      if (!login) {
+        setAdminLog("Укажи логин пользователя.");
+        return;
+      }
+
+      const taskIds = parseTaskIds(idsRaw);
+      if (!taskIds.length) {
+        setAdminLog("Укажи хотя бы один ID задачи.");
+        return;
+      }
+
+      const userRef = db.ref("users/" + login);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists()) {
+        setAdminLog(`Пользователь не найден: ${login}`);
+        return;
+      }
+
+      const userData = userSnap.val() || {};
+      const stats = userData.stats || {};
+      const solved = stats.solved || {};
+      let exp = Number(stats.exp) || 0;
+
+      const freshTaskIds = taskIds.filter(taskId => !solved[taskId]);
+      if (!freshTaskIds.length) {
+        setAdminLog(`У пользователя ${login} все эти задачи уже отмечены как решённые.`);
+        return;
+      }
+
+      const difficulties = await Promise.all(freshTaskIds.map(taskId => getTaskDifficulty(taskId)));
+      freshTaskIds.forEach((taskId, idx) => {
+        solved[taskId] = true;
+        exp += xpForDifficulty(difficulties[idx]);
+      });
+
+      const cnt = Object.keys(solved).length;
+      await userRef.child("stats").update({
+        solved,
+        exp,
+        cnt
+      });
+
+      setAdminLog(`Пользователь ${login}: добавлено задач ${freshTaskIds.length}, новый exp=${exp}, solved=${cnt}.`);
     }
 
     async function adminSaveAnnouncement() {
