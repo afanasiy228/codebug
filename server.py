@@ -15,7 +15,6 @@ app = Flask(__name__)
 CORS(app)  # разрешаем CORS всем источникам
 
 JUDGE_SCRIPT = "judge.py"
-SOL_FILE = "sol.cpp"
 TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "git@github.com:afanasiy228/taskscodebug.git")
 TASKS_REPO_DIR = os.getenv("TASKS_REPO_DIR", ".tasks_repo")
 TASKS_REPO_KEY_FILE = os.getenv("TASKS_REPO_KEY_FILE", "/etc/secrets/codebug_tasks_deploy")
@@ -337,24 +336,37 @@ def submit():
     else:
         firebase_error = "firebase_not_ready"
 
-    # --- записываем sol.cpp ---
-    try:
-        with open(SOL_FILE, "w") as f:
-            f.write(code)
-        print("sol.cpp записан")
-    except Exception as e:
-        print("Ошибка записи sol.cpp:", e)
-        return jsonify({"error": "write_error"}), 500
-
-    # --- запускаем judge ---
+    # --- изолированный запуск judge для конкретной посылки ---
     print("Запуск judge.py...")
+    log_text = "(log.txt не найден)"
     try:
-        result = subprocess.run(
-            ["python3", JUDGE_SCRIPT, task],
-            capture_output=True,
-            text=True,
-            timeout=JUDGE_PROCESS_TIMEOUT
-        )
+        with tempfile.TemporaryDirectory(prefix="codebug_submit_") as workdir:
+            source_path = os.path.join(workdir, "sol.cpp")
+            with open(source_path, "w") as f:
+                f.write(code)
+
+            judge_env = {
+                **os.environ,
+                "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
+                "JUDGE_SOURCE": "sol.cpp",
+                "JUDGE_BINARY": "sol",
+                "JUDGE_LOG_FILE": "log.txt"
+            }
+            result = subprocess.run(
+                ["python3", os.path.abspath(JUDGE_SCRIPT), task],
+                capture_output=True,
+                text=True,
+                timeout=JUDGE_PROCESS_TIMEOUT,
+                cwd=workdir,
+                env=judge_env
+            )
+
+            log_path = os.path.join(workdir, "log.txt")
+            if os.path.exists(log_path):
+                with open(log_path, "r") as f:
+                    log_text = f.read()
+            else:
+                log_text = (result.stdout or "") + "\n" + (result.stderr or "")
     except subprocess.TimeoutExpired:
         if submission_ref is not None:
             submission_ref.update({"verdict": "TL"})
@@ -365,15 +377,11 @@ def submit():
             "firebaseSaved": firebase_saved,
             "firebaseError": firebase_error
         })
+    except Exception as e:
+        print("Judge launch error:", e)
+        return jsonify({"error": "judge_launch_failed"}), 500
 
     print("judge.py завершён")
-
-    # читаем log.txt
-    try:
-        with open("log.txt", "r") as f:
-            log_text = f.read()
-    except:
-        log_text = "(log.txt не найден)"
 
     # --- определение финального вердикта ---
     final = "CE"

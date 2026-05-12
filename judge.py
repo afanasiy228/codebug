@@ -5,18 +5,18 @@ import glob
 
 # --- Настройки ---
 TIME_LIMIT = int(os.getenv("TIME_LIMIT", "5"))  # лимит времени на один тест
-SOURCE = "sol.cpp"     # сервер сохраняет код сюда
-BINARY = "sol"         # бинарник
-LOG_FILE = "log.txt"   # вывод для просмотра
+SOURCE = os.getenv("JUDGE_SOURCE", "sol.cpp")
+BINARY = os.getenv("JUDGE_BINARY", "sol")
+LOG_FILE = os.getenv("JUDGE_LOG_FILE", "log.txt")
 
 def task_dir(task):
-    base = os.getenv("TASKS_REPO_DIR", "tasks")
+    base = os.getenv("TASKS_REPO_DIR", ".tasks_repo")
     return os.path.join(base, task)
 
-def compile_cpp():
+def compile_cpp(log):
     if not os.path.exists(SOURCE):
-        with open(LOG_FILE, "w") as log:
-            log.write("Compilation Error\nsol.cpp not found\n")
+        log.write("Compilation Error\nsol.cpp not found\n")
+        log.write("Final verdict: CE\n")
         return False
 
     res = subprocess.run(
@@ -29,9 +29,11 @@ def compile_cpp():
     )
 
     if res.returncode != 0:
-        with open(LOG_FILE, "w") as log:
-            log.write("Compilation Error\n")
-            log.write(res.stderr)
+        log.write("Compilation Error\n")
+        log.write(res.stderr)
+        if not str(res.stderr).endswith("\n"):
+            log.write("\n")
+        log.write("Final verdict: CE\n")
         return False
 
     return True
@@ -57,8 +59,11 @@ def run_test(binary, inp_file, out_file):
 
     program_output = proc.stdout.strip()
 
-    with open(out_file, "r") as f:
-        correct_output = f.read().strip()
+    try:
+        with open(out_file, "r") as f:
+            correct_output = f.read().strip()
+    except Exception:
+        return "RE"
 
     return "OK" if program_output == correct_output else "WA"
 
@@ -67,21 +72,25 @@ def judge(task_id):
     task_path = task_dir(task_id)
     tests_path = os.path.join(task_path, "tests")
 
-    if not os.path.isdir(tests_path):
-        with open(LOG_FILE, "w") as log:
-            log.write("Error: tests folder not found\n")
-        return "NO_TESTS"
-
-    # Компиляция
-    if not compile_cpp():
-        return "CE"
-
-    tests = sorted(glob.glob(os.path.join(tests_path, "*.in")))
-
-    results = []
-
     with open(LOG_FILE, "w") as log:
         log.write(f"Task {task_id}\n")
+
+        if not os.path.isdir(tests_path):
+            log.write("Error: tests folder not found\n")
+            log.write("Final verdict: NO_TESTS\n")
+            return "NO_TESTS"
+
+        # Компиляция
+        if not compile_cpp(log):
+            return "CE"
+
+        tests = sorted(glob.glob(os.path.join(tests_path, "*.in")))
+        results = []
+
+        if not tests:
+            log.write("Error: no *.in tests found\n")
+            log.write("Final verdict: NO_TESTS\n")
+            return "NO_TESTS"
 
         for inp in tests:
             test_num = os.path.splitext(os.path.basename(inp))[0]
@@ -104,8 +113,7 @@ def judge(task_id):
             final = "PARTIAL"
 
         log.write(f"Final verdict: {final}\n")
-
-    return final
+        return final
 
 
 
