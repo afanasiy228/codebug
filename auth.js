@@ -324,15 +324,28 @@ async function verifyPassword(inputPass, data) {
     return false;
 }
 
-async function ensurePasswordHashForLegacyUser(login, inputPass, data) {
-    if (!data || data.passHash) return;
+async function migrateAndCleanupPasswordRecord(login, inputPass, data) {
+    if (!data) return;
+
+    // Уже есть хеш: удаляем legacy plaintext, если он остался.
+    if (typeof data.passHash === "string" && data.passHash.length > 0) {
+        if (typeof data.pass === "string") {
+            await db.ref("users/" + login).update({
+                pass: null
+            });
+        }
+        return;
+    }
+
+    // Легаси-формат: мигрируем в passHash и удаляем pass.
     if (typeof data.pass !== "string" || data.pass !== String(inputPass ?? "")) return;
     const hash = await sha256Hex(inputPass);
     if (!hash) return;
     await db.ref("users/" + login).update({
         passHash: hash,
         passAlgo: PASS_HASH_ALGO,
-        passMigratedAt: Date.now()
+        passMigratedAt: Date.now(),
+        pass: null
     });
 }
 
@@ -354,9 +367,9 @@ async function loginUser(login, pass) {
         return { ok: false, error: "Неверный пароль" };
     }
 
-    // Мягкая миграция: старые plaintext-аккаунты получают passHash после первого входа.
+    // Мягкая миграция + cleanup: после входа убираем plaintext pass.
     try {
-        await ensurePasswordHashForLegacyUser(login, pass, data);
+        await migrateAndCleanupPasswordRecord(login, pass, data);
     } catch (err) {
         console.warn("Password migration failed for user:", login, err);
     }
