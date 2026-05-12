@@ -608,22 +608,32 @@
 
         function normalizeTag(tag) {
             const t = String(tag || "").trim();
-            const key = t.toLowerCase();
+            const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
             const map = {
                 "prefix sums": "префиксные суммы",
                 "two pointers": "два указателя",
                 "binary search": "бинарный поиск",
                 "bruteforce": "перебор",
+                "brute force": "перебор",
                 "dynamic programming": "динамика",
+                "dp": "динамика",
                 "graphs": "графы",
+                "graph": "графы",
                 "strings": "строки",
+                "string": "строки",
                 "arrays": "массивы",
+                "array": "массивы",
                 "math": "математика",
                 "sorting": "сортировка",
                 "implementation": "реализация",
                 "greedy": "жадность",
                 "tree": "деревья",
-                "trees": "деревья"
+                "trees": "деревья",
+                "dfs": "dfs",
+                "bfs": "bfs",
+                "dijkstra": "дейкстра",
+                "shortest path": "кратчайший путь",
+                "prefix sum": "префиксные суммы"
             };
             return map[key] || t;
         }

@@ -1036,24 +1036,49 @@
 
         function normalizeTag(tag) {
             const t = String(tag || "").trim();
-            const key = t.toLowerCase();
+            const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
             const map = {
                 "prefix sums": "префиксные суммы",
                 "two pointers": "два указателя",
                 "binary search": "бинарный поиск",
                 "bruteforce": "перебор",
+                "brute force": "перебор",
                 "dynamic programming": "динамика",
+                "dp": "динамика",
                 "graphs": "графы",
+                "graph": "графы",
                 "strings": "строки",
+                "string": "строки",
                 "arrays": "массивы",
+                "array": "массивы",
                 "math": "математика",
                 "sorting": "сортировка",
                 "implementation": "реализация",
                 "greedy": "жадность",
                 "tree": "деревья",
-                "trees": "деревья"
+                "trees": "деревья",
+                "dfs": "dfs",
+                "bfs": "bfs",
+                "dijkstra": "дейкстра",
+                "shortest path": "кратчайший путь",
+                "prefix sum": "префиксные суммы"
             };
             return map[key] || t;
+        }
+
+        function showTaskNotFound(id) {
+            document.getElementById("taskTitle").innerText = `Задача #${id} не найдена`;
+            document.getElementById("taskStatement").innerHTML =
+                `<p>Мы не нашли эту задачу. Проверь ID или вернись в список задач.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`;
+            document.getElementById("taskHelp").innerText = "";
+            const examples = document.getElementById("examples");
+            if (examples) examples.innerHTML = "";
+            if (window.editor) editor.setValue("// Задача не найдена");
+            const submitBtn = document.querySelector(".btn");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Недоступно";
+            }
         }
 
         async function loadHiddenMap() {
@@ -1070,7 +1095,13 @@
 
             const url = new URL(location.href);
             const id = url.searchParams.get("id") || "0";
+            const parsedId = Number(id);
             const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+
+            if (!Number.isInteger(parsedId) || parsedId < 0) {
+                showTaskNotFound(id);
+                return;
+            }
 
             const hiddenMap = await loadHiddenMap();
             const isHidden = hiddenMap && hiddenMap[id];
@@ -1095,6 +1126,9 @@
 
             try {
                 const res = await fetch(metaPath);
+                if (!res.ok) {
+                    throw new Error(`meta_not_found_${res.status}`);
+                }
 
                 const meta = await res.json();
 
@@ -1110,7 +1144,8 @@
                         "";
                 }
             } catch (e) {
-                document.getElementById("taskTitle").innerText = "Название не найдено";
+                showTaskNotFound(id);
+                return;
             }
 
 
@@ -1119,6 +1154,7 @@
 
             try {
                 const res = await fetch(stmtPath);
+                if (!res.ok) throw new Error(`statement_${res.status}`);
 
                 const md = await res.text();
 
@@ -1131,6 +1167,7 @@
 
             try {
                 const res = await fetch(helpPath);
+                if (!res.ok) throw new Error(`help_${res.status}`);
                 const md = await res.text();
 
                 document.getElementById("taskHelp").innerHTML = renderMarkdown(md);
@@ -1144,6 +1181,7 @@
 
             try {
                 const res = await fetch(codePath);
+                if (!res.ok) throw new Error(`code_${res.status}`);
 
                 const code = await res.text();
 
@@ -1167,10 +1205,12 @@
 
                 try {
                     const inpRes = await fetch(inPath);
+                    if (!inpRes.ok) throw new Error(`in_${i}_${inpRes.status}`);
 
                     const inp = await inpRes.text();
 
                     const outRes = await fetch(outPath);
+                    if (!outRes.ok) throw new Error(`out_${i}_${outRes.status}`);
 
                     const out = await outRes.text();
 
