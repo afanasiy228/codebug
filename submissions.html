@@ -257,23 +257,30 @@
         const titleCache = {};
 
         async function getTaskTitle(id) {
-            if (titleCache[id]) return titleCache[id];
+            const key = String(id ?? "");
+            if (titleCache[key]) return titleCache[key];
 
             try {
                 const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
-                const meta = await fetch(`${base}/tasks/${id}/meta.json`).then(r => r.json());
-                titleCache[id] = meta.title;
-                return meta.title;
+                const res = await fetch(`${base}/tasks/${key}/meta.json`);
+                if (!res.ok) throw new Error(`meta_${res.status}`);
+                const meta = await res.json();
+                const title = meta?.title || ("Задача " + key);
+                titleCache[key] = title;
+                return title;
             } catch {
-                return "Задача " + id;
+                const fallback = "Задача " + key;
+                titleCache[key] = fallback;
+                return fallback;
             }
         }
 
         async function preloadTaskTitles(subs) {
             const uniqueTaskIds = [...new Set(
                 subs
+                .filter(s => s && typeof s === "object")
                 .map(s => s.task)
-                .filter(taskId => taskId !== undefined && taskId !== null)
+                .filter(taskId => taskId !== undefined && taskId !== null && taskId !== "")
             )];
 
             await Promise.all(uniqueTaskIds.map(id => getTaskTitle(id)));
@@ -317,10 +324,10 @@
                     return;
                 }
 
-                submissions = Object.values(snap.val());
+                submissions = Object.values(snap.val()).filter(s => s && typeof s === "object");
 
                 // Сортировка по дате (сначала новые)
-                submissions.sort((a, b) => b.date - a.date);
+                submissions.sort((a, b) => (Number(b.date) || 0) - (Number(a.date) || 0));
 
                 // Важно: грузим названия задач параллельно, иначе рендер может зависать.
                 await preloadTaskTitles(submissions);
@@ -346,7 +353,10 @@
             rendered = [];
 
             for (let s of submissions) {
-                const title = titleCache[s.task] || ("Задача " + s.task);
+                if (!s || typeof s !== "object") continue;
+
+                const taskId = s.task ?? "—";
+                const title = titleCache[String(taskId)] || ("Задача " + taskId);
 
                 // Проверяем фильтры
                 const login = getSubmissionLogin(s);
@@ -357,6 +367,7 @@
                 if (verdictF && verdictF !== verdict) continue;
 
                 rendered.push({...s,
+                    taskId,
                     title,
                     login,
                     verdict
@@ -391,14 +402,14 @@
             <td>${profileLink(s.login)}</td>
 
             <td>
-                <a href="problem.html?id=${s.task}" style="text-decoration:none;color:var(--ink);">
+                <a href="problem.html?id=${encodeURIComponent(s.taskId)}" style="text-decoration:none;color:var(--ink);">
                     <div class="task-card">${escapeHtml(s.title)}</div>
                 </a>
             </td>
 
             <td class="${cls}">${verdictLabel}</td>
 
-            <td>${new Date(s.date).toLocaleString()}</td>
+            <td>${s.date ? new Date(s.date).toLocaleString() : "—"}</td>
         `;
 
                 tbody.appendChild(tr);
