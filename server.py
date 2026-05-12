@@ -2,6 +2,7 @@ import os
 import json
 import subprocess
 import tempfile
+import re
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
@@ -114,17 +115,16 @@ def task_dir(task_id):
 def safe_task_file(task_id, filename):
     if ".." in filename or filename.startswith("/") or "\\\\" in filename:
         return None
-    allowed = {
+    allowed_exact = {
         "meta.json",
         "statement.md",
         "help.md",
         "code.cpp",
-        "tests/1.in",
-        "tests/1.out",
-        "tests/2.in",
-        "tests/2.out",
+        "sol.cpp",
+        "generator.cpp",
     }
-    if filename not in allowed:
+    is_test_file = re.fullmatch(r"tests/[1-9]\d*\.(in|out)", filename) is not None
+    if filename not in allowed_exact and not is_test_file:
         return None
     path = os.path.join(task_dir(task_id), filename)
     if not os.path.isfile(path):
