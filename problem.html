@@ -300,6 +300,7 @@
             color: var(--accent);
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
         }
         
         .btn {
@@ -1033,6 +1034,28 @@
             return (md || "").replace(/\n/g, "<br>");
         }
 
+        function normalizeTag(tag) {
+            const t = String(tag || "").trim();
+            const key = t.toLowerCase();
+            const map = {
+                "prefix sums": "префиксные суммы",
+                "two pointers": "два указателя",
+                "binary search": "бинарный поиск",
+                "bruteforce": "перебор",
+                "dynamic programming": "динамика",
+                "graphs": "графы",
+                "strings": "строки",
+                "arrays": "массивы",
+                "math": "математика",
+                "sorting": "сортировка",
+                "implementation": "реализация",
+                "greedy": "жадность",
+                "tree": "деревья",
+                "trees": "деревья"
+            };
+            return map[key] || t;
+        }
+
         async function loadHiddenMap() {
             try {
                 const snap = await db.ref("tasksHidden").get();
@@ -1083,7 +1106,7 @@
                 if (tagsRoot) {
                     const tags = Array.isArray(meta.tags) ? meta.tags : [];
                     tagsRoot.innerHTML = tags.length ?
-                        tags.map(tag => `<span class="task-tag">${tag}</span>`).join("") :
+                        tags.map(tag => `<span class="task-tag">${normalizeTag(tag)}</span>`).join("") :
                         "";
                 }
             } catch (e) {

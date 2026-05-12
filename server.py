@@ -16,7 +16,7 @@ CORS(app)  # разрешаем CORS всем источникам
 
 JUDGE_SCRIPT = "judge.py"
 SOL_FILE = "sol.cpp"
-TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "git@github.com:afanasiy228/taskscodebug.git")
+TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "")
 TASKS_REPO_DIR = os.getenv("TASKS_REPO_DIR", "tasks")
 TASKS_REPO_KEY_FILE = os.getenv("TASKS_REPO_KEY_FILE", "/etc/secrets/codebug_tasks_deploy")
 TASKS_SYNC_TTL = int(os.getenv("TASKS_SYNC_TTL", "300"))
@@ -24,6 +24,7 @@ TASKS_COMMIT_NAME = os.getenv("TASKS_COMMIT_NAME", "CodeBug Admin")
 TASKS_COMMIT_EMAIL = os.getenv("TASKS_COMMIT_EMAIL", "admin@codebug.local")
 LAST_TASKS_SYNC = 0.0
 MAX_GENERATED_TESTS = int(os.getenv("MAX_GENERATED_TESTS", "200"))
+JUDGE_PROCESS_TIMEOUT = int(os.getenv("JUDGE_PROCESS_TIMEOUT", "120"))
 
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
@@ -77,6 +78,14 @@ def sync_tasks_repo(force=False):
     now = time.time()
     if not force and LAST_TASKS_SYNC and now - LAST_TASKS_SYNC < TASKS_SYNC_TTL:
         return True
+
+    # If repo URL is not configured, use local tasks folder as source of truth.
+    if not TASKS_REPO_URL:
+        if os.path.isdir(TASKS_REPO_DIR):
+            LAST_TASKS_SYNC = now
+            return True
+        print("TASKS_REPO_URL не задан и локальная папка tasks отсутствует")
+        return False
 
     try:
         if os.path.isdir(os.path.join(TASKS_REPO_DIR, ".git")):
@@ -352,7 +361,7 @@ def submit():
             ["python3", JUDGE_SCRIPT, task],
             capture_output=True,
             text=True,
-            timeout=20
+            timeout=JUDGE_PROCESS_TIMEOUT
         )
     except subprocess.TimeoutExpired:
         if submission_ref is not None:

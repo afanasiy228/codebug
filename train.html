@@ -329,6 +329,7 @@
             font-size: 12px;
             background: #fff;
             color: var(--muted);
+            white-space: nowrap;
         }
         
         .link {
@@ -605,9 +606,31 @@
             return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
         }
 
+        function normalizeTag(tag) {
+            const t = String(tag || "").trim();
+            const key = t.toLowerCase();
+            const map = {
+                "prefix sums": "префиксные суммы",
+                "two pointers": "два указателя",
+                "binary search": "бинарный поиск",
+                "bruteforce": "перебор",
+                "dynamic programming": "динамика",
+                "graphs": "графы",
+                "strings": "строки",
+                "arrays": "массивы",
+                "math": "математика",
+                "sorting": "сортировка",
+                "implementation": "реализация",
+                "greedy": "жадность",
+                "tree": "деревья",
+                "trees": "деревья"
+            };
+            return map[key] || t;
+        }
+
         function tagsPill(tags) {
             if (!Array.isArray(tags) || !tags.length) return `<span class="pill">—</span>`;
-            return tags.map(tag => `<span class="pill">${tag}</span>`).join(" ");
+            return tags.map(tag => `<span class="pill">${normalizeTag(tag)}</span>`).join(" ");
         }
 
         function renderTable() {

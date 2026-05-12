@@ -356,21 +356,22 @@
 
             for (let s of rendered) {
                 const tr = document.createElement("tr");
+                const verdict = s.verdict || "ERROR";
 
                 const cls =
-                    s.verdict === "OK" ? "verdict-ok" :
-                    s.verdict === "WA" ? "verdict-wa" :
-                    s.verdict === "RE" ? "verdict-re" :
-                    s.verdict === "QUEUE" ? "verdict-queue" :
-                    s.verdict === "TESTING" ? "verdict-queue" :
-                    s.verdict === "ERROR" ? "verdict-re" :
+                    verdict === "OK" ? "verdict-ok" :
+                    verdict === "WA" ? "verdict-wa" :
+                    verdict === "RE" ? "verdict-re" :
+                    verdict === "QUEUE" ? "verdict-queue" :
+                    verdict === "TESTING" ? "verdict-queue" :
+                    verdict === "ERROR" ? "verdict-re" :
                     "verdict-tl";
 
                 const verdictLabel =
-                    s.verdict === "QUEUE" ? "В очереди" :
-                    s.verdict === "TESTING" ? "Тестируется" :
-                    s.verdict === "ERROR" ? "Ошибка" :
-                    s.verdict;
+                    verdict === "QUEUE" ? "В очереди" :
+                    verdict === "TESTING" ? "Тестируется" :
+                    verdict === "ERROR" ? "Ошибка" :
+                    verdict;
 
                 tr.innerHTML = `
             <td>${profileLink(s.login)}</td>

@@ -317,6 +317,10 @@
                 if (index === 0) row.classList.add("top-1");
                 if (index === 1) row.classList.add("top-2");
                 if (index === 2) row.classList.add("top-3");
+                row.style.cursor = "pointer";
+                row.addEventListener("click", () => {
+                    window.location.href = profileUrl;
+                });
 
                 row.innerHTML = `
             <div class="place">${index + 1}</div>

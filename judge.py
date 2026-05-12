@@ -4,7 +4,7 @@ import sys
 import glob
 
 # --- Настройки ---
-TIME_LIMIT = 3  # лимит времени на программу
+TIME_LIMIT = int(os.getenv("TIME_LIMIT", "5"))  # лимит времени на один тест
 SOURCE = "sol.cpp"     # сервер сохраняет код сюда
 BINARY = "sol"         # бинарник
 LOG_FILE = "log.txt"   # вывод для просмотра
