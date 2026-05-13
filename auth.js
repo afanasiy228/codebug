@@ -304,7 +304,7 @@ const PENDING_REG_KEY = "pendingRegistration";
 const TURNSTILE_PLACEHOLDER_KEY = "PASTE_TURNSTILE_SITE_KEY_HERE";
 let turnstileWidgetId = null;
 let turnstileToken = "";
-var turnstileReady = false;
+window.__turnstileReady = false;
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -394,6 +394,7 @@ window.addEventListener("beforeunload", (event) => {
 
 function resetTurnstileWidget() {
     turnstileToken = "";
+    window.__turnstileReady = false;
     setRegisterButtonEnabled(false, "Пройди капчу");
     if (window.turnstile && turnstileWidgetId !== null) {
         try {
@@ -422,7 +423,7 @@ function getTurnstileSiteKey() {
 function renderTurnstileWidget() {
     const host = document.getElementById("turnstile-box");
     if (!host) return;
-    turnstileReady = false;
+    window.__turnstileReady = false;
     setRegisterButtonEnabled(false, "Капча загружается");
 
     const siteKey = getTurnstileSiteKey();
@@ -451,18 +452,18 @@ function renderTurnstileWidget() {
         theme: "dark",
         callback: (token) => {
             turnstileToken = token || "";
-            turnstileReady = !!turnstileToken;
-            setRegisterButtonEnabled(turnstileReady, turnstileReady ? "" : "Пройди капчу");
-            if (turnstileReady) showError("reg-error", "");
+            window.__turnstileReady = !!turnstileToken;
+            setRegisterButtonEnabled(window.__turnstileReady, window.__turnstileReady ? "" : "Пройди капчу");
+            if (window.__turnstileReady) showError("reg-error", "");
         },
         "expired-callback": () => {
             turnstileToken = "";
-            turnstileReady = false;
+            window.__turnstileReady = false;
             setRegisterButtonEnabled(false, "Капча устарела");
         },
         "error-callback": () => {
             turnstileToken = "";
-            turnstileReady = false;
+            window.__turnstileReady = false;
             setRegisterButtonEnabled(false, "Ошибка капчи");
             showError("reg-error", "Ошибка капчи. Обнови страницу и попробуй снова.");
         }
@@ -673,7 +674,7 @@ async function register() {
     if (!isLoginValid(login)) return showError("reg-error", "Логин: 3-16 символов, латиница/цифры/_");
     if (!normalizeEmail(email)) return showError("reg-error", "Укажи email");
     if (pass.length < 6) return showError("reg-error", "Пароль минимум 6 символов");
-    if (!turnstileReady || !turnstileToken) {
+    if (!window.__turnstileReady || !turnstileToken) {
         setRegisterButtonEnabled(false, "Сначала пройди капчу");
         return showError("reg-error", "Подтверди капчу Cloudflare");
     }
