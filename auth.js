@@ -298,13 +298,13 @@ function clearErrors() {
 /* ============================
    FIREBASE AUTH HELPERS
 ============================ */
-const EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
-let lastVerificationSentAt = 0;
-const PENDING_REG_KEY = "pendingRegistration";
-const RECAPTCHA_PLACEHOLDER_KEY = "PASTE_RECAPTCHA_SITE_KEY_HERE";
-let captchaWidgetId = null;
-let captchaToken = "";
-window.__captchaReady = false;
+var EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
+var lastVerificationSentAt = 0;
+var PENDING_REG_KEY = "pendingRegistration";
+var RECAPTCHA_PLACEHOLDER_KEY = "PASTE_RECAPTCHA_SITE_KEY_HERE";
+var captchaWidgetId = null;
+var captchaToken = "";
+window.__captchaReady = !!window.__captchaReady;
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -416,7 +416,10 @@ function setRegisterButtonEnabled(enabled, reason = "") {
 
 function getTurnstileSiteKey() {
     const key = String(window.RECAPTCHA_SITE_KEY || "").trim();
-    if (!key || key === RECAPTCHA_PLACEHOLDER_KEY) return "";
+    const placeholder = (typeof RECAPTCHA_PLACEHOLDER_KEY === "string" && RECAPTCHA_PLACEHOLDER_KEY)
+        ? RECAPTCHA_PLACEHOLDER_KEY
+        : "PASTE_RECAPTCHA_SITE_KEY_HERE";
+    if (!key || key === placeholder) return "";
     return key;
 }
 
