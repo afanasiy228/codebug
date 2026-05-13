@@ -230,6 +230,19 @@
         .captcha input {
             margin-bottom: 0;
         }
+
+        .turnstile-wrap {
+            margin-top: 10px;
+            margin-bottom: 8px;
+            min-height: 66px;
+            border: 1px dashed rgba(226, 214, 196, 0.9);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.65);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         /* MODAL */
         
         #modal-bg {
@@ -344,6 +357,7 @@
                 <span id="captchaText"></span>
                 <input id="captchaAnswer" style="width:60px;">
             </div>
+            <div id="turnstile-box" class="turnstile-wrap"></div>
 
             <div id="reg-error" class="error-msg"></div>
 
@@ -376,6 +390,7 @@
         </div>
     </div>
 
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -415,6 +430,7 @@
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-register").style.display = "block";
             document.getElementById("screen-verify").style.display = "none";
+            if (window.renderTurnstileWidget) window.renderTurnstileWidget();
         }
 
         function forgotPassword() {
@@ -432,6 +448,7 @@
         }
 
         generateCaptcha();
+        if (window.renderTurnstileWidget) window.renderTurnstileWidget();
     </script>
 
 </body>

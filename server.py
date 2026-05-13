@@ -8,6 +8,8 @@ from flask_cors import CORS
 import time
 import platform
 import resource
+import urllib.parse
+import urllib.request
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -32,6 +34,8 @@ FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc/secrets/serviceAccountKey.json")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
+TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
+TURNSTILE_VERIFY_URL = os.getenv("TURNSTILE_VERIFY_URL", "https://challenges.cloudflare.com/turnstile/v0/siteverify")
 
 
 def init_firebase():
@@ -83,6 +87,42 @@ def _git_env():
             "-o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
         )
     }
+
+
+def _verify_turnstile_token(token, remote_ip=None):
+    if not TURNSTILE_SECRET_KEY:
+        return False, "captcha_not_configured"
+    if not token:
+        return False, "captcha_token_required"
+
+    payload = {
+        "secret": TURNSTILE_SECRET_KEY,
+        "response": token
+    }
+    if remote_ip:
+        payload["remoteip"] = remote_ip
+
+    body = urllib.parse.urlencode(payload).encode("utf-8")
+    req = urllib.request.Request(
+        TURNSTILE_VERIFY_URL,
+        data=body,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            raw = resp.read().decode("utf-8")
+            result = json.loads(raw)
+    except Exception as e:
+        print("Captcha verify request failed:", e)
+        return False, "captcha_verify_unavailable"
+
+    if result.get("success"):
+        return True, None
+    codes = result.get("error-codes") or []
+    if isinstance(codes, list) and codes:
+        return False, "captcha_" + str(codes[0]).replace("-", "_")
+    return False, "captcha_invalid"
 
 
 def sync_tasks_repo(force=False):
@@ -536,6 +576,20 @@ def submit():
         "firebaseSaved": firebase_saved,
         "firebaseError": firebase_error
     })
+
+
+@app.route("/auth/verify-captcha", methods=["POST", "OPTIONS"])
+def auth_verify_captcha():
+    data = request.get_json(silent=True) or {}
+    token = str(data.get("token", "")).strip()
+    remote_ip = request.headers.get("CF-Connecting-IP") or request.remote_addr
+
+    ok, error_code = _verify_turnstile_token(token, remote_ip=remote_ip)
+    if not ok:
+        status = 503 if error_code == "captcha_not_configured" else 400
+        return jsonify({"ok": False, "error": error_code}), status
+
+    return jsonify({"ok": True})
 
 
 @app.route("/tasks/list", methods=["GET"])

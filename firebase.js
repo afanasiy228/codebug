@@ -22,5 +22,6 @@ window.firebase = firebase;
 window.TASKS_API_BASE = window.TASKS_API_BASE || (
     location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com"
 );
+window.TURNSTILE_SITE_KEY = window.TURNSTILE_SITE_KEY || "PASTE_TURNSTILE_SITE_KEY_HERE";
 
 console.log("Firebase INIT OK, db =", window.db);

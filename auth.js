@@ -301,6 +301,9 @@ function clearErrors() {
 const EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
 let lastVerificationSentAt = 0;
 const PENDING_REG_KEY = "pendingRegistration";
+const TURNSTILE_PLACEHOLDER_KEY = "PASTE_TURNSTILE_SITE_KEY_HERE";
+let turnstileWidgetId = null;
+let turnstileToken = "";
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -387,6 +390,91 @@ window.addEventListener("beforeunload", (event) => {
     event.preventDefault();
     event.returnValue = "";
 });
+
+function resetTurnstileWidget() {
+    turnstileToken = "";
+    if (window.turnstile && turnstileWidgetId !== null) {
+        try {
+            window.turnstile.reset(turnstileWidgetId);
+        } catch (_) {}
+    }
+}
+
+function getTurnstileSiteKey() {
+    const key = String(window.TURNSTILE_SITE_KEY || "").trim();
+    if (!key || key === TURNSTILE_PLACEHOLDER_KEY) return "";
+    return key;
+}
+
+function renderTurnstileWidget() {
+    const host = document.getElementById("turnstile-box");
+    if (!host) return;
+
+    const siteKey = getTurnstileSiteKey();
+    if (!siteKey) {
+        host.innerHTML = `<span style="font-size:12px;color:#8a6d3b;">Капча не настроена: укажи TURNSTILE site key</span>`;
+        return;
+    }
+
+    if (!window.turnstile || typeof window.turnstile.render !== "function") {
+        setTimeout(renderTurnstileWidget, 250);
+        return;
+    }
+
+    if (turnstileWidgetId !== null) {
+        resetTurnstileWidget();
+        return;
+    }
+
+    host.innerHTML = "";
+    turnstileWidgetId = window.turnstile.render(host, {
+        sitekey: siteKey,
+        theme: "dark",
+        callback: (token) => {
+            turnstileToken = token || "";
+            showError("reg-error", "");
+        },
+        "expired-callback": () => {
+            turnstileToken = "";
+        },
+        "error-callback": () => {
+            turnstileToken = "";
+            showError("reg-error", "Ошибка капчи. Обнови страницу и попробуй снова.");
+        }
+    });
+}
+
+async function verifyCaptchaToken(token) {
+    const base = window.TASKS_API_BASE || "";
+    if (!base) return { ok: false, error: "Сервис капчи недоступен" };
+
+    const toMessage = (code) => {
+        const map = {
+            captcha_not_configured: "Капча на сервере не настроена",
+            captcha_token_required: "Подтверди капчу",
+            captcha_timeout_or_duplicate: "Капча устарела. Пройди ее заново",
+            captcha_invalid_input_response: "Неверный токен капчи. Пройди заново",
+            captcha_verify_unavailable: "Сервис проверки капчи недоступен",
+            captcha_invalid: "Капча не пройдена"
+        };
+        return map[code] || "Капча не пройдена";
+    };
+
+    try {
+        const response = await fetch(`${base}/auth/verify-captcha`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.ok) {
+            return { ok: false, error: toMessage(payload.error) };
+        }
+        return { ok: true };
+    } catch (_) {
+        return { ok: false, error: "Не удалось проверить капчу" };
+    }
+}
 
 function isLoginValid(login) {
     return /^[a-zA-Z0-9_]{3,16}$/.test(login);
@@ -562,10 +650,21 @@ async function register() {
     if (!normalizeEmail(email)) return showError("reg-error", "Укажи email");
     if (pass.length < 6) return showError("reg-error", "Пароль минимум 6 символов");
     if (parseInt(captcha) !== window.correctCaptcha) return showError("reg-error", "Капча неверная");
+    if (!turnstileToken) return showError("reg-error", "Подтверди капчу Cloudflare");
+
+    const captchaVerification = await verifyCaptchaToken(turnstileToken);
+    if (!captchaVerification.ok) {
+        resetTurnstileWidget();
+        return showError("reg-error", captchaVerification.error);
+    }
 
     const result = await registerUser(login, email, pass);
-    if (!result.ok) return showError("reg-error", result.error);
+    if (!result.ok) {
+        resetTurnstileWidget();
+        return showError("reg-error", result.error);
+    }
 
+    resetTurnstileWidget();
     showVerifyScreen(result.email, "Письмо отправлено. Подтверди email и нажми «Я подтвердил, проверить».");
 }
 
@@ -784,6 +883,8 @@ window.cancelPendingRegistration = cancelPendingRegistration;
 window.showVerifyScreen = showVerifyScreen;
 window.isRegistrationLocked = isRegistrationLocked;
 window.getPendingRegistrationSafe = getPendingRegistration;
+window.renderTurnstileWidget = renderTurnstileWidget;
+window.onTurnstileLoad = renderTurnstileWidget;
 window.updateAvatar = function() {};
 window.generateCaptcha = generateCaptcha;
 window.logout = logout;
