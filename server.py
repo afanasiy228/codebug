@@ -588,6 +588,9 @@ def submit():
 
 @app.route("/auth/verify-captcha", methods=["POST", "OPTIONS"])
 def auth_verify_captcha():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
     data = request.get_json(silent=True) or {}
     token = str(data.get("token", "")).strip()
     forwarded_for = request.headers.get("X-Forwarded-For", "")
