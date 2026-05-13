@@ -865,7 +865,13 @@ async function syncSessionFromAuth() {
 
 (() => {
     const auth = getAuth();
-    if (!auth) return;
+    if (!auth) {
+        if (window.__firebaseConfigError) {
+            showError("login-error", "Firebase не настроен на сервере");
+            showError("reg-error", "Firebase не настроен на сервере");
+        }
+        return;
+    }
     enforcePendingVerificationGuard();
     auth.onAuthStateChanged(async () => {
         try {

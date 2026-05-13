@@ -27,6 +27,8 @@
     }
 
     const runtimeConfig = loadPublicConfigSync();
+    window.CODEBUG_PUBLIC_CONFIG = runtimeConfig;
+    window.RECAPTCHA_SITE_KEY = runtimeConfig.recaptchaSiteKey || "";
 
     const firebaseConfig = runtimeConfig.firebase || {};
     const requiredFirebaseKeys = [
@@ -42,11 +44,13 @@
     const missingFirebaseKeys = requiredFirebaseKeys.filter((key) => !firebaseConfig[key]);
     if (missingFirebaseKeys.length) {
         console.error("Firebase config missing keys:", missingFirebaseKeys.join(", "));
-        throw new Error("Firebase config is not set. Configure /public-config on backend.");
+        window.__firebaseConfigError = "missing: " + missingFirebaseKeys.join(", ");
+        return;
     }
 
     if (!window.firebase || typeof window.firebase.initializeApp !== "function") {
-        throw new Error("Firebase SDK is not loaded");
+        window.__firebaseConfigError = "firebase_sdk_not_loaded";
+        return;
     }
 
     if (!firebase.apps || !firebase.apps.length) {
@@ -55,8 +59,7 @@
 
     window.db = firebase.database();
     window.firebase = firebase;
-    window.RECAPTCHA_SITE_KEY = runtimeConfig.recaptchaSiteKey || "";
-    window.CODEBUG_PUBLIC_CONFIG = runtimeConfig;
+    window.__firebaseConfigError = "";
 
     console.log("Firebase INIT OK, db =", window.db);
 })();
