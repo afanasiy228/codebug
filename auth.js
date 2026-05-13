@@ -8,6 +8,10 @@ const db = firebase.database();
    USER SESSION
 ============================ */
 function setUser(login) {
+    if (!login) {
+        localStorage.removeItem("user");
+        return;
+    }
     localStorage.setItem("user", login);
 }
 
@@ -15,8 +19,20 @@ function getUser() {
     return localStorage.getItem("user");
 }
 
-function logout() {
+function clearSession() {
     localStorage.removeItem("user");
+    localStorage.removeItem("uid");
+}
+
+async function logout() {
+    try {
+        const auth = getAuth();
+        if (auth) await auth.signOut();
+    } catch (err) {
+        console.warn("Signout failed", err);
+    }
+    localStorage.setItem("forceSignout", "1");
+    clearSession();
     window.location.href = "auth.html";
 }
 
@@ -279,189 +295,230 @@ function clearErrors() {
 
 
 /* ============================
-   GENERATE USER ID
+   FIREBASE AUTH HELPERS
 ============================ */
-function generateId() {
-    return "uid-" + Math.random().toString(36).substring(2, 10);
+const EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
+let lastVerificationSentAt = 0;
+
+function getAuth() {
+    if (!window.firebase || typeof firebase.auth !== "function") return null;
+    return firebase.auth();
 }
 
-/* ============================
-   PASSWORD HASHING
-============================ */
-const PASS_HASH_ALGO = "sha256-v1";
-
-function canHashPasswords() {
-    return typeof window !== "undefined" &&
-        window.crypto &&
-        window.crypto.subtle &&
-        typeof window.crypto.subtle.digest === "function";
-}
-
-async function sha256Hex(text) {
-    if (!canHashPasswords()) return null;
-    const normalized = String(text ?? "");
-    const bytes = new TextEncoder().encode(normalized);
-    const digest = await window.crypto.subtle.digest("SHA-256", bytes);
-    const arr = Array.from(new Uint8Array(digest));
-    return arr.map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function verifyPassword(inputPass, data) {
-    const input = String(inputPass ?? "");
-
-    // Новый формат: только хеш.
-    if (data && typeof data.passHash === "string" && data.passHash.length > 0) {
-        const inputHash = await sha256Hex(input);
-        if (!inputHash) return false;
-        return inputHash === data.passHash;
-    }
-
-    // Легаси-формат: plaintext.
-    if (data && typeof data.pass === "string") {
-        return data.pass === input;
-    }
-
-    return false;
-}
-
-async function migrateAndCleanupPasswordRecord(login, inputPass, data) {
-    if (!data) return;
-
-    // Уже есть хеш: удаляем legacy plaintext, если он остался.
-    if (typeof data.passHash === "string" && data.passHash.length > 0) {
-        if (typeof data.pass === "string") {
-            await db.ref("users/" + login).update({
-                pass: null
-            });
-        }
+function setUid(uid) {
+    if (!uid) {
+        localStorage.removeItem("uid");
         return;
     }
-
-    // Легаси-формат: мигрируем в passHash и удаляем pass.
-    if (typeof data.pass !== "string" || data.pass !== String(inputPass ?? "")) return;
-    const hash = await sha256Hex(inputPass);
-    if (!hash) return;
-    await db.ref("users/" + login).update({
-        passHash: hash,
-        passAlgo: PASS_HASH_ALGO,
-        passMigratedAt: Date.now(),
-        pass: null
-    });
+    localStorage.setItem("uid", uid);
 }
 
+function getUid() {
+    return localStorage.getItem("uid");
+}
 
-/* ============================
-   LOGIN
-============================ */
-async function loginUser(login, pass) {
-    const snapshot = await db.ref("users/" + login).get();
+function normalizeEmail(email) {
+    return String(email || "").trim().toLowerCase();
+}
 
-    if (!snapshot.exists()) {
-        return { ok: false, error: "Пользователь не найден" };
+function emailKey(email) {
+    return normalizeEmail(email).replace(/\./g, ",");
+}
+
+function isLoginValid(login) {
+    return /^[a-zA-Z0-9_]{3,16}$/.test(login);
+}
+
+async function resolveLoginByUidOrEmail(uid, email) {
+    if (uid) {
+        const mapSnap = await db.ref("userAuthMap/" + uid).get();
+        if (mapSnap.exists()) return mapSnap.val();
+    }
+    const e = normalizeEmail(email);
+    if (e) {
+        const emailSnap = await db.ref("emailToLogin/" + emailKey(e)).get();
+        if (emailSnap.exists()) return emailSnap.val();
+    }
+    return null;
+}
+
+async function ensureUserProfile(login, userAuth) {
+    const profileRef = db.ref("users/" + login);
+    const snap = await profileRef.get();
+    if (!snap.exists()) {
+        await profileRef.set({
+            login,
+            id: userAuth.uid,
+            email: normalizeEmail(userAuth.email),
+            emailVerified: !!userAuth.emailVerified,
+            created: Date.now(),
+            stats: {
+                exp: 0,
+                cnt: 0,
+                solved: {}
+            },
+            avatar: ""
+        });
+    } else {
+        await profileRef.update({
+            id: userAuth.uid,
+            email: normalizeEmail(userAuth.email),
+            emailVerified: !!userAuth.emailVerified,
+            updatedAt: Date.now()
+        });
     }
 
-    const data = snapshot.val();
-
-    const passwordOk = await verifyPassword(pass, data);
-    if (!passwordOk) {
-        return { ok: false, error: "Неверный пароль" };
+    await db.ref("userAuthMap/" + userAuth.uid).set(login);
+    if (userAuth.email) {
+        await db.ref("emailToLogin/" + emailKey(userAuth.email)).set(login);
     }
+}
 
-    // Мягкая миграция + cleanup: после входа убираем plaintext pass.
+async function loginUser(email, pass) {
+    const auth = getAuth();
+    if (!auth) return { ok: false, error: "Firebase Auth не инициализирован" };
+
+    let cred;
     try {
-        await migrateAndCleanupPasswordRecord(login, pass, data);
+        cred = await auth.signInWithEmailAndPassword(normalizeEmail(email), pass);
     } catch (err) {
-        console.warn("Password migration failed for user:", login, err);
+        const code = err?.code || "";
+        if (code === "auth/user-not-found") return { ok: false, error: "Пользователь не найден" };
+        if (code === "auth/wrong-password") return { ok: false, error: "Неверный пароль" };
+        if (code === "auth/invalid-email") return { ok: false, error: "Некорректный email" };
+        return { ok: false, error: "Ошибка входа: " + code };
     }
 
-    return { ok: true };
+    await cred.user.reload();
+    const userAuth = auth.currentUser || cred.user;
+    if (!userAuth.emailVerified) {
+        return { ok: false, needVerify: true, userAuth, error: "Подтверди email перед входом" };
+    }
+
+    const login = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+    if (!login) {
+        return { ok: false, error: "Профиль не найден. Обратись к админу." };
+    }
+
+    await ensureUserProfile(login, userAuth);
+    return { ok: true, login, uid: userAuth.uid };
+}
+
+async function sendVerificationWithCooldown(userAuth) {
+    const now = Date.now();
+    if (now - lastVerificationSentAt < EMAIL_RETRY_COOLDOWN_MS) {
+        const left = Math.ceil((EMAIL_RETRY_COOLDOWN_MS - (now - lastVerificationSentAt)) / 1000);
+        return { ok: false, error: `Подожди ${left} сек перед повторной отправкой` };
+    }
+    try {
+        await userAuth.sendEmailVerification();
+        lastVerificationSentAt = now;
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, error: "Не удалось отправить письмо: " + (err?.code || "unknown") };
+    }
 }
 
 async function login() {
     clearErrors();
-
-    const login = document.getElementById("login-user").value.trim();
+    const email = document.getElementById("login-email").value.trim();
     const pass = document.getElementById("login-pass").value.trim();
 
-    if (login.length < 3) {
-        showError("login-error", "Логин слишком короткий");
-        return;
-    }
-    if (pass.length < 3) {
-        showError("login-error", "Пароль слишком короткий");
-        return;
-    }
+    if (!normalizeEmail(email)) return showError("login-error", "Укажи email");
+    if (pass.length < 6) return showError("login-error", "Пароль слишком короткий");
 
-    const result = await loginUser(login, pass);
+    const result = await loginUser(email, pass);
     if (!result.ok) {
-        showError("login-error", result.error);
-        return;
+        if (result.needVerify && result.userAuth) {
+            const sent = await sendVerificationWithCooldown(result.userAuth);
+            if (!sent.ok) return showError("login-error", `${result.error}. ${sent.error}`);
+            return showError("login-error", "Email не подтвержден. Отправили новое письмо.");
+        }
+        return showError("login-error", result.error);
     }
 
-    setUser(login);
+    setUser(result.login);
+    setUid(result.uid);
     window.location.href = "index.html";
 }
 
+async function registerUser(login, email, pass) {
+    const auth = getAuth();
+    if (!auth) return { ok: false, error: "Firebase Auth не инициализирован" };
 
-/* ============================
-   REGISTER
-============================ */
-async function registerUser(login, pass) {
-    const ref = db.ref("users/" + login);
-    const snap = await ref.get();
+    const profileRef = db.ref("users/" + login);
+    const snap = await profileRef.get();
+    if (snap.exists()) return { ok: false, error: "Логин уже занят" };
 
-    if (snap.exists()) {
-        return { ok: false, error: "Логин уже занят" };
+    const e = normalizeEmail(email);
+    const mailMapSnap = await db.ref("emailToLogin/" + emailKey(e)).get();
+    if (mailMapSnap.exists()) return { ok: false, error: "Этот email уже используется" };
+
+    let cred;
+    try {
+        cred = await auth.createUserWithEmailAndPassword(e, pass);
+    } catch (err) {
+        const code = err?.code || "";
+        if (code === "auth/email-already-in-use") return { ok: false, error: "Этот email уже занят" };
+        if (code === "auth/invalid-email") return { ok: false, error: "Некорректный email" };
+        if (code === "auth/weak-password") return { ok: false, error: "Слабый пароль (минимум 6 символов)" };
+        return { ok: false, error: "Ошибка регистрации: " + code };
     }
 
-    const userId = "uid_" + Math.random().toString(36).substring(2, 10);
-    const passHash = await sha256Hex(pass);
-    if (!passHash) {
-        return { ok: false, error: "Браузер не поддерживает безопасное хеширование пароля" };
-    }
-
-    const userObj = {
-        login: login,
-        id: userId,
-        passHash: passHash,
-        passAlgo: PASS_HASH_ALGO,
-        created: Date.now(),
-
-        stats: {
-            exp: 0,
-            cnt: 0,
-            solved: {}
-        },
-
-        avatar: "",
-    };
-
-    await ref.set(userObj);
-
-    return { ok: true };
+    const userAuth = cred.user;
+    await ensureUserProfile(login, userAuth);
+    const sent = await sendVerificationWithCooldown(userAuth);
+    await auth.signOut();
+    setUid(null);
+    return sent.ok
+        ? { ok: true }
+        : { ok: false, error: sent.error };
 }
 
 async function register() {
     clearErrors();
-
     const login = document.getElementById("reg-user").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
     const pass = document.getElementById("reg-pass").value.trim();
     const captcha = document.getElementById("captchaAnswer").value.trim();
 
-    if (login.length < 3) return showError("reg-error", "Логин слишком короткий");
-    if (login.length > 16) return showError("reg-error", "Максимум 16 символов");
-    if (pass.length < 3) return showError("reg-error", "Пароль слишком короткий");
+    if (!isLoginValid(login)) return showError("reg-error", "Логин: 3-16 символов, латиница/цифры/_");
+    if (!normalizeEmail(email)) return showError("reg-error", "Укажи email");
+    if (pass.length < 6) return showError("reg-error", "Пароль минимум 6 символов");
     if (parseInt(captcha) !== window.correctCaptcha) return showError("reg-error", "Капча неверная");
 
-    const result = await registerUser(login, pass);
+    const result = await registerUser(login, email, pass);
+    if (!result.ok) return showError("reg-error", result.error);
 
-    if (!result.ok) {
-        showError("reg-error", result.error);
-        return;
+    showError("reg-error", "Письмо подтверждения отправлено. Подтверди email и войди.");
+    goLogin();
+}
+
+async function resendVerificationFromForm() {
+    clearErrors();
+    const auth = getAuth();
+    if (!auth) return showError("reg-error", "Firebase Auth не инициализирован");
+
+    const email = document.getElementById("reg-email").value.trim();
+    const pass = document.getElementById("reg-pass").value.trim();
+    if (!normalizeEmail(email) || !pass) {
+        return showError("reg-error", "Введи email и пароль для повторной отправки");
     }
 
-    setUser(login);
-    window.location.href = "profile.html";
+    try {
+        const cred = await auth.signInWithEmailAndPassword(normalizeEmail(email), pass);
+        await cred.user.reload();
+        if (cred.user.emailVerified) {
+            await auth.signOut();
+            return showError("reg-error", "Email уже подтвержден");
+        }
+        const sent = await sendVerificationWithCooldown(cred.user);
+        await auth.signOut();
+        if (!sent.ok) return showError("reg-error", sent.error);
+        showError("reg-error", "Письмо подтверждения отправлено повторно");
+    } catch (err) {
+        showError("reg-error", "Не удалось отправить письмо: " + (err?.code || "unknown"));
+    }
 }
 
 
@@ -501,6 +558,49 @@ if (document.getElementById("captchaText")) {
     generateCaptcha();
 }
 
+/* ============================
+   AUTH SESSION SYNC
+============================ */
+async function syncSessionFromAuth() {
+    const auth = getAuth();
+    if (!auth) return;
+    const userAuth = auth.currentUser;
+    if (!userAuth) {
+        clearSession();
+        return;
+    }
+    await userAuth.reload();
+    if (!userAuth.emailVerified) {
+        clearSession();
+        return;
+    }
+    const login = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+    if (!login) {
+        clearSession();
+        return;
+    }
+    setUser(login);
+    setUid(userAuth.uid);
+}
+
+(() => {
+    const auth = getAuth();
+    if (!auth) return;
+    auth.onAuthStateChanged(async () => {
+        try {
+            if (localStorage.getItem("forceSignout") === "1") {
+                localStorage.removeItem("forceSignout");
+                if (auth.currentUser) await auth.signOut();
+                clearSession();
+                return;
+            }
+            await syncSessionFromAuth();
+        } catch (err) {
+            console.warn("auth sync failed", err);
+        }
+    });
+})();
+
 
 /* ============================
    EXPORT GLOBAL (for HTML)
@@ -508,11 +608,13 @@ if (document.getElementById("captchaText")) {
 window.updateNavbar = updateNavbar;
 window.login = login;
 window.register = register;
+window.resendVerificationFromForm = resendVerificationFromForm;
 window.updateAvatar = function() {};
 window.generateCaptcha = generateCaptcha;
 window.logout = logout;
 
 window.getUser = getUser;
+window.getUid = getUid;
 window.db = db;
 window.uploadAvatarBase64 = uploadAvatarBase64;
 window.saveAvatar = saveAvatar;

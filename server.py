@@ -11,6 +11,7 @@ import resource
 
 import firebase_admin
 from firebase_admin import credentials, db
+from firebase_admin import auth as admin_auth
 
 app = Flask(__name__)
 CORS(app)  # разрешаем CORS всем источникам
@@ -30,6 +31,7 @@ SUPPORTED_LANGUAGES = {"cpp", "python"}
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc/secrets/serviceAccountKey.json")
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 
 
 def init_firebase():
@@ -62,6 +64,15 @@ def init_firebase():
 
 
 FIREBASE_READY = init_firebase()
+
+
+def _is_admin_request():
+    if not ADMIN_API_KEY:
+        return False
+    header_key = request.headers.get("X-Admin-Key", "")
+    body = request.get_json(silent=True) or {}
+    body_key = body.get("adminKey", "")
+    return header_key == ADMIN_API_KEY or body_key == ADMIN_API_KEY
 
 
 def _git_env():
@@ -820,6 +831,61 @@ def run_single():
     else:
         result = _run_cpp_single(code, input_data)
     return jsonify(result)
+
+
+@app.route("/admin/purge-users", methods=["POST"])
+def admin_purge_users():
+    if not _is_admin_request():
+        return jsonify({"error": "forbidden"}), 403
+
+    data = request.get_json(silent=True) or {}
+    if data.get("confirm") != "DELETE_ALL_USERS":
+        return jsonify({"error": "confirm_required"}), 400
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return jsonify({"error": "firebase_not_ready"}), 500
+
+    deleted_auth = 0
+    next_token = None
+    try:
+        while True:
+            page = admin_auth.list_users(page_token=next_token, max_results=1000)
+            users_batch = list(page.users)
+            if not users_batch:
+                break
+            for u in users_batch:
+                admin_auth.delete_user(u.uid)
+                deleted_auth += 1
+            next_token = page.next_page_token
+            if not next_token:
+                break
+    except Exception as e:
+        return jsonify({
+            "error": "auth_purge_failed",
+            "details": str(e),
+            "deletedAuth": deleted_auth
+        }), 500
+
+    try:
+        db.reference("users").set(None)
+        db.reference("userAuthMap").set(None)
+        db.reference("emailToLogin").set(None)
+        db.reference("admins").set(None)
+    except Exception as e:
+        return jsonify({
+            "error": "db_purge_failed",
+            "details": str(e),
+            "deletedAuth": deleted_auth
+        }), 500
+
+    return jsonify({
+        "status": "ok",
+        "deletedAuth": deleted_auth,
+        "deletedDbNodes": ["users", "userAuthMap", "emailToLogin", "admins"]
+    })
 
 
 @app.route("/ping", methods=["GET", "HEAD"])
