@@ -655,7 +655,7 @@
            SETTINGS
            ============================================================ */
 
-        const SUBMIT_URL = "https://codebug.onrender.com/submit";
+        const SUBMIT_URL = (window.TASKS_API_BASE || "") + "/submit";
 
         if (!window.firebase) {
             console.error("🔥 Firebase не загружен!");
@@ -1108,7 +1108,7 @@
             const url = new URL(location.href);
             const id = url.searchParams.get("id") || "0";
             const parsedId = Number(id);
-            const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+            const base = window.TASKS_API_BASE || "";
 
             if (!Number.isInteger(parsedId) || parsedId < 0) {
                 showTaskNotFound(id);

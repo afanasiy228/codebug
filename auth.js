@@ -304,6 +304,7 @@ const PENDING_REG_KEY = "pendingRegistration";
 const TURNSTILE_PLACEHOLDER_KEY = "PASTE_TURNSTILE_SITE_KEY_HERE";
 let turnstileWidgetId = null;
 let turnstileToken = "";
+let turnstileReady = false;
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -393,10 +394,22 @@ window.addEventListener("beforeunload", (event) => {
 
 function resetTurnstileWidget() {
     turnstileToken = "";
+    setRegisterButtonEnabled(false, "Пройди капчу");
     if (window.turnstile && turnstileWidgetId !== null) {
         try {
             window.turnstile.reset(turnstileWidgetId);
         } catch (_) {}
+    }
+}
+
+function setRegisterButtonEnabled(enabled, reason = "") {
+    const btn = document.getElementById("reg-submit-btn");
+    if (!btn) return;
+    btn.disabled = !enabled;
+    if (reason) {
+        btn.title = reason;
+    } else {
+        btn.removeAttribute("title");
     }
 }
 
@@ -409,10 +422,15 @@ function getTurnstileSiteKey() {
 function renderTurnstileWidget() {
     const host = document.getElementById("turnstile-box");
     if (!host) return;
+    turnstileReady = false;
+    setRegisterButtonEnabled(false, "Капча загружается");
 
     const siteKey = getTurnstileSiteKey();
     if (!siteKey) {
-        host.innerHTML = `<span style="font-size:12px;color:#8a6d3b;">Капча не настроена: укажи TURNSTILE site key</span>`;
+        host.style.borderColor = "rgba(194, 64, 64, 0.9)";
+        host.innerHTML = `<span style="font-size:12px;color:#c24040;">Капча не настроена: отсутствует TURNSTILE site key</span>`;
+        showError("reg-error", "Регистрация недоступна: капча не настроена");
+        setRegisterButtonEnabled(false, "Капча не настроена");
         return;
     }
 
@@ -426,19 +444,26 @@ function renderTurnstileWidget() {
         return;
     }
 
+    host.style.borderColor = "rgba(226, 214, 196, 0.9)";
     host.innerHTML = "";
     turnstileWidgetId = window.turnstile.render(host, {
         sitekey: siteKey,
         theme: "dark",
         callback: (token) => {
             turnstileToken = token || "";
-            showError("reg-error", "");
+            turnstileReady = !!turnstileToken;
+            setRegisterButtonEnabled(turnstileReady, turnstileReady ? "" : "Пройди капчу");
+            if (turnstileReady) showError("reg-error", "");
         },
         "expired-callback": () => {
             turnstileToken = "";
+            turnstileReady = false;
+            setRegisterButtonEnabled(false, "Капча устарела");
         },
         "error-callback": () => {
             turnstileToken = "";
+            turnstileReady = false;
+            setRegisterButtonEnabled(false, "Ошибка капчи");
             showError("reg-error", "Ошибка капчи. Обнови страницу и попробуй снова.");
         }
     });
@@ -644,13 +669,14 @@ async function register() {
     const login = document.getElementById("reg-user").value.trim();
     const email = document.getElementById("reg-email").value.trim();
     const pass = document.getElementById("reg-pass").value.trim();
-    const captcha = document.getElementById("captchaAnswer").value.trim();
 
     if (!isLoginValid(login)) return showError("reg-error", "Логин: 3-16 символов, латиница/цифры/_");
     if (!normalizeEmail(email)) return showError("reg-error", "Укажи email");
     if (pass.length < 6) return showError("reg-error", "Пароль минимум 6 символов");
-    if (parseInt(captcha) !== window.correctCaptcha) return showError("reg-error", "Капча неверная");
-    if (!turnstileToken) return showError("reg-error", "Подтверди капчу Cloudflare");
+    if (!turnstileReady || !turnstileToken) {
+        setRegisterButtonEnabled(false, "Сначала пройди капчу");
+        return showError("reg-error", "Подтверди капчу Cloudflare");
+    }
 
     const captchaVerification = await verifyCaptchaToken(turnstileToken);
     if (!captchaVerification.ok) {
@@ -789,21 +815,6 @@ async function saveAvatar(login, base64) {
 
 
 /* ============================
-   CAPTCHA
-============================ */
-function generateCaptcha() {
-    const a = Math.floor(Math.random() * 5 + 1);
-    const b = Math.floor(Math.random() * 5 + 1);
-    const el = document.getElementById("captchaText");
-    if (!el) return;
-    el.innerText = `${a} + ${b} = ?`;
-    window.correctCaptcha = a + b;
-}
-if (document.getElementById("captchaText")) {
-    generateCaptcha();
-}
-
-/* ============================
    AUTH SESSION SYNC
 ============================ */
 function isAuthPage() {
@@ -886,7 +897,6 @@ window.getPendingRegistrationSafe = getPendingRegistration;
 window.renderTurnstileWidget = renderTurnstileWidget;
 window.onTurnstileLoad = renderTurnstileWidget;
 window.updateAvatar = function() {};
-window.generateCaptcha = generateCaptcha;
 window.logout = logout;
 
 window.getUser = getUser;

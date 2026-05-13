@@ -217,20 +217,6 @@
             color: var(--ink);
         }
         
-        .captcha {
-            background: #fff;
-            border-radius: 12px;
-            border: 1px solid var(--stroke);
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .captcha input {
-            margin-bottom: 0;
-        }
-
         .turnstile-wrap {
             margin-top: 10px;
             margin-bottom: 8px;
@@ -353,15 +339,11 @@
             <input id="reg-email" type="email" placeholder="Email">
             <input id="reg-pass" type="password" placeholder="Пароль">
 
-            <div class="captcha">
-                <span id="captchaText"></span>
-                <input id="captchaAnswer" style="width:60px;">
-            </div>
             <div id="turnstile-box" class="turnstile-wrap"></div>
 
             <div id="reg-error" class="error-msg"></div>
 
-            <button onclick="register()">Зарегистрироваться</button>
+            <button id="reg-submit-btn" onclick="register()" disabled>Зарегистрироваться</button>
 
             <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
         </div>
@@ -447,7 +429,6 @@
             }, 200);
         }
 
-        generateCaptcha();
         if (window.renderTurnstileWidget) window.renderTurnstileWidget();
     </script>
 

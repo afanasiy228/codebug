@@ -1,27 +1,62 @@
-// === Firebase INIT (v8) === //
+// === Firebase INIT (v8) via runtime public config === //
 
-var firebaseConfig = {
-    apiKey: "AIzaSyDkQTqt1Hcg7H-a4rVl88dCbdJkDEiPDEg",
-    authDomain: "codebug-47347.firebaseapp.com",
-    databaseURL: "https://codebug-47347-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "codebug-47347",
-    storageBucket: "codebug-47347.appspot.com",
-    messagingSenderId: "1000157426060",
-    appId: "1:1000157426060:web:4350f2d9f3db75e407e6a9"
-};
+(function bootstrapCodeBugConfig() {
+    const defaultApiBase = (location.hostname === "localhost")
+        ? "http://localhost:7777"
+        : "https://codebug.onrender.com";
 
-// Чтобы firebase был доступен
-console.log("firebase =", window.firebase);
+    window.TASKS_API_BASE = (window.TASKS_API_BASE || window.CODEBUG_API_BASE || defaultApiBase).replace(/\/$/, "");
 
-// Инициализация (v8 — ТОЛЬКО ТАК!)
-firebase.initializeApp(firebaseConfig);
+    function loadPublicConfigSync() {
+        if (window.CODEBUG_PUBLIC_CONFIG && typeof window.CODEBUG_PUBLIC_CONFIG === "object") {
+            return window.CODEBUG_PUBLIC_CONFIG;
+        }
 
-// Глобальная переменная DB
-window.db = firebase.database();
-window.firebase = firebase;
-window.TASKS_API_BASE = window.TASKS_API_BASE || (
-    location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com"
-);
-window.TURNSTILE_SITE_KEY = window.TURNSTILE_SITE_KEY || "PASTE_TURNSTILE_SITE_KEY_HERE";
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", window.TASKS_API_BASE + "/public-config", false);
+            xhr.send(null);
+            if (xhr.status >= 200 && xhr.status < 300) {
+                return JSON.parse(xhr.responseText || "{}");
+            }
+            console.error("public-config status:", xhr.status, xhr.responseText);
+        } catch (err) {
+            console.error("public-config request failed:", err);
+        }
+        return {};
+    }
 
-console.log("Firebase INIT OK, db =", window.db);
+    const runtimeConfig = loadPublicConfigSync();
+
+    const firebaseConfig = runtimeConfig.firebase || {};
+    const requiredFirebaseKeys = [
+        "apiKey",
+        "authDomain",
+        "databaseURL",
+        "projectId",
+        "storageBucket",
+        "messagingSenderId",
+        "appId"
+    ];
+
+    const missingFirebaseKeys = requiredFirebaseKeys.filter((key) => !firebaseConfig[key]);
+    if (missingFirebaseKeys.length) {
+        console.error("Firebase config missing keys:", missingFirebaseKeys.join(", "));
+        throw new Error("Firebase config is not set. Configure /public-config on backend.");
+    }
+
+    if (!window.firebase || typeof window.firebase.initializeApp !== "function") {
+        throw new Error("Firebase SDK is not loaded");
+    }
+
+    if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    window.db = firebase.database();
+    window.firebase = firebase;
+    window.TURNSTILE_SITE_KEY = runtimeConfig.turnstileSiteKey || "";
+    window.CODEBUG_PUBLIC_CONFIG = runtimeConfig;
+
+    console.log("Firebase INIT OK, db =", window.db);
+})();

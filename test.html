@@ -399,7 +399,7 @@
       outputEl.value = "";
       appendRunLog(`Старт запуска (${nowText})`);
 
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || (location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com");
       try {
                 const res = await fetch(`${base}/run-single`, {
                     method: "POST",

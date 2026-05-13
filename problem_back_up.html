@@ -495,7 +495,7 @@
 
             // meta.json
             try {
-                const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+                const base = window.TASKS_API_BASE || "";
                 const meta = await fetch(`${base}/tasks/${id}/meta.json`).then(r => r.json());
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
             } catch {

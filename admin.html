@@ -768,7 +768,7 @@
         tags
       };
 
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       const payload = {
         meta,
         files: {
@@ -929,7 +929,7 @@
         setAdminLog("Некорректный ID задачи.");
         return;
       }
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       try {
         const metaRes = await fetch(`${base}/tasks/${id}/meta.json`);
         const meta = metaRes.ok ? await metaRes.json() : {};
@@ -1030,7 +1030,7 @@
         return;
       }
 
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       setAdminLog("Начал генерацию тестов. Не перезагружай страницу.");
       try {
         const res = await fetch(`${base}/tasks/generate-tests`, {
@@ -1095,7 +1095,7 @@
       const generator = document.getElementById("editGeneratorText").value;
       const tests = window.editTaskTests || [];
 
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       const payload = {
         meta: {
           id,
@@ -1150,7 +1150,7 @@
       }
       if (!confirm(`Удалить задачу ${id}? Это необратимо.`)) return;
 
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       try {
         setAdminLog("Удаление задачи. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/delete`, {
@@ -1277,7 +1277,7 @@
     }
 
     async function loadTaskList() {
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       try {
         const res = await fetch(`${base}/tasks/list`);
         if (!res.ok) return [];
@@ -1462,7 +1462,7 @@
       if (fromList && fromList.difficulty) {
         return fromList.difficulty;
       }
-      const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+      const base = window.TASKS_API_BASE || "";
       try {
         const res = await fetch(`${base}/tasks/${taskId}/meta.json`);
         if (!res.ok) return "";

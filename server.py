@@ -36,6 +36,14 @@ FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
 TURNSTILE_VERIFY_URL = os.getenv("TURNSTILE_VERIFY_URL", "https://challenges.cloudflare.com/turnstile/v0/siteverify")
+TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY", "")
+PUBLIC_FIREBASE_WEB_API_KEY = os.getenv("PUBLIC_FIREBASE_WEB_API_KEY", "")
+PUBLIC_FIREBASE_WEB_AUTH_DOMAIN = os.getenv("PUBLIC_FIREBASE_WEB_AUTH_DOMAIN", "")
+PUBLIC_FIREBASE_WEB_DATABASE_URL = os.getenv("PUBLIC_FIREBASE_WEB_DATABASE_URL", "")
+PUBLIC_FIREBASE_WEB_PROJECT_ID = os.getenv("PUBLIC_FIREBASE_WEB_PROJECT_ID", "")
+PUBLIC_FIREBASE_WEB_STORAGE_BUCKET = os.getenv("PUBLIC_FIREBASE_WEB_STORAGE_BUCKET", "")
+PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID = os.getenv("PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID", "")
+PUBLIC_FIREBASE_WEB_APP_ID = os.getenv("PUBLIC_FIREBASE_WEB_APP_ID", "")
 
 
 def init_firebase():
@@ -939,6 +947,23 @@ def admin_purge_users():
         "status": "ok",
         "deletedAuth": deleted_auth,
         "deletedDbNodes": ["users", "userAuthMap", "emailToLogin", "admins"]
+    })
+
+
+@app.route("/public-config", methods=["GET"])
+def public_config():
+    firebase_public = {
+        "apiKey": PUBLIC_FIREBASE_WEB_API_KEY,
+        "authDomain": PUBLIC_FIREBASE_WEB_AUTH_DOMAIN,
+        "databaseURL": PUBLIC_FIREBASE_WEB_DATABASE_URL,
+        "projectId": PUBLIC_FIREBASE_WEB_PROJECT_ID,
+        "storageBucket": PUBLIC_FIREBASE_WEB_STORAGE_BUCKET,
+        "messagingSenderId": PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID,
+        "appId": PUBLIC_FIREBASE_WEB_APP_ID
+    }
+    return jsonify({
+        "firebase": firebase_public,
+        "turnstileSiteKey": TURNSTILE_SITE_KEY
     })
 
 

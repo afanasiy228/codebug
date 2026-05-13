@@ -511,7 +511,7 @@
 
         async function loadProblems() {
             console.log("[training] loadProblems() start");
-            const base = window.TASKS_API_BASE || "https://codebug.onrender.com";
+            const base = window.TASKS_API_BASE || "";
             try {
                 const res = await fetch(`${base}/tasks/list`);
                 if (!res.ok) {
