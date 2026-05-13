@@ -304,7 +304,7 @@ const PENDING_REG_KEY = "pendingRegistration";
 const TURNSTILE_PLACEHOLDER_KEY = "PASTE_TURNSTILE_SITE_KEY_HERE";
 let turnstileWidgetId = null;
 let turnstileToken = "";
-let turnstileReady = false;
+var turnstileReady = false;
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -895,7 +895,6 @@ window.showVerifyScreen = showVerifyScreen;
 window.isRegistrationLocked = isRegistrationLocked;
 window.getPendingRegistrationSafe = getPendingRegistration;
 window.renderTurnstileWidget = renderTurnstileWidget;
-window.onTurnstileLoad = renderTurnstileWidget;
 window.updateAvatar = function() {};
 window.logout = logout;
 
