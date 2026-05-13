@@ -342,6 +342,15 @@ async function resolveLoginByUidOrEmail(uid, email) {
     return null;
 }
 
+async function resolveEmailByIdentity(identity) {
+    const raw = String(identity || "").trim();
+    if (!raw) return null;
+    if (raw.includes("@")) return normalizeEmail(raw);
+    const snap = await db.ref("users/" + raw + "/email").get();
+    if (!snap.exists()) return null;
+    return normalizeEmail(snap.val());
+}
+
 async function ensureUserProfile(login, userAuth) {
     const profileRef = db.ref("users/" + login);
     const snap = await profileRef.get();
@@ -421,11 +430,14 @@ async function sendVerificationWithCooldown(userAuth) {
 
 async function login() {
     clearErrors();
-    const email = document.getElementById("login-email").value.trim();
+    const identity = document.getElementById("login-identity").value.trim();
     const pass = document.getElementById("login-pass").value.trim();
 
-    if (!normalizeEmail(email)) return showError("login-error", "Укажи email");
+    if (!identity) return showError("login-error", "Укажи логин или email");
     if (pass.length < 6) return showError("login-error", "Пароль слишком короткий");
+
+    const email = await resolveEmailByIdentity(identity);
+    if (!email) return showError("login-error", "Пользователь не найден");
 
     const result = await loginUser(email, pass);
     if (!result.ok) {
