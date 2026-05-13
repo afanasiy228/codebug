@@ -474,6 +474,14 @@
             <button type="button" data-value="Другое">Другое</button>
           </div>
         </div>
+        <input id="taskMetaLanguage" type="hidden" value="cpp">
+        <div class="select-shell" id="languageSelect" data-target="taskMetaLanguage">
+          <button type="button" class="select-trigger">Язык: C++</button>
+          <div class="select-options">
+            <button type="button" data-value="cpp">C++</button>
+            <button type="button" data-value="python">Python</button>
+          </div>
+        </div>
         <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
         <div class="admin-note">Условие</div>
         <textarea id="taskStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
@@ -490,7 +498,7 @@
           <button type="button" class="admin-secondary" onclick="addTestCase()">Добавить тест</button>
         </div>
         <div id="testList" class="test-list"></div>
-        <div class="admin-note">Генератор (C++)</div>
+        <div class="admin-note">Генератор (на том же языке)</div>
         <textarea id="taskGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
           <input id="taskGeneratorCount" class="admin-input" type="number" min="1" max="200" placeholder="Сколько тестов сгенерировать">
@@ -537,6 +545,14 @@
             <button type="button" data-value="Другое">Другое</button>
           </div>
         </div>
+        <input id="editMetaLanguage" type="hidden" value="cpp">
+        <div class="select-shell" id="editLanguageSelect" data-target="editMetaLanguage">
+          <button type="button" class="select-trigger">Язык: C++</button>
+          <div class="select-options">
+            <button type="button" data-value="cpp">C++</button>
+            <button type="button" data-value="python">Python</button>
+          </div>
+        </div>
         <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
         <div class="admin-note">Условие</div>
         <textarea id="editStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
@@ -554,7 +570,7 @@
           <button type="button" class="admin-secondary" onclick="clearEditTests()">Очистить тесты</button>
         </div>
         <div id="editTestList" class="test-list"></div>
-        <div class="admin-note">Генератор (C++)</div>
+        <div class="admin-note">Генератор (на том же языке)</div>
         <textarea id="editGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
           <input id="editGeneratorCount" class="admin-input" type="number" min="1" max="200" placeholder="Сколько тестов сгенерировать">
@@ -666,8 +682,12 @@
         setAdminLog("Админ-доступ активирован.");
         initCustomSelect("difficultySelect");
         initCustomSelect("typeSelect");
+        initCustomSelect("languageSelect");
         initCustomSelect("editDifficultySelect");
         initCustomSelect("editTypeSelect");
+        initCustomSelect("editLanguageSelect");
+        setCustomSelectValue("languageSelect", "cpp", "Язык");
+        setCustomSelectValue("editLanguageSelect", "cpp", "Язык");
         await adminReloadTasks();
         const editSelect = document.getElementById("editTaskSelect");
         if (editSelect) {
@@ -717,6 +737,7 @@
       const author = document.getElementById("taskMetaAuthor").value.trim() || user || "admin";
       const difficulty = document.getElementById("taskMetaDifficulty").value.trim();
       const type = document.getElementById("taskMetaType").value.trim();
+      const language = (document.getElementById("taskMetaLanguage").value.trim() || "cpp");
       const tagsRaw = document.getElementById("taskMetaTags").value.trim();
 
       if (!title) {
@@ -746,6 +767,7 @@
         title,
         author,
         difficulty,
+        language,
         type,
         tags
       };
@@ -862,7 +884,11 @@
         const val = btn.getAttribute("data-value") || "";
         if (val === value) {
           btn.classList.add("active");
-          trigger.textContent = btn.textContent;
+          if (targetId === "taskMetaLanguage" || targetId === "editMetaLanguage") {
+            trigger.textContent = `Язык: ${btn.textContent}`;
+          } else {
+            trigger.textContent = btn.textContent;
+          }
           matched = true;
         } else {
           btn.classList.remove("active");
@@ -870,6 +896,9 @@
       });
       if (!matched) {
         trigger.textContent = labelFallback || "Выбрать";
+      }
+      if (targetId === "taskMetaLanguage" || targetId === "editMetaLanguage") {
+        updateCodePlaceholders();
       }
     }
 
@@ -913,12 +942,15 @@
         document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
         setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
         setCustomSelectValue("editTypeSelect", meta.type || "", "Тип ошибки");
+        const lang = normalizeTaskLanguage(meta.language);
+        setCustomSelectValue("editLanguageSelect", lang, "Язык");
+        const files = languageToFiles(lang);
 
         document.getElementById("editStatementText").value = await loadTextFile(`${base}/tasks/${id}/statement.md`);
         document.getElementById("editHelpText").value = await loadTextFile(`${base}/tasks/${id}/help.md`);
-        document.getElementById("editCodeText").value = await loadTextFile(`${base}/tasks/${id}/code.cpp`);
-        document.getElementById("editSolutionText").value = await loadTextFile(`${base}/tasks/${id}/sol.cpp`);
-        document.getElementById("editGeneratorText").value = await loadTextFile(`${base}/tasks/${id}/generator.cpp`);
+        document.getElementById("editCodeText").value = await loadTextFile(`${base}/tasks/${id}/${files.code}`);
+        document.getElementById("editSolutionText").value = await loadTextFile(`${base}/tasks/${id}/${files.solution}`);
+        document.getElementById("editGeneratorText").value = await loadTextFile(`${base}/tasks/${id}/${files.generator}`);
 
         window.editTaskTests = [];
         let idx = 1;
@@ -986,6 +1018,7 @@
       const generator = document.getElementById(isEdit ? "editGeneratorText" : "taskGeneratorText").value;
       const solution = document.getElementById(isEdit ? "editSolutionText" : "taskSolutionText").value
         || document.getElementById(isEdit ? "editCodeText" : "taskCodeText").value;
+      const language = normalizeTaskLanguage(document.getElementById(isEdit ? "editMetaLanguage" : "taskMetaLanguage")?.value);
       const countRaw = document.getElementById(isEdit ? "editGeneratorCount" : "taskGeneratorCount").value;
       const count = Number(countRaw);
 
@@ -1011,7 +1044,8 @@
           body: JSON.stringify({
             generator,
             solution,
-            count
+            count,
+            language
           })
         });
         if (!res.ok) {
@@ -1051,6 +1085,7 @@
       const author = document.getElementById("editMetaAuthor").value.trim() || user || "admin";
       const difficulty = document.getElementById("editMetaDifficulty").value.trim();
       const type = document.getElementById("editMetaType").value.trim();
+      const language = (document.getElementById("editMetaLanguage").value.trim() || "cpp");
       const tagsRaw = document.getElementById("editMetaTags").value.trim();
       const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
 
@@ -1073,6 +1108,7 @@
           title,
           author,
           difficulty,
+          language,
           type,
           tags
         },
@@ -1169,7 +1205,12 @@
         btn.addEventListener("click", () => {
           const value = btn.getAttribute("data-value") || "";
           target.value = value;
-          trigger.textContent = btn.textContent;
+          if (targetId === "taskMetaLanguage" || targetId === "editMetaLanguage") {
+            trigger.textContent = `Язык: ${btn.textContent}`;
+            updateCodePlaceholders();
+          } else {
+            trigger.textContent = btn.textContent;
+          }
           options.forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
           root.classList.remove("open");
@@ -1179,6 +1220,39 @@
       document.addEventListener("click", () => {
         root.classList.remove("open");
       });
+    }
+
+    function normalizeTaskLanguage(value) {
+      const lang = String(value || "").toLowerCase().trim();
+      if (lang === "python" || lang === "py" || lang === "python3") return "python";
+      return "cpp";
+    }
+
+    function languageToFiles(language) {
+      const lang = normalizeTaskLanguage(language);
+      if (lang === "python") {
+        return { code: "code.py", solution: "sol.py", generator: "generator.py" };
+      }
+      return { code: "code.cpp", solution: "sol.cpp", generator: "generator.cpp" };
+    }
+
+    function updateCodePlaceholders() {
+      const createLang = normalizeTaskLanguage(document.getElementById("taskMetaLanguage")?.value);
+      const editLang = normalizeTaskLanguage(document.getElementById("editMetaLanguage")?.value);
+      const createFiles = languageToFiles(createLang);
+      const editFiles = languageToFiles(editLang);
+
+      const setPh = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.placeholder = value;
+      };
+
+      setPh("taskCodeText", createFiles.code);
+      setPh("taskSolutionText", createFiles.solution);
+      setPh("taskGeneratorText", createFiles.generator);
+      setPh("editCodeText", editFiles.code);
+      setPh("editSolutionText", editFiles.solution);
+      setPh("editGeneratorText", editFiles.generator);
     }
 
     async function getNextTaskId() {
@@ -1218,7 +1292,8 @@
         return list.map(meta => ({
           id: typeof meta.id === "number" ? meta.id : Number(meta.id),
           title: meta.title || ("Задача " + meta.id),
-          difficulty: meta.difficulty || ""
+          difficulty: meta.difficulty || "",
+          language: normalizeTaskLanguage(meta.language)
         }));
       } catch (err) {
         console.warn("Task list fetch failed", err);

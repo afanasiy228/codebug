@@ -666,6 +666,17 @@
            ============================================================ */
 
         let TASK_DIFFICULTY = "easy";
+        let TASK_LANGUAGE = "cpp";
+
+        function normalizeTaskLanguage(lang) {
+            const value = String(lang || "").toLowerCase().trim();
+            if (value === "python" || value === "py" || value === "python3") return "python";
+            return "cpp";
+        }
+
+        function languageToCodeFile(lang) {
+            return normalizeTaskLanguage(lang) === "python" ? "code.py" : "code.cpp";
+        }
 
         async function submitCode() {
             console.log("[submitCode] старт");
@@ -724,6 +735,7 @@
             const payload = {
                 task: taskId,
                 code: code,
+                language: TASK_LANGUAGE,
                 user: getUser(),
                 contestId: new URL(location.href).searchParams.get("contest")
             };
@@ -1133,6 +1145,7 @@
                 const meta = await res.json();
 
                 TASK_DIFFICULTY = meta.difficulty;
+                TASK_LANGUAGE = normalizeTaskLanguage(meta.language);
                 console.log("Загружена сложность:", TASK_DIFFICULTY);
 
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
@@ -1177,20 +1190,23 @@
 
 
             // ————————————— CODE.CPP ————————————————
-            const codePath = `${base}/tasks/${id}/code.cpp`;
+            const codeFile = languageToCodeFile(TASK_LANGUAGE);
+            const fallbackCodeFile = codeFile === "code.py" ? "code.cpp" : "code.py";
+            const codePath = `${base}/tasks/${id}/${codeFile}`;
 
             try {
                 const res = await fetch(codePath);
-                if (!res.ok) throw new Error(`code_${res.status}`);
-
-                const code = await res.text();
-
-                if (window.editor) {
-                    editor.setValue(code);
-                } else {}
+                if (!res.ok) {
+                    const fallbackRes = await fetch(`${base}/tasks/${id}/${fallbackCodeFile}`);
+                    if (!fallbackRes.ok) throw new Error(`code_${res.status}`);
+                    const fallbackCode = await fallbackRes.text();
+                    if (window.editor) editor.setValue(fallbackCode);
+                } else {
+                    const code = await res.text();
+                    if (window.editor) editor.setValue(code);
+                }
             } catch (e) {
-
-                if (window.editor) editor.setValue("// code.cpp не найден");
+                if (window.editor) editor.setValue("// Файл кода не найден");
             }
 
             // ————————————— PRIMITIVES TESTS ————————————————
@@ -1299,7 +1315,7 @@
             };
 
             // начальное содержимое
-            el.value = "// Загружаю code.cpp...";
+            el.value = "// Загружаю код задачи...";
             if (typeof updateHighlight === "function") {
                 updateHighlight();
             }

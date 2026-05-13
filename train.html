@@ -443,6 +443,15 @@
             </select>
             </div>
 
+            <label>Язык</label>
+            <div class="select">
+                <select id="languageFilter">
+                <option value="">Любой</option>
+                <option value="cpp">C++</option>
+                <option value="python">Python</option>
+            </select>
+            </div>
+
             <label>Автор</label>
             <input type="text" id="authorFilter" placeholder="Логин автора">
 
@@ -480,6 +489,7 @@
                     <tr>
                         <th>Название</th>
                         <th>Сложность</th>
+                        <th>Язык</th>
                         <th>Автор</th>
                         <th>Тип ошибки</th>
                         <th>Теги</th>
@@ -519,6 +529,7 @@
                     title: meta.title || ("Задача " + meta.id),
                     author: meta.author || "",
                     difficulty: meta.difficulty || "",
+                    language: (meta.language || "cpp"),
                     type: meta.type || "",
                     tags: meta.tags || []
                 }));
@@ -605,6 +616,14 @@
             return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
         }
 
+        function languagePill(language) {
+            const lang = (language || "cpp").toLowerCase();
+            if (lang === "python") {
+                return `<span class="pill" style="background:#284d39; color:#c9ffd9;">Python</span>`;
+            }
+            return `<span class="pill" style="background:#3a2d5a; color:#e7dcff;">C++</span>`;
+        }
+
         function normalizeTag(tag) {
             const t = String(tag || "").trim();
             const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
@@ -647,6 +666,7 @@
 
             const diff = document.getElementById("difficulty").value;
             const err = document.getElementById("errorType").value;
+            const lang = document.getElementById("languageFilter").value;
             const query = document.getElementById("search").value.toLowerCase();
             const authorQuery = document.getElementById("authorFilter").value.toLowerCase();
 
@@ -654,6 +674,7 @@
             const filtered = baseList.filter(p =>
                 (!diff || p.difficulty === diff) &&
                 (!err || p.type === err) &&
+                (!lang || (p.language || "cpp") === lang) &&
                 (!query || p.title.toLowerCase().includes(query)) &&
                 (!authorQuery || (p.author || "").toLowerCase().includes(authorQuery))
             );
@@ -672,6 +693,7 @@
                 tr.innerHTML = `
                 <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a> ${hiddenBadge}</td>
                 <td>${diffPill(p.difficulty)}</td>
+                <td>${languagePill(p.language)}</td>
                 <td>${p.author || "—"}</td>
                 <td>${typePill(p.type)}</td>
                 <td>${tagsPill(p.tags)}</td>
@@ -720,6 +742,7 @@
             // фильтры
             document.getElementById("difficulty").addEventListener("change", renderTable);
             document.getElementById("errorType").addEventListener("change", renderTable);
+            document.getElementById("languageFilter").addEventListener("change", renderTable);
             document.getElementById("authorFilter").addEventListener("input", renderTable);
             document.getElementById("search").addEventListener("input", renderTable);
 

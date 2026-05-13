@@ -8,25 +8,31 @@ TIME_LIMIT = int(os.getenv("TIME_LIMIT", "5"))  # лимит времени на
 SOURCE = os.getenv("JUDGE_SOURCE", "sol.cpp")
 BINARY = os.getenv("JUDGE_BINARY", "sol")
 LOG_FILE = os.getenv("JUDGE_LOG_FILE", "log.txt")
+LANG = os.getenv("JUDGE_LANG", "cpp").strip().lower()
 
 def task_dir(task):
     base = os.getenv("TASKS_REPO_DIR", ".tasks_repo")
     return os.path.join(base, task)
 
-def compile_cpp(log):
+def compile_solution(log):
     if not os.path.exists(SOURCE):
-        log.write("Compilation Error\nsol.cpp not found\n")
+        log.write("Compilation Error\n")
+        log.write(f"{SOURCE} not found\n")
         log.write("Final verdict: CE\n")
         return False
 
-    res = subprocess.run(
-        [
-            "g++", "-std=c++17", "-O2",
-            SOURCE, "-o", BINARY
-        ],
-        capture_output=True,
-        text=True
-    )
+    if LANG in ("py", "python", "python3"):
+        res = subprocess.run(
+            ["python3", "-m", "py_compile", SOURCE],
+            capture_output=True,
+            text=True
+        )
+    else:
+        res = subprocess.run(
+            ["g++", "-std=c++17", "-O2", SOURCE, "-o", BINARY],
+            capture_output=True,
+            text=True
+        )
 
     if res.returncode != 0:
         log.write("Compilation Error\n")
@@ -39,11 +45,12 @@ def compile_cpp(log):
     return True
 
 
-def run_test(binary, inp_file, out_file):
+def run_test(inp_file, out_file):
     try:
         with open(inp_file, "r") as fin:
+            cmd = ["python3", SOURCE] if LANG in ("py", "python", "python3") else [f"./{BINARY}"]
             proc = subprocess.run(
-                [f"./{binary}"],
+                cmd,
                 stdin=fin,
                 capture_output=True,
                 timeout=TIME_LIMIT,
@@ -81,7 +88,7 @@ def judge(task_id):
             return "NO_TESTS"
 
         # Компиляция
-        if not compile_cpp(log):
+        if not compile_solution(log):
             return "CE"
 
         tests = sorted(glob.glob(os.path.join(tests_path, "*.in")))
@@ -96,7 +103,7 @@ def judge(task_id):
             test_num = os.path.splitext(os.path.basename(inp))[0]
             out_file = os.path.join(tests_path, test_num + ".out")
 
-            verdict = run_test(BINARY, inp, out_file)
+            verdict = run_test(inp, out_file)
             log.write(f"Test {test_num}: {verdict}\n")
             results.append(verdict)
 
