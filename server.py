@@ -184,6 +184,8 @@ def list_tasks():
         try:
             with open(meta_path, "r", encoding="utf-8") as f:
                 meta = json.load(f)
+            if "author" in meta:
+                meta.pop("author", None)
             meta["language"] = normalize_language(meta.get("language"))
             tasks.append(meta)
         except Exception as e:
@@ -560,6 +562,7 @@ def tasks_create():
     title = meta.get("title")
     if not title:
         return jsonify({"error": "title_required"}), 400
+    meta.pop("author", None)
     lang = normalize_language(meta.get("language"))
     if lang not in SUPPORTED_LANGUAGES:
         return jsonify({"error": "language_not_supported"}), 400

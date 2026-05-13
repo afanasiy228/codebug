@@ -445,7 +445,6 @@
         <h3>Добавление задачи</h3>
         <p class="admin-note">Заполни мета-данные и файлы задачи. Задача сразу сохранится в репозиторий.</p>
         <input id="taskMetaTitle" class="admin-input" type="text" placeholder="Название">
-        <input id="taskMetaAuthor" class="admin-input" type="text" placeholder="Автор">
         <input id="taskMetaDifficulty" type="hidden" value="">
         <div class="select-shell" id="difficultySelect" data-target="taskMetaDifficulty">
           <button type="button" class="select-trigger">Сложность</button>
@@ -516,7 +515,6 @@
           <select id="editTaskSelect" class="admin-input"></select>
         </div>
         <input id="editMetaTitle" class="admin-input" type="text" placeholder="Название">
-        <input id="editMetaAuthor" class="admin-input" type="text" placeholder="Автор">
         <input id="editMetaDifficulty" type="hidden" value="">
         <div class="select-shell" id="editDifficultySelect" data-target="editMetaDifficulty">
           <button type="button" class="select-trigger">Сложность</button>
@@ -734,7 +732,6 @@
 
     async function adminUploadTaskFromForm() {
       const title = document.getElementById("taskMetaTitle").value.trim();
-      const author = document.getElementById("taskMetaAuthor").value.trim() || user || "admin";
       const difficulty = document.getElementById("taskMetaDifficulty").value.trim();
       const type = document.getElementById("taskMetaType").value.trim();
       const language = (document.getElementById("taskMetaLanguage").value.trim() || "cpp");
@@ -765,7 +762,6 @@
       const meta = {
         id,
         title,
-        author,
         difficulty,
         language,
         type,
@@ -938,7 +934,6 @@
         const metaRes = await fetch(`${base}/tasks/${id}/meta.json`);
         const meta = metaRes.ok ? await metaRes.json() : {};
         document.getElementById("editMetaTitle").value = meta.title || "";
-        document.getElementById("editMetaAuthor").value = meta.author || "";
         document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
         setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
         setCustomSelectValue("editTypeSelect", meta.type || "", "Тип ошибки");
@@ -1082,7 +1077,6 @@
       }
 
       const title = document.getElementById("editMetaTitle").value.trim();
-      const author = document.getElementById("editMetaAuthor").value.trim() || user || "admin";
       const difficulty = document.getElementById("editMetaDifficulty").value.trim();
       const type = document.getElementById("editMetaType").value.trim();
       const language = (document.getElementById("editMetaLanguage").value.trim() || "cpp");
@@ -1106,7 +1100,6 @@
         meta: {
           id,
           title,
-          author,
           difficulty,
           language,
           type,
