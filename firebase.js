@@ -55,7 +55,7 @@
 
     window.db = firebase.database();
     window.firebase = firebase;
-    window.TURNSTILE_SITE_KEY = runtimeConfig.turnstileSiteKey || "";
+    window.RECAPTCHA_SITE_KEY = runtimeConfig.recaptchaSiteKey || "";
     window.CODEBUG_PUBLIC_CONFIG = runtimeConfig;
 
     console.log("Firebase INIT OK, db =", window.db);

@@ -373,18 +373,18 @@
     </div>
 
     <script>
-        window.onTurnstileLoad = function() {
-            if (window.renderTurnstileWidget) window.renderTurnstileWidget();
+        window.onRecaptchaLoad = function() {
+            if (window.renderCaptchaWidget) window.renderCaptchaWidget();
         };
     </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=explicit&onload=onRecaptchaLoad" async defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-    <script src="firebase.js?v=20260513-1"></script>
+    <script src="firebase.js?v=20260513-4"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20260513-2"></script>
+    <script src="auth.js?v=20260513-5"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -417,7 +417,7 @@
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-register").style.display = "block";
             document.getElementById("screen-verify").style.display = "none";
-            if (window.renderTurnstileWidget) window.renderTurnstileWidget();
+            if (window.renderCaptchaWidget) window.renderCaptchaWidget();
         }
 
         function forgotPassword() {
@@ -434,7 +434,7 @@
             }, 200);
         }
 
-        if (window.renderTurnstileWidget) window.renderTurnstileWidget();
+        if (window.renderCaptchaWidget) window.renderCaptchaWidget();
     </script>
 
 </body>

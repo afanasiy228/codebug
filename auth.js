@@ -301,10 +301,10 @@ function clearErrors() {
 const EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
 let lastVerificationSentAt = 0;
 const PENDING_REG_KEY = "pendingRegistration";
-const TURNSTILE_PLACEHOLDER_KEY = "PASTE_TURNSTILE_SITE_KEY_HERE";
-let turnstileWidgetId = null;
-let turnstileToken = "";
-window.__turnstileReady = false;
+const RECAPTCHA_PLACEHOLDER_KEY = "PASTE_RECAPTCHA_SITE_KEY_HERE";
+let captchaWidgetId = null;
+let captchaToken = "";
+window.__captchaReady = false;
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -393,12 +393,12 @@ window.addEventListener("beforeunload", (event) => {
 });
 
 function resetTurnstileWidget() {
-    turnstileToken = "";
-    window.__turnstileReady = false;
+    captchaToken = "";
+    window.__captchaReady = false;
     setRegisterButtonEnabled(false, "Пройди капчу");
-    if (window.turnstile && turnstileWidgetId !== null) {
+    if (window.grecaptcha && captchaWidgetId !== null) {
         try {
-            window.turnstile.reset(turnstileWidgetId);
+            window.grecaptcha.reset(captchaWidgetId);
         } catch (_) {}
     }
 }
@@ -415,55 +415,55 @@ function setRegisterButtonEnabled(enabled, reason = "") {
 }
 
 function getTurnstileSiteKey() {
-    const key = String(window.TURNSTILE_SITE_KEY || "").trim();
-    if (!key || key === TURNSTILE_PLACEHOLDER_KEY) return "";
+    const key = String(window.RECAPTCHA_SITE_KEY || "").trim();
+    if (!key || key === RECAPTCHA_PLACEHOLDER_KEY) return "";
     return key;
 }
 
-function renderTurnstileWidget() {
+function renderCaptchaWidget() {
     const host = document.getElementById("turnstile-box");
     if (!host) return;
-    window.__turnstileReady = false;
+    window.__captchaReady = false;
     setRegisterButtonEnabled(false, "Капча загружается");
 
     const siteKey = getTurnstileSiteKey();
     if (!siteKey) {
         host.style.borderColor = "rgba(194, 64, 64, 0.9)";
-        host.innerHTML = `<span style="font-size:12px;color:#c24040;">Капча не настроена: отсутствует TURNSTILE site key</span>`;
+        host.innerHTML = `<span style="font-size:12px;color:#c24040;">Капча не настроена: отсутствует reCAPTCHA site key</span>`;
         showError("reg-error", "Регистрация недоступна: капча не настроена");
         setRegisterButtonEnabled(false, "Капча не настроена");
         return;
     }
 
-    if (!window.turnstile || typeof window.turnstile.render !== "function") {
-        setTimeout(renderTurnstileWidget, 250);
+    if (!window.grecaptcha || typeof window.grecaptcha.render !== "function") {
+        setTimeout(renderCaptchaWidget, 250);
         return;
     }
 
-    if (turnstileWidgetId !== null) {
+    if (captchaWidgetId !== null) {
         resetTurnstileWidget();
         return;
     }
 
     host.style.borderColor = "rgba(226, 214, 196, 0.9)";
     host.innerHTML = "";
-    turnstileWidgetId = window.turnstile.render(host, {
+    captchaWidgetId = window.grecaptcha.render(host, {
         sitekey: siteKey,
         theme: "dark",
         callback: (token) => {
-            turnstileToken = token || "";
-            window.__turnstileReady = !!turnstileToken;
-            setRegisterButtonEnabled(window.__turnstileReady, window.__turnstileReady ? "" : "Пройди капчу");
-            if (window.__turnstileReady) showError("reg-error", "");
+            captchaToken = token || "";
+            window.__captchaReady = !!captchaToken;
+            setRegisterButtonEnabled(window.__captchaReady, window.__captchaReady ? "" : "Пройди капчу");
+            if (window.__captchaReady) showError("reg-error", "");
         },
         "expired-callback": () => {
-            turnstileToken = "";
-            window.__turnstileReady = false;
+            captchaToken = "";
+            window.__captchaReady = false;
             setRegisterButtonEnabled(false, "Капча устарела");
         },
         "error-callback": () => {
-            turnstileToken = "";
-            window.__turnstileReady = false;
+            captchaToken = "";
+            window.__captchaReady = false;
             setRegisterButtonEnabled(false, "Ошибка капчи");
             showError("reg-error", "Ошибка капчи. Обнови страницу и попробуй снова.");
         }
@@ -674,12 +674,12 @@ async function register() {
     if (!isLoginValid(login)) return showError("reg-error", "Логин: 3-16 символов, латиница/цифры/_");
     if (!normalizeEmail(email)) return showError("reg-error", "Укажи email");
     if (pass.length < 6) return showError("reg-error", "Пароль минимум 6 символов");
-    if (!window.__turnstileReady || !turnstileToken) {
+    if (!window.__captchaReady || !captchaToken) {
         setRegisterButtonEnabled(false, "Сначала пройди капчу");
-        return showError("reg-error", "Подтверди капчу Cloudflare");
+        return showError("reg-error", "Подтверди reCAPTCHA");
     }
 
-    const captchaVerification = await verifyCaptchaToken(turnstileToken);
+    const captchaVerification = await verifyCaptchaToken(captchaToken);
     if (!captchaVerification.ok) {
         resetTurnstileWidget();
         return showError("reg-error", captchaVerification.error);
@@ -895,7 +895,8 @@ window.cancelPendingRegistration = cancelPendingRegistration;
 window.showVerifyScreen = showVerifyScreen;
 window.isRegistrationLocked = isRegistrationLocked;
 window.getPendingRegistrationSafe = getPendingRegistration;
-window.renderTurnstileWidget = renderTurnstileWidget;
+window.renderCaptchaWidget = renderCaptchaWidget;
+window.renderTurnstileWidget = renderCaptchaWidget;
 window.updateAvatar = function() {};
 window.logout = logout;
 

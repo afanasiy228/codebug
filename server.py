@@ -34,9 +34,9 @@ FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc/secrets/serviceAccountKey.json")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
-TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
-TURNSTILE_VERIFY_URL = os.getenv("TURNSTILE_VERIFY_URL", "https://challenges.cloudflare.com/turnstile/v0/siteverify")
-TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY", "")
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
+RECAPTCHA_VERIFY_URL = os.getenv("RECAPTCHA_VERIFY_URL", "https://www.google.com/recaptcha/api/siteverify")
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY", "")
 PUBLIC_FIREBASE_WEB_API_KEY = os.getenv("PUBLIC_FIREBASE_WEB_API_KEY", "")
 PUBLIC_FIREBASE_WEB_AUTH_DOMAIN = os.getenv("PUBLIC_FIREBASE_WEB_AUTH_DOMAIN", "")
 PUBLIC_FIREBASE_WEB_DATABASE_URL = os.getenv("PUBLIC_FIREBASE_WEB_DATABASE_URL", "")
@@ -97,14 +97,14 @@ def _git_env():
     }
 
 
-def _verify_turnstile_token(token, remote_ip=None):
-    if not TURNSTILE_SECRET_KEY:
+def _verify_captcha_token(token, remote_ip=None):
+    if not RECAPTCHA_SECRET_KEY:
         return False, "captcha_not_configured"
     if not token:
         return False, "captcha_token_required"
 
     payload = {
-        "secret": TURNSTILE_SECRET_KEY,
+        "secret": RECAPTCHA_SECRET_KEY,
         "response": token
     }
     if remote_ip:
@@ -112,7 +112,7 @@ def _verify_turnstile_token(token, remote_ip=None):
 
     body = urllib.parse.urlencode(payload).encode("utf-8")
     req = urllib.request.Request(
-        TURNSTILE_VERIFY_URL,
+        RECAPTCHA_VERIFY_URL,
         data=body,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
         method="POST"
@@ -590,9 +590,10 @@ def submit():
 def auth_verify_captcha():
     data = request.get_json(silent=True) or {}
     token = str(data.get("token", "")).strip()
-    remote_ip = request.headers.get("CF-Connecting-IP") or request.remote_addr
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    remote_ip = (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr)
 
-    ok, error_code = _verify_turnstile_token(token, remote_ip=remote_ip)
+    ok, error_code = _verify_captcha_token(token, remote_ip=remote_ip)
     if not ok:
         status = 503 if error_code == "captcha_not_configured" else 400
         return jsonify({"ok": False, "error": error_code}), status
@@ -963,7 +964,7 @@ def public_config():
     }
     return jsonify({
         "firebase": firebase_public,
-        "turnstileSiteKey": TURNSTILE_SITE_KEY
+        "recaptchaSiteKey": RECAPTCHA_SITE_KEY
     })
 
 
