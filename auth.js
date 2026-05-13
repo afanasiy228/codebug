@@ -267,7 +267,7 @@ function startPresence() {
 
     ref.onDisconnect().update({
         online: false,
-        lastSeen: Date.now()
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
     });
 
     if (!window.__presenceTimer) {
@@ -291,6 +291,7 @@ function showError(id, text) {
 function clearErrors() {
     showError("login-error", "");
     showError("reg-error", "");
+    showError("verify-error", "");
 }
 
 
@@ -299,6 +300,7 @@ function clearErrors() {
 ============================ */
 const EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
 let lastVerificationSentAt = 0;
+const PENDING_REG_KEY = "pendingRegistration";
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
@@ -324,6 +326,67 @@ function normalizeEmail(email) {
 function emailKey(email) {
     return normalizeEmail(email).replace(/\./g, ",");
 }
+
+function getPendingRegistration() {
+    try {
+        const raw = localStorage.getItem(PENDING_REG_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.email || !parsed.login) return null;
+        return {
+            login: String(parsed.login),
+            email: normalizeEmail(parsed.email)
+        };
+    } catch (_) {
+        return null;
+    }
+}
+
+function setPendingRegistration(data) {
+    if (!data || !data.login || !data.email) {
+        localStorage.removeItem(PENDING_REG_KEY);
+        return;
+    }
+    localStorage.setItem(PENDING_REG_KEY, JSON.stringify({
+        login: String(data.login),
+        email: normalizeEmail(data.email)
+    }));
+}
+
+function clearPendingRegistration() {
+    localStorage.removeItem(PENDING_REG_KEY);
+}
+
+function isRegistrationLocked() {
+    return !!getPendingRegistration();
+}
+
+function showVerifyScreen(emailText, infoText = "") {
+    const loginScreen = document.getElementById("screen-login");
+    const regScreen = document.getElementById("screen-register");
+    const verifyScreen = document.getElementById("screen-verify");
+    if (!verifyScreen) return;
+
+    if (loginScreen) loginScreen.style.display = "none";
+    if (regScreen) regScreen.style.display = "none";
+    verifyScreen.style.display = "block";
+
+    const label = document.getElementById("verify-email-label");
+    if (label) label.innerText = emailText || "указанный email";
+    showError("verify-error", infoText);
+}
+
+function redirectToAuthForVerification() {
+    const next = encodeURIComponent(window.location.pathname.split("/").pop() || "index.html");
+    window.location.href = `auth.html?verify=1&next=${next}`;
+}
+
+window.addEventListener("beforeunload", (event) => {
+    if (!isAuthPage()) return;
+    if (!isRegistrationLocked()) return;
+    event.preventDefault();
+    event.returnValue = "";
+});
 
 function isLoginValid(login) {
     return /^[a-zA-Z0-9_]{3,16}$/.test(login);
@@ -404,13 +467,7 @@ async function loginUser(email, pass) {
         return { ok: false, needVerify: true, userAuth, error: "Подтверди email перед входом" };
     }
 
-    const login = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
-    if (!login) {
-        return { ok: false, error: "Профиль не найден. Обратись к админу." };
-    }
-
-    await ensureUserProfile(login, userAuth);
-    return { ok: true, login, uid: userAuth.uid };
+    return { ok: true, userAuth };
 }
 
 async function sendVerificationWithCooldown(userAuth) {
@@ -442,16 +499,24 @@ async function login() {
     const result = await loginUser(email, pass);
     if (!result.ok) {
         if (result.needVerify && result.userAuth) {
+            const pendingLogin = await resolveLoginByUidOrEmail(result.userAuth.uid, result.userAuth.email) || String(identity);
+            setPendingRegistration({ login: pendingLogin, email });
             const sent = await sendVerificationWithCooldown(result.userAuth);
-            if (!sent.ok) return showError("login-error", `${result.error}. ${sent.error}`);
-            return showError("login-error", "Email не подтвержден. Отправили новое письмо.");
+            if (!sent.ok) {
+                showVerifyScreen(email, `${result.error}. ${sent.error}`);
+                return;
+            }
+            showVerifyScreen(email, "Email не подтвержден. Отправили новую ссылку.");
+            return;
         }
         return showError("login-error", result.error);
     }
 
-    setUser(result.login);
-    setUid(result.uid);
-    window.location.href = "index.html";
+    const finalized = await finalizeVerifiedAccount(result.userAuth, null);
+    if (!finalized.ok) return showError("login-error", finalized.error);
+
+    const next = new URLSearchParams(window.location.search).get("next");
+    window.location.href = next || "index.html";
 }
 
 async function registerUser(login, email, pass) {
@@ -478,13 +543,12 @@ async function registerUser(login, email, pass) {
     }
 
     const userAuth = cred.user;
-    await ensureUserProfile(login, userAuth);
     const sent = await sendVerificationWithCooldown(userAuth);
-    await auth.signOut();
-    setUid(null);
-    return sent.ok
-        ? { ok: true }
-        : { ok: false, error: sent.error };
+    if (!sent.ok) return { ok: false, error: sent.error };
+
+    setPendingRegistration({ login, email: e });
+    clearSession();
+    return { ok: true, email: e };
 }
 
 async function register() {
@@ -502,35 +566,105 @@ async function register() {
     const result = await registerUser(login, email, pass);
     if (!result.ok) return showError("reg-error", result.error);
 
-    showError("reg-error", "Письмо подтверждения отправлено. Подтверди email и войди.");
-    goLogin();
+    showVerifyScreen(result.email, "Письмо отправлено. Подтверди email и нажми «Я подтвердил, проверить».");
 }
 
 async function resendVerificationFromForm() {
     clearErrors();
     const auth = getAuth();
-    if (!auth) return showError("reg-error", "Firebase Auth не инициализирован");
+    if (!auth) return showError("verify-error", "Firebase Auth не инициализирован");
 
-    const email = document.getElementById("reg-email").value.trim();
-    const pass = document.getElementById("reg-pass").value.trim();
-    if (!normalizeEmail(email) || !pass) {
-        return showError("reg-error", "Введи email и пароль для повторной отправки");
+    const pending = getPendingRegistration();
+    if (!pending) return showError("verify-error", "Нет активной регистрации для подтверждения");
+
+    const userAuth = auth.currentUser;
+    if (!userAuth) return showError("verify-error", "Открой письмо и перейди по ссылке, затем нажми проверку");
+
+    await userAuth.reload();
+    if (userAuth.emailVerified) {
+        const finalized = await finalizeVerifiedAccount(userAuth, pending.login);
+        if (!finalized.ok) return showError("verify-error", finalized.error);
+        const next = new URLSearchParams(window.location.search).get("next");
+        window.location.href = next || "index.html";
+        return;
     }
 
+    const sent = await sendVerificationWithCooldown(userAuth);
+    if (!sent.ok) return showError("verify-error", sent.error);
+    showError("verify-error", "Ссылка подтверждения отправлена повторно");
+}
+
+async function finalizeVerifiedAccount(userAuth, fallbackLogin = null) {
+    const pending = getPendingRegistration();
+    const loginFromMap = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+    const login = loginFromMap || fallbackLogin || (pending && pending.login) || null;
+    if (!login || login.startsWith("pending_")) {
+        return { ok: false, error: "Логин не найден. Начни регистрацию заново." };
+    }
+
+    const existingRef = db.ref("users/" + login + "/id");
+    const existingSnap = await existingRef.get();
+    if (existingSnap.exists() && existingSnap.val() !== userAuth.uid) {
+        return { ok: false, error: "Этот логин уже занят. Начни регистрацию заново." };
+    }
+
+    await ensureUserProfile(login, userAuth);
+    clearPendingRegistration();
+    setUser(login);
+    setUid(userAuth.uid);
+    return { ok: true, login };
+}
+
+async function checkVerificationStatus() {
+    clearErrors();
+    const auth = getAuth();
+    if (!auth) return showError("verify-error", "Firebase Auth не инициализирован");
+
+    const pending = getPendingRegistration();
+    if (!pending) return showError("verify-error", "Нет активной регистрации");
+
+    const userAuth = auth.currentUser;
+    if (!userAuth) {
+        return showError("verify-error", "Сессия подтверждения потеряна. Войди по email и паролю.");
+    }
+
+    await userAuth.reload();
+    if (!userAuth.emailVerified) {
+        return showError("verify-error", "Email еще не подтвержден");
+    }
+
+    const finalized = await finalizeVerifiedAccount(userAuth, pending.login);
+    if (!finalized.ok) return showError("verify-error", finalized.error);
+    const next = new URLSearchParams(window.location.search).get("next");
+    window.location.href = next || "index.html";
+}
+
+async function cancelPendingRegistration() {
+    clearErrors();
+    const auth = getAuth();
+    const pending = getPendingRegistration();
     try {
-        const cred = await auth.signInWithEmailAndPassword(normalizeEmail(email), pass);
-        await cred.user.reload();
-        if (cred.user.emailVerified) {
+        if (auth?.currentUser && !auth.currentUser.emailVerified) {
+            await auth.currentUser.delete();
+        } else if (auth?.currentUser) {
             await auth.signOut();
-            return showError("reg-error", "Email уже подтвержден");
         }
-        const sent = await sendVerificationWithCooldown(cred.user);
-        await auth.signOut();
-        if (!sent.ok) return showError("reg-error", sent.error);
-        showError("reg-error", "Письмо подтверждения отправлено повторно");
     } catch (err) {
-        showError("reg-error", "Не удалось отправить письмо: " + (err?.code || "unknown"));
+        // Требует recent login, но мы все равно чистим локальный pending.
+        console.warn("cancelPendingRegistration", err);
     }
+    clearPendingRegistration();
+    clearSession();
+    showError("verify-error", "Регистрация отменена");
+    if (pending?.email) {
+        showVerifyScreen(pending.email, "Регистрация отменена. Можно начать заново.");
+    }
+    const loginScreen = document.getElementById("screen-login");
+    const regScreen = document.getElementById("screen-register");
+    const verifyScreen = document.getElementById("screen-verify");
+    if (loginScreen) loginScreen.style.display = "none";
+    if (verifyScreen) verifyScreen.style.display = "none";
+    if (regScreen) regScreen.style.display = "block";
 }
 
 
@@ -573,31 +707,55 @@ if (document.getElementById("captchaText")) {
 /* ============================
    AUTH SESSION SYNC
 ============================ */
+function isAuthPage() {
+    return window.location.pathname.endsWith("/auth.html") || window.location.pathname.endsWith("auth.html");
+}
+
+function enforcePendingVerificationGuard() {
+    const pending = getPendingRegistration();
+    if (!pending) return;
+    if (isAuthPage()) {
+        showVerifyScreen(pending.email, "Подтверди email, чтобы завершить регистрацию.");
+        return;
+    }
+    redirectToAuthForVerification();
+}
+
 async function syncSessionFromAuth() {
     const auth = getAuth();
     if (!auth) return;
     const userAuth = auth.currentUser;
     if (!userAuth) {
         clearSession();
+        enforcePendingVerificationGuard();
         return;
     }
     await userAuth.reload();
     if (!userAuth.emailVerified) {
         clearSession();
+        const currentPending = getPendingRegistration();
+        const mappedLogin = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+        const loginForPending = (currentPending && currentPending.login) || mappedLogin || ("pending_" + userAuth.uid);
+        setPendingRegistration({ login: loginForPending, email: normalizeEmail(userAuth.email) });
+        enforcePendingVerificationGuard();
         return;
     }
-    const login = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
-    if (!login) {
+    const finalized = await finalizeVerifiedAccount(userAuth, null);
+    if (!finalized.ok) {
         clearSession();
         return;
     }
-    setUser(login);
-    setUid(userAuth.uid);
+
+    if (isAuthPage()) {
+        const next = new URLSearchParams(window.location.search).get("next");
+        window.location.href = next || "index.html";
+    }
 }
 
 (() => {
     const auth = getAuth();
     if (!auth) return;
+    enforcePendingVerificationGuard();
     auth.onAuthStateChanged(async () => {
         try {
             if (localStorage.getItem("forceSignout") === "1") {
@@ -621,6 +779,11 @@ window.updateNavbar = updateNavbar;
 window.login = login;
 window.register = register;
 window.resendVerificationFromForm = resendVerificationFromForm;
+window.checkVerificationStatus = checkVerificationStatus;
+window.cancelPendingRegistration = cancelPendingRegistration;
+window.showVerifyScreen = showVerifyScreen;
+window.isRegistrationLocked = isRegistrationLocked;
+window.getPendingRegistrationSafe = getPendingRegistration;
 window.updateAvatar = function() {};
 window.generateCaptcha = generateCaptcha;
 window.logout = logout;

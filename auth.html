@@ -348,9 +348,20 @@
             <div id="reg-error" class="error-msg"></div>
 
             <button onclick="register()">Зарегистрироваться</button>
-            <button type="button" onclick="resendVerificationFromForm()" style="margin-top:8px;background:#1f7a63;">Отправить письмо повторно</button>
 
             <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
+        </div>
+
+        <!-- VERIFY EMAIL -->
+        <div id="screen-verify" style="display:none;">
+            <h1>Подтверждение Email</h1>
+            <p style="color:var(--muted);line-height:1.55;margin-top:-4px;">
+                Мы отправили ссылку подтверждения на <b id="verify-email-label">твой email</b>. Пока ты не подтвердишь почту, доступ к аккаунту закрыт.
+            </p>
+            <div id="verify-error" class="error-msg" style="height:auto;min-height:18px;"></div>
+            <button onclick="checkVerificationStatus()">Я подтвердил, проверить</button>
+            <button type="button" onclick="resendVerificationFromForm()" style="margin-top:8px;background:#1f7a63;">Отправить ссылку повторно</button>
+            <button type="button" onclick="cancelPendingRegistration()" style="margin-top:8px;background:#8f3d3d;">Отменить регистрацию</button>
         </div>
 
         </div>
@@ -381,13 +392,29 @@
         updateNavbar();
 
         function goLogin() {
+            if (window.isRegistrationLocked && window.isRegistrationLocked()) {
+                const pending = window.getPendingRegistrationSafe ? window.getPendingRegistrationSafe() : null;
+                if (window.showVerifyScreen) {
+                    window.showVerifyScreen((pending && pending.email) || "", "Сначала подтверди email.");
+                }
+                return;
+            }
             document.getElementById("screen-login").style.display = "block";
             document.getElementById("screen-register").style.display = "none";
+            document.getElementById("screen-verify").style.display = "none";
         }
 
         function goRegister() {
+            if (window.isRegistrationLocked && window.isRegistrationLocked()) {
+                const pending = window.getPendingRegistrationSafe ? window.getPendingRegistrationSafe() : null;
+                if (window.showVerifyScreen) {
+                    window.showVerifyScreen((pending && pending.email) || "", "Сначала подтверди email.");
+                }
+                return;
+            }
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-register").style.display = "block";
+            document.getElementById("screen-verify").style.display = "none";
         }
 
         function forgotPassword() {
