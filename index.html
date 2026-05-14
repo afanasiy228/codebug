@@ -116,48 +116,72 @@
 
         .code-fog {
             position: absolute;
-            inset: -22% -26% -18%;
+            inset: -14% -16% -14%;
             z-index: 1;
-            transform: rotate(-1.4deg);
+            transform: rotate(-1.15deg);
             pointer-events: none;
             filter: blur(1px);
-            opacity: 0.46;
+            opacity: 0.72;
         }
 
         .code-block {
             position: absolute;
             display: grid;
             gap: 0;
-            width: 48vw;
+            width: 42vw;
         }
 
         .code-block.a {
-            left: -10vw;
-            top: 7vh;
+            left: -14vw;
+            top: -2vh;
             transform: rotate(-0.4deg);
         }
 
         .code-block.b {
-            right: -12vw;
-            top: 16vh;
+            right: -14vw;
+            top: -4vh;
             transform: rotate(0.8deg);
             opacity: 0.86;
         }
 
         .code-block.c {
-            left: 8vw;
-            bottom: 10vh;
-            width: 42vw;
+            left: -7vw;
+            top: 38vh;
+            width: 44vw;
             transform: rotate(-0.7deg);
             opacity: 0.8;
         }
 
         .code-block.d {
-            right: 4vw;
-            bottom: 5vh;
-            width: 38vw;
+            right: -6vw;
+            top: 44vh;
+            width: 41vw;
             transform: rotate(0.5deg);
             opacity: 0.72;
+        }
+
+        .code-block.e {
+            left: 28vw;
+            top: 12vh;
+            width: 36vw;
+            transform: rotate(-0.25deg);
+            opacity: 0.68;
+        }
+
+        .code-block.f {
+            left: 24vw;
+            top: 58vh;
+            width: 38vw;
+            transform: rotate(0.35deg);
+            opacity: 0.64;
+        }
+
+        .code-block.g {
+            left: 20vw;
+            top: 28vh;
+            width: 52vw;
+            transform: rotate(0.18deg);
+            opacity: 0.56;
         }
 
         .code-row {
@@ -168,12 +192,12 @@
             color: #687a89;
             line-height: 1.48;
             transition: opacity .48s ease, color .48s ease, background-color .7s ease;
-            opacity: .18;
+            opacity: .3;
             padding: 1px 0;
         }
 
         .code-row:nth-child(2n) {
-            opacity: .24;
+            opacity: .36;
         }
 
         .code-row .ln {
@@ -370,9 +394,9 @@
             }
 
             .code-fog {
-                inset: -8% -44% -12%;
-                transform: rotate(-1deg);
-                opacity: 0.42;
+                inset: -12% -38% -16%;
+                transform: rotate(-0.8deg);
+                opacity: 0.48;
             }
 
             .code-block {
@@ -380,23 +404,43 @@
             }
 
             .code-block.a {
-                left: -20vw;
-                top: 14vh;
+                left: -26vw;
+                top: -1vh;
             }
 
             .code-block.b {
-                right: -26vw;
-                top: 42vh;
+                right: -30vw;
+                top: 22vh;
             }
 
             .code-block.c {
-                left: -10vw;
-                bottom: 16vh;
-                width: 84vw;
+                left: -24vw;
+                top: 47vh;
+                width: 90vw;
             }
 
             .code-block.d {
-                display: none;
+                right: -30vw;
+                top: 68vh;
+                width: 92vw;
+            }
+
+            .code-block.e {
+                left: -8vw;
+                top: 32vh;
+                width: 88vw;
+            }
+
+            .code-block.f {
+                left: -22vw;
+                top: 80vh;
+                width: 92vw;
+            }
+
+            .code-block.g {
+                left: -18vw;
+                top: 56vh;
+                width: 92vw;
             }
         }
     </style>
@@ -457,6 +501,34 @@
                 <div class="code-row"><span class="ln">46</span><span class="txt">if (cur == target) break;</span></div>
                 <div class="code-row"><span class="ln">47</span><span class="txt">if (x == 0) return 0;</span></div>
                 <div class="code-row"><span class="ln">48</span><span class="txt">ans += max(0LL, r - l + 1);</span></div>
+            </div>
+            <div class="code-block e">
+                <div class="code-row"><span class="ln">49</span><span class="txt">if (left <= right) mid = left + (right - left) / 2;</span></div>
+                <div class="code-row"><span class="ln">50</span><span class="txt">for (int i = 0; i < q; ++i) apply(query[i]);</span></div>
+                <div class="code-row"><span class="ln">51</span><span class="txt">if (used + cost <= budget) used += cost;</span></div>
+                <div class="code-row"><span class="ln">52</span><span class="txt">best = min(best, abs(pref[r] - pref[l - 1]));</span></div>
+                <div class="code-row"><span class="ln">53</span><span class="txt">if (v == parent) continue;</span></div>
+                <div class="code-row"><span class="ln">54</span><span class="txt">while (ptr < n && a[ptr] < lim) ++ptr;</span></div>
+                <div class="code-row"><span class="ln">55</span><span class="txt">if (ok && cnt == need) return true;</span></div>
+            </div>
+            <div class="code-block f">
+                <div class="code-row"><span class="ln">56</span><span class="txt">dp[i][mask] = min(dp[i][mask], dp[i - 1][mask]);</span></div>
+                <div class="code-row"><span class="ln">57</span><span class="txt">if (pref[r] - pref[l] == sum) ans++;</span></div>
+                <div class="code-row"><span class="ln">58</span><span class="txt">for (auto [to, w] : g[v]) relax(to, w);</span></div>
+                <div class="code-row"><span class="ln">59</span><span class="txt">if (k <= 0) return 1;</span></div>
+                <div class="code-row"><span class="ln">60</span><span class="txt">while (lo < hi) { int mid = (lo + hi) >> 1; }</span></div>
+                <div class="code-row"><span class="ln">61</span><span class="txt">if (a[mid] = x) return mid;</span></div>
+                <div class="code-row"><span class="ln">62</span><span class="txt">sum = sum + value[id];</span></div>
+            </div>
+            <div class="code-block g">
+                <div class="code-row"><span class="ln">63</span><span class="txt">for (int i = 0; i <= n; i++) score += pref[i];</span></div>
+                <div class="code-row"><span class="ln">64</span><span class="txt">if (left == right) return data[left];</span></div>
+                <div class="code-row"><span class="ln">65</span><span class="txt">while (lo <= hi) { int mid = (lo + hi) / 2; }</span></div>
+                <div class="code-row"><span class="ln">66</span><span class="txt">if (node == parent) continue;</span></div>
+                <div class="code-row"><span class="ln">67</span><span class="txt">pref[r] - pref[l - 1] == target</span></div>
+                <div class="code-row"><span class="ln">68</span><span class="txt">if (balance == 0) ok = true;</span></div>
+                <div class="code-row"><span class="ln">69</span><span class="txt">ans = min(ans, cur + delta);</span></div>
+                <div class="code-row"><span class="ln">70</span><span class="txt">dp[i + 1] = max(dp[i + 1], dp[i] + w);</span></div>
             </div>
         </div>
 
