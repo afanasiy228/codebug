@@ -3,29 +3,29 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>CodeBug — Учись находить ошибки</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
+    <title>CodeBug — Debug Training</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b0d10;
-            --bg-strong: #0e1115;
-            --bg-panel: #151a20;
-            --bg-panel-alt: #12161c;
-            --ink: #e7edf4;
-            --muted: #98a3b1;
-            --accent: #1f6b45;
-            --accent-strong: #185437;
-            --stroke: #2a313a;
-            --radius-lg: 10px;
-            --radius-md: 8px;
-            --shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-            --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-            --accepted: #27a56c;
-            --wrong: #d36a6a;
-            --runtime: #d08f47;
-            --timelimit: #ac83f4;
-            --pending: #8c97a6;
+            --bg: #090b0d;
+            --surface: #0f1316;
+            --surface-2: #12181c;
+            --surface-3: #0c1114;
+            --stroke: #222b31;
+            --stroke-soft: #1b2329;
+            --text: #e4ebf1;
+            --text-dim: #98a4b0;
+            --accent: #1f6a47;
+            --accent-strong: #2b8258;
+            --ok: #2d8f61;
+            --wa: #b45e5e;
+            --re: #b47a44;
+            --tl: #8671bf;
+            --pending: #7d8995;
+            --radius: 10px;
+            --radius-sm: 8px;
+            --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
 
         * {
@@ -34,410 +34,254 @@
 
         body {
             margin: 0;
-            color: var(--ink);
-            font-family: "IBM Plex Sans", sans-serif;
-            background:
-                linear-gradient(180deg, var(--bg) 0%, var(--bg-strong) 100%);
+            color: var(--text);
+            font-family: "Inter", sans-serif;
+            background: linear-gradient(180deg, #080a0c 0%, #0a0d10 100%);
         }
 
         a {
             color: inherit;
-        }
-
-        ::selection {
-            background: rgba(31, 107, 69, 0.36);
-            color: #f2f6f8;
+            text-decoration: none;
         }
 
         .container {
-            width: min(1180px, 94vw);
+            width: min(1100px, 94vw);
             margin: 0 auto;
         }
 
         header {
-            height: 64px;
-            background: rgba(11, 13, 16, 0.9);
-            border-bottom: 1px solid var(--stroke);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            height: 60px;
             position: sticky;
             top: 0;
             z-index: 20;
+            background: rgba(9, 11, 13, 0.88);
+            border-bottom: 1px solid var(--stroke-soft);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 0 3vw;
-            backdrop-filter: blur(6px);
         }
 
         .logo {
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 18px;
+            font-size: 26px;
             font-weight: 700;
-            letter-spacing: 0.4px;
-            color: var(--ink);
+            letter-spacing: 0;
         }
 
         nav a {
-            margin-left: 16px;
-            color: var(--muted);
+            color: var(--text-dim);
             font-size: 14px;
-            text-decoration: none;
             font-weight: 600;
+            margin-left: 18px;
         }
 
         nav a:hover {
-            color: #c5d3e1;
+            color: var(--text);
         }
 
-        main.container {
-            padding: 34px 0 70px;
+        main {
+            padding: 34px 0 54px;
             display: grid;
-            gap: 28px;
+            gap: 18px;
+        }
+
+        section {
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius);
+            background: var(--surface);
         }
 
         .hero {
-            display: grid;
-            grid-template-columns: 1.05fr 1fr;
-            gap: 20px;
-            align-items: stretch;
-        }
-
-        .hero-copy,
-        .diagnostics-panel,
-        .tool-section,
-        .action-panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow);
-        }
-
-        .hero-copy {
+            position: relative;
+            overflow: hidden;
             padding: 24px;
             display: grid;
-            gap: 14px;
-            align-content: start;
+            gap: 18px;
         }
 
-        .kicker {
-            margin: 0;
-            width: fit-content;
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(31, 107, 69, 0.65);
-            background: rgba(31, 107, 69, 0.18);
-            color: #8fcbab;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.2px;
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(120deg, transparent 0%, rgba(31, 106, 71, 0.08) 35%, transparent 70%),
+                radial-gradient(700px 220px at 90% -5%, rgba(31, 106, 71, 0.12), transparent 65%);
+            opacity: 0.7;
         }
 
-        .hero-copy h1 {
-            margin: 0;
-            font-family: "Space Grotesk", sans-serif;
-            font-size: clamp(31px, 3.5vw, 47px);
-            line-height: 1.1;
-        }
-
-        .hero-copy p {
-            margin: 0;
-            font-size: 15px;
-            line-height: 1.58;
-            color: var(--muted);
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn-main,
-        .btn-faq {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            padding: 11px 16px;
-            border: 1px solid var(--stroke);
-            transition: background 0.15s ease, border-color 0.15s ease;
-        }
-
-        .btn-main {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #e7f3ec;
-        }
-
-        .btn-main:hover {
-            background: var(--accent-strong);
-            border-color: var(--accent-strong);
-        }
-
-        .btn-faq {
-            background: #10151b;
-            color: #d8e0e9;
-        }
-
-        .btn-faq:hover {
-            border-color: #3b4552;
-            background: #121923;
-        }
-
-        .tool-tags {
-            display: flex;
-            flex-wrap: wrap;
+        .hero-head {
+            z-index: 1;
+            max-width: 760px;
+            display: grid;
             gap: 8px;
         }
 
-        .bug-type-tag {
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid #32404e;
-            background: #111923;
-            color: #a9b5c5;
+        .hero-kicker {
+            color: #8fbda5;
             font-size: 12px;
-            font-weight: 600;
-        }
-
-        .diagnostics-panel {
-            padding: 14px;
-            display: grid;
-            gap: 12px;
-            align-content: start;
-            background: var(--bg-panel-alt);
-        }
-
-        .panel-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--stroke);
-            font-size: 13px;
-            color: #c8d2de;
-        }
-
-        .panel-head strong {
-            font-weight: 600;
-            color: #e4ebf3;
-        }
-
-        .verdict-badge,
-        .problem-status {
+            font-family: var(--mono);
             display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2px 10px;
+            width: fit-content;
+            border: 1px solid rgba(43, 130, 88, 0.5);
+            background: rgba(31, 106, 71, 0.16);
             border-radius: 999px;
-            border: 1px solid transparent;
-            font-size: 11px;
+            padding: 3px 9px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(29px, 5vw, 42px);
+            line-height: 1.08;
             font-weight: 700;
-            font-family: var(--mono);
-            letter-spacing: 0.1px;
-            min-height: 22px;
-            white-space: nowrap;
+            max-width: 680px;
         }
 
-        .verdict-badge.is-accepted,
-        .problem-status.is-accepted {
-            color: #8addb8;
-            border-color: rgba(39, 165, 108, 0.4);
-            background: rgba(39, 165, 108, 0.16);
+        .hero-sub {
+            margin: 0;
+            color: var(--text-dim);
+            line-height: 1.55;
+            max-width: 760px;
+            font-size: 16px;
         }
 
-        .verdict-badge.is-wa,
-        .problem-status.is-wa {
-            color: #ffb6b6;
-            border-color: rgba(211, 106, 106, 0.45);
-            background: rgba(211, 106, 106, 0.14);
+        .hero-actions {
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .verdict-badge.is-re,
-        .problem-status.is-re {
-            color: #ffd09f;
-            border-color: rgba(208, 143, 71, 0.45);
-            background: rgba(208, 143, 71, 0.16);
-        }
-
-        .verdict-badge.is-tl,
-        .problem-status.is-tl {
-            color: #dbc6ff;
-            border-color: rgba(172, 131, 244, 0.42);
-            background: rgba(172, 131, 244, 0.14);
-        }
-
-        .verdict-badge.is-pending,
-        .problem-status.is-pending {
-            color: #c8d1db;
-            border-color: rgba(140, 151, 166, 0.35);
-            background: rgba(140, 151, 166, 0.15);
-        }
-
-        .code-preview {
+        .btn {
             border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            background: #0f141a;
-            overflow: hidden;
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--surface-3);
+            color: var(--text);
         }
 
-        .code-row {
-            display: grid;
-            grid-template-columns: 42px 1fr;
-            align-items: start;
-            gap: 0;
+        .btn.primary {
+            background: var(--accent);
+            border-color: #246e4c;
+            color: #e9f4ee;
+        }
+
+        .btn.primary:hover {
+            background: var(--accent-strong);
+            border-color: #338760;
+        }
+
+        .hero-tags {
+            z-index: 1;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
             font-family: var(--mono);
             font-size: 12px;
-            line-height: 1.46;
-            border-bottom: 1px solid rgba(42, 49, 58, 0.55);
+            color: #a9b6c3;
+            background: #11171c;
+            border: 1px solid #2a343d;
+            border-radius: 999px;
+            padding: 3px 9px;
         }
 
-        .code-row:last-child {
-            border-bottom: none;
+        .code-atmos {
+            z-index: 1;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-sm);
+            background: rgba(10, 13, 16, 0.82);
+            padding: 10px 0;
+            overflow: hidden;
+            position: relative;
         }
 
-        .code-ln {
-            color: #6f7a88;
+        .code-atmos::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(9, 11, 13, 0.45), rgba(9, 11, 13, 0.8));
+            pointer-events: none;
+        }
+
+        .code-line {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 44px 1fr;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.5;
+            color: #9fb0bd;
+            border-top: 1px solid rgba(34, 43, 49, 0.35);
+        }
+
+        .code-line:first-child {
+            border-top: none;
+        }
+
+        .ln {
             text-align: right;
-            padding: 6px 8px 6px 0;
-            border-right: 1px solid rgba(42, 49, 58, 0.55);
-            user-select: none;
+            padding: 6px 10px 6px 0;
+            color: #687685;
+            border-right: 1px solid rgba(34, 43, 49, 0.4);
         }
 
-        .code-text {
-            padding: 6px 10px;
+        .lt {
+            padding: 6px 12px;
             white-space: pre;
             overflow-x: auto;
-            color: #dbe3ee;
         }
 
-        .code-row.is-bug {
-            background: rgba(211, 106, 106, 0.12);
+        .code-line.bad .lt {
+            background: rgba(180, 94, 94, 0.14);
+            color: #dab1b1;
         }
 
-        .code-row.is-bug .code-text {
-            color: #ffd1d1;
+        .code-line.good .lt {
+            background: rgba(45, 143, 97, 0.14);
+            color: #b5dcc8;
         }
 
-        .diag-grid {
+        .inline-bad {
+            color: #e2a3a3;
+            border-bottom: 1px solid rgba(180, 94, 94, 0.55);
+        }
+
+        .inline-good {
+            color: #9fd2b6;
+            border-bottom: 1px solid rgba(45, 143, 97, 0.6);
+        }
+
+        .stack {
+            padding: 18px 20px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 14px;
         }
 
-        .test-output,
-        .diff-block {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            background: #10161d;
-            padding: 10px;
-            display: grid;
-            gap: 7px;
-        }
-
-        .mini-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #a8b5c4;
-            letter-spacing: 0.1px;
-            text-transform: uppercase;
-        }
-
-        .test-row {
-            font-size: 12px;
-            color: #afbbca;
-            font-family: var(--mono);
-        }
-
-        .test-row strong {
-            font-weight: 700;
-        }
-
-        .test-row.fail strong {
-            color: #ffb6b6;
-        }
-
-        .test-row.pass strong {
-            color: #8addb8;
-        }
-
-        .io-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            font-family: var(--mono);
-            font-size: 12px;
-        }
-
-        .io-box {
-            border: 1px solid var(--stroke);
-            border-radius: 6px;
-            padding: 8px;
-            background: #0e1319;
-            min-height: 52px;
-        }
-
-        .io-box.expected {
-            border-color: rgba(39, 165, 108, 0.5);
-        }
-
-        .io-box.actual {
-            border-color: rgba(211, 106, 106, 0.55);
-            color: #ffcdcd;
-        }
-
-        .diff-line {
-            font-family: var(--mono);
-            font-size: 12px;
-            padding: 6px 8px;
-            border-radius: 6px;
-            border: 1px solid var(--stroke);
-            background: #0f151b;
-            color: #d6dfe9;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .diff-line.remove {
-            border-color: rgba(211, 106, 106, 0.5);
-            background: rgba(211, 106, 106, 0.12);
-            color: #ffcccc;
-        }
-
-        .diff-line.add {
-            border-color: rgba(39, 165, 108, 0.5);
-            background: rgba(39, 165, 108, 0.12);
-            color: #b7efd5;
-        }
-
-        .tool-section {
-            padding: 18px;
-            display: grid;
-            gap: 16px;
-        }
-
-        .section-head {
+        .head {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            gap: 14px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--stroke);
+            align-items: end;
+            border-bottom: 1px solid var(--stroke-soft);
+            padding-bottom: 10px;
+            gap: 12px;
         }
 
-        .section-head h2 {
+        .head h2 {
             margin: 0;
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 23px;
-            line-height: 1.2;
+            font-size: 25px;
+            font-weight: 700;
         }
 
-        .section-head p {
+        .head p {
             margin: 0;
-            color: var(--muted);
+            color: var(--text-dim);
             font-size: 14px;
         }
 
@@ -447,11 +291,11 @@
             gap: 10px;
         }
 
-        .workflow-step {
+        .step {
             border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            background: #10151b;
-            padding: 12px;
+            border-radius: var(--radius-sm);
+            padding: 11px;
+            background: var(--surface-3);
             display: grid;
             gap: 8px;
         }
@@ -459,89 +303,103 @@
         .step-no {
             width: 24px;
             height: 24px;
-            border-radius: 5px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            border-radius: 6px;
+            background: rgba(31, 106, 71, 0.2);
+            color: #9ecfb4;
             font-family: var(--mono);
             font-size: 12px;
             font-weight: 700;
-            background: rgba(31, 107, 69, 0.25);
-            color: #b0e2c9;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .workflow-step h3 {
+        .step h3 {
             margin: 0;
-            font-size: 15px;
+            font-size: 16px;
+            font-weight: 700;
         }
 
-        .workflow-step p {
+        .step p {
             margin: 0;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.55;
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.5;
         }
 
-        .problem-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .problem-card {
+        .diagnostic-table {
             border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            background: #11161d;
-            padding: 12px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .diag-row {
             display: grid;
-            gap: 10px;
-        }
-
-        .problem-head {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            align-items: flex-start;
-        }
-
-        .problem-head h3 {
-            margin: 0;
-            font-size: 15px;
-            line-height: 1.3;
-        }
-
-        .problem-card p {
-            margin: 0;
-            font-size: 13px;
-            color: var(--muted);
-            line-height: 1.45;
-        }
-
-        .problem-meta {
-            display: flex;
-            flex-wrap: wrap;
+            grid-template-columns: 1.5fr .8fr 1fr .9fr;
             gap: 8px;
+            align-items: center;
+            border-top: 1px solid var(--stroke-soft);
+            padding: 11px 12px;
+            font-size: 14px;
         }
 
-        .problem-attempts {
+        .diag-row:first-child {
+            border-top: none;
+            background: #0e1418;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #91a0ad;
+            letter-spacing: .4px;
+            font-family: var(--mono);
+        }
+
+        .diag-row .status {
             font-family: var(--mono);
             font-size: 12px;
-            color: #b8c2ce;
-            border: 1px solid #3a4553;
             border-radius: 999px;
-            padding: 3px 9px;
-            background: #111924;
+            border: 1px solid transparent;
+            padding: 3px 8px;
+            width: fit-content;
         }
 
-        .news-home {
-            padding: 18px;
+        .s-ok {
+            color: #9cd6b8;
+            border-color: rgba(45, 143, 97, 0.5);
+            background: rgba(45, 143, 97, 0.16);
         }
 
-        .news-layout {
+        .s-wa {
+            color: #e6b4b4;
+            border-color: rgba(180, 94, 94, 0.5);
+            background: rgba(180, 94, 94, 0.14);
+        }
+
+        .s-re {
+            color: #e3c5a2;
+            border-color: rgba(180, 122, 68, 0.5);
+            background: rgba(180, 122, 68, 0.15);
+        }
+
+        .s-tl {
+            color: #ccbdea;
+            border-color: rgba(134, 113, 191, 0.52);
+            background: rgba(134, 113, 191, 0.16);
+        }
+
+        .s-pending {
+            color: #c0cad5;
+            border-color: rgba(125, 137, 149, 0.45);
+            background: rgba(125, 137, 149, 0.16);
+        }
+
+        .mono {
+            font-family: var(--mono);
+        }
+
+        .news-wrap {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 300px;
+            grid-template-columns: 1fr 280px;
             gap: 14px;
-            align-items: start;
         }
 
         .news-stream {
@@ -550,192 +408,149 @@
         }
 
         .news-entry {
-            background: #10161d;
             border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            padding: 12px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-3);
+            padding: 11px;
             display: grid;
             gap: 7px;
         }
 
         .news-entry-title {
             margin: 0;
-            font-family: "Space Grotesk", sans-serif;
             font-size: 18px;
-            line-height: 1.25;
-            color: #e7edf4;
+            font-weight: 700;
         }
 
         .news-entry-meta {
             margin: 0;
-            color: #a6b2c1;
+            color: var(--text-dim);
             font-size: 13px;
-            line-height: 1.4;
         }
 
         .news-author {
-            color: #d2dbe5;
+            color: #b8c4d0;
             font-weight: 600;
         }
 
         .news-entry-body {
-            color: var(--muted);
-            line-height: 1.55;
-            font-size: 14px;
-        }
-
-        .news-side {
-            background: #10161d;
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            padding: 12px;
-            display: grid;
-            gap: 9px;
-        }
-
-        .news-side h3 {
             margin: 0;
-            font-size: 16px;
-        }
-
-        .news-side p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.48;
-        }
-
-        .news-link {
-            width: 100%;
-        }
-
-        .news-empty {
-            border: 1px dashed #3b4654;
-            border-radius: var(--radius-md);
-            padding: 12px;
-            color: var(--muted);
-            font-size: 14px;
-            background: #10161d;
-        }
-
-        .action-panel {
-            padding: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .action-panel h2 {
-            margin: 0 0 6px;
-            font-size: 22px;
-            font-family: "Space Grotesk", sans-serif;
-        }
-
-        .action-panel p {
-            margin: 0;
-            color: var(--muted);
+            color: var(--text-dim);
             font-size: 14px;
             line-height: 1.5;
         }
 
-        .reveal {
-            opacity: 0;
-            transform: translateY(14px);
-            animation: fadeUp 0.55s ease forwards;
-            animation-delay: var(--delay, 0s);
+        .news-side {
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-sm);
+            background: var(--surface-3);
+            padding: 12px;
+            display: grid;
+            gap: 8px;
+            align-content: start;
         }
 
-        @keyframes fadeUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .news-side h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .news-side p {
+            margin: 0;
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .news-empty {
+            border: 1px dashed #33414c;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .final {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 20px;
+        }
+
+        .final h2 {
+            margin: 0 0 6px;
+            font-size: 24px;
+        }
+
+        .final p {
+            margin: 0;
+            color: var(--text-dim);
+            font-size: 14px;
         }
 
         footer {
-            margin-top: 14px;
-            padding: 16px;
+            margin-top: 4px;
+            padding: 14px;
+            border-top: 1px solid var(--stroke-soft);
+            color: #7d8a98;
             text-align: center;
             font-size: 12px;
-            color: #7e8998;
-            border-top: 1px solid var(--stroke);
         }
 
-        @media (max-width: 1080px) {
-            .hero {
+        @media (max-width: 900px) {
+            .workflow {
                 grid-template-columns: 1fr;
             }
 
-            .diag-grid {
+            .news-wrap {
                 grid-template-columns: 1fr;
             }
 
-            .news-layout {
+            .diag-row {
                 grid-template-columns: 1fr;
+                gap: 4px;
+                align-items: start;
             }
 
-            .action-panel {
-                flex-direction: column;
-                align-items: flex-start;
+            .diag-row:first-child {
+                display: none;
             }
         }
 
-        @media (max-width: 760px) {
+        @media (max-width: 720px) {
             header {
-                padding: 0 16px;
+                padding: 0 14px;
             }
 
-            main.container {
-                width: 95vw;
-                padding-top: 22px;
-                gap: 16px;
+            main {
+                padding-top: 18px;
+                gap: 12px;
             }
 
-            .hero-copy,
-            .diagnostics-panel,
-            .tool-section,
-            .news-home,
-            .action-panel {
-                padding: 12px;
+            .hero,
+            .stack,
+            .final {
+                padding: 14px;
             }
 
-            .hero-copy h1 {
-                font-size: 28px;
+            h1 {
+                font-size: 35px;
             }
 
             .hero-actions {
                 flex-direction: column;
             }
 
-            .btn-main,
-            .btn-faq {
+            .btn {
                 width: 100%;
-            }
-
-            .workflow,
-            .problem-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-head {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .reveal {
-                animation: none;
-                opacity: 1;
-                transform: none;
+                text-align: center;
             }
         }
     </style>
 </head>
 
 <body>
-
     <header>
         <div class="logo">CodeBug</div>
         <nav id="nav-links"></nav>
@@ -743,188 +558,140 @@
 
     <main class="container">
         <section class="hero">
-            <div class="hero-copy reveal" style="--delay: 0s;">
-                <p class="kicker">CodeBug Debug Arena</p>
-                <h1>Тебе дают сломанный C++ код. Найди баг. Почини. Пройди тесты.</h1>
-                <p>
-                    Тренировка построена вокруг реальных причин WA, RE и TL. Ты не читаешь мотивацию. Ты анализируешь вход, правишь логику, запускаешь тесты и получаешь точный вердикт.
-                </p>
-                <div class="hero-actions">
-                    <a href="train.html" class="btn-main">Открыть тренировку</a>
-                    <a href="faq.html" class="btn-faq">Правила платформы</a>
-                </div>
-                <div class="tool-tags">
-                    <span class="bug-type-tag">off-by-one</span>
-                    <span class="bug-type-tag">overflow</span>
-                    <span class="bug-type-tag">индексы</span>
-                    <span class="bug-type-tag">бинарный поиск</span>
-                    <span class="bug-type-tag">DP transitions</span>
-                </div>
+            <div class="hero-head">
+                <span class="hero-kicker">debug session</span>
+                <h1>Сломанный C++ код. Найди баг. Исправь. Сдай тесты.</h1>
+                <p class="hero-sub">Точка входа в тренировку: WA, RE, TL, overflow, off-by-one, индексы, бинарный поиск, DP.</p>
             </div>
 
-            <aside class="diagnostics-panel reveal" style="--delay: 0.08s;">
-                <div class="panel-head">
-                    <span><strong>Задача:</strong> Prefix Sum Query</span>
-                    <span class="verdict-badge is-wa">Wrong Answer</span>
-                </div>
+            <div class="hero-actions">
+                <a class="btn primary" href="train.html">Открыть тренировку</a>
+                <a class="btn" href="submissions.html">Глобальные посылки</a>
+                <a class="btn" href="faq.html">Правила</a>
+            </div>
 
-                <div class="code-preview">
-                    <div class="code-row"><span class="code-ln">12</span><span class="code-text">for (int i = 1; i &lt;= n; ++i) pref[i] = pref[i - 1] + a[i];</span></div>
-                    <div class="code-row"><span class="code-ln">13</span><span class="code-text">while (q--) {</span></div>
-                    <div class="code-row"><span class="code-ln">14</span><span class="code-text">    int l, r; cin &gt;&gt; l &gt;&gt; r;</span></div>
-                    <div class="code-row is-bug"><span class="code-ln">15</span><span class="code-text">    cout &lt;&lt; pref[r] - pref[l] &lt;&lt; '\n';</span></div>
-                    <div class="code-row"><span class="code-ln">16</span><span class="code-text">}</span></div>
-                </div>
+            <div class="hero-tags">
+                <span class="tag">WA</span>
+                <span class="tag">RE</span>
+                <span class="tag">TL</span>
+                <span class="tag">overflow</span>
+                <span class="tag">off-by-one</span>
+                <span class="tag">binary search</span>
+                <span class="tag">DP</span>
+            </div>
 
-                <div class="diag-grid">
-                    <div class="test-output">
-                        <div class="mini-title">Test Output</div>
-                        <div class="test-row fail">test #4 <strong>FAILED</strong> (WA)</div>
-                        <div class="io-grid">
-                            <div class="io-box expected">expected\n42</div>
-                            <div class="io-box actual">actual\n39</div>
-                        </div>
-                        <div class="test-row pass">test #1-3 <strong>PASSED</strong></div>
-                    </div>
-                    <div class="diff-block">
-                        <div class="mini-title">Diff</div>
-                        <div class="diff-line remove">- cout &lt;&lt; pref[r] - pref[l] &lt;&lt; '\n';</div>
-                        <div class="diff-line add">+ cout &lt;&lt; pref[r] - pref[l - 1] &lt;&lt; '\n';</div>
-                        <div class="diff-line">bug type: off-by-one on left border</div>
-                    </div>
-                </div>
-            </aside>
+            <div class="code-atmos">
+                <div class="code-line"><span class="ln">14</span><span class="lt">for (int i = 0; i <span class="inline-bad"> <= </span> n; i++) sum += a[i];</span></div>
+                <div class="code-line bad"><span class="ln">15</span><span class="lt">cout << pref[r] - pref[l] << '\n';</span></div>
+                <div class="code-line good"><span class="ln">16</span><span class="lt">cout << pref[r] - pref[l - 1] << '\n';</span></div>
+                <div class="code-line"><span class="ln">17</span><span class="lt">if (mid <span class="inline-good">+ 1</span> <= hi) lo = mid + 1;</span></div>
+            </div>
         </section>
 
-        <section class="tool-section reveal" style="--delay: 0.12s;">
-            <div class="section-head">
-                <div>
-                    <h2>Как проходит сессия</h2>
-                    <p>Один цикл: код, диагностика, фикс, повторный прогон.</p>
-                </div>
+        <section class="stack">
+            <div class="head">
+                <h2>Как работает</h2>
+                <p>Короткий цикл без лишнего UI.</p>
             </div>
             <div class="workflow">
-                <article class="workflow-step">
+                <article class="step">
                     <span class="step-no">01</span>
-                    <h3>Читаешь условие и код</h3>
-                    <p>Находишь инвариант. Проверяешь индексы, типы, границы и переходы.</p>
+                    <h3>Читай код</h3>
+                    <p>Проверь границы, индексы, типы, переходы.</p>
                 </article>
-                <article class="workflow-step">
+                <article class="step">
                     <span class="step-no">02</span>
-                    <h3>Смотришь вердикт и тест</h3>
-                    <p>Сравниваешь expected/actual. Локализуешь строку с багом.</p>
+                    <h3>Смотри тест</h3>
+                    <p>Сравни expected/actual. Локализуй строку.</p>
                 </article>
-                <article class="workflow-step">
+                <article class="step">
                     <span class="step-no">03</span>
-                    <h3>Правишь и сдаешь снова</h3>
-                    <p>Получаешь Accepted или новый сигнал: WA, RE, TL, Pending.</p>
+                    <h3>Исправляй</h3>
+                    <p>Сдай снова и получи следующий вердикт.</p>
                 </article>
             </div>
         </section>
 
-        <section class="tool-section reveal" style="--delay: 0.18s;">
-            <div class="section-head">
-                <div>
-                    <h2>Примеры тренировок</h2>
-                    <p>Карточка задачи показывает не только тему, но и тип ошибки и текущий статус.</p>
+        <section class="stack">
+            <div class="head">
+                <h2>Диагностика задач</h2>
+                <p>Карточки без витрины. Только сигнал и контекст.</p>
+            </div>
+            <div class="diagnostic-table">
+                <div class="diag-row">
+                    <div>Задача</div>
+                    <div>Вердикт</div>
+                    <div>Тип бага</div>
+                    <div>Попытки</div>
+                </div>
+                <div class="diag-row">
+                    <div>Префиксные суммы</div>
+                    <div><span class="status s-wa">Wrong Answer</span></div>
+                    <div class="mono">off-by-one</div>
+                    <div class="mono">8</div>
+                </div>
+                <div class="diag-row">
+                    <div>DP на отрезке</div>
+                    <div><span class="status s-re">Runtime Error</span></div>
+                    <div class="mono">index underflow</div>
+                    <div class="mono">3</div>
+                </div>
+                <div class="diag-row">
+                    <div>Бинарный поиск</div>
+                    <div><span class="status s-tl">Time Limit</span></div>
+                    <div class="mono">infinite loop</div>
+                    <div class="mono">5</div>
+                </div>
+                <div class="diag-row">
+                    <div>Сумма на дереве</div>
+                    <div><span class="status s-ok">Accepted</span></div>
+                    <div class="mono">overflow fixed</div>
+                    <div class="mono">2</div>
+                </div>
+                <div class="diag-row">
+                    <div>Два указателя</div>
+                    <div><span class="status s-pending">Pending</span></div>
+                    <div class="mono">check in progress</div>
+                    <div class="mono">1</div>
                 </div>
             </div>
-            <div class="problem-grid">
-                <article class="problem-card">
-                    <div class="problem-head">
-                        <h3>Бинарный поиск по ответу</h3>
-                        <span class="problem-status is-pending">Pending</span>
-                    </div>
-                    <p>Ошибка в условии монотонности. При границе `mid` цикл не сужается.</p>
-                    <div class="problem-meta">
-                        <span class="bug-type-tag">Bug: infinite loop</span>
-                        <span class="bug-type-tag">Сложность: Средняя</span>
-                        <span class="problem-attempts">попыток: 5</span>
-                    </div>
-                </article>
-                <article class="problem-card">
-                    <div class="problem-head">
-                        <h3>DP на отрезке</h3>
-                        <span class="problem-status is-re">Runtime Error</span>
-                    </div>
-                    <p>Выход за границы массива при переходе `dp[i + 1][j - 1]`.</p>
-                    <div class="problem-meta">
-                        <span class="bug-type-tag">Bug: index underflow</span>
-                        <span class="bug-type-tag">Сложность: Сложная</span>
-                        <span class="problem-attempts">попыток: 3</span>
-                    </div>
-                </article>
-                <article class="problem-card">
-                    <div class="problem-head">
-                        <h3>Префиксные суммы</h3>
-                        <span class="problem-status is-wa">Wrong Answer</span>
-                    </div>
-                    <p>Смещение левой границы на 1. Ломает запросы длины 1 и full range.</p>
-                    <div class="problem-meta">
-                        <span class="bug-type-tag">Bug: off-by-one</span>
-                        <span class="bug-type-tag">Сложность: Легкая</span>
-                        <span class="problem-attempts">попыток: 8</span>
-                    </div>
-                </article>
-                <article class="problem-card">
-                    <div class="problem-head">
-                        <h3>Сумма на дереве</h3>
-                        <span class="problem-status is-accepted">Accepted</span>
-                    </div>
-                    <p>Исправлен overflow: `int` заменен на `long long` в аккумуляторе.</p>
-                    <div class="problem-meta">
-                        <span class="bug-type-tag">Bug: overflow</span>
-                        <span class="bug-type-tag">Сложность: Средняя</span>
-                        <span class="problem-attempts">попыток: 2</span>
-                    </div>
-                </article>
-            </div>
         </section>
 
-        <section class="tool-section news-home reveal" style="--delay: 0.24s;">
-            <div class="news-layout">
+        <section class="stack">
+            <div class="head">
+                <h2>Новости</h2>
+                <p>Релизы задач, изменения judge, правки тестов.</p>
+            </div>
+            <div class="news-wrap">
                 <div>
-                    <div class="section-head" style="margin-bottom:10px;">
-                        <div>
-                            <h2>Новости платформы</h2>
-                            <p>Только релизы задач, изменения рантайма, обновления тестов и правил.</p>
-                        </div>
-                    </div>
                     <div id="homeNewsList" class="news-stream"></div>
-                    <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
+                    <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет обновлений.</div>
                 </div>
                 <aside class="news-side">
-                    <h3>Что здесь публикуется</h3>
-                    <p>Новые наборы багов, изменения judge, правки тестов и статусов контестов.</p>
-                    <a href="news.html" class="btn-faq news-link" id="homeNewsArchiveLink">Открыть архив</a>
+                    <h3>Архив</h3>
+                    <p>История изменений по платформе и тестирующей системе.</p>
+                    <a href="news.html" class="btn" id="homeNewsArchiveLink">Открыть архив</a>
                 </aside>
             </div>
         </section>
 
-        <section class="action-panel reveal" style="--delay: 0.3s;">
+        <section class="final">
             <div>
-                <h2>Готов к сессии</h2>
-                <p>Открой тренировку и начни с WA. Потом переходи к overflow, UB, бинарному поиску и DP.</p>
+                <h2>Начни с WA</h2>
+                <p>Сначала простые ошибки. Потом overflow, UB, бинарный поиск и DP.</p>
             </div>
             <div class="hero-actions">
-                <a href="train.html" class="btn-main">Начать с WA</a>
-                <a href="submissions.html" class="btn-faq">История посылок</a>
+                <a class="btn primary" href="train.html">К задачам</a>
             </div>
         </section>
     </main>
-
-
-    <!-- подключение навигации -->
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script src="firebase.js"></script>
-    <!-- обязательно первой! -->
     <script src="auth.js"></script>
-    <!-- использует db -->
     <script src="globalsubmissions.js"></script>
-    <!-- использует db -->
     <script src="submit.js"></script>
 
     <script>
@@ -985,11 +752,11 @@
                 article.className = "news-entry";
                 const title = item.title || "Обновление CodeBug";
                 const author = item.author || "admin";
-                const body = trimText(item.text || "", 680);
+                const body = trimText(item.text || "", 500);
                 article.innerHTML = `
                     <h3 class="news-entry-title">${escapeHtml(title)}</h3>
                     <p class="news-entry-meta">Автор <span class="news-author">${escapeHtml(author)}</span>, ${formatRelativeTime(item.created)}</p>
-                    <div class="news-entry-body">${formatAnnouncementText(body)}</div>
+                    <p class="news-entry-body">${formatAnnouncementText(body)}</p>
                 `;
                 list.appendChild(article);
             });
