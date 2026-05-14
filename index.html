@@ -108,36 +108,56 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(900px 460px at 82% 16%, rgba(38, 96, 68, 0.16), transparent 70%),
-                radial-gradient(620px 380px at 8% 74%, rgba(31, 63, 50, 0.1), transparent 68%);
+                radial-gradient(900px 460px at 82% 16%, rgba(38, 96, 68, 0.14), transparent 70%),
+                radial-gradient(620px 380px at 8% 74%, rgba(31, 63, 50, 0.09), transparent 68%),
+                radial-gradient(700px 320px at 55% 62%, rgba(22, 44, 36, 0.12), transparent 72%);
             pointer-events: none;
         }
 
         .code-fog {
             position: absolute;
-            inset: -12% -14% -10%;
+            inset: -22% -26% -18%;
             z-index: 1;
-            transform: rotate(-1.8deg);
+            transform: rotate(-1.4deg);
             pointer-events: none;
-            filter: blur(0.9px);
-            opacity: 0.48;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 8vw;
-            align-content: center;
+            filter: blur(1px);
+            opacity: 0.46;
         }
 
         .code-block {
+            position: absolute;
             display: grid;
             gap: 0;
+            width: 48vw;
         }
 
         .code-block.a {
-            transform: translate(-4vw, -3vh);
+            left: -10vw;
+            top: 7vh;
+            transform: rotate(-0.4deg);
         }
 
         .code-block.b {
-            transform: translate(6vw, 5vh);
+            right: -12vw;
+            top: 16vh;
+            transform: rotate(0.8deg);
+            opacity: 0.86;
+        }
+
+        .code-block.c {
+            left: 8vw;
+            bottom: 10vh;
+            width: 42vw;
+            transform: rotate(-0.7deg);
+            opacity: 0.8;
+        }
+
+        .code-block.d {
+            right: 4vw;
+            bottom: 5vh;
+            width: 38vw;
+            transform: rotate(0.5deg);
+            opacity: 0.72;
         }
 
         .code-row {
@@ -148,8 +168,12 @@
             color: #687a89;
             line-height: 1.48;
             transition: opacity .48s ease, color .48s ease, background-color .7s ease;
-            opacity: .2;
+            opacity: .18;
             padding: 1px 0;
+        }
+
+        .code-row:nth-child(2n) {
+            opacity: .24;
         }
 
         .code-row .ln {
@@ -165,7 +189,7 @@
         }
 
         .code-row.hover {
-            opacity: .46;
+            opacity: .42;
             color: #8ea2b2;
         }
 
@@ -196,7 +220,7 @@
             font-size: clamp(32px, 5.1vw, 54px);
             line-height: 1;
             font-weight: 700;
-            color: rgba(123, 176, 149, 0.75);
+            color: rgba(118, 169, 143, 0.67);
             letter-spacing: 0.2px;
         }
 
@@ -210,11 +234,11 @@
 
         .cta {
             margin-top: 4px;
-            border: 1px solid rgba(63, 134, 96, 0.62);
+            border: 1px solid rgba(67, 136, 99, 0.46);
             border-radius: 9px;
             padding: 10px 15px;
-            background: rgba(25, 55, 42, 0.62);
-            color: #cfe2d7;
+            background: rgba(16, 24, 21, 0.44);
+            color: #bfd1c6;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
@@ -222,9 +246,9 @@
         }
 
         .cta:hover {
-            background: rgba(33, 78, 58, 0.78);
-            border-color: rgba(80, 157, 116, 0.72);
-            color: #deece4;
+            background: rgba(27, 56, 43, 0.65);
+            border-color: rgba(83, 158, 119, 0.64);
+            color: #d2e1d9;
         }
 
         .news {
@@ -346,14 +370,32 @@
             }
 
             .code-fog {
-                inset: -2% -36%;
+                inset: -8% -44% -12%;
                 transform: rotate(-1deg);
-                opacity: 0.43;
-                grid-template-columns: 1fr;
-                column-gap: 0;
+                opacity: 0.42;
+            }
+
+            .code-block {
+                width: 92vw;
+            }
+
+            .code-block.a {
+                left: -20vw;
+                top: 14vh;
             }
 
             .code-block.b {
+                right: -26vw;
+                top: 42vh;
+            }
+
+            .code-block.c {
+                left: -10vw;
+                bottom: 16vh;
+                width: 84vw;
+            }
+
+            .code-block.d {
                 display: none;
             }
         }
@@ -398,12 +440,30 @@
                 <div class="code-row"><span class="ln">33</span><span class="txt">sum += (long long)cnt * val;</span></div>
                 <div class="code-row"><span class="ln">34</span><span class="txt">if (prev == -1) prev = cur;</span></div>
             </div>
+            <div class="code-block c">
+                <div class="code-row"><span class="ln">35</span><span class="txt">if (r - l + 1 <= k) best = min(best, cur);</span></div>
+                <div class="code-row"><span class="ln">36</span><span class="txt">for (int bit = 0; bit < 20; ++bit) mask ^= (1 << bit);</span></div>
+                <div class="code-row"><span class="ln">37</span><span class="txt">if (ptr == -1) ptr = i;</span></div>
+                <div class="code-row"><span class="ln">38</span><span class="txt">while (j < n && sum + a[j] <= s) sum += a[j++];</span></div>
+                <div class="code-row"><span class="ln">39</span><span class="txt">auto ok = [&](long long x) { return x * x <= lim; };</span></div>
+                <div class="code-row"><span class="ln">40</span><span class="txt">if (used <= limit) answer = max(answer, cur);</span></div>
+                <div class="code-row"><span class="ln">41</span><span class="txt">pref[i] = pref[i - 1] + val[i];</span></div>
+                <div class="code-row"><span class="ln">42</span><span class="txt">if (a[mid] == x) return mid;</span></div>
+            </div>
+            <div class="code-block d">
+                <div class="code-row"><span class="ln">43</span><span class="txt">int nxt = (v + 1) % n;</span></div>
+                <div class="code-row"><span class="ln">44</span><span class="txt">if (dist[to] > dist[v] + w) dist[to] = dist[v] + w;</span></div>
+                <div class="code-row"><span class="ln">45</span><span class="txt">for (int i = 0; i <= m; ++i) ways[i] = 0;</span></div>
+                <div class="code-row"><span class="ln">46</span><span class="txt">if (cur == target) break;</span></div>
+                <div class="code-row"><span class="ln">47</span><span class="txt">if (x == 0) return 0;</span></div>
+                <div class="code-row"><span class="ln">48</span><span class="txt">ans += max(0LL, r - l + 1);</span></div>
+            </div>
         </div>
 
         <div class="hero-content">
             <h1 class="brand">CodeBug</h1>
             <p class="subtitle">Где-то здесь ошибка.</p>
-            <a class="cta" href="train.html">Открыть тренировку</a>
+            <a class="cta" href="train.html">К тренировке</a>
         </div>
     </section>
 
