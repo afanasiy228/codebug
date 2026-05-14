@@ -7,7 +7,7 @@
     <title>CodeBug</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
+         :root {
             --bg: #090b0d;
             --bg-2: #0b0f12;
             --ink: #cfd9e2;
@@ -18,16 +18,16 @@
             --red-soft: #9f6464;
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
-
+        
         * {
             box-sizing: border-box;
         }
-
+        
         html,
         body {
             height: 100%;
         }
-
+        
         body {
             margin: 0;
             font-family: "Inter", sans-serif;
@@ -38,13 +38,13 @@
             scrollbar-width: thin;
             scrollbar-color: #27323a #0a0d10;
         }
-
+        
         .screen {
             min-height: 100vh;
             scroll-snap-align: start;
             scroll-snap-stop: always;
         }
-
+        
         .top-nav {
             position: fixed;
             top: 0;
@@ -59,7 +59,7 @@
             border-bottom: 1px solid rgba(29, 39, 46, 0.42);
             backdrop-filter: blur(4px);
         }
-
+        
         .top-nav-inner {
             width: min(1180px, 96vw);
             display: flex;
@@ -67,20 +67,20 @@
             justify-content: space-between;
             gap: 10px;
         }
-
+        
         .top-nav .logo {
             font-size: 14px;
             font-weight: 700;
             color: #d2dde5;
             letter-spacing: 0.2px;
         }
-
+        
         .top-nav nav {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-
+        
         .top-nav nav a {
             margin: 0;
             color: #8f9daa;
@@ -89,11 +89,11 @@
             font-weight: 600;
             white-space: nowrap;
         }
-
+        
         .top-nav nav a:hover {
             color: #cbd6df;
         }
-
+        
         .hero {
             position: relative;
             overflow: hidden;
@@ -102,18 +102,15 @@
             justify-items: center;
             padding: 24px;
         }
-
+        
         .hero::before {
             content: "";
             position: absolute;
             inset: 0;
-            background:
-                radial-gradient(900px 460px at 82% 16%, rgba(38, 96, 68, 0.14), transparent 70%),
-                radial-gradient(620px 380px at 8% 74%, rgba(31, 63, 50, 0.09), transparent 68%),
-                radial-gradient(700px 320px at 55% 62%, rgba(22, 44, 36, 0.12), transparent 72%);
+            background: radial-gradient(900px 460px at 82% 16%, rgba(38, 96, 68, 0.14), transparent 70%), radial-gradient(620px 380px at 8% 74%, rgba(31, 63, 50, 0.09), transparent 68%), radial-gradient(700px 320px at 55% 62%, rgba(22, 44, 36, 0.12), transparent 72%);
             pointer-events: none;
         }
-
+        
         .code-fog {
             position: absolute;
             inset: -14% -16% -14%;
@@ -124,15 +121,30 @@
             opacity: 0.72;
             overflow: hidden;
         }
-
+        
         .code-block {
             position: absolute;
-            display: grid;
+            display: flex;
+            flex-direction: column;
             gap: 0;
-            width: 42vw;
             will-change: transform, opacity;
         }
 
+        .layer-1 {
+            opacity: .22;
+            filter: blur(1px);
+        }
+
+        .layer-2 {
+            opacity: .16;
+            filter: blur(1.5px);
+        }
+
+        .layer-3 {
+            opacity: .2;
+            filter: blur(1.2px);
+        }
+        
         .code-row {
             display: grid;
             grid-template-columns: 38px 1fr;
@@ -144,45 +156,46 @@
             opacity: .22;
             padding: 1px 0;
             transform: translateY(0);
+            width: 180vw;
         }
-
+        
         .code-row:nth-child(2n) {
             opacity: .28;
         }
-
+        
         .code-row .ln {
             text-align: right;
             padding-right: 8px;
             color: #4e5e6d;
             user-select: none;
         }
-
+        
         .code-row .txt {
             white-space: pre;
             overflow-x: auto;
         }
-
+        
         .code-row.hover {
             opacity: .42;
             color: #8ea2b2;
         }
-
+        
         .code-row.hot-red {
             opacity: .66;
             color: #cfb1b1;
             background: rgba(122, 63, 63, 0.17);
         }
-
+        
         .code-row.hot-green {
             opacity: .66;
             color: #b1d7c2;
             background: rgba(45, 107, 76, 0.18);
         }
-
+        
         .code-row.muted-hide {
             opacity: .08;
         }
-
+        
         .hero-content {
             position: relative;
             z-index: 2;
@@ -192,7 +205,7 @@
             justify-items: start;
             gap: 10px;
         }
-
+        
         .brand {
             margin: 0;
             font-size: clamp(32px, 5.1vw, 54px);
@@ -201,7 +214,7 @@
             color: rgba(118, 169, 143, 0.67);
             letter-spacing: 0.2px;
         }
-
+        
         .subtitle {
             margin: 0;
             color: #9ca8b4;
@@ -209,7 +222,7 @@
             line-height: 1.28;
             max-width: 560px;
         }
-
+        
         .cta {
             margin-top: 4px;
             border: 1px solid rgba(67, 136, 99, 0.46);
@@ -222,26 +235,26 @@
             font-weight: 600;
             transition: background .2s ease, border-color .2s ease, color .2s ease;
         }
-
+        
         .cta:hover {
             background: rgba(27, 56, 43, 0.65);
             border-color: rgba(83, 158, 119, 0.64);
             color: #d2e1d9;
         }
-
+        
         .news {
             padding: 84px 18px 34px;
             display: grid;
             align-content: center;
         }
-
+        
         .news-shell {
             width: min(780px, 100%);
             margin: 0 auto;
             display: grid;
             gap: 10px;
         }
-
+        
         .news-head {
             display: flex;
             align-items: center;
@@ -250,14 +263,14 @@
             padding-bottom: 8px;
             border-bottom: 1px solid var(--line);
         }
-
+        
         .news-head h2 {
             margin: 0;
             font-size: 26px;
             font-weight: 700;
             color: #d6dfe8;
         }
-
+        
         .news-head a {
             border: 1px solid #2a3640;
             border-radius: 8px;
@@ -267,29 +280,29 @@
             text-decoration: none;
             padding: 5px 9px;
         }
-
+        
         .news-list {
             display: grid;
             gap: 0;
         }
-
+        
         .news-item {
             display: grid;
             gap: 4px;
             padding: 10px 0;
             border-bottom: 1px solid #19242b;
         }
-
+        
         .news-item:last-child {
             border-bottom: none;
         }
-
+        
         .news-meta {
             font-family: var(--mono);
             color: #7f8d9b;
             font-size: 11px;
         }
-
+        
         .news-title {
             margin: 0;
             font-size: 16px;
@@ -297,14 +310,14 @@
             line-height: 1.3;
             color: #d2dce5;
         }
-
+        
         .news-text {
             margin: 0;
             color: var(--muted);
             font-size: 14px;
             line-height: 1.35;
         }
-
+        
         .news-open {
             margin-top: 2px;
             width: fit-content;
@@ -314,47 +327,38 @@
             border-bottom: 1px solid #2b3741;
             padding-bottom: 1px;
         }
-
+        
         .news-empty {
             margin-top: 8px;
             color: var(--muted);
             font-size: 14px;
         }
-
+        
         @media (max-width: 760px) {
             .top-nav {
                 height: 50px;
                 justify-content: center;
                 border-bottom-color: rgba(27, 37, 44, 0.55);
             }
-
             .top-nav-inner {
                 width: calc(100vw - 22px);
             }
-
             .hero-content {
                 transform: none;
                 width: min(560px, 92vw);
                 justify-items: center;
                 text-align: center;
             }
-
             .brand {
                 color: rgba(145, 196, 170, 0.88);
             }
-
             .subtitle {
                 font-size: 21px;
             }
-
             .code-fog {
                 inset: -12% -38% -16%;
                 transform: rotate(-0.8deg);
                 opacity: 0.48;
-            }
-
-            .code-block {
-                width: 92vw;
             }
         }
     </style>
@@ -416,7 +420,10 @@
             if (!ts) return "без даты";
             const d = new Date(Number(ts));
             if (Number.isNaN(d.getTime())) return "без даты";
-            return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
+            return d.toLocaleDateString("ru-RU", {
+                day: "2-digit",
+                month: "2-digit"
+            });
         }
 
         function renderHomeNews(items) {
@@ -539,42 +546,31 @@
                 "if (best > cur) best = cur;"
             ];
 
-            const blockConfigsDesktop = [
-                { left: "-16vw", top: "-10vh", width: "42vw", rotate: -0.8, opacity: 0.62, blur: 1.2 },
-                { left: "20vw", top: "-12vh", width: "42vw", rotate: 0.4, opacity: 0.56, blur: 1.0 },
-                { left: "56vw", top: "-8vh", width: "40vw", rotate: 1.0, opacity: 0.6, blur: 1.15 },
-                { left: "-12vw", top: "28vh", width: "44vw", rotate: -0.5, opacity: 0.58, blur: 0.95 },
-                { left: "24vw", top: "26vh", width: "42vw", rotate: 0.3, opacity: 0.52, blur: 1.15 },
-                { left: "60vw", top: "30vh", width: "38vw", rotate: -0.2, opacity: 0.6, blur: 1.0 },
-                { left: "-18vw", top: "62vh", width: "46vw", rotate: 0.8, opacity: 0.56, blur: 1.2 },
-                { left: "20vw", top: "64vh", width: "44vw", rotate: -0.4, opacity: 0.54, blur: 1.05 },
-                { left: "58vw", top: "66vh", width: "40vw", rotate: 0.55, opacity: 0.58, blur: 1.1 }
-            ];
-
-            const blockConfigsMobile = [
-                { left: "-30vw", top: "-8vh", width: "92vw", rotate: -0.6, opacity: 0.56, blur: 1.1 },
-                { left: "-8vw", top: "14vh", width: "92vw", rotate: 0.35, opacity: 0.5, blur: 1.0 },
-                { left: "-24vw", top: "36vh", width: "92vw", rotate: -0.45, opacity: 0.52, blur: 1.15 },
-                { left: "-4vw", top: "58vh", width: "92vw", rotate: 0.25, opacity: 0.48, blur: 1.0 },
-                { left: "-20vw", top: "80vh", width: "92vw", rotate: -0.35, opacity: 0.54, blur: 1.2 }
-            ];
-
-            const blockConfigs = window.matchMedia("(max-width: 760px)").matches ? blockConfigsMobile : blockConfigsDesktop;
-            const lineCountPerBlock = window.matchMedia("(max-width: 760px)").matches ? 22 : 16;
+            const layers = [{
+                className: "layer-1",
+                top: "-8vh",
+                rotate: -1
+            }, {
+                className: "layer-2",
+                top: "26vh",
+                rotate: 0.5
+            }, {
+                className: "layer-3",
+                top: "58vh",
+                rotate: -0.4
+            }];
             const rows = [];
             let lineNo = 100;
 
-            for (const cfg of blockConfigs) {
+            for (const layerCfg of layers) {
                 const block = document.createElement("div");
-                block.className = "code-block";
-                block.style.left = cfg.left;
-                block.style.top = cfg.top;
-                block.style.width = cfg.width;
-                block.style.transform = `rotate(${cfg.rotate}deg)`;
-                block.style.opacity = String(cfg.opacity);
-                block.style.filter = `blur(${cfg.blur}px)`;
+                block.className = `code-block ${layerCfg.className}`;
+                block.style.left = "-30vw";
+                block.style.top = layerCfg.top;
+                block.style.width = "180vw";
+                block.style.transform = `rotate(${layerCfg.rotate}deg)`;
 
-                for (let i = 0; i < lineCountPerBlock; i++) {
+                for (let i = 0; i < 44; i++) {
                     const row = document.createElement("div");
                     row.className = "code-row";
                     const ln = document.createElement("span");
@@ -582,7 +578,11 @@
                     ln.textContent = String(lineNo++);
                     const txt = document.createElement("span");
                     txt.className = "txt";
-                    txt.textContent = codeTemplates[(i + rows.length) % codeTemplates.length];
+                    let line = "";
+                    for (let j = 0; j < 4; j++) {
+                        line += codeTemplates[(i + j + rows.length) % codeTemplates.length] + "   ";
+                    }
+                    txt.textContent = line;
                     row.appendChild(ln);
                     row.appendChild(txt);
                     block.appendChild(row);
@@ -615,17 +615,25 @@
                     const cy = r.top + r.height / 2;
                     const dx = Math.abs(clientX - cx);
                     const dy = Math.abs(clientY - cy);
-                    if (dx < 560 && dy < 66) row.classList.add("hover");
+                    if (dx < 760 && dy < 52) row.classList.add("hover");
                     else row.classList.remove("hover");
                 });
             }
 
             function mutateLine(text) {
-                const swaps = [
-                    { from: "<=", to: "<" },
-                    { from: "==", to: "=" },
-                    { from: "r]", to: "r - 1]" }
-                ];
+                const swaps = [{
+                    from: "<=",
+                    to: "<"
+                }, {
+                    from: "==",
+                    to: "="
+                }, {
+                    from: "r]",
+                    to: "r - 1]"
+                }, {
+                    from: "+ 1",
+                    to: "- 1"
+                }];
                 for (const pair of swaps) {
                     if (text.includes(pair.from)) return text.replace(pair.from, pair.to);
                 }
@@ -666,7 +674,7 @@
                 if (mode === 0) {
                     txt.textContent = original + " // check";
                 } else if (mode === 1) {
-                    txt.textContent = original.slice(0, Math.max(0, original.length - 8));
+                    txt.textContent = original.slice(0, Math.max(0, original.length - 12));
                 } else if (mode === 2) {
                     txt.textContent = mutateLine(original);
                 } else {
@@ -681,7 +689,7 @@
             }
 
             function schedulePulse() {
-                const delay = 6000 + Math.floor(Math.random() * 4000);
+                const delay = 4000 + Math.floor(Math.random() * 7000);
                 setTimeout(() => {
                     runPulse();
                     schedulePulse();
@@ -689,14 +697,16 @@
             }
 
             function scheduleDrift() {
-                const delay = 2600 + Math.floor(Math.random() * 4200);
+                const delay = 2200 + Math.floor(Math.random() * 5000);
                 setTimeout(() => {
                     runDrift();
                     scheduleDrift();
                 }, delay);
             }
 
-            document.addEventListener("mousemove", (e) => setHoverByPointer(e.clientX, e.clientY), { passive: true });
+            document.addEventListener("mousemove", (e) => setHoverByPointer(e.clientX, e.clientY), {
+                passive: true
+            });
             document.addEventListener("mouseleave", () => rows.forEach((row) => row.classList.remove("hover")));
 
             schedulePulse();
