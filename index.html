@@ -5,22 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeBug</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #090b0d;
-            --bg-2: #0d1114;
-            --surface: #11171b;
-            --surface-2: #0f1418;
-            --stroke: #1f2a31;
-            --text: #dfe7ee;
-            --text-dim: #95a1ad;
-            --accent: #1f6a47;
-            --accent-strong: #2b8559;
-            --bad: #ad5f5f;
-            --good: #3b8f66;
+            --bg-2: #0b0f12;
+            --ink: #cfd9e2;
+            --muted: #8693a0;
+            --line: #1b252c;
+            --green: #2f7a56;
+            --green-soft: #3d9468;
+            --red-soft: #9f6464;
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            --radius: 10px;
         }
 
         * {
@@ -35,12 +31,12 @@
         body {
             margin: 0;
             font-family: "Inter", sans-serif;
-            color: var(--text);
+            color: var(--ink);
             background: linear-gradient(180deg, var(--bg), var(--bg-2));
             overflow-y: auto;
             scroll-snap-type: y mandatory;
             scrollbar-width: thin;
-            scrollbar-color: #2a353d #0a0d10;
+            scrollbar-color: #27323a #0a0d10;
         }
 
         .screen {
@@ -49,255 +45,249 @@
             scroll-snap-stop: always;
         }
 
-        .hero-screen {
+        .top-nav {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 7px 11px;
+            border: 1px solid rgba(29, 39, 46, 0.75);
+            border-radius: 999px;
+            background: rgba(8, 11, 13, 0.62);
+            backdrop-filter: blur(7px);
+        }
+
+        .top-nav .logo {
+            font-size: 14px;
+            font-weight: 700;
+            color: #d6e0e8;
+        }
+
+        .top-nav nav a {
+            margin-left: 10px;
+            color: #92a0ae;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .top-nav nav a:hover {
+            color: #d2dce5;
+        }
+
+        .hero {
             position: relative;
-            display: grid;
-            place-items: center;
-            padding: 24px;
             overflow: hidden;
+            display: grid;
+            align-items: center;
+            justify-items: center;
+            padding: 24px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(900px 460px at 82% 16%, rgba(38, 96, 68, 0.16), transparent 70%),
+                radial-gradient(620px 380px at 8% 74%, rgba(31, 63, 50, 0.1), transparent 68%);
+            pointer-events: none;
+        }
+
+        .code-fog {
+            position: absolute;
+            inset: -4% -8%;
+            z-index: 1;
+            transform: rotate(-2.4deg) translateX(-2%);
+            pointer-events: none;
+            filter: blur(0.8px);
+            opacity: 0.56;
+        }
+
+        .code-row {
+            display: grid;
+            grid-template-columns: 38px 1fr;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: #718292;
+            line-height: 1.48;
+            transition: opacity .48s ease, color .48s ease, background-color .7s ease;
+            opacity: .22;
+            padding: 1px 0;
+        }
+
+        .code-row .ln {
+            text-align: right;
+            padding-right: 8px;
+            color: #4e5e6d;
+            user-select: none;
+        }
+
+        .code-row .txt {
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .code-row.hover {
+            opacity: .5;
+            color: #95a7b7;
+        }
+
+        .code-row.hot-red {
+            opacity: .66;
+            color: #cfb1b1;
+            background: rgba(122, 63, 63, 0.17);
+        }
+
+        .code-row.hot-green {
+            opacity: .66;
+            color: #b1d7c2;
+            background: rgba(45, 107, 76, 0.18);
         }
 
         .hero-content {
             position: relative;
             z-index: 2;
-            max-width: 760px;
-            text-align: center;
+            width: min(760px, 92vw);
+            transform: translate(-5.8vw, 4.6vh);
+            text-align: left;
             display: grid;
-            gap: 14px;
+            justify-items: start;
+            gap: 10px;
         }
 
         .brand {
             margin: 0;
-            font-size: clamp(44px, 9vw, 92px);
-            font-weight: 700;
+            font-size: clamp(36px, 6.6vw, 68px);
             line-height: 1;
-            letter-spacing: 0;
+            font-weight: 700;
+            color: rgba(136, 187, 161, 0.84);
+            letter-spacing: 0.2px;
         }
 
         .subtitle {
             margin: 0;
-            color: var(--text-dim);
-            font-size: clamp(16px, 2.6vw, 22px);
-            line-height: 1.35;
+            color: #9ca8b4;
+            font-size: clamp(16px, 2.2vw, 24px);
+            line-height: 1.28;
+            max-width: 560px;
         }
 
         .cta {
-            justify-self: center;
-            border: 1px solid #2b7a54;
-            border-radius: 10px;
-            background: var(--accent);
-            color: #e8f4ee;
-            font-size: 15px;
-            font-weight: 600;
-            padding: 11px 18px;
+            margin-top: 4px;
+            border: 1px solid #2f8159;
+            border-radius: 9px;
+            padding: 10px 15px;
+            background: rgba(35, 106, 74, 0.88);
+            color: #e3f0e8;
             text-decoration: none;
-            transition: background .15s ease, border-color .15s ease, transform .15s ease;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background .2s ease, border-color .2s ease;
         }
 
         .cta:hover {
-            background: var(--accent-strong);
-            border-color: #379868;
-            transform: translateY(-1px);
+            background: rgba(44, 130, 91, 0.9);
+            border-color: #42996d;
         }
 
-        .top-nav {
-            position: fixed;
-            top: 14px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 5;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 8px 12px;
-            border: 1px solid #1a232a;
-            border-radius: 999px;
-            background: rgba(10, 13, 16, .72);
-            backdrop-filter: blur(8px);
-        }
-
-        .top-nav .logo {
-            font-weight: 700;
-            font-size: 14px;
-            letter-spacing: .2px;
-            color: #e6edf3;
-        }
-
-        .top-nav nav a {
-            font-size: 13px;
-            color: #9aa6b3;
-            text-decoration: none;
-            margin-left: 10px;
-        }
-
-        .top-nav nav a:hover {
-            color: #dce5ed;
-        }
-
-        .code-bg {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            display: grid;
-            place-items: center;
-            pointer-events: none;
-        }
-
-        .code-field {
-            width: min(980px, 92vw);
-            border: 1px solid #1a242b;
-            border-radius: var(--radius);
-            background: rgba(12, 16, 20, .52);
-            overflow: hidden;
-            filter: blur(.2px);
-        }
-
-        .code-row {
-            display: grid;
-            grid-template-columns: 46px 1fr;
-            border-top: 1px solid rgba(31, 42, 49, .45);
-            font-family: var(--mono);
-            font-size: 12px;
-            line-height: 1.5;
-            color: #8ea0af;
-            opacity: .4;
-            transition: opacity .18s ease, background-color .18s ease;
-        }
-
-        .code-row:first-child {
-            border-top: none;
-        }
-
-        .code-row .ln {
-            text-align: right;
-            padding: 7px 10px 7px 0;
-            border-right: 1px solid rgba(31, 42, 49, .55);
-            color: #647483;
-        }
-
-        .code-row .txt {
-            padding: 7px 12px;
-            white-space: pre;
-            overflow-x: auto;
-        }
-
-        .code-row.active {
-            opacity: .72;
-        }
-
-        .code-row.bad {
-            opacity: .85;
-            background: rgba(173, 95, 95, .16);
-            color: #dcb2b2;
-        }
-
-        .code-row.good {
-            opacity: .85;
-            background: rgba(59, 143, 102, .16);
-            color: #b8d9c7;
-        }
-
-        .news-screen {
-            padding: 76px 16px 34px;
+        .news {
+            padding: 84px 18px 34px;
             display: grid;
             align-content: center;
         }
 
-        .news-wrap {
-            width: min(820px, 100%);
+        .news-shell {
+            width: min(780px, 100%);
             margin: 0 auto;
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius);
-            background: var(--surface);
-            padding: 18px;
             display: grid;
-            gap: 12px;
+            gap: 10px;
         }
 
         .news-head {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #1b252c;
-            padding-bottom: 10px;
+            justify-content: space-between;
             gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--line);
         }
 
         .news-head h2 {
             margin: 0;
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
+            color: #d6dfe8;
         }
 
         .news-head a {
-            font-size: 13px;
-            color: #a9b7c4;
-            text-decoration: none;
-            border: 1px solid #283640;
+            border: 1px solid #2a3640;
             border-radius: 8px;
-            padding: 6px 10px;
-            background: var(--surface-2);
+            color: #a8b6c3;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 5px 9px;
         }
 
         .news-list {
             display: grid;
-            gap: 8px;
+            gap: 0;
         }
 
         .news-item {
-            border: 1px solid #1f2b33;
-            border-radius: 9px;
-            background: var(--surface-2);
-            padding: 11px 12px;
             display: grid;
-            gap: 6px;
+            gap: 4px;
+            padding: 10px 0;
+            border-bottom: 1px solid #19242b;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
         }
 
         .news-meta {
-            display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            align-items: center;
             font-family: var(--mono);
+            color: #7f8d9b;
             font-size: 11px;
-            color: #7f8d9a;
         }
 
         .news-title {
             margin: 0;
             font-size: 16px;
             font-weight: 600;
-            line-height: 1.25;
+            line-height: 1.3;
+            color: #d2dce5;
         }
 
         .news-text {
             margin: 0;
-            color: var(--text-dim);
+            color: var(--muted);
             font-size: 14px;
-            line-height: 1.4;
+            line-height: 1.35;
         }
 
         .news-open {
-            justify-self: start;
-            font-size: 12px;
-            font-weight: 600;
-            color: #c4cfda;
-            border: 1px solid #2a3741;
-            border-radius: 7px;
-            padding: 5px 9px;
+            margin-top: 2px;
+            width: fit-content;
+            color: #b7c4d0;
             text-decoration: none;
-            background: #0f1418;
+            font-size: 12px;
+            border-bottom: 1px solid #2b3741;
+            padding-bottom: 1px;
         }
 
         .news-empty {
-            color: var(--text-dim);
+            margin-top: 8px;
+            color: var(--muted);
             font-size: 14px;
-            border: 1px dashed #2d3a44;
-            border-radius: 9px;
-            padding: 12px;
         }
 
-        @media (max-width: 720px) {
+        @media (max-width: 760px) {
             .top-nav {
                 width: calc(100vw - 22px);
                 justify-content: space-between;
@@ -308,19 +298,24 @@
             }
 
             .hero-content {
-                gap: 12px;
+                transform: none;
+                width: min(560px, 92vw);
+                justify-items: center;
+                text-align: center;
+            }
+
+            .brand {
+                color: rgba(145, 196, 170, 0.88);
             }
 
             .subtitle {
-                font-size: 20px;
+                font-size: 21px;
             }
 
-            .code-field {
-                width: 100%;
-            }
-
-            .news-screen {
-                padding-top: 64px;
+            .code-fog {
+                inset: 8% -18%;
+                transform: rotate(-1.2deg);
+                opacity: 0.5;
             }
         }
     </style>
@@ -332,16 +327,20 @@
         <nav id="nav-links"></nav>
     </div>
 
-    <section class="screen hero-screen">
-        <div class="code-bg" aria-hidden="true">
-            <div class="code-field" id="codeField">
-                <div class="code-row" data-row="0"><span class="ln">12</span><span class="txt">for (int i = 0; i <= n; i++) pref[i] = pref[i - 1] + a[i];</span></div>
-                <div class="code-row" data-row="1"><span class="ln">13</span><span class="txt">while (q--) { int l, r; cin >> l >> r; }</span></div>
-                <div class="code-row" data-row="2"><span class="ln">14</span><span class="txt">cout << pref[r] - pref[l] << '\n';</span></div>
-                <div class="code-row" data-row="3"><span class="ln">15</span><span class="txt">if (lo <= hi) mid = (lo + hi) / 2;</span></div>
-                <div class="code-row" data-row="4"><span class="ln">16</span><span class="txt">vector<int> dp(n + 1, INF);</span></div>
-                <div class="code-row" data-row="5"><span class="ln">17</span><span class="txt">answer += a[i] * b[i];</span></div>
-            </div>
+    <section class="screen hero" id="heroScreen">
+        <div class="code-fog" id="codeFog" aria-hidden="true">
+            <div class="code-row"><span class="ln">11</span><span class="txt">for (int i = 0; i <= n; ++i) pref[i] = pref[i - 1] + a[i];</span></div>
+            <div class="code-row"><span class="ln">12</span><span class="txt">if (l < 0 || r >= n) return false;</span></div>
+            <div class="code-row"><span class="ln">13</span><span class="txt">while (lo <= hi) { int mid = (lo + hi) / 2; }</span></div>
+            <div class="code-row"><span class="ln">14</span><span class="txt">cout << pref[r] - pref[l] << '\n';</span></div>
+            <div class="code-row"><span class="ln">15</span><span class="txt">if (a[i] == target) ans = i;</span></div>
+            <div class="code-row"><span class="ln">16</span><span class="txt">if (dp[i - 1] + w < dp[i]) dp[i] = dp[i - 1] + w;</span></div>
+            <div class="code-row"><span class="ln">17</span><span class="txt">for (int i = 1; i < n; ++i) answer += a[i] * b[i];</span></div>
+            <div class="code-row"><span class="ln">18</span><span class="txt">if (r > 0) sum -= pref[r - 1];</span></div>
+            <div class="code-row"><span class="ln">19</span><span class="txt">if (balance = 0) ok = true;</span></div>
+            <div class="code-row"><span class="ln">20</span><span class="txt">vector<long long> pref(n + 1, 0);</span></div>
+            <div class="code-row"><span class="ln">21</span><span class="txt">if (idx < n) idx = idx + 1;</span></div>
+            <div class="code-row"><span class="ln">22</span><span class="txt">cout << (ok ? "YES" : "NO") << '\n';</span></div>
         </div>
 
         <div class="hero-content">
@@ -351,8 +350,8 @@
         </div>
     </section>
 
-    <section class="screen news-screen">
-        <div class="news-wrap">
+    <section class="screen news">
+        <div class="news-shell">
             <div class="news-head">
                 <h2>Новости</h2>
                 <a href="news.html" id="homeNewsArchiveLink">Открыть</a>
@@ -389,7 +388,7 @@
             if (!ts) return "без даты";
             const d = new Date(Number(ts));
             if (Number.isNaN(d.getTime())) return "без даты";
-            return d.toLocaleDateString("ru-RU");
+            return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
         }
 
         function renderHomeNews(items) {
@@ -410,13 +409,10 @@
             items.slice(0, 5).forEach(item => {
                 const article = document.createElement("article");
                 article.className = "news-item";
-                const title = item.title || "Обновление";
-                const body = trimText(item.text || "", 110) || "Новые задачи.";
+                const title = item.title || "Обновление тренировки";
+                const body = trimText(item.text || "", 72) || "Новые задачи.";
                 article.innerHTML = `
-                    <div class="news-meta">
-                        <span>${formatDate(item.created)}</span>
-                        <span>${escapeHtml(item.author || "admin")}</span>
-                    </div>
+                    <div class="news-meta">${formatDate(item.created)}</div>
                     <h3 class="news-title">${escapeHtml(title)}</h3>
                     <p class="news-text">${escapeHtml(body)}</p>
                     <a class="news-open" href="news.html">Подробнее</a>
@@ -469,52 +465,85 @@
         }
 
         function initCodeEffect() {
-            const field = document.getElementById("codeField");
-            if (!field) return;
-            const rows = Array.from(field.querySelectorAll(".code-row"));
+            const hero = document.getElementById("heroScreen");
+            const fog = document.getElementById("codeFog");
+            if (!hero || !fog) return;
+            const rows = Array.from(fog.querySelectorAll(".code-row"));
             if (!rows.length) return;
-            let activeIndex = -1;
-            let phase = 0;
 
-            function clearStates() {
-                rows.forEach(r => r.classList.remove("active", "bad", "good"));
+            const baseText = rows.map((row) => row.querySelector(".txt").textContent);
+            let pulseTimer = null;
+
+            function resetRows() {
+                rows.forEach((row, idx) => {
+                    row.classList.remove("hot-red", "hot-green");
+                    row.querySelector(".txt").textContent = baseText[idx];
+                });
             }
 
-            function setActiveByY(clientY) {
-                const rect = field.getBoundingClientRect();
-                const rel = clientY - rect.top;
-                if (rel < 0 || rel > rect.height) {
-                    if (activeIndex !== -1) {
-                        clearStates();
-                        activeIndex = -1;
-                    }
+            function setHoverByY(clientY) {
+                const rect = hero.getBoundingClientRect();
+                if (clientY < rect.top || clientY > rect.bottom) {
+                    rows.forEach((row) => row.classList.remove("hover"));
                     return;
                 }
-                const rowHeight = rect.height / rows.length;
-                const idx = Math.max(0, Math.min(rows.length - 1, Math.floor(rel / rowHeight)));
-                if (idx === activeIndex) return;
-                clearStates();
-                rows[idx].classList.add("active");
-                activeIndex = idx;
+                const p = (clientY - rect.top) / rect.height;
+                const center = Math.max(0, Math.min(rows.length - 1, Math.round(p * (rows.length - 1))));
+                rows.forEach((row, idx) => {
+                    const d = Math.abs(idx - center);
+                    if (d <= 2) row.classList.add("hover");
+                    else row.classList.remove("hover");
+                });
             }
 
-            document.addEventListener("mousemove", (e) => setActiveByY(e.clientY));
-            document.addEventListener("mouseleave", () => {
-                clearStates();
-                activeIndex = -1;
-            });
-
-            setInterval(() => {
-                clearStates();
-                if (phase % 2 === 0) {
-                    rows[0].classList.add("bad");
-                    rows[2].classList.add("bad");
-                } else {
-                    rows[0].classList.add("good");
-                    rows[2].classList.add("good");
+            function mutateLine(text) {
+                const swaps = [
+                    { from: "<=", to: "<" },
+                    { from: "==", to: "=" },
+                    { from: "r]", to: "r - 1]" }
+                ];
+                for (const pair of swaps) {
+                    if (text.includes(pair.from)) return text.replace(pair.from, pair.to);
                 }
-                phase += 1;
-            }, 2200);
+                return text;
+            }
+
+            function runPulse() {
+                const idx = Math.floor(Math.random() * rows.length);
+                const mode = Math.floor(Math.random() * 3);
+                const row = rows[idx];
+                const txt = row.querySelector(".txt");
+                const original = baseText[idx];
+
+                row.classList.remove("hot-red", "hot-green");
+                if (mode === 0) {
+                    row.classList.add("hot-red");
+                } else if (mode === 1) {
+                    row.classList.add("hot-green");
+                } else {
+                    row.classList.add(Math.random() > 0.5 ? "hot-red" : "hot-green");
+                    txt.textContent = mutateLine(original);
+                }
+
+                if (pulseTimer) clearTimeout(pulseTimer);
+                pulseTimer = setTimeout(() => {
+                    row.classList.remove("hot-red", "hot-green");
+                    txt.textContent = original;
+                }, 1650);
+            }
+
+            function schedulePulse() {
+                const delay = 6000 + Math.floor(Math.random() * 4000);
+                setTimeout(() => {
+                    runPulse();
+                    schedulePulse();
+                }, delay);
+            }
+
+            document.addEventListener("mousemove", (e) => setHoverByY(e.clientY), { passive: true });
+            document.addEventListener("mouseleave", () => rows.forEach((row) => row.classList.remove("hover")));
+
+            schedulePulse();
         }
 
         document.addEventListener("DOMContentLoaded", () => {
