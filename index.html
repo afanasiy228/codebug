@@ -3,690 +3,371 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>CodeBug — Debug Training</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBug</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-         :root {
+        :root {
             --bg: #090b0d;
-            --surface: #0f1316;
-            --surface-2: #12181c;
-            --surface-3: #0c1114;
-            --stroke: #222b31;
-            --stroke-soft: #1b2329;
-            --text: #e4ebf1;
-            --text-dim: #98a4b0;
+            --bg-2: #0d1114;
+            --surface: #11171b;
+            --surface-2: #0f1418;
+            --stroke: #1f2a31;
+            --text: #dfe7ee;
+            --text-dim: #95a1ad;
             --accent: #1f6a47;
-            --accent-strong: #2b8258;
-            --ok: #2d8f61;
-            --wa: #b45e5e;
-            --re: #b47a44;
-            --tl: #8671bf;
-            --pending: #7d8995;
-            --radius: 10px;
-            --radius-sm: 8px;
+            --accent-strong: #2b8559;
+            --bad: #ad5f5f;
+            --good: #3b8f66;
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --radius: 10px;
         }
-        
+
         * {
             box-sizing: border-box;
         }
-        
+
+        html,
+        body {
+            height: 100%;
+        }
+
         body {
             margin: 0;
-            color: var(--text);
             font-family: "Inter", sans-serif;
-            background: linear-gradient(180deg, #080a0c 0%, #0a0d10 100%);
+            color: var(--text);
+            background: linear-gradient(180deg, var(--bg), var(--bg-2));
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: thin;
+            scrollbar-color: #2a353d #0a0d10;
         }
-        
-        a {
-            color: inherit;
-            text-decoration: none;
+
+        .screen {
+            min-height: 100vh;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
         }
-        
-        .container {
-            width: min(1100px, 94vw);
-            margin: 0 auto;
+
+        .hero-screen {
+            position: relative;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            overflow: hidden;
         }
-        
-        header {
-            height: 60px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: rgba(9, 11, 13, 0.88);
-            border-bottom: 1px solid var(--stroke-soft);
-            backdrop-filter: blur(8px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 3vw;
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 760px;
+            text-align: center;
+            display: grid;
+            gap: 14px;
         }
-        
-        .logo {
-            font-size: 26px;
+
+        .brand {
+            margin: 0;
+            font-size: clamp(44px, 9vw, 92px);
             font-weight: 700;
+            line-height: 1;
             letter-spacing: 0;
         }
-        
-        nav a {
-            color: var(--text-dim);
-            font-size: 14px;
-            font-weight: 600;
-            margin-left: 18px;
-        }
-        
-        nav a:hover {
-            color: var(--text);
-        }
-        
-        main {
-            padding: 34px 0 54px;
-            display: grid;
-            gap: 18px;
-        }
-        
-        section {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius);
-            background: var(--surface);
-        }
-        
-        .hero {
-            position: relative;
-            overflow: hidden;
-            padding: 24px;
-            display: grid;
-            gap: 18px;
-        }
-        
-        .hero::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background: linear-gradient(120deg, transparent 0%, rgba(31, 106, 71, 0.08) 35%, transparent 70%), radial-gradient(700px 220px at 90% -5%, rgba(31, 106, 71, 0.12), transparent 65%);
-            opacity: 0.7;
-        }
-        
-        .hero-head {
-            z-index: 1;
-            max-width: 760px;
-            display: grid;
-            gap: 8px;
-        }
-        
-        .hero-kicker {
-            color: #8fbda5;
-            font-size: 12px;
-            font-family: var(--mono);
-            display: inline-flex;
-            width: fit-content;
-            border: 1px solid rgba(43, 130, 88, 0.5);
-            background: rgba(31, 106, 71, 0.16);
-            border-radius: 999px;
-            padding: 3px 9px;
-        }
-        
-        h1 {
-            margin: 0;
-            font-size: clamp(29px, 5vw, 42px);
-            line-height: 1.08;
-            font-weight: 700;
-            max-width: 680px;
-        }
-        
-        .hero-sub {
+
+        .subtitle {
             margin: 0;
             color: var(--text-dim);
-            line-height: 1.55;
-            max-width: 760px;
-            font-size: 16px;
+            font-size: clamp(16px, 2.6vw, 22px);
+            line-height: 1.35;
         }
-        
-        .hero-actions {
-            z-index: 1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .btn {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-sm);
-            padding: 10px 14px;
-            font-size: 14px;
-            font-weight: 600;
-            background: var(--surface-3);
-            color: var(--text);
-        }
-        
-        .btn.primary {
+
+        .cta {
+            justify-self: center;
+            border: 1px solid #2b7a54;
+            border-radius: 10px;
             background: var(--accent);
-            border-color: #246e4c;
-            color: #e9f4ee;
+            color: #e8f4ee;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 11px 18px;
+            text-decoration: none;
+            transition: background .15s ease, border-color .15s ease, transform .15s ease;
         }
-        
-        .btn.primary:hover {
+
+        .cta:hover {
             background: var(--accent-strong);
-            border-color: #338760;
+            border-color: #379868;
+            transform: translateY(-1px);
         }
-        
-        .hero-tags {
-            z-index: 1;
+
+        .top-nav {
+            position: fixed;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .tag {
-            font-family: var(--mono);
-            font-size: 12px;
-            color: #a9b6c3;
-            background: #11171c;
-            border: 1px solid #2a343d;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 12px;
+            border: 1px solid #1a232a;
             border-radius: 999px;
-            padding: 3px 9px;
+            background: rgba(10, 13, 16, .72);
+            backdrop-filter: blur(8px);
         }
-        
-        .code-atmos {
-            z-index: 1;
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-sm);
-            background: rgba(10, 13, 16, 0.82);
-            padding: 10px 0;
-            overflow: hidden;
-            position: relative;
+
+        .top-nav .logo {
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: .2px;
+            color: #e6edf3;
         }
-        
-        .code-atmos::before {
-            content: "";
+
+        .top-nav nav a {
+            font-size: 13px;
+            color: #9aa6b3;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        .top-nav nav a:hover {
+            color: #dce5ed;
+        }
+
+        .code-bg {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(9, 11, 13, 0.45), rgba(9, 11, 13, 0.8));
-            pointer-events: none;
-        }
-        
-        .code-line {
-            position: relative;
             z-index: 1;
             display: grid;
-            grid-template-columns: 44px 1fr;
+            place-items: center;
+            pointer-events: none;
+        }
+
+        .code-field {
+            width: min(980px, 92vw);
+            border: 1px solid #1a242b;
+            border-radius: var(--radius);
+            background: rgba(12, 16, 20, .52);
+            overflow: hidden;
+            filter: blur(.2px);
+        }
+
+        .code-row {
+            display: grid;
+            grid-template-columns: 46px 1fr;
+            border-top: 1px solid rgba(31, 42, 49, .45);
             font-family: var(--mono);
             font-size: 12px;
             line-height: 1.5;
-            color: #9fb0bd;
-            border-top: 1px solid rgba(34, 43, 49, 0.35);
+            color: #8ea0af;
+            opacity: .4;
+            transition: opacity .18s ease, background-color .18s ease;
         }
-        
-        .code-line:first-child {
+
+        .code-row:first-child {
             border-top: none;
         }
-        
-        .ln {
+
+        .code-row .ln {
             text-align: right;
-            padding: 6px 10px 6px 0;
-            color: #687685;
-            border-right: 1px solid rgba(34, 43, 49, 0.4);
+            padding: 7px 10px 7px 0;
+            border-right: 1px solid rgba(31, 42, 49, .55);
+            color: #647483;
         }
-        
-        .lt {
-            padding: 6px 12px;
+
+        .code-row .txt {
+            padding: 7px 12px;
             white-space: pre;
             overflow-x: auto;
         }
-        
-        .code-line.bad .lt {
-            background: rgba(180, 94, 94, 0.14);
-            color: #dab1b1;
+
+        .code-row.active {
+            opacity: .72;
         }
-        
-        .code-line.good .lt {
-            background: rgba(45, 143, 97, 0.14);
-            color: #b5dcc8;
+
+        .code-row.bad {
+            opacity: .85;
+            background: rgba(173, 95, 95, .16);
+            color: #dcb2b2;
         }
-        
-        .inline-bad {
-            color: #e2a3a3;
-            border-bottom: 1px solid rgba(180, 94, 94, 0.55);
+
+        .code-row.good {
+            opacity: .85;
+            background: rgba(59, 143, 102, .16);
+            color: #b8d9c7;
         }
-        
-        .inline-good {
-            color: #9fd2b6;
-            border-bottom: 1px solid rgba(45, 143, 97, 0.6);
-        }
-        
-        .stack {
-            padding: 18px 20px;
+
+        .news-screen {
+            padding: 76px 16px 34px;
             display: grid;
-            gap: 14px;
+            align-content: center;
         }
-        
-        .head {
-            display: flex;
-            justify-content: space-between;
-            align-items: end;
-            border-bottom: 1px solid var(--stroke-soft);
-            padding-bottom: 10px;
+
+        .news-wrap {
+            width: min(820px, 100%);
+            margin: 0 auto;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius);
+            background: var(--surface);
+            padding: 18px;
+            display: grid;
             gap: 12px;
         }
-        
-        .head h2 {
-            margin: 0;
-            font-size: 25px;
-            font-weight: 700;
-        }
-        
-        .head p {
-            margin: 0;
-            color: var(--text-dim);
-            font-size: 14px;
-        }
-        
-        .workflow {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-        }
-        
-        .step {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-sm);
-            padding: 11px;
-            background: var(--surface-3);
-            display: grid;
-            gap: 8px;
-        }
-        
-        .step-no {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            background: rgba(31, 106, 71, 0.2);
-            color: #9ecfb4;
-            font-family: var(--mono);
-            font-size: 12px;
-            font-weight: 700;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .step h3 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-        }
-        
-        .step p {
-            margin: 0;
-            color: var(--text-dim);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .diagnostic-table {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-        }
-        
-        .diag-row {
-            display: grid;
-            grid-template-columns: 1.5fr .8fr 1fr .9fr;
-            gap: 8px;
-            align-items: center;
-            border-top: 1px solid var(--stroke-soft);
-            padding: 11px 12px;
-            font-size: 14px;
-        }
-        
-        .diag-row:first-child {
-            border-top: none;
-            background: #0e1418;
-            font-size: 12px;
-            text-transform: uppercase;
-            color: #91a0ad;
-            letter-spacing: .4px;
-            font-family: var(--mono);
-        }
-        
-        .diag-row .status {
-            font-family: var(--mono);
-            font-size: 12px;
-            border-radius: 999px;
-            border: 1px solid transparent;
-            padding: 3px 8px;
-            width: fit-content;
-        }
-        
-        .s-ok {
-            color: #9cd6b8;
-            border-color: rgba(45, 143, 97, 0.5);
-            background: rgba(45, 143, 97, 0.16);
-        }
-        
-        .s-wa {
-            color: #e6b4b4;
-            border-color: rgba(180, 94, 94, 0.5);
-            background: rgba(180, 94, 94, 0.14);
-        }
-        
-        .s-re {
-            color: #e3c5a2;
-            border-color: rgba(180, 122, 68, 0.5);
-            background: rgba(180, 122, 68, 0.15);
-        }
-        
-        .s-tl {
-            color: #ccbdea;
-            border-color: rgba(134, 113, 191, 0.52);
-            background: rgba(134, 113, 191, 0.16);
-        }
-        
-        .s-pending {
-            color: #c0cad5;
-            border-color: rgba(125, 137, 149, 0.45);
-            background: rgba(125, 137, 149, 0.16);
-        }
-        
-        .mono {
-            font-family: var(--mono);
-        }
-        
-        .news-wrap {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 14px;
-        }
-        
-        .news-stream {
-            display: grid;
-            gap: 10px;
-        }
-        
-        .news-entry {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-sm);
-            background: var(--surface-3);
-            padding: 11px;
-            display: grid;
-            gap: 7px;
-        }
-        
-        .news-entry-title {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-        }
-        
-        .news-entry-meta {
-            margin: 0;
-            color: var(--text-dim);
-            font-size: 13px;
-        }
-        
-        .news-author {
-            color: #b8c4d0;
-            font-weight: 600;
-        }
-        
-        .news-entry-body {
-            margin: 0;
-            color: var(--text-dim);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .news-side {
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-sm);
-            background: var(--surface-3);
-            padding: 12px;
-            display: grid;
-            gap: 8px;
-            align-content: start;
-        }
-        
-        .news-side h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-        
-        .news-side p {
-            margin: 0;
-            color: var(--text-dim);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .news-empty {
-            border: 1px dashed #33414c;
-            border-radius: var(--radius-sm);
-            padding: 12px;
-            color: var(--text-dim);
-            font-size: 14px;
-        }
-        
-        .final {
+
+        .news-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 14px;
-            padding: 18px 20px;
+            border-bottom: 1px solid #1b252c;
+            padding-bottom: 10px;
+            gap: 10px;
         }
-        
-        .final h2 {
-            margin: 0 0 6px;
+
+        .news-head h2 {
+            margin: 0;
             font-size: 24px;
+            font-weight: 700;
         }
-        
-        .final p {
+
+        .news-head a {
+            font-size: 13px;
+            color: #a9b7c4;
+            text-decoration: none;
+            border: 1px solid #283640;
+            border-radius: 8px;
+            padding: 6px 10px;
+            background: var(--surface-2);
+        }
+
+        .news-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .news-item {
+            border: 1px solid #1f2b33;
+            border-radius: 9px;
+            background: var(--surface-2);
+            padding: 11px 12px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: #7f8d9a;
+        }
+
+        .news-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .news-text {
             margin: 0;
             color: var(--text-dim);
             font-size: 14px;
+            line-height: 1.4;
         }
-        
-        footer {
-            margin-top: 4px;
-            padding: 14px;
-            border-top: 1px solid var(--stroke-soft);
-            color: #7d8a98;
-            text-align: center;
+
+        .news-open {
+            justify-self: start;
             font-size: 12px;
+            font-weight: 600;
+            color: #c4cfda;
+            border: 1px solid #2a3741;
+            border-radius: 7px;
+            padding: 5px 9px;
+            text-decoration: none;
+            background: #0f1418;
         }
-        
-        @media (max-width: 900px) {
-            .workflow {
-                grid-template-columns: 1fr;
+
+        .news-empty {
+            color: var(--text-dim);
+            font-size: 14px;
+            border: 1px dashed #2d3a44;
+            border-radius: 9px;
+            padding: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .top-nav {
+                width: calc(100vw - 22px);
+                justify-content: space-between;
             }
-            .news-wrap {
-                grid-template-columns: 1fr;
-            }
-            .diag-row {
-                grid-template-columns: 1fr;
-                gap: 4px;
-                align-items: start;
-            }
-            .diag-row:first-child {
+
+            .top-nav nav {
                 display: none;
             }
-        }
-        
-        @media (max-width: 720px) {
-            header {
-                padding: 0 14px;
-            }
-            main {
-                padding-top: 18px;
+
+            .hero-content {
                 gap: 12px;
             }
-            .hero,
-            .stack,
-            .final {
-                padding: 14px;
+
+            .subtitle {
+                font-size: 20px;
             }
-            h1 {
-                font-size: 35px;
-            }
-            .hero-actions {
-                flex-direction: column;
-            }
-            .btn {
+
+            .code-field {
                 width: 100%;
-                text-align: center;
+            }
+
+            .news-screen {
+                padding-top: 64px;
             }
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <div class="logo">CodeBug</div>
+    <div class="top-nav">
+        <span class="logo">CodeBug</span>
         <nav id="nav-links"></nav>
-    </header>
+    </div>
 
-    <main class="container">
-        <section class="hero">
-            <div class="hero-head">
-                <span class="hero-kicker">debug session</span>
-                <h1>Найди и исправь ошибку</h1>
-                <p class="hero-sub">WA, RE, TL, overflow, off-by-one, индексы, бинарный поиск, DP.</p>
+    <section class="screen hero-screen">
+        <div class="code-bg" aria-hidden="true">
+            <div class="code-field" id="codeField">
+                <div class="code-row" data-row="0"><span class="ln">12</span><span class="txt">for (int i = 0; i <= n; i++) pref[i] = pref[i - 1] + a[i];</span></div>
+                <div class="code-row" data-row="1"><span class="ln">13</span><span class="txt">while (q--) { int l, r; cin >> l >> r; }</span></div>
+                <div class="code-row" data-row="2"><span class="ln">14</span><span class="txt">cout << pref[r] - pref[l] << '\n';</span></div>
+                <div class="code-row" data-row="3"><span class="ln">15</span><span class="txt">if (lo <= hi) mid = (lo + hi) / 2;</span></div>
+                <div class="code-row" data-row="4"><span class="ln">16</span><span class="txt">vector<int> dp(n + 1, INF);</span></div>
+                <div class="code-row" data-row="5"><span class="ln">17</span><span class="txt">answer += a[i] * b[i];</span></div>
             </div>
+        </div>
 
-            <div class="hero-actions">
-                <a class="btn primary" href="train.html">Открыть тренировку</a>
-                <a class="btn" href="submissions.html">Глобальные посылки</a>
-                <a class="btn" href="faq.html">Правила</a>
-            </div>
+        <div class="hero-content">
+            <h1 class="brand">CodeBug</h1>
+            <p class="subtitle">Где-то здесь ошибка.</p>
+            <a class="cta" href="train.html">Открыть тренировку</a>
+        </div>
+    </section>
 
-            <div class="hero-tags">
-                <span class="tag">WA</span>
-                <span class="tag">RE</span>
-                <span class="tag">TL</span>
-                <span class="tag">overflow</span>
-                <span class="tag">off-by-one</span>
-                <span class="tag">binary search</span>
-                <span class="tag">DP</span>
-            </div>
-
-            <div class="code-atmos">
-                <div class="code-line"><span class="ln">14</span><span class="lt">for (int i = 0; i <span class="inline-bad"> <= </span> n; i++) sum += a[i];</span>
-                </div>
-                <div class="code-line bad"><span class="ln">15</span><span class="lt">cout << pref[r] - pref[l] << '\n';</span></div>
-                <div class="code-line good"><span class="ln">16</span><span class="lt">cout << pref[r] - pref[l - 1] << '\n';</span></div>
-                <div class="code-line"><span class="ln">17</span><span class="lt">if (mid <span class="inline-good">+ 1</span>
-                    <=h i) lo=m id + 1;</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="stack">
-            <div class="head">
-                <h2>Как работает</h2>
-                <p>3 шага.</p>
-            </div>
-            <div class="workflow">
-                <article class="step">
-                    <span class="step-no">01</span>
-                    <h3>Читай код</h3>
-                    <p>Проверь границы, индексы, типы, переходы.</p>
-                </article>
-                <article class="step">
-                    <span class="step-no">02</span>
-                    <h3>Смотри тест</h3>
-                    <p>Сравни expected/actual. Локализуй строку.</p>
-                </article>
-                <article class="step">
-                    <span class="step-no">03</span>
-                    <h3>Исправляй</h3>
-                    <p>Сдай снова и получи следующий вердикт.</p>
-                </article>
-            </div>
-        </section>
-
-        <section class="stack">
-            <div class="head">
-                <h2>Диагностика задач</h2>
-                <p>Вердикт и тип бага.</p>
-            </div>
-            <div class="diagnostic-table">
-                <div class="diag-row">
-                    <div>Задача</div>
-                    <div>Вердикт</div>
-                    <div>Тип бага</div>
-                    <div>Попытки</div>
-                </div>
-                <div class="diag-row">
-                    <div>Префиксные суммы</div>
-                    <div><span class="status s-wa">Wrong Answer</span></div>
-                    <div class="mono">off-by-one</div>
-                    <div class="mono">8</div>
-                </div>
-                <div class="diag-row">
-                    <div>DP на отрезке</div>
-                    <div><span class="status s-re">Runtime Error</span></div>
-                    <div class="mono">index underflow</div>
-                    <div class="mono">3</div>
-                </div>
-                <div class="diag-row">
-                    <div>Бинарный поиск</div>
-                    <div><span class="status s-tl">Time Limit</span></div>
-                    <div class="mono">infinite loop</div>
-                    <div class="mono">5</div>
-                </div>
-                <div class="diag-row">
-                    <div>Сумма на дереве</div>
-                    <div><span class="status s-ok">Accepted</span></div>
-                    <div class="mono">overflow fixed</div>
-                    <div class="mono">2</div>
-                </div>
-                <div class="diag-row">
-                    <div>Два указателя</div>
-                    <div><span class="status s-pending">Pending</span></div>
-                    <div class="mono">check in progress</div>
-                    <div class="mono">1</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="stack">
-            <div class="head">
+    <section class="screen news-screen">
+        <div class="news-wrap">
+            <div class="news-head">
                 <h2>Новости</h2>
-                <p>Обновления.</p>
+                <a href="news.html" id="homeNewsArchiveLink">Открыть</a>
             </div>
-            <div class="news-wrap">
-                <div>
-                    <div id="homeNewsList" class="news-stream"></div>
-                    <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет обновлений.</div>
-                </div>
-                <aside class="news-side">
-                    <h3>Архив</h3>
-                    <p>История изменений по платформе и тестирующей системе.</p>
-                    <a href="news.html" class="btn" id="homeNewsArchiveLink">Открыть архив</a>
-                </aside>
-            </div>
-        </section>
-
-        <section class="final">
-            <div>
-                <h2>К задачам</h2>
-                <p>Начни с WA.</p>
-            </div>
-            <div class="hero-actions">
-                <a class="btn primary" href="train.html">К задачам</a>
-            </div>
-        </section>
-    </main>
+            <div id="homeNewsList" class="news-list"></div>
+            <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
+        </div>
+    </section>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script src="firebase.js"></script>
     <script src="auth.js"></script>
     <script src="globalsubmissions.js"></script>
     <script src="submit.js"></script>
-
     <script>
         function escapeHtml(text) {
             return (text || "")
@@ -697,33 +378,18 @@
                 .replace(/'/g, "&#039;");
         }
 
-        function pluralRu(value, one, few, many) {
-            const mod10 = value % 10;
-            const mod100 = value % 100;
-            if (mod10 === 1 && mod100 !== 11) return one;
-            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-            return many;
-        }
-
-        function formatRelativeTime(ts) {
-            if (!ts) return "недавно";
-            const now = Date.now();
-            const diff = Math.max(0, now - Number(ts));
-            const hour = Math.floor(diff / (60 * 60 * 1000));
-            if (hour < 1) return "только что";
-            if (hour < 24) return `${hour} ${pluralRu(hour, "час", "часа", "часов")} назад`;
-            const days = Math.floor(hour / 24);
-            return `${days} ${pluralRu(days, "день", "дня", "дней")} назад`;
-        }
-
         function trimText(text, limit) {
             if (!text) return "";
-            if (text.length <= limit) return text;
-            return text.slice(0, limit).trimEnd() + "...";
+            const oneLine = text.replace(/\s+/g, " ").trim();
+            if (oneLine.length <= limit) return oneLine;
+            return oneLine.slice(0, limit).trimEnd() + "...";
         }
 
-        function formatAnnouncementText(text) {
-            return escapeHtml(text).replace(/\n/g, "<br>");
+        function formatDate(ts) {
+            if (!ts) return "без даты";
+            const d = new Date(Number(ts));
+            if (Number.isNaN(d.getTime())) return "без даты";
+            return d.toLocaleDateString("ru-RU");
         }
 
         function renderHomeNews(items) {
@@ -737,20 +403,23 @@
                 if (archiveLink) archiveLink.style.display = "none";
                 return;
             }
-            empty.style.display = "block";
+
             empty.style.display = "none";
             if (archiveLink) archiveLink.style.display = "inline-flex";
 
-            items.slice(0, 3).forEach(item => {
+            items.slice(0, 5).forEach(item => {
                 const article = document.createElement("article");
-                article.className = "news-entry";
-                const title = item.title || "Обновление CodeBug";
-                const author = item.author || "admin";
-                const body = trimText(item.text || "", 500);
+                article.className = "news-item";
+                const title = item.title || "Обновление";
+                const body = trimText(item.text || "", 110) || "Новые задачи.";
                 article.innerHTML = `
-                    <h3 class="news-entry-title">${escapeHtml(title)}</h3>
-                    <p class="news-entry-meta">Автор <span class="news-author">${escapeHtml(author)}</span>, ${formatRelativeTime(item.created)}</p>
-                    <p class="news-entry-body">${formatAnnouncementText(body)}</p>
+                    <div class="news-meta">
+                        <span>${formatDate(item.created)}</span>
+                        <span>${escapeHtml(item.author || "admin")}</span>
+                    </div>
+                    <h3 class="news-title">${escapeHtml(title)}</h3>
+                    <p class="news-text">${escapeHtml(body)}</p>
+                    <a class="news-open" href="news.html">Подробнее</a>
                 `;
                 list.appendChild(article);
             });
@@ -799,9 +468,59 @@
             renderHomeNews(unique);
         }
 
+        function initCodeEffect() {
+            const field = document.getElementById("codeField");
+            if (!field) return;
+            const rows = Array.from(field.querySelectorAll(".code-row"));
+            if (!rows.length) return;
+            let activeIndex = -1;
+            let phase = 0;
+
+            function clearStates() {
+                rows.forEach(r => r.classList.remove("active", "bad", "good"));
+            }
+
+            function setActiveByY(clientY) {
+                const rect = field.getBoundingClientRect();
+                const rel = clientY - rect.top;
+                if (rel < 0 || rel > rect.height) {
+                    if (activeIndex !== -1) {
+                        clearStates();
+                        activeIndex = -1;
+                    }
+                    return;
+                }
+                const rowHeight = rect.height / rows.length;
+                const idx = Math.max(0, Math.min(rows.length - 1, Math.floor(rel / rowHeight)));
+                if (idx === activeIndex) return;
+                clearStates();
+                rows[idx].classList.add("active");
+                activeIndex = idx;
+            }
+
+            document.addEventListener("mousemove", (e) => setActiveByY(e.clientY));
+            document.addEventListener("mouseleave", () => {
+                clearStates();
+                activeIndex = -1;
+            });
+
+            setInterval(() => {
+                clearStates();
+                if (phase % 2 === 0) {
+                    rows[0].classList.add("bad");
+                    rows[2].classList.add("bad");
+                } else {
+                    rows[0].classList.add("good");
+                    rows[2].classList.add("good");
+                }
+                phase += 1;
+            }, 2200);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             updateNavbar();
             loadHomeNews();
+            initCodeEffect();
         });
     </script>
 </body>
