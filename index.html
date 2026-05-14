@@ -120,8 +120,9 @@
             z-index: 1;
             transform: rotate(-1.15deg);
             pointer-events: none;
-            filter: blur(1px);
+            filter: blur(1.05px);
             opacity: 0.72;
+            overflow: hidden;
         }
 
         .code-block {
@@ -129,59 +130,7 @@
             display: grid;
             gap: 0;
             width: 42vw;
-        }
-
-        .code-block.a {
-            left: -14vw;
-            top: -2vh;
-            transform: rotate(-0.4deg);
-        }
-
-        .code-block.b {
-            right: -14vw;
-            top: -4vh;
-            transform: rotate(0.8deg);
-            opacity: 0.86;
-        }
-
-        .code-block.c {
-            left: -7vw;
-            top: 38vh;
-            width: 44vw;
-            transform: rotate(-0.7deg);
-            opacity: 0.8;
-        }
-
-        .code-block.d {
-            right: -6vw;
-            top: 44vh;
-            width: 41vw;
-            transform: rotate(0.5deg);
-            opacity: 0.72;
-        }
-
-        .code-block.e {
-            left: 28vw;
-            top: 12vh;
-            width: 36vw;
-            transform: rotate(-0.25deg);
-            opacity: 0.68;
-        }
-
-        .code-block.f {
-            left: 24vw;
-            top: 58vh;
-            width: 38vw;
-            transform: rotate(0.35deg);
-            opacity: 0.64;
-        }
-
-        .code-block.g {
-            left: 20vw;
-            top: 28vh;
-            width: 52vw;
-            transform: rotate(0.18deg);
-            opacity: 0.56;
+            will-change: transform, opacity;
         }
 
         .code-row {
@@ -192,12 +141,13 @@
             color: #687a89;
             line-height: 1.48;
             transition: opacity .48s ease, color .48s ease, background-color .7s ease;
-            opacity: .3;
+            opacity: .22;
             padding: 1px 0;
+            transform: translateY(0);
         }
 
         .code-row:nth-child(2n) {
-            opacity: .36;
+            opacity: .28;
         }
 
         .code-row .ln {
@@ -227,6 +177,10 @@
             opacity: .66;
             color: #b1d7c2;
             background: rgba(45, 107, 76, 0.18);
+        }
+
+        .code-row.muted-hide {
+            opacity: .08;
         }
 
         .hero-content {
@@ -402,46 +356,6 @@
             .code-block {
                 width: 92vw;
             }
-
-            .code-block.a {
-                left: -26vw;
-                top: -1vh;
-            }
-
-            .code-block.b {
-                right: -30vw;
-                top: 22vh;
-            }
-
-            .code-block.c {
-                left: -24vw;
-                top: 47vh;
-                width: 90vw;
-            }
-
-            .code-block.d {
-                right: -30vw;
-                top: 68vh;
-                width: 92vw;
-            }
-
-            .code-block.e {
-                left: -8vw;
-                top: 32vh;
-                width: 88vw;
-            }
-
-            .code-block.f {
-                left: -22vw;
-                top: 80vh;
-                width: 92vw;
-            }
-
-            .code-block.g {
-                left: -18vw;
-                top: 56vh;
-                width: 92vw;
-            }
         }
     </style>
 </head>
@@ -455,82 +369,7 @@
     </div>
 
     <section class="screen hero" id="heroScreen">
-        <div class="code-fog" id="codeFog" aria-hidden="true">
-            <div class="code-block a">
-                <div class="code-row"><span class="ln">11</span><span class="txt">for (int i = 0; i <= n; ++i) pref[i] = pref[i - 1] + a[i];</span></div>
-                <div class="code-row"><span class="ln">12</span><span class="txt">if (l < 0 || r >= n) return false;</span></div>
-                <div class="code-row"><span class="ln">13</span><span class="txt">while (lo <= hi) { int mid = (lo + hi) / 2; }</span></div>
-                <div class="code-row"><span class="ln">14</span><span class="txt">cout << pref[r] - pref[l] << '\n';</span></div>
-                <div class="code-row"><span class="ln">15</span><span class="txt">if (a[i] == target) ans = i;</span></div>
-                <div class="code-row"><span class="ln">16</span><span class="txt">if (dp[i - 1] + w < dp[i]) dp[i] = dp[i - 1] + w;</span></div>
-                <div class="code-row"><span class="ln">17</span><span class="txt">for (int i = 1; i < n; ++i) answer += a[i] * b[i];</span></div>
-                <div class="code-row"><span class="ln">18</span><span class="txt">if (r > 0) sum -= pref[r - 1];</span></div>
-                <div class="code-row"><span class="ln">19</span><span class="txt">if (balance = 0) ok = true;</span></div>
-                <div class="code-row"><span class="ln">20</span><span class="txt">vector<long long> pref(n + 1, 0);</span></div>
-                <div class="code-row"><span class="ln">21</span><span class="txt">if (idx < n) idx = idx + 1;</span></div>
-                <div class="code-row"><span class="ln">22</span><span class="txt">cout << (ok ? "YES" : "NO") << '\n';</span></div>
-            </div>
-            <div class="code-block b">
-                <div class="code-row"><span class="ln">23</span><span class="txt">if (best > cur) best = cur;</span></div>
-                <div class="code-row"><span class="ln">24</span><span class="txt">long long mid = (left + right) / 2;</span></div>
-                <div class="code-row"><span class="ln">25</span><span class="txt">while (pos <= n && a[pos] <= x) pos++;</span></div>
-                <div class="code-row"><span class="ln">26</span><span class="txt">if (used == k) return dist <= t;</span></div>
-                <div class="code-row"><span class="ln">27</span><span class="txt">prefix[i + 1] = prefix[i] + value[i];</span></div>
-                <div class="code-row"><span class="ln">28</span><span class="txt">if (state[u] == 1) cycle = true;</span></div>
-                <div class="code-row"><span class="ln">29</span><span class="txt">for (int j = 0; j <= m; ++j) dp[i][j] = INF;</span></div>
-                <div class="code-row"><span class="ln">30</span><span class="txt">ans = max(ans, curLen);</span></div>
-                <div class="code-row"><span class="ln">31</span><span class="txt">if (l == r) return tree[v];</span></div>
-                <div class="code-row"><span class="ln">32</span><span class="txt">auto it = lower_bound(a.begin(), a.end(), x);</span></div>
-                <div class="code-row"><span class="ln">33</span><span class="txt">sum += (long long)cnt * val;</span></div>
-                <div class="code-row"><span class="ln">34</span><span class="txt">if (prev == -1) prev = cur;</span></div>
-            </div>
-            <div class="code-block c">
-                <div class="code-row"><span class="ln">35</span><span class="txt">if (r - l + 1 <= k) best = min(best, cur);</span></div>
-                <div class="code-row"><span class="ln">36</span><span class="txt">for (int bit = 0; bit < 20; ++bit) mask ^= (1 << bit);</span></div>
-                <div class="code-row"><span class="ln">37</span><span class="txt">if (ptr == -1) ptr = i;</span></div>
-                <div class="code-row"><span class="ln">38</span><span class="txt">while (j < n && sum + a[j] <= s) sum += a[j++];</span></div>
-                <div class="code-row"><span class="ln">39</span><span class="txt">auto ok = [&](long long x) { return x * x <= lim; };</span></div>
-                <div class="code-row"><span class="ln">40</span><span class="txt">if (used <= limit) answer = max(answer, cur);</span></div>
-                <div class="code-row"><span class="ln">41</span><span class="txt">pref[i] = pref[i - 1] + val[i];</span></div>
-                <div class="code-row"><span class="ln">42</span><span class="txt">if (a[mid] == x) return mid;</span></div>
-            </div>
-            <div class="code-block d">
-                <div class="code-row"><span class="ln">43</span><span class="txt">int nxt = (v + 1) % n;</span></div>
-                <div class="code-row"><span class="ln">44</span><span class="txt">if (dist[to] > dist[v] + w) dist[to] = dist[v] + w;</span></div>
-                <div class="code-row"><span class="ln">45</span><span class="txt">for (int i = 0; i <= m; ++i) ways[i] = 0;</span></div>
-                <div class="code-row"><span class="ln">46</span><span class="txt">if (cur == target) break;</span></div>
-                <div class="code-row"><span class="ln">47</span><span class="txt">if (x == 0) return 0;</span></div>
-                <div class="code-row"><span class="ln">48</span><span class="txt">ans += max(0LL, r - l + 1);</span></div>
-            </div>
-            <div class="code-block e">
-                <div class="code-row"><span class="ln">49</span><span class="txt">if (left <= right) mid = left + (right - left) / 2;</span></div>
-                <div class="code-row"><span class="ln">50</span><span class="txt">for (int i = 0; i < q; ++i) apply(query[i]);</span></div>
-                <div class="code-row"><span class="ln">51</span><span class="txt">if (used + cost <= budget) used += cost;</span></div>
-                <div class="code-row"><span class="ln">52</span><span class="txt">best = min(best, abs(pref[r] - pref[l - 1]));</span></div>
-                <div class="code-row"><span class="ln">53</span><span class="txt">if (v == parent) continue;</span></div>
-                <div class="code-row"><span class="ln">54</span><span class="txt">while (ptr < n && a[ptr] < lim) ++ptr;</span></div>
-                <div class="code-row"><span class="ln">55</span><span class="txt">if (ok && cnt == need) return true;</span></div>
-            </div>
-            <div class="code-block f">
-                <div class="code-row"><span class="ln">56</span><span class="txt">dp[i][mask] = min(dp[i][mask], dp[i - 1][mask]);</span></div>
-                <div class="code-row"><span class="ln">57</span><span class="txt">if (pref[r] - pref[l] == sum) ans++;</span></div>
-                <div class="code-row"><span class="ln">58</span><span class="txt">for (auto [to, w] : g[v]) relax(to, w);</span></div>
-                <div class="code-row"><span class="ln">59</span><span class="txt">if (k <= 0) return 1;</span></div>
-                <div class="code-row"><span class="ln">60</span><span class="txt">while (lo < hi) { int mid = (lo + hi) >> 1; }</span></div>
-                <div class="code-row"><span class="ln">61</span><span class="txt">if (a[mid] = x) return mid;</span></div>
-                <div class="code-row"><span class="ln">62</span><span class="txt">sum = sum + value[id];</span></div>
-            </div>
-            <div class="code-block g">
-                <div class="code-row"><span class="ln">63</span><span class="txt">for (int i = 0; i <= n; i++) score += pref[i];</span></div>
-                <div class="code-row"><span class="ln">64</span><span class="txt">if (left == right) return data[left];</span></div>
-                <div class="code-row"><span class="ln">65</span><span class="txt">while (lo <= hi) { int mid = (lo + hi) / 2; }</span></div>
-                <div class="code-row"><span class="ln">66</span><span class="txt">if (node == parent) continue;</span></div>
-                <div class="code-row"><span class="ln">67</span><span class="txt">pref[r] - pref[l - 1] == target</span></div>
-                <div class="code-row"><span class="ln">68</span><span class="txt">if (balance == 0) ok = true;</span></div>
-                <div class="code-row"><span class="ln">69</span><span class="txt">ans = min(ans, cur + delta);</span></div>
-                <div class="code-row"><span class="ln">70</span><span class="txt">dp[i + 1] = max(dp[i + 1], dp[i] + w);</span></div>
-            </div>
-        </div>
+        <div class="code-fog" id="codeFog" aria-hidden="true"></div>
 
         <div class="hero-content">
             <h1 class="brand">CodeBug</h1>
@@ -657,15 +496,109 @@
             const hero = document.getElementById("heroScreen");
             const fog = document.getElementById("codeFog");
             if (!hero || !fog) return;
-            const rows = Array.from(fog.querySelectorAll(".code-row"));
-            if (!rows.length) return;
+
+            const codeTemplates = [
+                "for (int i = 0; i <= n; ++i) pref[i] = pref[i - 1] + a[i];",
+                "while (lo <= hi) { int mid = (lo + hi) / 2; }",
+                "if (a[mid] == x) return mid;",
+                "if (pref[r] - pref[l] == need) ans++;",
+                "for (auto [to, w] : g[v]) relax(to, w);",
+                "if (dist[to] > dist[v] + w) dist[to] = dist[v] + w;",
+                "dp[i][mask] = min(dp[i][mask], dp[i - 1][mask]);",
+                "if (balance = 0) ok = true;",
+                "if (used + cost <= budget) used += cost;",
+                "while (ptr < n && a[ptr] < lim) ++ptr;",
+                "if (left == right) return tree[v];",
+                "long long mid = left + (right - left) / 2;",
+                "if (node == parent) continue;",
+                "ans = min(ans, cur + delta);",
+                "if (k <= 0) return 1;",
+                "for (int j = 0; j <= m; ++j) dp[i][j] = INF;",
+                "pref[i + 1] = pref[i] + val[i];",
+                "if (ok && cnt == need) return true;",
+                "sum += max(0LL, r - l + 1);",
+                "vector<long long> pref(n + 1, 0);",
+                "if (state[u] == 1) cycle = true;",
+                "while (pos <= n && a[pos] <= x) pos++;",
+                "if (cur == target) break;",
+                "if (x == 0) return 0;",
+                "for (int bit = 0; bit < 20; ++bit) mask ^= (1 << bit);",
+                "if (r > 0) sum -= pref[r - 1];",
+                "if (ptr == -1) ptr = i;",
+                "if (a[mid] = x) return mid;",
+                "auto it = lower_bound(a.begin(), a.end(), x);",
+                "dp[i + 1] = max(dp[i + 1], dp[i] + w);",
+                "if (v == parent) continue;",
+                "best = min(best, abs(pref[r] - pref[l - 1]));",
+                "while (j < n && sum + a[j] <= s) sum += a[j++];",
+                "if (left <= right) mid = left + (right - left) / 2;",
+                "if (used <= limit) answer = max(answer, cur);",
+                "if (l < 0 || r >= n) return false;",
+                "answer += a[i] * b[i];",
+                "if (idx < n) idx = idx + 1;",
+                "if (best > cur) best = cur;"
+            ];
+
+            const blockConfigsDesktop = [
+                { left: "-16vw", top: "-10vh", width: "42vw", rotate: -0.8, opacity: 0.62, blur: 1.2 },
+                { left: "20vw", top: "-12vh", width: "42vw", rotate: 0.4, opacity: 0.56, blur: 1.0 },
+                { left: "56vw", top: "-8vh", width: "40vw", rotate: 1.0, opacity: 0.6, blur: 1.15 },
+                { left: "-12vw", top: "28vh", width: "44vw", rotate: -0.5, opacity: 0.58, blur: 0.95 },
+                { left: "24vw", top: "26vh", width: "42vw", rotate: 0.3, opacity: 0.52, blur: 1.15 },
+                { left: "60vw", top: "30vh", width: "38vw", rotate: -0.2, opacity: 0.6, blur: 1.0 },
+                { left: "-18vw", top: "62vh", width: "46vw", rotate: 0.8, opacity: 0.56, blur: 1.2 },
+                { left: "20vw", top: "64vh", width: "44vw", rotate: -0.4, opacity: 0.54, blur: 1.05 },
+                { left: "58vw", top: "66vh", width: "40vw", rotate: 0.55, opacity: 0.58, blur: 1.1 }
+            ];
+
+            const blockConfigsMobile = [
+                { left: "-30vw", top: "-8vh", width: "92vw", rotate: -0.6, opacity: 0.56, blur: 1.1 },
+                { left: "-8vw", top: "14vh", width: "92vw", rotate: 0.35, opacity: 0.5, blur: 1.0 },
+                { left: "-24vw", top: "36vh", width: "92vw", rotate: -0.45, opacity: 0.52, blur: 1.15 },
+                { left: "-4vw", top: "58vh", width: "92vw", rotate: 0.25, opacity: 0.48, blur: 1.0 },
+                { left: "-20vw", top: "80vh", width: "92vw", rotate: -0.35, opacity: 0.54, blur: 1.2 }
+            ];
+
+            const blockConfigs = window.matchMedia("(max-width: 760px)").matches ? blockConfigsMobile : blockConfigsDesktop;
+            const lineCountPerBlock = window.matchMedia("(max-width: 760px)").matches ? 22 : 16;
+            const rows = [];
+            let lineNo = 100;
+
+            for (const cfg of blockConfigs) {
+                const block = document.createElement("div");
+                block.className = "code-block";
+                block.style.left = cfg.left;
+                block.style.top = cfg.top;
+                block.style.width = cfg.width;
+                block.style.transform = `rotate(${cfg.rotate}deg)`;
+                block.style.opacity = String(cfg.opacity);
+                block.style.filter = `blur(${cfg.blur}px)`;
+
+                for (let i = 0; i < lineCountPerBlock; i++) {
+                    const row = document.createElement("div");
+                    row.className = "code-row";
+                    const ln = document.createElement("span");
+                    ln.className = "ln";
+                    ln.textContent = String(lineNo++);
+                    const txt = document.createElement("span");
+                    txt.className = "txt";
+                    txt.textContent = codeTemplates[(i + rows.length) % codeTemplates.length];
+                    row.appendChild(ln);
+                    row.appendChild(txt);
+                    block.appendChild(row);
+                    rows.push(row);
+                }
+                fog.appendChild(block);
+            }
 
             const baseText = rows.map((row) => row.querySelector(".txt").textContent);
             let pulseTimer = null;
+            let driftTimer = null;
 
             function resetRows() {
                 rows.forEach((row, idx) => {
                     row.classList.remove("hot-red", "hot-green");
+                    row.classList.remove("muted-hide");
                     row.querySelector(".txt").textContent = baseText[idx];
                 });
             }
@@ -682,7 +615,7 @@
                     const cy = r.top + r.height / 2;
                     const dx = Math.abs(clientX - cx);
                     const dy = Math.abs(clientY - cy);
-                    if (dx < 520 && dy < 56) row.classList.add("hover");
+                    if (dx < 560 && dy < 66) row.classList.add("hover");
                     else row.classList.remove("hover");
                 });
             }
@@ -723,6 +656,30 @@
                 }, 1650);
             }
 
+            function runDrift() {
+                const idx = Math.floor(Math.random() * rows.length);
+                const row = rows[idx];
+                const txt = row.querySelector(".txt");
+                const original = baseText[idx];
+                const mode = Math.floor(Math.random() * 4);
+
+                if (mode === 0) {
+                    txt.textContent = original + " // check";
+                } else if (mode === 1) {
+                    txt.textContent = original.slice(0, Math.max(0, original.length - 8));
+                } else if (mode === 2) {
+                    txt.textContent = mutateLine(original);
+                } else {
+                    row.classList.add("muted-hide");
+                }
+
+                if (driftTimer) clearTimeout(driftTimer);
+                driftTimer = setTimeout(() => {
+                    row.classList.remove("muted-hide");
+                    txt.textContent = original;
+                }, 1800 + Math.floor(Math.random() * 1400));
+            }
+
             function schedulePulse() {
                 const delay = 6000 + Math.floor(Math.random() * 4000);
                 setTimeout(() => {
@@ -731,10 +688,19 @@
                 }, delay);
             }
 
+            function scheduleDrift() {
+                const delay = 2600 + Math.floor(Math.random() * 4200);
+                setTimeout(() => {
+                    runDrift();
+                    scheduleDrift();
+                }, delay);
+            }
+
             document.addEventListener("mousemove", (e) => setHoverByPointer(e.clientX, e.clientY), { passive: true });
             document.addEventListener("mouseleave", () => rows.forEach((row) => row.classList.remove("hover")));
 
             schedulePulse();
+            scheduleDrift();
         }
 
         document.addEventListener("DOMContentLoaded", () => {
