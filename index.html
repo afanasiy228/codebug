@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
+         :root {
             --bg: #090b0d;
             --surface: #0f1316;
             --surface-2: #12181c;
@@ -27,28 +27,28 @@
             --radius-sm: 8px;
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
-
+        
         * {
             box-sizing: border-box;
         }
-
+        
         body {
             margin: 0;
             color: var(--text);
             font-family: "Inter", sans-serif;
             background: linear-gradient(180deg, #080a0c 0%, #0a0d10 100%);
         }
-
+        
         a {
             color: inherit;
             text-decoration: none;
         }
-
+        
         .container {
             width: min(1100px, 94vw);
             margin: 0 auto;
         }
-
+        
         header {
             height: 60px;
             position: sticky;
@@ -62,36 +62,36 @@
             align-items: center;
             padding: 0 3vw;
         }
-
+        
         .logo {
             font-size: 26px;
             font-weight: 700;
             letter-spacing: 0;
         }
-
+        
         nav a {
             color: var(--text-dim);
             font-size: 14px;
             font-weight: 600;
             margin-left: 18px;
         }
-
+        
         nav a:hover {
             color: var(--text);
         }
-
+        
         main {
             padding: 34px 0 54px;
             display: grid;
             gap: 18px;
         }
-
+        
         section {
             border: 1px solid var(--stroke);
             border-radius: var(--radius);
             background: var(--surface);
         }
-
+        
         .hero {
             position: relative;
             overflow: hidden;
@@ -99,25 +99,23 @@
             display: grid;
             gap: 18px;
         }
-
+        
         .hero::after {
             content: "";
             position: absolute;
             inset: 0;
             pointer-events: none;
-            background:
-                linear-gradient(120deg, transparent 0%, rgba(31, 106, 71, 0.08) 35%, transparent 70%),
-                radial-gradient(700px 220px at 90% -5%, rgba(31, 106, 71, 0.12), transparent 65%);
+            background: linear-gradient(120deg, transparent 0%, rgba(31, 106, 71, 0.08) 35%, transparent 70%), radial-gradient(700px 220px at 90% -5%, rgba(31, 106, 71, 0.12), transparent 65%);
             opacity: 0.7;
         }
-
+        
         .hero-head {
             z-index: 1;
             max-width: 760px;
             display: grid;
             gap: 8px;
         }
-
+        
         .hero-kicker {
             color: #8fbda5;
             font-size: 12px;
@@ -129,7 +127,7 @@
             border-radius: 999px;
             padding: 3px 9px;
         }
-
+        
         h1 {
             margin: 0;
             font-size: clamp(29px, 5vw, 42px);
@@ -137,7 +135,7 @@
             font-weight: 700;
             max-width: 680px;
         }
-
+        
         .hero-sub {
             margin: 0;
             color: var(--text-dim);
@@ -145,14 +143,14 @@
             max-width: 760px;
             font-size: 16px;
         }
-
+        
         .hero-actions {
             z-index: 1;
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
-
+        
         .btn {
             border: 1px solid var(--stroke);
             border-radius: var(--radius-sm);
@@ -162,25 +160,25 @@
             background: var(--surface-3);
             color: var(--text);
         }
-
+        
         .btn.primary {
             background: var(--accent);
             border-color: #246e4c;
             color: #e9f4ee;
         }
-
+        
         .btn.primary:hover {
             background: var(--accent-strong);
             border-color: #338760;
         }
-
+        
         .hero-tags {
             z-index: 1;
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-
+        
         .tag {
             font-family: var(--mono);
             font-size: 12px;
@@ -190,7 +188,7 @@
             border-radius: 999px;
             padding: 3px 9px;
         }
-
+        
         .code-atmos {
             z-index: 1;
             border: 1px solid var(--stroke);
@@ -200,7 +198,7 @@
             overflow: hidden;
             position: relative;
         }
-
+        
         .code-atmos::before {
             content: "";
             position: absolute;
@@ -208,7 +206,7 @@
             background: linear-gradient(180deg, rgba(9, 11, 13, 0.45), rgba(9, 11, 13, 0.8));
             pointer-events: none;
         }
-
+        
         .code-line {
             position: relative;
             z-index: 1;
@@ -220,50 +218,50 @@
             color: #9fb0bd;
             border-top: 1px solid rgba(34, 43, 49, 0.35);
         }
-
+        
         .code-line:first-child {
             border-top: none;
         }
-
+        
         .ln {
             text-align: right;
             padding: 6px 10px 6px 0;
             color: #687685;
             border-right: 1px solid rgba(34, 43, 49, 0.4);
         }
-
+        
         .lt {
             padding: 6px 12px;
             white-space: pre;
             overflow-x: auto;
         }
-
+        
         .code-line.bad .lt {
             background: rgba(180, 94, 94, 0.14);
             color: #dab1b1;
         }
-
+        
         .code-line.good .lt {
             background: rgba(45, 143, 97, 0.14);
             color: #b5dcc8;
         }
-
+        
         .inline-bad {
             color: #e2a3a3;
             border-bottom: 1px solid rgba(180, 94, 94, 0.55);
         }
-
+        
         .inline-good {
             color: #9fd2b6;
             border-bottom: 1px solid rgba(45, 143, 97, 0.6);
         }
-
+        
         .stack {
             padding: 18px 20px;
             display: grid;
             gap: 14px;
         }
-
+        
         .head {
             display: flex;
             justify-content: space-between;
@@ -272,25 +270,25 @@
             padding-bottom: 10px;
             gap: 12px;
         }
-
+        
         .head h2 {
             margin: 0;
             font-size: 25px;
             font-weight: 700;
         }
-
+        
         .head p {
             margin: 0;
             color: var(--text-dim);
             font-size: 14px;
         }
-
+        
         .workflow {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
-
+        
         .step {
             border: 1px solid var(--stroke);
             border-radius: var(--radius-sm);
@@ -299,7 +297,7 @@
             display: grid;
             gap: 8px;
         }
-
+        
         .step-no {
             width: 24px;
             height: 24px;
@@ -313,26 +311,26 @@
             justify-content: center;
             align-items: center;
         }
-
+        
         .step h3 {
             margin: 0;
             font-size: 16px;
             font-weight: 700;
         }
-
+        
         .step p {
             margin: 0;
             color: var(--text-dim);
             font-size: 14px;
             line-height: 1.5;
         }
-
+        
         .diagnostic-table {
             border: 1px solid var(--stroke);
             border-radius: var(--radius-sm);
             overflow: hidden;
         }
-
+        
         .diag-row {
             display: grid;
             grid-template-columns: 1.5fr .8fr 1fr .9fr;
@@ -342,7 +340,7 @@
             padding: 11px 12px;
             font-size: 14px;
         }
-
+        
         .diag-row:first-child {
             border-top: none;
             background: #0e1418;
@@ -352,7 +350,7 @@
             letter-spacing: .4px;
             font-family: var(--mono);
         }
-
+        
         .diag-row .status {
             font-family: var(--mono);
             font-size: 12px;
@@ -361,52 +359,52 @@
             padding: 3px 8px;
             width: fit-content;
         }
-
+        
         .s-ok {
             color: #9cd6b8;
             border-color: rgba(45, 143, 97, 0.5);
             background: rgba(45, 143, 97, 0.16);
         }
-
+        
         .s-wa {
             color: #e6b4b4;
             border-color: rgba(180, 94, 94, 0.5);
             background: rgba(180, 94, 94, 0.14);
         }
-
+        
         .s-re {
             color: #e3c5a2;
             border-color: rgba(180, 122, 68, 0.5);
             background: rgba(180, 122, 68, 0.15);
         }
-
+        
         .s-tl {
             color: #ccbdea;
             border-color: rgba(134, 113, 191, 0.52);
             background: rgba(134, 113, 191, 0.16);
         }
-
+        
         .s-pending {
             color: #c0cad5;
             border-color: rgba(125, 137, 149, 0.45);
             background: rgba(125, 137, 149, 0.16);
         }
-
+        
         .mono {
             font-family: var(--mono);
         }
-
+        
         .news-wrap {
             display: grid;
             grid-template-columns: 1fr 280px;
             gap: 14px;
         }
-
+        
         .news-stream {
             display: grid;
             gap: 10px;
         }
-
+        
         .news-entry {
             border: 1px solid var(--stroke);
             border-radius: var(--radius-sm);
@@ -415,31 +413,31 @@
             display: grid;
             gap: 7px;
         }
-
+        
         .news-entry-title {
             margin: 0;
             font-size: 18px;
             font-weight: 700;
         }
-
+        
         .news-entry-meta {
             margin: 0;
             color: var(--text-dim);
             font-size: 13px;
         }
-
+        
         .news-author {
             color: #b8c4d0;
             font-weight: 600;
         }
-
+        
         .news-entry-body {
             margin: 0;
             color: var(--text-dim);
             font-size: 14px;
             line-height: 1.5;
         }
-
+        
         .news-side {
             border: 1px solid var(--stroke);
             border-radius: var(--radius-sm);
@@ -449,19 +447,19 @@
             gap: 8px;
             align-content: start;
         }
-
+        
         .news-side h3 {
             margin: 0;
             font-size: 18px;
         }
-
+        
         .news-side p {
             margin: 0;
             color: var(--text-dim);
             font-size: 14px;
             line-height: 1.5;
         }
-
+        
         .news-empty {
             border: 1px dashed #33414c;
             border-radius: var(--radius-sm);
@@ -469,7 +467,7 @@
             color: var(--text-dim);
             font-size: 14px;
         }
-
+        
         .final {
             display: flex;
             justify-content: space-between;
@@ -477,18 +475,18 @@
             gap: 14px;
             padding: 18px 20px;
         }
-
+        
         .final h2 {
             margin: 0 0 6px;
             font-size: 24px;
         }
-
+        
         .final p {
             margin: 0;
             color: var(--text-dim);
             font-size: 14px;
         }
-
+        
         footer {
             margin-top: 4px;
             padding: 14px;
@@ -497,51 +495,43 @@
             text-align: center;
             font-size: 12px;
         }
-
+        
         @media (max-width: 900px) {
             .workflow {
                 grid-template-columns: 1fr;
             }
-
             .news-wrap {
                 grid-template-columns: 1fr;
             }
-
             .diag-row {
                 grid-template-columns: 1fr;
                 gap: 4px;
                 align-items: start;
             }
-
             .diag-row:first-child {
                 display: none;
             }
         }
-
+        
         @media (max-width: 720px) {
             header {
                 padding: 0 14px;
             }
-
             main {
                 padding-top: 18px;
                 gap: 12px;
             }
-
             .hero,
             .stack,
             .final {
                 padding: 14px;
             }
-
             h1 {
                 font-size: 35px;
             }
-
             .hero-actions {
                 flex-direction: column;
             }
-
             .btn {
                 width: 100%;
                 text-align: center;
@@ -560,8 +550,8 @@
         <section class="hero">
             <div class="hero-head">
                 <span class="hero-kicker">debug session</span>
-                <h1>Сломанный C++ код. Найди баг. Исправь. Сдай тесты.</h1>
-                <p class="hero-sub">Точка входа в тренировку: WA, RE, TL, overflow, off-by-one, индексы, бинарный поиск, DP.</p>
+                <h1>Найди и исправь ошибку</h1>
+                <p class="hero-sub">WA, RE, TL, overflow, off-by-one, индексы, бинарный поиск, DP.</p>
             </div>
 
             <div class="hero-actions">
@@ -581,17 +571,20 @@
             </div>
 
             <div class="code-atmos">
-                <div class="code-line"><span class="ln">14</span><span class="lt">for (int i = 0; i <span class="inline-bad"> <= </span> n; i++) sum += a[i];</span></div>
+                <div class="code-line"><span class="ln">14</span><span class="lt">for (int i = 0; i <span class="inline-bad"> <= </span> n; i++) sum += a[i];</span>
+                </div>
                 <div class="code-line bad"><span class="ln">15</span><span class="lt">cout << pref[r] - pref[l] << '\n';</span></div>
                 <div class="code-line good"><span class="ln">16</span><span class="lt">cout << pref[r] - pref[l - 1] << '\n';</span></div>
-                <div class="code-line"><span class="ln">17</span><span class="lt">if (mid <span class="inline-good">+ 1</span> <= hi) lo = mid + 1;</span></div>
+                <div class="code-line"><span class="ln">17</span><span class="lt">if (mid <span class="inline-good">+ 1</span>
+                    <=h i) lo=m id + 1;</span>
+                </div>
             </div>
         </section>
 
         <section class="stack">
             <div class="head">
                 <h2>Как работает</h2>
-                <p>Короткий цикл без лишнего UI.</p>
+                <p>3 шага.</p>
             </div>
             <div class="workflow">
                 <article class="step">
@@ -615,7 +608,7 @@
         <section class="stack">
             <div class="head">
                 <h2>Диагностика задач</h2>
-                <p>Карточки без витрины. Только сигнал и контекст.</p>
+                <p>Вердикт и тип бага.</p>
             </div>
             <div class="diagnostic-table">
                 <div class="diag-row">
@@ -660,7 +653,7 @@
         <section class="stack">
             <div class="head">
                 <h2>Новости</h2>
-                <p>Релизы задач, изменения judge, правки тестов.</p>
+                <p>Обновления.</p>
             </div>
             <div class="news-wrap">
                 <div>
@@ -677,8 +670,8 @@
 
         <section class="final">
             <div>
-                <h2>Начни с WA</h2>
-                <p>Сначала простые ошибки. Потом overflow, UB, бинарный поиск и DP.</p>
+                <h2>К задачам</h2>
+                <p>Начни с WA.</p>
             </div>
             <div class="hero-actions">
                 <a class="btn primary" href="train.html">К задачам</a>
@@ -744,6 +737,7 @@
                 if (archiveLink) archiveLink.style.display = "none";
                 return;
             }
+            empty.style.display = "block";
             empty.style.display = "none";
             if (archiveLink) archiveLink.style.display = "inline-flex";
 
