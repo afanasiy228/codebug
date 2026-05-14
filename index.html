@@ -8,18 +8,28 @@
 
     <style>
         :root {
-            --bg: #f7f1e7;
-            --bg-strong: #f0e6d8;
-            --ink: #1a1612;
-            --muted: #5f5b54;
-            --accent: #0f766e;
-            --accent-strong: #0b5f59;
-            --warm: #f3b562;
-            --card: #fffaf2;
-            --stroke: #e2d6c4;
-            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
-            --radius-lg: 28px;
-            --radius-md: 18px;
+            --bg: #0b0d10;
+            --bg-strong: #0e1115;
+            --bg-panel: #151a20;
+            --bg-panel-alt: #12161c;
+            --ink: #e7edf4;
+            --muted: #98a3b1;
+            --accent: #1f6b45;
+            --accent-strong: #185437;
+            --stroke: #2a313a;
+            --radius-lg: 10px;
+            --radius-md: 8px;
+            --shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+            --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            --accepted: #27a56c;
+            --wrong: #d36a6a;
+            --runtime: #d08f47;
+            --timelimit: #ac83f4;
+            --pending: #8c97a6;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -27,54 +37,47 @@
             color: var(--ink);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
-                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
-                linear-gradient(180deg, var(--bg), var(--bg-strong));
-        }
-
-        ::selection {
-            background: rgba(15, 118, 110, 0.2);
-        }
-
-        * {
-            box-sizing: border-box;
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-strong) 100%);
         }
 
         a {
             color: inherit;
         }
 
+        ::selection {
+            background: rgba(31, 107, 69, 0.36);
+            color: #f2f6f8;
+        }
+
         .container {
-            width: min(1100px, 92vw);
+            width: min(1180px, 94vw);
             margin: 0 auto;
         }
-        /* HEADER */
 
         header {
-            height: 72px;
-            background: rgba(255, 250, 242, 0.8);
-            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            height: 64px;
+            background: rgba(11, 13, 16, 0.9);
+            border-bottom: 1px solid var(--stroke);
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
-            z-index: 10;
-            backdrop-filter: blur(12px);
-            padding: 0 4vw;
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            z-index: 20;
+            padding: 0 3vw;
+            backdrop-filter: blur(6px);
         }
 
         .logo {
             font-family: "Space Grotesk", sans-serif;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             color: var(--ink);
         }
 
         nav a {
-            margin-left: 20px;
+            margin-left: 16px;
             color: var(--muted);
             font-size: 14px;
             text-decoration: none;
@@ -82,275 +85,524 @@
         }
 
         nav a:hover {
-            color: var(--accent);
+            color: #c5d3e1;
         }
-        /* HERO BLOCK */
+
+        main.container {
+            padding: 34px 0 70px;
+            display: grid;
+            gap: 28px;
+        }
 
         .hero {
-            padding: 80px 0 100px;
-        }
-
-        .hero-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 40px;
-            align-items: center;
+            grid-template-columns: 1.05fr 1fr;
+            gap: 20px;
+            align-items: stretch;
         }
 
-        .hero h1 {
-            font-family: "Space Grotesk", sans-serif;
-            font-size: clamp(34px, 4vw, 52px);
-            font-weight: 700;
-            margin: 0 0 18px;
-            color: var(--ink);
-        }
-
-        .hero p {
-            font-size: 17px;
-            color: var(--muted);
-            margin: 0 0 26px;
-            line-height: 1.7;
-        }
-
-        .hero-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--card);
+        .hero-copy,
+        .diagnostics-panel,
+        .tool-section,
+        .action-panel {
+            background: var(--bg-panel);
             border: 1px solid var(--stroke);
-            border-radius: 999px;
-            padding: 6px 14px;
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 16px;
-            box-shadow: 0 10px 24px rgba(26, 22, 18, 0.08);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
         }
 
-        .hero-tag span {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--accent);
-            color: #fff;
-            font-size: 11px;
-            font-weight: 700;
+        .hero-copy {
+            padding: 24px;
+            display: grid;
+            gap: 14px;
+            align-content: start;
+        }
+
+        .kicker {
+            margin: 0;
+            width: fit-content;
+            padding: 4px 10px;
             border-radius: 999px;
-            padding: 4px 8px;
+            border: 1px solid rgba(31, 107, 69, 0.65);
+            background: rgba(31, 107, 69, 0.18);
+            color: #8fcbab;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .hero-copy h1 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(31px, 3.5vw, 47px);
+            line-height: 1.1;
+        }
+
+        .hero-copy p {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.58;
+            color: var(--muted);
         }
 
         .hero-actions {
             display: flex;
+            gap: 10px;
             flex-wrap: wrap;
-            gap: 12px;
         }
 
-        .btn-main {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--accent);
-            color: #fff;
-            padding: 14px 26px;
-            font-weight: 600;
-            border-radius: 14px;
-            font-size: 16px;
-            text-decoration: none;
-            box-shadow: 0 16px 40px rgba(15, 118, 110, 0.25);
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
-
-        .btn-main:hover {
-            background: var(--accent-strong);
-            transform: translateY(-1px);
-        }
-
+        .btn-main,
         .btn-faq {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid var(--stroke);
-            color: var(--ink);
-            background: rgba(255, 250, 242, 0.7);
-            padding: 14px 24px;
-            font-weight: 600;
-            border-radius: 14px;
             text-decoration: none;
-            font-size: 16px;
-            transition: transform 0.2s ease, border 0.2s ease;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            padding: 11px 16px;
+            border: 1px solid var(--stroke);
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .btn-main {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #e7f3ec;
+        }
+
+        .btn-main:hover {
+            background: var(--accent-strong);
+            border-color: var(--accent-strong);
+        }
+
+        .btn-faq {
+            background: #10151b;
+            color: #d8e0e9;
         }
 
         .btn-faq:hover {
-            border-color: var(--accent);
-            transform: translateY(-1px);
+            border-color: #3b4552;
+            background: #121923;
         }
 
-        .hero-card {
-            background: var(--card);
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .bug-type-tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid #32404e;
+            background: #111923;
+            color: #a9b5c5;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .diagnostics-panel {
+            padding: 14px;
+            display: grid;
+            gap: 12px;
+            align-content: start;
+            background: var(--bg-panel-alt);
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--stroke);
+            font-size: 13px;
+            color: #c8d2de;
+        }
+
+        .panel-head strong {
+            font-weight: 600;
+            color: #e4ebf3;
+        }
+
+        .verdict-badge,
+        .problem-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 10px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--mono);
+            letter-spacing: 0.1px;
+            min-height: 22px;
+            white-space: nowrap;
+        }
+
+        .verdict-badge.is-accepted,
+        .problem-status.is-accepted {
+            color: #8addb8;
+            border-color: rgba(39, 165, 108, 0.4);
+            background: rgba(39, 165, 108, 0.16);
+        }
+
+        .verdict-badge.is-wa,
+        .problem-status.is-wa {
+            color: #ffb6b6;
+            border-color: rgba(211, 106, 106, 0.45);
+            background: rgba(211, 106, 106, 0.14);
+        }
+
+        .verdict-badge.is-re,
+        .problem-status.is-re {
+            color: #ffd09f;
+            border-color: rgba(208, 143, 71, 0.45);
+            background: rgba(208, 143, 71, 0.16);
+        }
+
+        .verdict-badge.is-tl,
+        .problem-status.is-tl {
+            color: #dbc6ff;
+            border-color: rgba(172, 131, 244, 0.42);
+            background: rgba(172, 131, 244, 0.14);
+        }
+
+        .verdict-badge.is-pending,
+        .problem-status.is-pending {
+            color: #c8d1db;
+            border-color: rgba(140, 151, 166, 0.35);
+            background: rgba(140, 151, 166, 0.15);
+        }
+
+        .code-preview {
             border: 1px solid var(--stroke);
-            border-radius: var(--radius-lg);
-            padding: 28px;
-            box-shadow: var(--shadow);
-            position: relative;
+            border-radius: var(--radius-md);
+            background: #0f141a;
             overflow: hidden;
         }
 
-        .hero-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.2px;
-            color: var(--accent);
-            background: rgba(15, 118, 110, 0.12);
-            border-radius: 999px;
-            padding: 6px 10px;
-            margin-bottom: 14px;
-        }
-
-        .hero-card::after {
-            content: "";
-            position: absolute;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(15, 118, 110, 0.2), transparent 70%);
-            top: -60px;
-            right: -40px;
-        }
-
-        .hero-card h3 {
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 20px;
-            margin: 0 0 14px;
-        }
-
-        .hero-list {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 20px;
+        .code-row {
             display: grid;
-            gap: 12px;
+            grid-template-columns: 42px 1fr;
+            align-items: start;
+            gap: 0;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.46;
+            border-bottom: 1px solid rgba(42, 49, 58, 0.55);
         }
 
-        .hero-list li {
-            background: #fff;
-            border: 1px solid rgba(226, 214, 196, 0.7);
-            padding: 12px 14px;
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
+        .code-row:last-child {
+            border-bottom: none;
+        }
+
+        .code-ln {
+            color: #6f7a88;
+            text-align: right;
+            padding: 6px 8px 6px 0;
+            border-right: 1px solid rgba(42, 49, 58, 0.55);
+            user-select: none;
+        }
+
+        .code-text {
+            padding: 6px 10px;
+            white-space: pre;
+            overflow-x: auto;
+            color: #dbe3ee;
+        }
+
+        .code-row.is-bug {
+            background: rgba(211, 106, 106, 0.12);
+        }
+
+        .code-row.is-bug .code-text {
+            color: #ffd1d1;
+        }
+
+        .diag-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
-        .hero-list strong {
-            color: var(--ink);
+        .test-output,
+        .diff-block {
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            background: #10161d;
+            padding: 10px;
+            display: grid;
+            gap: 7px;
         }
 
-        .hero-stat {
+        .mini-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #a8b5c4;
+            letter-spacing: 0.1px;
+            text-transform: uppercase;
+        }
+
+        .test-row {
+            font-size: 12px;
+            color: #afbbca;
+            font-family: var(--mono);
+        }
+
+        .test-row strong {
+            font-weight: 700;
+        }
+
+        .test-row.fail strong {
+            color: #ffb6b6;
+        }
+
+        .test-row.pass strong {
+            color: #8addb8;
+        }
+
+        .io-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        .io-box {
+            border: 1px solid var(--stroke);
+            border-radius: 6px;
+            padding: 8px;
+            background: #0e1319;
+            min-height: 52px;
+        }
+
+        .io-box.expected {
+            border-color: rgba(39, 165, 108, 0.5);
+        }
+
+        .io-box.actual {
+            border-color: rgba(211, 106, 106, 0.55);
+            color: #ffcdcd;
+        }
+
+        .diff-line {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--stroke);
+            background: #0f151b;
+            color: #d6dfe9;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .diff-line.remove {
+            border-color: rgba(211, 106, 106, 0.5);
+            background: rgba(211, 106, 106, 0.12);
+            color: #ffcccc;
+        }
+
+        .diff-line.add {
+            border-color: rgba(39, 165, 108, 0.5);
+            background: rgba(39, 165, 108, 0.12);
+            color: #b7efd5;
+        }
+
+        .tool-section {
+            padding: 18px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--stroke);
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 23px;
+            line-height: 1.2;
+        }
+
+        .section-head p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .workflow-step {
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            background: #10151b;
+            padding: 12px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .step-no {
+            width: 24px;
+            height: 24px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(31, 107, 69, 0.25);
+            color: #b0e2c9;
+        }
+
+        .workflow-step h3 {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .workflow-step p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .problem-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
+            gap: 10px;
         }
 
-        .stat {
-            background: rgba(15, 118, 110, 0.08);
-            border-radius: 16px;
-            padding: 14px;
-            text-align: left;
+        .problem-card {
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            background: #11161d;
+            padding: 12px;
+            display: grid;
+            gap: 10px;
         }
 
-        .stat span {
-            font-size: 20px;
-            font-weight: 700;
-            font-family: "Space Grotesk", sans-serif;
+        .problem-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
         }
 
-        .stat p {
-            margin: 6px 0 0;
+        .problem-head h3 {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.3;
+        }
+
+        .problem-card p {
+            margin: 0;
             font-size: 13px;
             color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .problem-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .problem-attempts {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: #b8c2ce;
+            border: 1px solid #3a4553;
+            border-radius: 999px;
+            padding: 3px 9px;
+            background: #111924;
         }
 
         .news-home {
-            padding: 10px 0 30px;
+            padding: 18px;
         }
 
         .news-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 280px;
-            gap: 24px;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 14px;
             align-items: start;
         }
 
         .news-stream {
             display: grid;
-            gap: 16px;
+            gap: 10px;
         }
 
         .news-entry {
-            background: var(--card);
+            background: #10161d;
             border: 1px solid var(--stroke);
             border-radius: var(--radius-md);
-            padding: 20px 22px;
-            box-shadow: 0 14px 40px rgba(26, 22, 18, 0.08);
+            padding: 12px;
+            display: grid;
+            gap: 7px;
         }
 
         .news-entry-title {
-            margin: 0 0 10px;
+            margin: 0;
             font-family: "Space Grotesk", sans-serif;
-            font-size: clamp(22px, 2.7vw, 34px);
-            line-height: 1.22;
-            color: #3b5998;
+            font-size: 18px;
+            line-height: 1.25;
+            color: #e7edf4;
         }
 
         .news-entry-meta {
-            margin: 0 0 16px;
-            color: var(--ink);
-            font-size: 17px;
-            font-weight: 500;
+            margin: 0;
+            color: #a6b2c1;
+            font-size: 13px;
+            line-height: 1.4;
         }
 
         .news-author {
-            color: #163ccf;
-            text-decoration: none;
-            font-weight: 700;
+            color: #d2dbe5;
+            font-weight: 600;
         }
 
         .news-entry-body {
-            border-left: 6px solid rgba(95, 91, 84, 0.35);
-            padding-left: 16px;
-            color: var(--ink);
-            line-height: 1.68;
-            font-size: 16px;
-            white-space: normal;
-            word-break: break-word;
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 14px;
         }
 
         .news-side {
-            background: var(--card);
+            background: #10161d;
             border: 1px solid var(--stroke);
             border-radius: var(--radius-md);
-            padding: 18px;
-            box-shadow: 0 14px 40px rgba(26, 22, 18, 0.08);
+            padding: 12px;
             display: grid;
-            gap: 14px;
-            position: sticky;
-            top: 92px;
+            gap: 9px;
         }
 
         .news-side h3 {
             margin: 0;
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .news-side p {
             margin: 0;
             color: var(--muted);
-            font-size: 14px;
-            line-height: 1.55;
+            font-size: 13px;
+            line-height: 1.48;
         }
 
         .news-link {
@@ -358,86 +610,39 @@
         }
 
         .news-empty {
-            border: 1px dashed var(--stroke);
+            border: 1px dashed #3b4654;
             border-radius: var(--radius-md);
-            padding: 16px;
-            color: var(--muted);
-            background: rgba(255, 255, 255, 0.45);
-        }
-
-        .section-title {
-            font-family: "Space Grotesk", sans-serif;
-            font-size: clamp(24px, 3vw, 32px);
-            margin: 0 0 16px;
-        }
-
-        .section-lead {
-            color: var(--muted);
-            margin: 0 0 32px;
-            line-height: 1.6;
-        }
-
-        .why {
-            padding: 10px 0 80px;
-        }
-        /* WHY BLOCK */
-
-        .why-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 22px;
-        }
-
-        .why-item {
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            padding: 22px;
-            border-radius: var(--radius-md);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .why-item:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow);
-        }
-
-        .why-item h3 {
-            margin: 0 0 10px;
-            font-size: 18px;
-            font-family: "Space Grotesk", sans-serif;
-        }
-
-        .why-item p {
+            padding: 12px;
             color: var(--muted);
             font-size: 14px;
-            line-height: 1.6;
+            background: #10161d;
         }
 
-        .cta {
-            margin: 40px 0 80px;
-            background: linear-gradient(120deg, rgba(15, 118, 110, 0.12), rgba(243, 181, 98, 0.2));
-            border-radius: var(--radius-lg);
-            padding: 32px;
-            border: 1px solid rgba(226, 214, 196, 0.7);
-            display: grid;
-            gap: 18px;
+        .action-panel {
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
 
-        .cta h2 {
-            margin: 0;
+        .action-panel h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
             font-family: "Space Grotesk", sans-serif;
-            font-size: clamp(24px, 3vw, 32px);
         }
 
-        .cta p {
+        .action-panel p {
             margin: 0;
             color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .reveal {
             opacity: 0;
-            transform: translateY(18px);
-            animation: fadeUp 0.7s ease forwards;
+            transform: translateY(14px);
+            animation: fadeUp 0.55s ease forwards;
             animation-delay: var(--delay, 0s);
         }
 
@@ -448,37 +653,74 @@
             }
         }
 
-        /* FOOTER */
-
         footer {
-            margin-top: 60px;
-            padding: 20px;
+            margin-top: 14px;
+            padding: 16px;
             text-align: center;
-            font-size: 13px;
-            color: var(--muted);
-            border-top: 1px solid rgba(226, 214, 196, 0.7);
+            font-size: 12px;
+            color: #7e8998;
+            border-top: 1px solid var(--stroke);
         }
 
-        @media (max-width: 768px) {
-            header {
-                padding: 0 20px;
-            }
-
+        @media (max-width: 1080px) {
             .hero {
-                padding: 50px 0 60px;
+                grid-template-columns: 1fr;
             }
 
-            .hero-actions {
-                flex-direction: column;
-                align-items: stretch;
+            .diag-grid {
+                grid-template-columns: 1fr;
             }
 
             .news-layout {
                 grid-template-columns: 1fr;
             }
 
-            .news-side {
-                position: static;
+            .action-panel {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 760px) {
+            header {
+                padding: 0 16px;
+            }
+
+            main.container {
+                width: 95vw;
+                padding-top: 22px;
+                gap: 16px;
+            }
+
+            .hero-copy,
+            .diagnostics-panel,
+            .tool-section,
+            .news-home,
+            .action-panel {
+                padding: 12px;
+            }
+
+            .hero-copy h1 {
+                font-size: 28px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+            }
+
+            .btn-main,
+            .btn-faq {
+                width: 100%;
+            }
+
+            .workflow,
+            .problem-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-head {
+                align-items: flex-start;
+                flex-direction: column;
             }
         }
 
@@ -490,7 +732,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -502,85 +743,172 @@
 
     <main class="container">
         <section class="hero">
-            <div class="hero-grid">
-                <div class="reveal" style="--delay: 0s;">
-                    <div class="hero-tag"><span>NEW</span> Практика, похожая на реальные баги</div>
-                    <h1>Учись находить и исправлять ошибки в C++</h1>
-                    <p>
-                        CodeBug — тренировочная платформа, где школьники учатся дебажить код, исправлять реальные ошибки и готовиться к олимпиадам по информатике. Всё как на LeetCode и Codeforces, только под реальные баги.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="train.html" class="btn-main">Начать обучение</a>
-                        <a href="faq.html" class="btn-faq">FAQ</a>
+            <div class="hero-copy reveal" style="--delay: 0s;">
+                <p class="kicker">CodeBug Debug Arena</p>
+                <h1>Тебе дают сломанный C++ код. Найди баг. Почини. Пройди тесты.</h1>
+                <p>
+                    Тренировка построена вокруг реальных причин WA, RE и TL. Ты не читаешь мотивацию. Ты анализируешь вход, правишь логику, запускаешь тесты и получаешь точный вердикт.
+                </p>
+                <div class="hero-actions">
+                    <a href="train.html" class="btn-main">Открыть тренировку</a>
+                    <a href="faq.html" class="btn-faq">Правила платформы</a>
+                </div>
+                <div class="tool-tags">
+                    <span class="bug-type-tag">off-by-one</span>
+                    <span class="bug-type-tag">overflow</span>
+                    <span class="bug-type-tag">индексы</span>
+                    <span class="bug-type-tag">бинарный поиск</span>
+                    <span class="bug-type-tag">DP transitions</span>
+                </div>
+            </div>
+
+            <aside class="diagnostics-panel reveal" style="--delay: 0.08s;">
+                <div class="panel-head">
+                    <span><strong>Задача:</strong> Prefix Sum Query</span>
+                    <span class="verdict-badge is-wa">Wrong Answer</span>
+                </div>
+
+                <div class="code-preview">
+                    <div class="code-row"><span class="code-ln">12</span><span class="code-text">for (int i = 1; i &lt;= n; ++i) pref[i] = pref[i - 1] + a[i];</span></div>
+                    <div class="code-row"><span class="code-ln">13</span><span class="code-text">while (q--) {</span></div>
+                    <div class="code-row"><span class="code-ln">14</span><span class="code-text">    int l, r; cin &gt;&gt; l &gt;&gt; r;</span></div>
+                    <div class="code-row is-bug"><span class="code-ln">15</span><span class="code-text">    cout &lt;&lt; pref[r] - pref[l] &lt;&lt; '\n';</span></div>
+                    <div class="code-row"><span class="code-ln">16</span><span class="code-text">}</span></div>
+                </div>
+
+                <div class="diag-grid">
+                    <div class="test-output">
+                        <div class="mini-title">Test Output</div>
+                        <div class="test-row fail">test #4 <strong>FAILED</strong> (WA)</div>
+                        <div class="io-grid">
+                            <div class="io-box expected">expected\n42</div>
+                            <div class="io-box actual">actual\n39</div>
+                        </div>
+                        <div class="test-row pass">test #1-3 <strong>PASSED</strong></div>
+                    </div>
+                    <div class="diff-block">
+                        <div class="mini-title">Diff</div>
+                        <div class="diff-line remove">- cout &lt;&lt; pref[r] - pref[l] &lt;&lt; '\n';</div>
+                        <div class="diff-line add">+ cout &lt;&lt; pref[r] - pref[l - 1] &lt;&lt; '\n';</div>
+                        <div class="diff-line">bug type: off-by-one on left border</div>
                     </div>
                 </div>
-                <div class="hero-card reveal" style="--delay: 0.12s;">
-                    <div class="hero-label">Режим практики</div>
-                    <h3>Тренируйся по сценарию разработчика</h3>
-                    <ul class="hero-list">
-                        <li>Разбери проблему и <strong>найди баг</strong></li>
-                        <li>Почини решение и <strong>сдай тесты</strong></li>
-                        <li>Сравни с эталоном и <strong>вырасти в рейтинге</strong></li>
-                    </ul>
-                    <div class="hero-stat">
-                        <div class="stat">
-                            <span>120+</span>
-                            <p>задач с реальными ошибками</p>
-                        </div>
-                        <div class="stat">
-                            <span>7 дней</span>
-                            <p>новые подборки каждую неделю</p>
-                        </div>
-                    </div>
+            </aside>
+        </section>
+
+        <section class="tool-section reveal" style="--delay: 0.12s;">
+            <div class="section-head">
+                <div>
+                    <h2>Как проходит сессия</h2>
+                    <p>Один цикл: код, диагностика, фикс, повторный прогон.</p>
                 </div>
+            </div>
+            <div class="workflow">
+                <article class="workflow-step">
+                    <span class="step-no">01</span>
+                    <h3>Читаешь условие и код</h3>
+                    <p>Находишь инвариант. Проверяешь индексы, типы, границы и переходы.</p>
+                </article>
+                <article class="workflow-step">
+                    <span class="step-no">02</span>
+                    <h3>Смотришь вердикт и тест</h3>
+                    <p>Сравниваешь expected/actual. Локализуешь строку с багом.</p>
+                </article>
+                <article class="workflow-step">
+                    <span class="step-no">03</span>
+                    <h3>Правишь и сдаешь снова</h3>
+                    <p>Получаешь Accepted или новый сигнал: WA, RE, TL, Pending.</p>
+                </article>
             </div>
         </section>
 
-        <section class="news-home reveal" style="--delay: 0.12s;">
+        <section class="tool-section reveal" style="--delay: 0.18s;">
+            <div class="section-head">
+                <div>
+                    <h2>Примеры тренировок</h2>
+                    <p>Карточка задачи показывает не только тему, но и тип ошибки и текущий статус.</p>
+                </div>
+            </div>
+            <div class="problem-grid">
+                <article class="problem-card">
+                    <div class="problem-head">
+                        <h3>Бинарный поиск по ответу</h3>
+                        <span class="problem-status is-pending">Pending</span>
+                    </div>
+                    <p>Ошибка в условии монотонности. При границе `mid` цикл не сужается.</p>
+                    <div class="problem-meta">
+                        <span class="bug-type-tag">Bug: infinite loop</span>
+                        <span class="bug-type-tag">Сложность: Средняя</span>
+                        <span class="problem-attempts">попыток: 5</span>
+                    </div>
+                </article>
+                <article class="problem-card">
+                    <div class="problem-head">
+                        <h3>DP на отрезке</h3>
+                        <span class="problem-status is-re">Runtime Error</span>
+                    </div>
+                    <p>Выход за границы массива при переходе `dp[i + 1][j - 1]`.</p>
+                    <div class="problem-meta">
+                        <span class="bug-type-tag">Bug: index underflow</span>
+                        <span class="bug-type-tag">Сложность: Сложная</span>
+                        <span class="problem-attempts">попыток: 3</span>
+                    </div>
+                </article>
+                <article class="problem-card">
+                    <div class="problem-head">
+                        <h3>Префиксные суммы</h3>
+                        <span class="problem-status is-wa">Wrong Answer</span>
+                    </div>
+                    <p>Смещение левой границы на 1. Ломает запросы длины 1 и full range.</p>
+                    <div class="problem-meta">
+                        <span class="bug-type-tag">Bug: off-by-one</span>
+                        <span class="bug-type-tag">Сложность: Легкая</span>
+                        <span class="problem-attempts">попыток: 8</span>
+                    </div>
+                </article>
+                <article class="problem-card">
+                    <div class="problem-head">
+                        <h3>Сумма на дереве</h3>
+                        <span class="problem-status is-accepted">Accepted</span>
+                    </div>
+                    <p>Исправлен overflow: `int` заменен на `long long` в аккумуляторе.</p>
+                    <div class="problem-meta">
+                        <span class="bug-type-tag">Bug: overflow</span>
+                        <span class="bug-type-tag">Сложность: Средняя</span>
+                        <span class="problem-attempts">попыток: 2</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="tool-section news-home reveal" style="--delay: 0.24s;">
             <div class="news-layout">
                 <div>
-                    <h2 class="section-title">Новости платформы</h2>
-                    <p class="section-lead">Свежие анонсы теперь прямо на главной: автор, время публикации и короткий текст обновления.</p>
+                    <div class="section-head" style="margin-bottom:10px;">
+                        <div>
+                            <h2>Новости платформы</h2>
+                            <p>Только релизы задач, изменения рантайма, обновления тестов и правил.</p>
+                        </div>
+                    </div>
                     <div id="homeNewsList" class="news-stream"></div>
                     <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
                 </div>
                 <aside class="news-side">
-                    <h3>Что публикуем</h3>
-                    <p>Анонсы раундов, обновления задач, изменения платформы и важные организационные сообщения.</p>
-                    <a href="news.html" class="btn-faq news-link" id="homeNewsArchiveLink">Открыть архив новостей</a>
+                    <h3>Что здесь публикуется</h3>
+                    <p>Новые наборы багов, изменения judge, правки тестов и статусов контестов.</p>
+                    <a href="news.html" class="btn-faq news-link" id="homeNewsArchiveLink">Открыть архив</a>
                 </aside>
             </div>
         </section>
 
-        <section class="why reveal" style="--delay: 0.18s;">
-            <h2 class="section-title">Почему CodeBug работает</h2>
-            <p class="section-lead">Собрали то, что обычно скрыто в разборе олимпиадных решений: ошибки, причины и путь исправления.</p>
-            <div class="why-grid">
-                <div class="why-item">
-                    <h3>Практика на ошибках</h3>
-                    <p>Не просто решай, а именно исправляй чужой код — так формируется настоящий навык дебага.</p>
-                </div>
-                <div class="why-item">
-                    <h3>Обратная связь сразу</h3>
-                    <p>Ты видишь результат по тестам и узнаёшь, где логика дала сбой и почему.</p>
-                </div>
-                <div class="why-item">
-                    <h3>Структурный рост</h3>
-                    <p>Рейтинги, подборки и уровни сложности помогают идти от базовых багов к олимпиадным.</p>
-                </div>
-                <div class="why-item">
-                    <h3>Фокус на C++</h3>
-                    <p>Все задания заточены под стиль олимпиадного кода и типовые ошибки школьников.</p>
-                </div>
+        <section class="action-panel reveal" style="--delay: 0.3s;">
+            <div>
+                <h2>Готов к сессии</h2>
+                <p>Открой тренировку и начни с WA. Потом переходи к overflow, UB, бинарному поиску и DP.</p>
             </div>
-        </section>
-
-        <section class="cta reveal" style="--delay: 0.24s;">
-            <h2>Готов прокачать дебаг как суперсилу?</h2>
-            <p>Открой тренировки или уточни детали в FAQ. Начни с первых задач уже сегодня.</p>
             <div class="hero-actions">
-                <a href="train.html" class="btn-main">Перейти к задачам</a>
-                <a href="faq.html" class="btn-faq">Что внутри платформы</a>
+                <a href="train.html" class="btn-main">Начать с WA</a>
+                <a href="submissions.html" class="btn-faq">История посылок</a>
             </div>
         </section>
     </main>
