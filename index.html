@@ -47,36 +47,51 @@
 
         .top-nav {
             position: fixed;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 8;
+            height: 54px;
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 7px 11px;
-            border: 1px solid rgba(29, 39, 46, 0.75);
-            border-radius: 999px;
-            background: rgba(8, 11, 13, 0.62);
-            backdrop-filter: blur(7px);
+            justify-content: center;
+            background: rgba(8, 11, 13, 0.34);
+            border-bottom: 1px solid rgba(29, 39, 46, 0.42);
+            backdrop-filter: blur(4px);
+        }
+
+        .top-nav-inner {
+            width: min(1180px, 96vw);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
         .top-nav .logo {
             font-size: 14px;
             font-weight: 700;
-            color: #d6e0e8;
+            color: #d2dde5;
+            letter-spacing: 0.2px;
+        }
+
+        .top-nav nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
         .top-nav nav a {
-            margin-left: 10px;
-            color: #92a0ae;
+            margin: 0;
+            color: #8f9daa;
             text-decoration: none;
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .top-nav nav a:hover {
-            color: #d2dce5;
+            color: #cbd6df;
         }
 
         .hero {
@@ -100,12 +115,29 @@
 
         .code-fog {
             position: absolute;
-            inset: -4% -8%;
+            inset: -12% -14% -10%;
             z-index: 1;
-            transform: rotate(-2.4deg) translateX(-2%);
+            transform: rotate(-1.8deg);
             pointer-events: none;
-            filter: blur(0.8px);
-            opacity: 0.56;
+            filter: blur(0.9px);
+            opacity: 0.48;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 8vw;
+            align-content: center;
+        }
+
+        .code-block {
+            display: grid;
+            gap: 0;
+        }
+
+        .code-block.a {
+            transform: translate(-4vw, -3vh);
+        }
+
+        .code-block.b {
+            transform: translate(6vw, 5vh);
         }
 
         .code-row {
@@ -113,10 +145,10 @@
             grid-template-columns: 38px 1fr;
             font-family: var(--mono);
             font-size: 12px;
-            color: #718292;
+            color: #687a89;
             line-height: 1.48;
             transition: opacity .48s ease, color .48s ease, background-color .7s ease;
-            opacity: .22;
+            opacity: .2;
             padding: 1px 0;
         }
 
@@ -133,8 +165,8 @@
         }
 
         .code-row.hover {
-            opacity: .5;
-            color: #95a7b7;
+            opacity: .46;
+            color: #8ea2b2;
         }
 
         .code-row.hot-red {
@@ -152,8 +184,7 @@
         .hero-content {
             position: relative;
             z-index: 2;
-            width: min(760px, 92vw);
-            transform: translate(-5.8vw, 4.6vh);
+            width: min(920px, 92vw);
             text-align: left;
             display: grid;
             justify-items: start;
@@ -162,10 +193,10 @@
 
         .brand {
             margin: 0;
-            font-size: clamp(36px, 6.6vw, 68px);
+            font-size: clamp(32px, 5.1vw, 54px);
             line-height: 1;
             font-weight: 700;
-            color: rgba(136, 187, 161, 0.84);
+            color: rgba(123, 176, 149, 0.75);
             letter-spacing: 0.2px;
         }
 
@@ -179,20 +210,21 @@
 
         .cta {
             margin-top: 4px;
-            border: 1px solid #2f8159;
+            border: 1px solid rgba(63, 134, 96, 0.62);
             border-radius: 9px;
             padding: 10px 15px;
-            background: rgba(35, 106, 74, 0.88);
-            color: #e3f0e8;
+            background: rgba(25, 55, 42, 0.62);
+            color: #cfe2d7;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
-            transition: background .2s ease, border-color .2s ease;
+            transition: background .2s ease, border-color .2s ease, color .2s ease;
         }
 
         .cta:hover {
-            background: rgba(44, 130, 91, 0.9);
-            border-color: #42996d;
+            background: rgba(33, 78, 58, 0.78);
+            border-color: rgba(80, 157, 116, 0.72);
+            color: #deece4;
         }
 
         .news {
@@ -289,12 +321,13 @@
 
         @media (max-width: 760px) {
             .top-nav {
-                width: calc(100vw - 22px);
-                justify-content: space-between;
+                height: 50px;
+                justify-content: center;
+                border-bottom-color: rgba(27, 37, 44, 0.55);
             }
 
-            .top-nav nav {
-                display: none;
+            .top-nav-inner {
+                width: calc(100vw - 22px);
             }
 
             .hero-content {
@@ -313,9 +346,15 @@
             }
 
             .code-fog {
-                inset: 8% -18%;
-                transform: rotate(-1.2deg);
-                opacity: 0.5;
+                inset: -2% -36%;
+                transform: rotate(-1deg);
+                opacity: 0.43;
+                grid-template-columns: 1fr;
+                column-gap: 0;
+            }
+
+            .code-block.b {
+                display: none;
             }
         }
     </style>
@@ -323,24 +362,42 @@
 
 <body>
     <div class="top-nav">
-        <span class="logo">CodeBug</span>
-        <nav id="nav-links"></nav>
+        <div class="top-nav-inner">
+            <span class="logo">CodeBug</span>
+            <nav id="nav-links"></nav>
+        </div>
     </div>
 
     <section class="screen hero" id="heroScreen">
         <div class="code-fog" id="codeFog" aria-hidden="true">
-            <div class="code-row"><span class="ln">11</span><span class="txt">for (int i = 0; i <= n; ++i) pref[i] = pref[i - 1] + a[i];</span></div>
-            <div class="code-row"><span class="ln">12</span><span class="txt">if (l < 0 || r >= n) return false;</span></div>
-            <div class="code-row"><span class="ln">13</span><span class="txt">while (lo <= hi) { int mid = (lo + hi) / 2; }</span></div>
-            <div class="code-row"><span class="ln">14</span><span class="txt">cout << pref[r] - pref[l] << '\n';</span></div>
-            <div class="code-row"><span class="ln">15</span><span class="txt">if (a[i] == target) ans = i;</span></div>
-            <div class="code-row"><span class="ln">16</span><span class="txt">if (dp[i - 1] + w < dp[i]) dp[i] = dp[i - 1] + w;</span></div>
-            <div class="code-row"><span class="ln">17</span><span class="txt">for (int i = 1; i < n; ++i) answer += a[i] * b[i];</span></div>
-            <div class="code-row"><span class="ln">18</span><span class="txt">if (r > 0) sum -= pref[r - 1];</span></div>
-            <div class="code-row"><span class="ln">19</span><span class="txt">if (balance = 0) ok = true;</span></div>
-            <div class="code-row"><span class="ln">20</span><span class="txt">vector<long long> pref(n + 1, 0);</span></div>
-            <div class="code-row"><span class="ln">21</span><span class="txt">if (idx < n) idx = idx + 1;</span></div>
-            <div class="code-row"><span class="ln">22</span><span class="txt">cout << (ok ? "YES" : "NO") << '\n';</span></div>
+            <div class="code-block a">
+                <div class="code-row"><span class="ln">11</span><span class="txt">for (int i = 0; i <= n; ++i) pref[i] = pref[i - 1] + a[i];</span></div>
+                <div class="code-row"><span class="ln">12</span><span class="txt">if (l < 0 || r >= n) return false;</span></div>
+                <div class="code-row"><span class="ln">13</span><span class="txt">while (lo <= hi) { int mid = (lo + hi) / 2; }</span></div>
+                <div class="code-row"><span class="ln">14</span><span class="txt">cout << pref[r] - pref[l] << '\n';</span></div>
+                <div class="code-row"><span class="ln">15</span><span class="txt">if (a[i] == target) ans = i;</span></div>
+                <div class="code-row"><span class="ln">16</span><span class="txt">if (dp[i - 1] + w < dp[i]) dp[i] = dp[i - 1] + w;</span></div>
+                <div class="code-row"><span class="ln">17</span><span class="txt">for (int i = 1; i < n; ++i) answer += a[i] * b[i];</span></div>
+                <div class="code-row"><span class="ln">18</span><span class="txt">if (r > 0) sum -= pref[r - 1];</span></div>
+                <div class="code-row"><span class="ln">19</span><span class="txt">if (balance = 0) ok = true;</span></div>
+                <div class="code-row"><span class="ln">20</span><span class="txt">vector<long long> pref(n + 1, 0);</span></div>
+                <div class="code-row"><span class="ln">21</span><span class="txt">if (idx < n) idx = idx + 1;</span></div>
+                <div class="code-row"><span class="ln">22</span><span class="txt">cout << (ok ? "YES" : "NO") << '\n';</span></div>
+            </div>
+            <div class="code-block b">
+                <div class="code-row"><span class="ln">23</span><span class="txt">if (best > cur) best = cur;</span></div>
+                <div class="code-row"><span class="ln">24</span><span class="txt">long long mid = (left + right) / 2;</span></div>
+                <div class="code-row"><span class="ln">25</span><span class="txt">while (pos <= n && a[pos] <= x) pos++;</span></div>
+                <div class="code-row"><span class="ln">26</span><span class="txt">if (used == k) return dist <= t;</span></div>
+                <div class="code-row"><span class="ln">27</span><span class="txt">prefix[i + 1] = prefix[i] + value[i];</span></div>
+                <div class="code-row"><span class="ln">28</span><span class="txt">if (state[u] == 1) cycle = true;</span></div>
+                <div class="code-row"><span class="ln">29</span><span class="txt">for (int j = 0; j <= m; ++j) dp[i][j] = INF;</span></div>
+                <div class="code-row"><span class="ln">30</span><span class="txt">ans = max(ans, curLen);</span></div>
+                <div class="code-row"><span class="ln">31</span><span class="txt">if (l == r) return tree[v];</span></div>
+                <div class="code-row"><span class="ln">32</span><span class="txt">auto it = lower_bound(a.begin(), a.end(), x);</span></div>
+                <div class="code-row"><span class="ln">33</span><span class="txt">sum += (long long)cnt * val;</span></div>
+                <div class="code-row"><span class="ln">34</span><span class="txt">if (prev == -1) prev = cur;</span></div>
+            </div>
         </div>
 
         <div class="hero-content">
@@ -481,17 +538,19 @@
                 });
             }
 
-            function setHoverByY(clientY) {
-                const rect = hero.getBoundingClientRect();
-                if (clientY < rect.top || clientY > rect.bottom) {
+            function setHoverByPointer(clientX, clientY) {
+                const heroRect = hero.getBoundingClientRect();
+                if (clientY < heroRect.top || clientY > heroRect.bottom) {
                     rows.forEach((row) => row.classList.remove("hover"));
                     return;
                 }
-                const p = (clientY - rect.top) / rect.height;
-                const center = Math.max(0, Math.min(rows.length - 1, Math.round(p * (rows.length - 1))));
-                rows.forEach((row, idx) => {
-                    const d = Math.abs(idx - center);
-                    if (d <= 2) row.classList.add("hover");
+                rows.forEach((row) => {
+                    const r = row.getBoundingClientRect();
+                    const cx = r.left + r.width / 2;
+                    const cy = r.top + r.height / 2;
+                    const dx = Math.abs(clientX - cx);
+                    const dy = Math.abs(clientY - cy);
+                    if (dx < 520 && dy < 56) row.classList.add("hover");
                     else row.classList.remove("hover");
                 });
             }
@@ -540,7 +599,7 @@
                 }, delay);
             }
 
-            document.addEventListener("mousemove", (e) => setHoverByY(e.clientY), { passive: true });
+            document.addEventListener("mousemove", (e) => setHoverByPointer(e.clientX, e.clientY), { passive: true });
             document.addEventListener("mouseleave", () => rows.forEach((row) => row.classList.remove("hover")));
 
             schedulePulse();
