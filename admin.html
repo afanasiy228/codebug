@@ -483,9 +483,9 @@
         </div>
         <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
         <div class="admin-note">Условие</div>
-        <textarea id="taskStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
+        <textarea id="taskStatementText" class="admin-textarea" placeholder="statement/russian.tex"></textarea>
         <div class="admin-note">Пояснение</div>
-        <textarea id="taskHelpText" class="admin-textarea" placeholder="help.md"></textarea>
+        <textarea id="taskHelpText" class="admin-textarea" placeholder="statement/hint.md"></textarea>
         <div class="admin-note">Код (ошибочный)</div>
         <textarea id="taskCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
         <div class="admin-note">Правильное решение (опционально)</div>
@@ -561,9 +561,9 @@
         </div>
         <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
         <div class="admin-note">Условие</div>
-        <textarea id="editStatementText" class="admin-textarea" placeholder="statement.md"></textarea>
+        <textarea id="editStatementText" class="admin-textarea" placeholder="statement/russian.tex"></textarea>
         <div class="admin-note">Пояснение</div>
-        <textarea id="editHelpText" class="admin-textarea" placeholder="help.md"></textarea>
+        <textarea id="editHelpText" class="admin-textarea" placeholder="statement/hint.md"></textarea>
         <div class="admin-note">Код (ошибочный)</div>
         <textarea id="editCodeText" class="admin-textarea" placeholder="code.cpp"></textarea>
         <div class="admin-note">Правильное решение (опционально)</div>
@@ -669,6 +669,7 @@
   </main>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="firebase.js"></script>
   <script src="auth.js"></script>
@@ -684,6 +685,40 @@
       if (!log) return;
       const time = new Date().toLocaleTimeString();
       log.textContent = `[${time}] ${message}\n` + log.textContent;
+    }
+
+    async function adminRequestHeaders(json = true) {
+      const headers = {};
+      if (json) headers["Content-Type"] = "application/json";
+      try {
+        const auth = typeof getAuth === "function" ? getAuth() : null;
+        const user = await new Promise((resolve) => {
+          if (!auth) return resolve(null);
+          if (auth.currentUser) return resolve(auth.currentUser);
+          let done = false;
+          let unsubscribe = null;
+          const finish = (value) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            if (typeof unsubscribe === "function") unsubscribe();
+            resolve(value || null);
+          };
+          const timer = setTimeout(() => finish(null), 1500);
+          unsubscribe = auth.onAuthStateChanged((value) => {
+            finish(value);
+          }, () => {
+            clearTimeout(timer);
+            finish(null);
+          });
+        });
+        if (user) {
+          headers.Authorization = `Bearer ${await user.getIdToken()}`;
+        }
+      } catch (err) {
+        console.warn("Admin token unavailable", err);
+      }
+      return headers;
     }
 
     async function initAdminPanel() {
@@ -805,9 +840,7 @@
         setAdminLog("Сохранение задачи. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/create`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: await adminRequestHeaders(),
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
@@ -952,6 +985,40 @@
       }
       const base = window.TASKS_API_BASE || "";
       try {
+        const bundleRes = await fetch(`${base}/tasks/${id}/admin-bundle`, {
+          headers: await adminRequestHeaders(false)
+        });
+        if (bundleRes.ok) {
+          const bundle = await bundleRes.json();
+          const problem = bundle.problem || {};
+          const filesData = bundle.files || {};
+          document.getElementById("editMetaTitle").value = problem.title || "";
+          document.getElementById("editMetaTags").value = Array.isArray(problem.tags) ? problem.tags.join(", ") : "";
+          setCustomSelectValue("editDifficultySelect", problem.difficulty || "", "Сложность");
+          setCustomSelectValue("editTypeSelect", problem.type || "", "Тип ошибки");
+          setCustomSelectValue("editLanguageSelect", normalizeTaskLanguage(problem.language), "Язык");
+
+          document.getElementById("editStatementText").value = filesData.statementTex || "";
+          document.getElementById("editHelpText").value = filesData.help || "";
+          document.getElementById("editCodeText").value = filesData.code || "";
+          document.getElementById("editSolutionText").value = filesData.solution || "";
+          document.getElementById("editGeneratorText").value = filesData.generator || "";
+          document.getElementById("editCheckerText").value = filesData.checker || "";
+          document.getElementById("editValidatorText").value = filesData.validator || "";
+
+          window.editTaskTests = Array.isArray(bundle.tests)
+            ? bundle.tests.map(test => ({
+                input: test.input || "",
+                output: test.output || "",
+                visibility: test.visibility || "private",
+                subtask: test.subtask || 1
+              }))
+            : [];
+          renderEditTestCases();
+          setAdminLog(`Задача ${id} загружена для редактирования.`);
+          return;
+        }
+
         const metaRes = await fetch(`${base}/tasks/${id}/meta.json`);
         const meta = metaRes.ok ? await metaRes.json() : {};
         document.getElementById("editMetaTitle").value = meta.title || "";
@@ -1059,7 +1126,7 @@
       try {
         const res = await fetch(`${base}/tasks/generate-tests`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await adminRequestHeaders(),
           body: JSON.stringify({
             generator,
             solution,
@@ -1147,7 +1214,7 @@
         setAdminLog("Сохранение изменений. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/create`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await adminRequestHeaders(),
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
@@ -1183,7 +1250,7 @@
         setAdminLog("Удаление задачи. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/delete`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await adminRequestHeaders(),
           body: JSON.stringify({ id })
         });
         if (!res.ok) {

@@ -81,12 +81,39 @@ FIREBASE_READY = init_firebase()
 
 
 def _is_admin_request():
-    if not ADMIN_API_KEY:
+    if ADMIN_API_KEY:
+        header_key = request.headers.get("X-Admin-Key", "")
+        body = request.get_json(silent=True) or {}
+        body_key = body.get("adminKey", "")
+        if header_key == ADMIN_API_KEY or body_key == ADMIN_API_KEY:
+            return True
+
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
         return False
-    header_key = request.headers.get("X-Admin-Key", "")
-    body = request.get_json(silent=True) or {}
-    body_key = body.get("adminKey", "")
-    return header_key == ADMIN_API_KEY or body_key == ADMIN_API_KEY
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return False
+
+    token = auth_header.removeprefix("Bearer ").strip()
+    if not token:
+        return False
+
+    try:
+        decoded = admin_auth.verify_id_token(token)
+        uid = decoded.get("uid")
+        if not uid:
+            return False
+        login = db.reference(f"userAuthMap/{uid}").get()
+        if not login:
+            return False
+        return bool(db.reference(f"admins/{login}").get())
+    except Exception as e:
+        print("Admin auth failed:", e)
+        return False
 
 
 def _git_env():
@@ -325,6 +352,7 @@ def public_problem_meta(problem):
         "subtask": t.get("subtask", 1)
     } for t in tests]
     checker = problem.get("checker") or {"type": "standard"}
+    files = problem.get("files") or {}
     return {
         "schemaVersion": problem.get("schemaVersion", 2),
         "id": problem.get("id"),
@@ -335,7 +363,9 @@ def public_problem_meta(problem):
         "tags": problem.get("tags") or [],
         "taskType": problem.get("taskType", "standard"),
         "statement": problem.get("statement") or {},
-        "files": problem.get("files") or {},
+        "files": {
+            "code": files.get("code")
+        },
         "checker": {
             "type": checker.get("type", "standard")
         },
@@ -363,33 +393,44 @@ def safe_task_file(task_id, filename):
     if filename == "problem.json":
         path = _problem_path(task_id)
         return path if os.path.isfile(path) else None
+
+    problem = read_problem_config(task_id)
+    if not problem:
+        return None
+
+    statement = problem.get("statement") or {}
+    files = problem.get("files") or {}
+    public_exact = {
+        statement.get("html"),
+        statement.get("tex"),
+        statement.get("hint"),
+        files.get("code")
+    }
+    public_exact = {item for item in public_exact if item}
+    if filename.startswith("statement/assets/"):
+        public_exact.add(filename)
+
+    if problem.get("schemaVersion") == 1:
+        public_exact.update({
+            "statement.md",
+            "help.md",
+            files.get("code"),
+        })
+
     allowed_exact = {
         "meta.json",
-        "statement.md",
-        "help.md",
-        "code.cpp",
-        "code.py",
-        "sol.cpp",
-        "sol.py",
-        "generator.cpp",
-        "generator.py",
     }
-    allowed_prefixes = (
-        "statement/",
-        "solutions/",
-        "checker/",
-        "grader/",
-        "generator/",
-        "validator/",
-    )
     is_v2_test_file = re.fullmatch(r"tests/\d{3}(\.a)?", filename) is not None
     is_legacy_test_file = re.fullmatch(r"tests/[1-9]\d*\.(in|out)", filename) is not None
     if is_v2_test_file:
         test = _test_entry_by_path(task_id, filename)
         if not test or test.get("visibility", "private") != "open":
             return None
-    is_allowed_prefix = any(filename.startswith(prefix) for prefix in allowed_prefixes)
-    if filename not in allowed_exact and not is_legacy_test_file and not is_v2_test_file and not is_allowed_prefix:
+    if is_legacy_test_file:
+        test = _test_entry_by_path(task_id, filename)
+        if not test or test.get("visibility", "private") != "open":
+            return None
+    if filename not in allowed_exact and filename not in public_exact and not is_legacy_test_file and not is_v2_test_file:
         return None
     path = os.path.join(task_dir(task_id), filename)
     if not os.path.isfile(path):
@@ -449,6 +490,23 @@ def _write_text(path, content):
         f.write(content)
 
 
+def _read_text(path):
+    if not path or not os.path.isfile(path):
+        return ""
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        return f.read()
+
+
+def _task_text(task_id, relpath):
+    if not relpath or ".." in relpath or relpath.startswith("/") or "\\\\" in relpath:
+        return ""
+    base = os.path.abspath(task_dir(task_id))
+    path = os.path.abspath(os.path.join(base, relpath))
+    if path != base and not path.startswith(base + os.sep):
+        return ""
+    return _read_text(path)
+
+
 def _statement_to_html(text):
     escaped = html.escape(text or "").strip()
     if not escaped:
@@ -506,13 +564,14 @@ def _build_problem_v2(task_id, meta, files, tests):
             "language": "ru",
             "tex": "statement/russian.tex",
             "html": "statement/russian.html",
-            "assets": "statement/assets"
+            "assets": "statement/assets",
+            **({"hint": "statement/hint.md"} if files.get("help") else {})
         },
         "files": {
             "code": f"solutions/wa.{ext}",
             "solution": f"solutions/main.{ext}",
             "generator": f"generator/gen.{ext}",
-            "validator": "validator/validator.cpp",
+            **({"validator": "validator/validator.cpp"} if files.get("validator") else {}),
             **({"checker": checker_path} if checker_path else {})
         },
         "checker": checker,
@@ -845,6 +904,47 @@ def tasks_list():
     return jsonify(list_tasks())
 
 
+@app.route("/tasks/<int:task_id>/admin-bundle", methods=["GET"])
+def tasks_admin_bundle(task_id):
+    if not _is_admin_request():
+        return jsonify({"error": "admin_required"}), 403
+    if not sync_tasks_repo():
+        return jsonify({"error": "tasks_sync_failed"}), 500
+
+    problem = read_problem_config(task_id)
+    if not problem:
+        return abort(404)
+
+    statement = problem.get("statement") or {}
+    files = problem.get("files") or {}
+    checker = problem.get("checker") or {}
+
+    tests = []
+    for item in problem.get("tests") or []:
+        tests.append({
+            "name": item.get("name"),
+            "visibility": item.get("visibility", "private"),
+            "subtask": item.get("subtask", 1),
+            "input": _task_text(task_id, item.get("input")),
+            "output": _task_text(task_id, item.get("answer"))
+        })
+
+    return jsonify({
+        "problem": problem,
+        "files": {
+            "statementTex": _task_text(task_id, statement.get("tex")),
+            "statementHtml": _task_text(task_id, statement.get("html")),
+            "help": _task_text(task_id, statement.get("hint")),
+            "code": _task_text(task_id, files.get("code")),
+            "solution": _task_text(task_id, files.get("solution")),
+            "generator": _task_text(task_id, files.get("generator")),
+            "validator": _task_text(task_id, files.get("validator")),
+            "checker": _task_text(task_id, checker.get("path") or files.get("checker")),
+        },
+        "tests": tests
+    })
+
+
 @app.route("/tasks/<int:task_id>/<path:filename>", methods=["GET"])
 def tasks_file(task_id, filename):
     if not sync_tasks_repo():
@@ -888,14 +988,13 @@ def tasks_create():
     if lang not in SUPPORTED_LANGUAGES:
         return jsonify({"error": "language_not_supported"}), 400
     meta["language"] = lang
-    file_names = language_file_map(lang)
     problem_v2 = _build_problem_v2(task_id, meta, files, tests)
 
     task_path = task_dir(task_id)
+    if os.path.isdir(task_path):
+        shutil.rmtree(task_path)
     os.makedirs(task_path, exist_ok=True)
     tests_path = os.path.join(task_path, "tests")
-    if os.path.isdir(tests_path):
-        shutil.rmtree(tests_path)
 
     # v2 Polygon-compatible layout
     _write_text(os.path.join(task_path, "problem.json"), json.dumps(problem_v2, ensure_ascii=False, indent=2))
@@ -905,6 +1004,8 @@ def tasks_create():
     _write_text(os.path.join(task_path, "statement", "russian.tex"), statement_tex)
     _write_text(os.path.join(task_path, "statement", "russian.html"), statement_html)
     os.makedirs(os.path.join(task_path, "statement", "assets"), exist_ok=True)
+    if files.get("help"):
+        _write_text(os.path.join(task_path, "statement", "hint.md"), files["help"])
     if files.get("code"):
         _write_text(os.path.join(task_path, problem_v2["files"]["code"]), files["code"])
     if files.get("solution"):
@@ -919,33 +1020,6 @@ def tasks_create():
         name = _pad_test_name(idx)
         _write_text(os.path.join(tests_path, name), t.get("input", ""))
         _write_text(os.path.join(tests_path, f"{name}.a"), t.get("output", ""))
-
-    # legacy mirror for old frontend/tools and simpler manual inspection
-    _write_text(os.path.join(task_path, "meta.json"), json.dumps(meta, ensure_ascii=False, indent=2))
-
-    if files.get("statement"):
-        _write_text(os.path.join(task_path, "statement.md"), files["statement"])
-    if files.get("help"):
-        _write_text(os.path.join(task_path, "help.md"), files["help"])
-    if files.get("code"):
-        _write_text(os.path.join(task_path, file_names["code"]), files["code"])
-    if files.get("solution"):
-        _write_text(os.path.join(task_path, file_names["solution"]), files["solution"])
-    if files.get("generator"):
-        _write_text(os.path.join(task_path, file_names["generator"]), files["generator"])
-
-    # cleanup opposite-language files when task language changed
-    other_names = language_file_map("cpp" if lang == "python" else "python")
-    for key in ("code", "solution", "generator"):
-        old_path = os.path.join(task_path, other_names[key])
-        if os.path.isfile(old_path):
-            os.remove(old_path)
-
-    for idx, t in enumerate(tests, start=1):
-        inp = t.get("input", "")
-        out = t.get("output", "")
-        _write_text(os.path.join(tests_path, f"{idx}.in"), inp)
-        _write_text(os.path.join(tests_path, f"{idx}.out"), out)
 
     _ensure_git_identity()
     try:

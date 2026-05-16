@@ -1196,7 +1196,8 @@
                 }
             }
 
-            const helpPath = `${base}/tasks/${id}/help.md`;
+            const helpFile = problemV2?.statement?.hint || "help.md";
+            const helpPath = `${base}/tasks/${id}/${helpFile}`;
 
             try {
                 const res = await fetch(helpPath);
@@ -1205,7 +1206,7 @@
 
                 document.getElementById("taskHelp").innerHTML = renderMarkdown(md);
             } catch (e) {
-                document.getElementById("taskHelp").innerText = "help.md не найден";
+                document.getElementById("taskHelp").innerText = "Подсказка не добавлена";
             }
 
 
