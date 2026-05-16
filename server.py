@@ -3,6 +3,7 @@ import json
 import subprocess
 import tempfile
 import re
+import shutil
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
@@ -10,6 +11,7 @@ import platform
 import resource
 import urllib.parse
 import urllib.request
+import html
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -196,20 +198,171 @@ def language_file_map(lang):
     }
 
 
-def read_task_meta(task_id):
-    meta_path = os.path.join(task_dir(task_id), "meta.json")
-    if not os.path.isfile(meta_path):
-        return {}
+def _read_json(path):
+    if not os.path.isfile(path):
+        return None
     try:
-        with open(meta_path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f) or {}
-    except Exception:
+    except Exception as e:
+        print(f"JSON load failed for {path}:", e)
+        return None
+
+
+def _problem_path(task_id):
+    return os.path.join(task_dir(task_id), "problem.json")
+
+
+def _meta_path(task_id):
+    return os.path.join(task_dir(task_id), "meta.json")
+
+
+def _task_has_v2(task_id):
+    return os.path.isfile(_problem_path(task_id))
+
+
+def _pad_test_name(idx):
+    return str(idx).zfill(3)
+
+
+def _legacy_tests_manifest(task_id):
+    tests_path = os.path.join(task_dir(task_id), "tests")
+    if not os.path.isdir(tests_path):
+        return []
+    tests = []
+    for filename in os.listdir(tests_path):
+        match = re.fullmatch(r"([1-9]\d*)\.in", filename)
+        if not match:
+            continue
+        num = match.group(1)
+        out_name = f"{num}.out"
+        if not os.path.isfile(os.path.join(tests_path, out_name)):
+            continue
+        tests.append({
+            "name": num,
+            "input": f"tests/{num}.in",
+            "answer": f"tests/{num}.out",
+            "visibility": "open" if len(tests) < 2 else "private",
+            "subtask": 1
+        })
+    tests.sort(key=lambda item: int(item["name"]))
+    return tests
+
+
+def read_problem_config(task_id):
+    problem = _read_json(_problem_path(task_id))
+    if problem:
+        problem["id"] = int(problem.get("id", task_id))
+        problem["schemaVersion"] = int(problem.get("schemaVersion", 2))
+        problem["language"] = normalize_language(problem.get("language"))
+        problem.setdefault("taskType", "standard")
+        problem.setdefault("checker", {"type": "standard"})
+        problem.setdefault("statement", {
+            "html": "statement/russian.html",
+            "tex": "statement/russian.tex"
+        })
+        problem.setdefault("files", {})
+        problem.setdefault("tests", [])
+        problem.setdefault("subtasks", [])
+        problem.pop("author", None)
+        return problem
+
+    if not os.path.isfile(_meta_path(task_id)):
+        return None
+
+    meta = _read_json(_meta_path(task_id)) or {}
+    lang = normalize_language(meta.get("language"))
+    file_names = language_file_map(lang)
+    problem = {
+        "schemaVersion": 1,
+        "id": int(meta.get("id", task_id)),
+        "title": meta.get("title") or f"Задача {task_id}",
+        "difficulty": meta.get("difficulty", ""),
+        "language": lang,
+        "type": meta.get("type", ""),
+        "tags": meta.get("tags") or [],
+        "taskType": "standard",
+        "checker": {"type": "standard"},
+        "statement": {
+            "markdown": "statement.md"
+        },
+        "files": {
+            "code": file_names["code"],
+            "solution": file_names["solution"],
+            "generator": file_names["generator"]
+        },
+        "tests": _legacy_tests_manifest(task_id),
+        "subtasks": [{
+            "id": 1,
+            "name": "all",
+            "score": 100
+        }]
+    }
+    problem.pop("author", None)
+    return problem
+
+
+def read_task_meta(task_id):
+    problem = read_problem_config(task_id)
+    if not problem:
         return {}
+    return {
+        "id": problem.get("id"),
+        "title": problem.get("title", ""),
+        "difficulty": problem.get("difficulty", ""),
+        "language": normalize_language(problem.get("language")),
+        "type": problem.get("type", ""),
+        "tags": problem.get("tags") or []
+    }
+
+
+def public_problem_meta(problem):
+    tests = problem.get("tests") or []
+    open_tests = [t for t in tests if t.get("visibility", "private") == "open"]
+    public_tests = [{
+        "name": t.get("name"),
+        "visibility": t.get("visibility", "private"),
+        "subtask": t.get("subtask", 1)
+    } for t in tests]
+    checker = problem.get("checker") or {"type": "standard"}
+    return {
+        "schemaVersion": problem.get("schemaVersion", 2),
+        "id": problem.get("id"),
+        "title": problem.get("title", ""),
+        "difficulty": problem.get("difficulty", ""),
+        "language": normalize_language(problem.get("language")),
+        "type": problem.get("type", ""),
+        "tags": problem.get("tags") or [],
+        "taskType": problem.get("taskType", "standard"),
+        "statement": problem.get("statement") or {},
+        "files": problem.get("files") or {},
+        "checker": {
+            "type": checker.get("type", "standard")
+        },
+        "subtasks": problem.get("subtasks") or [],
+        "tests": public_tests,
+        "openTests": open_tests,
+        "testCount": len(tests),
+        "openTestCount": len(open_tests)
+    }
+
+
+def _test_entry_by_path(task_id, filename):
+    problem = read_problem_config(task_id)
+    if not problem:
+        return None
+    for test in problem.get("tests") or []:
+        if filename in (test.get("input"), test.get("answer")):
+            return test
+    return None
 
 
 def safe_task_file(task_id, filename):
     if ".." in filename or filename.startswith("/") or "\\\\" in filename:
         return None
+    if filename == "problem.json":
+        path = _problem_path(task_id)
+        return path if os.path.isfile(path) else None
     allowed_exact = {
         "meta.json",
         "statement.md",
@@ -221,8 +374,22 @@ def safe_task_file(task_id, filename):
         "generator.cpp",
         "generator.py",
     }
-    is_test_file = re.fullmatch(r"tests/[1-9]\d*\.(in|out)", filename) is not None
-    if filename not in allowed_exact and not is_test_file:
+    allowed_prefixes = (
+        "statement/",
+        "solutions/",
+        "checker/",
+        "grader/",
+        "generator/",
+        "validator/",
+    )
+    is_v2_test_file = re.fullmatch(r"tests/\d{3}(\.a)?", filename) is not None
+    is_legacy_test_file = re.fullmatch(r"tests/[1-9]\d*\.(in|out)", filename) is not None
+    if is_v2_test_file:
+        test = _test_entry_by_path(task_id, filename)
+        if not test or test.get("visibility", "private") != "open":
+            return None
+    is_allowed_prefix = any(filename.startswith(prefix) for prefix in allowed_prefixes)
+    if filename not in allowed_exact and not is_legacy_test_file and not is_v2_test_file and not is_allowed_prefix:
         return None
     path = os.path.join(task_dir(task_id), filename)
     if not os.path.isfile(path):
@@ -237,18 +404,13 @@ def list_tasks():
     for name in os.listdir(TASKS_REPO_DIR):
         if not name.isdigit():
             continue
-        meta_path = os.path.join(TASKS_REPO_DIR, name, "meta.json")
-        if not os.path.isfile(meta_path):
+        if not os.path.isfile(_problem_path(name)) and not os.path.isfile(_meta_path(name)):
             continue
         try:
-            with open(meta_path, "r", encoding="utf-8") as f:
-                meta = json.load(f)
-            if "author" in meta:
-                meta.pop("author", None)
-            meta["language"] = normalize_language(meta.get("language"))
-            tasks.append(meta)
+            problem = read_problem_config(name)
+            tasks.append(public_problem_meta(problem))
         except Exception as e:
-            print(f"Meta load failed for {name}:", e)
+            print(f"Task load failed for {name}:", e)
     tasks.sort(key=lambda x: int(x.get("id", 0)))
     return tasks
 
@@ -285,6 +447,78 @@ def _write_text(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
+
+
+def _statement_to_html(text):
+    escaped = html.escape(text or "").strip()
+    if not escaped:
+        return "<p>Условие пока не заполнено.</p>\n"
+    blocks = [p.strip() for p in re.split(r"\n\s*\n", escaped) if p.strip()]
+    return "\n".join(f"<p>{block.replace(chr(10), '<br>')}</p>" for block in blocks) + "\n"
+
+
+def _build_problem_v2(task_id, meta, files, tests):
+    lang = normalize_language(meta.get("language"))
+    ext = "py" if lang == "python" else "cpp"
+    test_manifest = []
+    for idx, t in enumerate(tests, start=1):
+        name = _pad_test_name(idx)
+        visibility = str(t.get("visibility") or ("open" if idx <= 2 else "private")).lower()
+        if visibility not in ("open", "private"):
+            visibility = "private"
+        subtask = t.get("subtask", 1)
+        test_manifest.append({
+            "name": name,
+            "input": f"tests/{name}",
+            "answer": f"tests/{name}.a",
+            "visibility": visibility,
+            "subtask": subtask
+        })
+
+    checker_path = "checker/checker.cpp" if files.get("checker") else None
+    checker = {
+        "type": "custom" if checker_path else "standard"
+    }
+    if checker_path:
+        checker["path"] = checker_path
+
+    subtasks_by_id = {}
+    for test in test_manifest:
+        sid = test.get("subtask", 1)
+        subtasks_by_id.setdefault(sid, {
+            "id": sid,
+            "name": f"subtask {sid}",
+            "score": 100 if sid == 1 else 0,
+            "tests": []
+        })
+        subtasks_by_id[sid]["tests"].append(test["name"])
+
+    return {
+        "schemaVersion": 2,
+        "id": task_id,
+        "title": meta.get("title") or f"Задача {task_id}",
+        "difficulty": meta.get("difficulty", ""),
+        "language": lang,
+        "type": meta.get("type", ""),
+        "tags": meta.get("tags") or [],
+        "taskType": meta.get("taskType", "standard"),
+        "statement": {
+            "language": "ru",
+            "tex": "statement/russian.tex",
+            "html": "statement/russian.html",
+            "assets": "statement/assets"
+        },
+        "files": {
+            "code": f"solutions/wa.{ext}",
+            "solution": f"solutions/main.{ext}",
+            "generator": f"generator/gen.{ext}",
+            "validator": "validator/validator.cpp",
+            **({"checker": checker_path} if checker_path else {})
+        },
+        "checker": checker,
+        "tests": test_manifest,
+        "subtasks": list(subtasks_by_id.values())
+    }
 
 
 def _compile_cpp(src_path, out_path):
@@ -615,6 +849,16 @@ def tasks_list():
 def tasks_file(task_id, filename):
     if not sync_tasks_repo():
         return jsonify({"error": "tasks_sync_failed"}), 500
+    if filename == "problem.json":
+        problem = read_problem_config(task_id)
+        if not problem:
+            return abort(404)
+        return jsonify(public_problem_meta(problem))
+    if filename == "meta.json":
+        meta = read_task_meta(task_id)
+        if not meta:
+            return abort(404)
+        return jsonify(meta)
     path = safe_task_file(task_id, filename)
     if not path:
         return abort(404)
@@ -645,8 +889,38 @@ def tasks_create():
         return jsonify({"error": "language_not_supported"}), 400
     meta["language"] = lang
     file_names = language_file_map(lang)
+    problem_v2 = _build_problem_v2(task_id, meta, files, tests)
 
     task_path = task_dir(task_id)
+    os.makedirs(task_path, exist_ok=True)
+    tests_path = os.path.join(task_path, "tests")
+    if os.path.isdir(tests_path):
+        shutil.rmtree(tests_path)
+
+    # v2 Polygon-compatible layout
+    _write_text(os.path.join(task_path, "problem.json"), json.dumps(problem_v2, ensure_ascii=False, indent=2))
+    statement_text = files.get("statement", "")
+    statement_tex = files.get("statementTex") or statement_text
+    statement_html = files.get("statementHtml") or _statement_to_html(statement_text)
+    _write_text(os.path.join(task_path, "statement", "russian.tex"), statement_tex)
+    _write_text(os.path.join(task_path, "statement", "russian.html"), statement_html)
+    os.makedirs(os.path.join(task_path, "statement", "assets"), exist_ok=True)
+    if files.get("code"):
+        _write_text(os.path.join(task_path, problem_v2["files"]["code"]), files["code"])
+    if files.get("solution"):
+        _write_text(os.path.join(task_path, problem_v2["files"]["solution"]), files["solution"])
+    if files.get("generator"):
+        _write_text(os.path.join(task_path, problem_v2["files"]["generator"]), files["generator"])
+    if files.get("checker"):
+        _write_text(os.path.join(task_path, "checker", "checker.cpp"), files["checker"])
+    if files.get("validator"):
+        _write_text(os.path.join(task_path, "validator", "validator.cpp"), files["validator"])
+    for idx, t in enumerate(tests, start=1):
+        name = _pad_test_name(idx)
+        _write_text(os.path.join(tests_path, name), t.get("input", ""))
+        _write_text(os.path.join(tests_path, f"{name}.a"), t.get("output", ""))
+
+    # legacy mirror for old frontend/tools and simpler manual inspection
     _write_text(os.path.join(task_path, "meta.json"), json.dumps(meta, ensure_ascii=False, indent=2))
 
     if files.get("statement"):
@@ -667,7 +941,6 @@ def tasks_create():
         if os.path.isfile(old_path):
             os.remove(old_path)
 
-    tests_path = os.path.join(task_path, "tests")
     for idx, t in enumerate(tests, start=1):
         inp = t.get("input", "")
         out = t.get("output", "")

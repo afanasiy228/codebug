@@ -1133,16 +1133,24 @@
                 return;
             }
 
-            // ————————————— META.JSON ————————————————
-            const metaPath = `${base}/tasks/${id}/meta.json`;
+            let problemV2 = null;
+            try {
+                const problemRes = await fetch(`${base}/tasks/${id}/problem.json`);
+                if (problemRes.ok) problemV2 = await problemRes.json();
+            } catch (e) {
+                problemV2 = null;
+            }
 
             try {
-                const res = await fetch(metaPath);
-                if (!res.ok) {
-                    throw new Error(`meta_not_found_${res.status}`);
+                let meta = problemV2;
+                if (!meta || !meta.title) {
+                    const metaPath = `${base}/tasks/${id}/meta.json`;
+                    const res = await fetch(metaPath);
+                    if (!res.ok) {
+                        throw new Error(`meta_not_found_${res.status}`);
+                    }
+                    meta = await res.json();
                 }
-
-                const meta = await res.json();
 
                 TASK_DIFFICULTY = meta.difficulty;
                 TASK_LANGUAGE = normalizeTaskLanguage(meta.language);
@@ -1162,18 +1170,30 @@
             }
 
 
-            // ————————————— STATEMENT.MD ————————————————
-            const stmtPath = `${base}/tasks/${id}/statement.md`;
+            const statementHtmlPath = problemV2?.statement?.html;
+            const statementMarkdownPath = problemV2?.statement?.markdown || "statement.md";
 
-            try {
-                const res = await fetch(stmtPath);
-                if (!res.ok) throw new Error(`statement_${res.status}`);
+            if (statementHtmlPath) {
+                try {
+                    const res = await fetch(`${base}/tasks/${id}/${statementHtmlPath}`);
+                    if (!res.ok) throw new Error(`statement_html_${res.status}`);
+                    const html = await res.text();
+                    document.getElementById("taskStatement").innerHTML =
+                        window.DOMPurify ? DOMPurify.sanitize(html) : html;
+                } catch (e) {
+                    document.getElementById("taskStatement").innerText = "statement/russian.html не найден";
+                }
+            } else {
+                try {
+                    const res = await fetch(`${base}/tasks/${id}/${statementMarkdownPath}`);
+                    if (!res.ok) throw new Error(`statement_${res.status}`);
 
-                const md = await res.text();
+                    const md = await res.text();
 
-                document.getElementById("taskStatement").innerHTML = renderMarkdown(md);
-            } catch (e) {
-                document.getElementById("taskStatement").innerText = "statement.md не найден";
+                    document.getElementById("taskStatement").innerHTML = renderMarkdown(md);
+                } catch (e) {
+                    document.getElementById("taskStatement").innerText = "statement.md не найден";
+                }
             }
 
             const helpPath = `${base}/tasks/${id}/help.md`;
@@ -1189,10 +1209,10 @@
             }
 
 
-            // ————————————— CODE.CPP ————————————————
             const codeFile = languageToCodeFile(TASK_LANGUAGE);
             const fallbackCodeFile = codeFile === "code.py" ? "code.cpp" : "code.py";
-            const codePath = `${base}/tasks/${id}/${codeFile}`;
+            const v2CodeFile = problemV2?.files?.code;
+            const codePath = `${base}/tasks/${id}/${v2CodeFile || codeFile}`;
 
             try {
                 const res = await fetch(codePath);
@@ -1209,46 +1229,66 @@
                 if (window.editor) editor.setValue("// Файл кода не найден");
             }
 
-            // ————————————— PRIMITIVES TESTS ————————————————
             const examples = document.getElementById("examples");
             examples.innerHTML = "";
 
-            for (let i = 1; i <= 2; i++) {
-                console.log(`📄 test ${i}`);
-
-                const inPath = `${base}/tasks/${id}/tests/${i}.in`;
-                const outPath = `${base}/tasks/${id}/tests/${i}.out`;
-
-                try {
-                    const inpRes = await fetch(inPath);
-                    if (!inpRes.ok) throw new Error(`in_${i}_${inpRes.status}`);
-
-                    const inp = await inpRes.text();
-
-                    const outRes = await fetch(outPath);
-                    if (!outRes.ok) throw new Error(`out_${i}_${outRes.status}`);
-
-                    const out = await outRes.text();
-
-
-                    examples.innerHTML += `
+            const renderExample = (title, inp, out) => {
+                examples.innerHTML += `
                 <div class="testcase-block">
-                    <div class="kf-title">Тест ${i}</div>
+                    <div class="kf-title">${escapeHtml(title)}</div>
 
                     <div class="kf-io">
                         <div class="kf-copy" onclick="copyKF(this)">Скопировать</div>
-                        <pre class="kf-pre">${inp.trim()}</pre>
+                        <pre class="kf-pre">${escapeHtml(inp.trim())}</pre>
                     </div>
 
                     <div class="kf-title" style="margin-top:10px;">Вывод</div>
                     <div class="kf-io">
                         <div class="kf-copy" onclick="copyKF(this)">Скопировать</div>
-                        <pre class="kf-pre">${out.trim()}</pre>
+                        <pre class="kf-pre">${escapeHtml(out.trim())}</pre>
                     </div>
                 </div>
             `;
-                } catch (e) {
-                    console.error(`❌ test ${i} ERROR:`, e);
+            };
+
+            const openTests = Array.isArray(problemV2?.openTests) ? problemV2.openTests : [];
+            if (openTests.length) {
+                for (const test of openTests.slice(0, 2)) {
+                    try {
+                        const inpRes = await fetch(`${base}/tasks/${id}/${test.input}`);
+                        if (!inpRes.ok) throw new Error(`v2_in_${test.name}_${inpRes.status}`);
+
+                        const outRes = await fetch(`${base}/tasks/${id}/${test.answer}`);
+                        if (!outRes.ok) throw new Error(`v2_out_${test.name}_${outRes.status}`);
+
+                        const inp = await inpRes.text();
+                        const out = await outRes.text();
+                        renderExample(`Тест ${test.name}`, inp, out);
+                    } catch (e) {
+                        console.error(`open test ${test.name} ERROR:`, e);
+                    }
+                }
+            } else {
+                for (let i = 1; i <= 2; i++) {
+                    console.log(`📄 test ${i}`);
+
+                    const inPath = `${base}/tasks/${id}/tests/${i}.in`;
+                    const outPath = `${base}/tasks/${id}/tests/${i}.out`;
+
+                    try {
+                        const inpRes = await fetch(inPath);
+                        if (!inpRes.ok) throw new Error(`in_${i}_${inpRes.status}`);
+
+                        const inp = await inpRes.text();
+
+                        const outRes = await fetch(outPath);
+                        if (!outRes.ok) throw new Error(`out_${i}_${outRes.status}`);
+
+                        const out = await outRes.text();
+                        renderExample(`Тест ${i}`, inp, out);
+                    } catch (e) {
+                        console.error(`test ${i} ERROR:`, e);
+                    }
                 }
             }
 

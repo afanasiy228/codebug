@@ -494,9 +494,17 @@
         <div class="test-form">
           <textarea id="taskTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
           <textarea id="taskTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
+          <select id="taskTestVisibility" class="admin-input">
+            <option value="open">open</option>
+            <option value="private">private</option>
+          </select>
           <button type="button" class="admin-secondary" onclick="addTestCase()">Добавить тест</button>
         </div>
         <div id="testList" class="test-list"></div>
+        <div class="admin-note">Custom checker.cpp (опционально)</div>
+        <textarea id="taskCheckerText" class="admin-textarea" placeholder="checker.cpp"></textarea>
+        <div class="admin-note">validator.cpp (опционально)</div>
+        <textarea id="taskValidatorText" class="admin-textarea" placeholder="validator.cpp"></textarea>
         <div class="admin-note">Генератор (на том же языке)</div>
         <textarea id="taskGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
@@ -564,10 +572,18 @@
         <div class="test-form">
           <textarea id="editTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
           <textarea id="editTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
+          <select id="editTestVisibility" class="admin-input">
+            <option value="open">open</option>
+            <option value="private">private</option>
+          </select>
           <button type="button" class="admin-secondary" onclick="addEditTestCase()">Добавить тест</button>
           <button type="button" class="admin-secondary" onclick="clearEditTests()">Очистить тесты</button>
         </div>
         <div id="editTestList" class="test-list"></div>
+        <div class="admin-note">Custom checker.cpp (опционально)</div>
+        <textarea id="editCheckerText" class="admin-textarea" placeholder="checker.cpp"></textarea>
+        <div class="admin-note">validator.cpp (опционально)</div>
+        <textarea id="editValidatorText" class="admin-textarea" placeholder="validator.cpp"></textarea>
         <div class="admin-note">Генератор (на том же языке)</div>
         <textarea id="editGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
@@ -757,6 +773,8 @@
       const codeText = document.getElementById("taskCodeText").value;
       const solutionText = document.getElementById("taskSolutionText").value;
       const generatorText = document.getElementById("taskGeneratorText").value;
+      const checkerText = document.getElementById("taskCheckerText").value;
+      const validatorText = document.getElementById("taskValidatorText").value;
       const tests = window.taskTests || [];
 
       const meta = {
@@ -776,7 +794,9 @@
           help: helpText,
           code: codeText,
           solution: solutionText,
-          generator: generatorText
+          generator: generatorText,
+          checker: checkerText,
+          validator: validatorText
         },
         tests
       };
@@ -814,7 +834,7 @@
         const row = document.createElement("div");
         row.className = "test-row";
         row.innerHTML = `
-          <div class="test-index">Тест ${idx + 1}</div>
+          <div class="test-index">Тест ${idx + 1} · ${t.visibility || "open"}</div>
           <button type="button" class="admin-secondary" data-index="${idx}">Удалить</button>
         `;
         row.querySelector("button").addEventListener("click", (e) => {
@@ -829,6 +849,7 @@
     function addTestCase() {
       const input = document.getElementById("taskTestInput");
       const output = document.getElementById("taskTestOutput");
+      const visibility = document.getElementById("taskTestVisibility");
       if (!input || !output) return;
       const inp = input.value;
       const out = output.value;
@@ -836,7 +857,7 @@
         setAdminLog("Пустой тест не добавлен.");
         return;
       }
-      window.taskTests.push({ input: inp, output: out });
+      window.taskTests.push({ input: inp, output: out, visibility: visibility?.value || "open", subtask: 1 });
       input.value = "";
       output.value = "";
       renderTestCases();
@@ -946,6 +967,8 @@
         document.getElementById("editCodeText").value = await loadTextFile(`${base}/tasks/${id}/${files.code}`);
         document.getElementById("editSolutionText").value = await loadTextFile(`${base}/tasks/${id}/${files.solution}`);
         document.getElementById("editGeneratorText").value = await loadTextFile(`${base}/tasks/${id}/${files.generator}`);
+        document.getElementById("editCheckerText").value = await loadTextFile(`${base}/tasks/${id}/checker/checker.cpp`);
+        document.getElementById("editValidatorText").value = await loadTextFile(`${base}/tasks/${id}/validator/validator.cpp`);
 
         window.editTaskTests = [];
         let idx = 1;
@@ -954,7 +977,7 @@
           const outRes = await loadTextFileWithStatus(`${base}/tasks/${id}/tests/${idx}.out`);
           if (!inRes.ok && !outRes.ok) break;
           if (inRes.text || outRes.text) {
-            window.editTaskTests.push({ input: inRes.text, output: outRes.text });
+            window.editTaskTests.push({ input: inRes.text, output: outRes.text, visibility: idx <= 2 ? "open" : "private", subtask: 1 });
           }
           idx += 1;
         }
@@ -975,7 +998,7 @@
         const row = document.createElement("div");
         row.className = "test-row";
         row.innerHTML = `
-          <div class="test-index">Тест ${idx + 1}</div>
+          <div class="test-index">Тест ${idx + 1} · ${t.visibility || "open"}</div>
           <button type="button" class="admin-secondary" data-index="${idx}">Удалить</button>
         `;
         row.querySelector("button").addEventListener("click", (e) => {
@@ -990,6 +1013,7 @@
     function addEditTestCase() {
       const input = document.getElementById("editTestInput");
       const output = document.getElementById("editTestOutput");
+      const visibility = document.getElementById("editTestVisibility");
       if (!input || !output) return;
       const inp = input.value;
       const out = output.value;
@@ -997,7 +1021,7 @@
         setAdminLog("Пустой тест не добавлен.");
         return;
       }
-      window.editTaskTests.push({ input: inp, output: out });
+      window.editTaskTests.push({ input: inp, output: out, visibility: visibility?.value || "open", subtask: 1 });
       input.value = "";
       output.value = "";
       renderEditTestCases();
@@ -1093,6 +1117,8 @@
       const code = document.getElementById("editCodeText").value;
       const solution = document.getElementById("editSolutionText").value;
       const generator = document.getElementById("editGeneratorText").value;
+      const checker = document.getElementById("editCheckerText").value;
+      const validator = document.getElementById("editValidatorText").value;
       const tests = window.editTaskTests || [];
 
       const base = window.TASKS_API_BASE || "";
@@ -1110,7 +1136,9 @@
           help,
           code,
           solution,
-          generator
+          generator,
+          checker,
+          validator
         },
         tests
       };
