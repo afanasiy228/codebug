@@ -8,8 +8,8 @@
   --warm: #f5c542;
   --card: #111826;
   --stroke: #1f2a37;
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
-  --glow: 0 0 0 1px rgba(124, 255, 167, 0.18), 0 18px 50px rgba(0, 0, 0, 0.6);
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  --glow: 0 0 0 1px rgba(72, 142, 99, 0.18), 0 8px 20px rgba(0, 0, 0, 0.34);
 }
 
 html, body {
@@ -21,8 +21,8 @@ body {
   position: relative;
   min-height: 100vh;
   background:
-    radial-gradient(900px 400px at 15% -10%, rgba(124, 255, 167, 0.18), transparent 60%),
-    radial-gradient(1000px 600px at 85% 0%, rgba(88, 148, 255, 0.16), transparent 60%),
+    radial-gradient(900px 400px at 15% -10%, rgba(60, 118, 83, 0.10), transparent 68%),
+    radial-gradient(1000px 600px at 85% 0%, rgba(68, 105, 146, 0.08), transparent 70%),
     linear-gradient(180deg, var(--bg), var(--bg-strong));
 }
 
@@ -32,9 +32,9 @@ body::before {
   inset: -20% -10% auto -10%;
   height: 60vh;
   background:
-    radial-gradient(400px 200px at 20% 10%, rgba(124, 255, 167, 0.18), transparent 60%),
-    radial-gradient(500px 220px at 80% 20%, rgba(153, 119, 255, 0.18), transparent 60%);
-  opacity: 0.9;
+    radial-gradient(400px 200px at 20% 10%, rgba(55, 108, 79, 0.10), transparent 70%),
+    radial-gradient(500px 220px at 80% 20%, rgba(73, 91, 124, 0.08), transparent 70%);
+  opacity: 0.4;
   z-index: -2;
   pointer-events: none;
 }
@@ -46,7 +46,7 @@ body::after {
   background:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 40px),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 40px);
-  opacity: 0.4;
+  opacity: 0.14;
   z-index: -2;
   pointer-events: none;
 }
@@ -154,7 +154,7 @@ button,
   background: var(--accent) !important;
   color: #06120c !important;
   border-color: transparent !important;
-  box-shadow: var(--glow) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28) !important;
 }
 
 .btn-faq,

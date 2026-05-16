@@ -44,6 +44,21 @@ function ensureMobileNavStyles() {
     const style = document.createElement("style");
     style.id = "mobile-nav-style";
     style.textContent = `
+header, .top-nav {
+    background: rgba(10, 14, 20, 0.88) !important;
+    border-bottom: 1px solid rgba(31, 42, 55, 0.95) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(10px) !important;
+}
+header .logo, .top-nav .logo {
+    color: #dce7f2 !important;
+}
+header nav a, .top-nav nav a {
+    color: #9fb0c2 !important;
+}
+header nav a:hover, .top-nav nav a:hover {
+    color: #dce7f2 !important;
+}
 #nav-links {
     display: flex;
     align-items: center;
@@ -71,14 +86,16 @@ function ensureMobileNavStyles() {
 }
 #nav-links .nav-account .nav-profile {
     padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    background: rgba(255, 255, 255, 0.65);
-    color: var(--ink) !important;
+    border-radius: 10px;
+    border: 1px solid rgba(31, 42, 55, 0.95);
+    background: rgba(13, 20, 30, 0.88);
+    color: #dce7f2 !important;
     font-weight: 700;
 }
 #nav-links .nav-account .nav-profile:hover {
-    color: var(--accent) !important;
+    color: #ffffff !important;
+    border-color: rgba(51, 118, 78, 0.95);
+    background: rgba(18, 30, 25, 0.92);
 }
 #nav-links .nav-burger {
     display: none;
@@ -87,8 +104,9 @@ function ensureMobileNavStyles() {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(31, 42, 55, 0.95);
+    background: rgba(13, 20, 30, 0.88);
+    color: #dce7f2;
     font-size: 20px;
     cursor: pointer;
 }
@@ -99,9 +117,9 @@ function ensureMobileNavStyles() {
     right: -320px;
     width: 280px;
     height: 100%;
-    background: #fffaf2;
+    background: #0e141d;
     padding: 80px 20px 24px;
-    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.12);
+    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.45);
     z-index: 1001;
     gap: 12px;
     flex-direction: column;
@@ -109,6 +127,8 @@ function ensureMobileNavStyles() {
 }
 #nav-links .nav-drawer a {
     margin: 0;
+    color: #dce7f2 !important;
+    text-decoration: none;
 }
 #nav-overlay {
     position: fixed;
