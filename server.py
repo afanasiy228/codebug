@@ -280,6 +280,7 @@ def read_problem_config(task_id):
     problem = _read_json(_problem_path(task_id))
     if problem:
         problem["id"] = int(problem.get("id", task_id))
+        problem["formatVersion"] = int(problem.get("formatVersion", problem.get("schemaVersion", 2)))
         problem["schemaVersion"] = int(problem.get("schemaVersion", 2))
         problem["language"] = normalize_language(problem.get("language"))
         problem.setdefault("taskType", "standard")
@@ -290,6 +291,7 @@ def read_problem_config(task_id):
         })
         problem.setdefault("files", {})
         problem.setdefault("tests", [])
+        problem.setdefault("groups", problem.get("subtasks", []))
         problem.setdefault("subtasks", [])
         problem.pop("author", None)
         return problem
@@ -301,6 +303,7 @@ def read_problem_config(task_id):
     lang = normalize_language(meta.get("language"))
     file_names = language_file_map(lang)
     problem = {
+        "formatVersion": 1,
         "schemaVersion": 1,
         "id": int(meta.get("id", task_id)),
         "title": meta.get("title") or f"Задача {task_id}",
@@ -319,6 +322,13 @@ def read_problem_config(task_id):
             "generator": file_names["generator"]
         },
         "tests": _legacy_tests_manifest(task_id),
+        "groups": [{
+            "id": 1,
+            "name": "all",
+            "points": 100,
+            "dependencies": [],
+            "tests": []
+        }],
         "subtasks": [{
             "id": 1,
             "name": "all",
@@ -347,13 +357,17 @@ def public_problem_meta(problem):
     tests = problem.get("tests") or []
     open_tests = [t for t in tests if t.get("visibility", "private") == "open"]
     public_tests = [{
+        "id": t.get("id"),
         "name": t.get("name"),
         "visibility": t.get("visibility", "private"),
-        "subtask": t.get("subtask", 1)
+        "group": t.get("group", t.get("subtask", 1)),
+        "subtask": t.get("subtask", 1),
+        "points": t.get("points", 0)
     } for t in tests]
     checker = problem.get("checker") or {"type": "standard"}
     files = problem.get("files") or {}
     return {
+        "formatVersion": problem.get("formatVersion", problem.get("schemaVersion", 2)),
         "schemaVersion": problem.get("schemaVersion", 2),
         "id": problem.get("id"),
         "title": problem.get("title", ""),
@@ -369,6 +383,7 @@ def public_problem_meta(problem):
         "checker": {
             "type": checker.get("type", "standard")
         },
+        "groups": problem.get("groups") or problem.get("subtasks") or [],
         "subtasks": problem.get("subtasks") or [],
         "tests": public_tests,
         "openTests": open_tests,
@@ -515,6 +530,72 @@ def _statement_to_html(text):
     return "\n".join(f"<p>{block.replace(chr(10), '<br>')}</p>" for block in blocks) + "\n"
 
 
+def _safe_int(value, fallback=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _safe_int_list(value):
+    if not isinstance(value, list):
+        return []
+    result = []
+    for item in value:
+        try:
+            result.append(int(item))
+        except (TypeError, ValueError):
+            continue
+    return sorted(set(result))
+
+
+def _normalize_groups(raw_groups, test_manifest):
+    tests_by_group = {}
+    for test in test_manifest:
+        gid = _safe_int(test.get("group"), 1)
+        tests_by_group.setdefault(gid, []).append(test["name"])
+
+    groups = []
+    seen = set()
+    if isinstance(raw_groups, list):
+        for item in raw_groups:
+            if not isinstance(item, dict):
+                continue
+            gid = _safe_int(item.get("id"), 0)
+            if gid <= 0 or gid in seen:
+                continue
+            seen.add(gid)
+            groups.append({
+                "id": gid,
+                "name": str(item.get("name") or f"group {gid}"),
+                "points": _safe_int(item.get("points"), 0),
+                "dependencies": _safe_int_list(item.get("dependencies")),
+                "tests": [str(t) for t in (item.get("tests") or tests_by_group.get(gid, []))]
+            })
+
+    for gid in sorted(tests_by_group):
+        if gid in seen:
+            continue
+        seen.add(gid)
+        groups.append({
+            "id": gid,
+            "name": f"group {gid}",
+            "points": 100 if len(tests_by_group) == 1 else 0,
+            "dependencies": [],
+            "tests": tests_by_group[gid]
+        })
+
+    if not groups:
+        groups.append({
+            "id": 1,
+            "name": "group 1",
+            "points": 100,
+            "dependencies": [],
+            "tests": []
+        })
+    return sorted(groups, key=lambda item: item["id"])
+
+
 def _build_problem_v2(task_id, meta, files, tests):
     lang = normalize_language(meta.get("language"))
     ext = "py" if lang == "python" else "cpp"
@@ -524,13 +605,20 @@ def _build_problem_v2(task_id, meta, files, tests):
         visibility = str(t.get("visibility") or ("open" if idx <= 2 else "private")).lower()
         if visibility not in ("open", "private"):
             visibility = "private"
-        subtask = t.get("subtask", 1)
+        group = _safe_int(t.get("group", t.get("subtask", 1)), 1)
+        if group <= 0:
+            group = 1
+        subtask = _safe_int(t.get("subtask", group), group)
+        points = _safe_int(t.get("points"), 0)
         test_manifest.append({
+            "id": idx,
             "name": name,
             "input": f"tests/{name}",
             "answer": f"tests/{name}.a",
             "visibility": visibility,
-            "subtask": subtask
+            "group": group,
+            "subtask": subtask,
+            "points": points
         })
 
     checker_path = "checker/checker.cpp" if files.get("checker") else None
@@ -540,18 +628,17 @@ def _build_problem_v2(task_id, meta, files, tests):
     if checker_path:
         checker["path"] = checker_path
 
-    subtasks_by_id = {}
-    for test in test_manifest:
-        sid = test.get("subtask", 1)
-        subtasks_by_id.setdefault(sid, {
-            "id": sid,
-            "name": f"subtask {sid}",
-            "score": 100 if sid == 1 else 0,
-            "tests": []
-        })
-        subtasks_by_id[sid]["tests"].append(test["name"])
+    groups = _normalize_groups(meta.get("groups"), test_manifest)
+    subtasks = [{
+        "id": group["id"],
+        "name": group["name"],
+        "score": group["points"],
+        "dependencies": group["dependencies"],
+        "tests": group["tests"]
+    } for group in groups]
 
     return {
+        "formatVersion": 2,
         "schemaVersion": 2,
         "id": task_id,
         "title": meta.get("title") or f"Задача {task_id}",
@@ -576,7 +663,8 @@ def _build_problem_v2(task_id, meta, files, tests):
         },
         "checker": checker,
         "tests": test_manifest,
-        "subtasks": list(subtasks_by_id.values())
+        "groups": groups,
+        "subtasks": subtasks
     }
 
 
@@ -922,9 +1010,12 @@ def tasks_admin_bundle(task_id):
     tests = []
     for item in problem.get("tests") or []:
         tests.append({
+            "id": item.get("id"),
             "name": item.get("name"),
             "visibility": item.get("visibility", "private"),
+            "group": item.get("group", item.get("subtask", 1)),
             "subtask": item.get("subtask", 1),
+            "points": item.get("points", 0),
             "input": _task_text(task_id, item.get("input")),
             "output": _task_text(task_id, item.get("answer"))
         })

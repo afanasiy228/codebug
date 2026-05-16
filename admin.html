@@ -482,6 +482,8 @@
           </div>
         </div>
         <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <div class="admin-note">Группы тестов JSON (опционально)</div>
+        <textarea id="taskGroupsJson" class="admin-textarea" placeholder='[{"id":1,"points":40,"dependencies":[]},{"id":2,"points":60,"dependencies":[1]}]'></textarea>
         <div class="admin-note">Условие</div>
         <textarea id="taskStatementText" class="admin-textarea" placeholder="statement/russian.tex"></textarea>
         <div class="admin-note">Пояснение</div>
@@ -494,6 +496,8 @@
         <div class="test-form">
           <textarea id="taskTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
           <textarea id="taskTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
+          <input id="taskTestGroup" class="admin-input" type="number" min="1" placeholder="Группа, например 1">
+          <input id="taskTestPoints" class="admin-input" type="number" min="0" placeholder="Баллы теста, опционально">
           <select id="taskTestVisibility" class="admin-input">
             <option value="open">open</option>
             <option value="private">private</option>
@@ -560,6 +564,8 @@
           </div>
         </div>
         <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <div class="admin-note">Группы тестов JSON (опционально)</div>
+        <textarea id="editGroupsJson" class="admin-textarea" placeholder='[{"id":1,"points":40,"dependencies":[]},{"id":2,"points":60,"dependencies":[1]}]'></textarea>
         <div class="admin-note">Условие</div>
         <textarea id="editStatementText" class="admin-textarea" placeholder="statement/russian.tex"></textarea>
         <div class="admin-note">Пояснение</div>
@@ -572,6 +578,8 @@
         <div class="test-form">
           <textarea id="editTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
           <textarea id="editTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
+          <input id="editTestGroup" class="admin-input" type="number" min="1" placeholder="Группа, например 1">
+          <input id="editTestPoints" class="admin-input" type="number" min="0" placeholder="Баллы теста, опционально">
           <select id="editTestVisibility" class="admin-input">
             <option value="open">open</option>
             <option value="private">private</option>
@@ -781,12 +789,40 @@
       }
     }
 
+    function parseGroupsJson(raw) {
+      const text = String(raw || "").trim();
+      if (!text) return [];
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) {
+        throw new Error("groups_must_be_array");
+      }
+      return parsed.map(group => ({
+        id: Number(group.id),
+        name: group.name || `group ${Number(group.id)}`,
+        points: Number(group.points || 0),
+        dependencies: Array.isArray(group.dependencies)
+          ? group.dependencies.map(Number).filter(Number.isFinite)
+          : [],
+        tests: Array.isArray(group.tests)
+          ? group.tests.map(String)
+          : undefined
+      })).filter(group => Number.isFinite(group.id) && group.id > 0);
+    }
+
     async function adminUploadTaskFromForm() {
       const title = document.getElementById("taskMetaTitle").value.trim();
       const difficulty = document.getElementById("taskMetaDifficulty").value.trim();
       const type = document.getElementById("taskMetaType").value.trim();
       const language = (document.getElementById("taskMetaLanguage").value.trim() || "cpp");
       const tagsRaw = document.getElementById("taskMetaTags").value.trim();
+      let groups = [];
+
+      try {
+        groups = parseGroupsJson(document.getElementById("taskGroupsJson").value);
+      } catch (err) {
+        setAdminLog("JSON групп невалидный.");
+        return;
+      }
 
       if (!title) {
         setAdminLog("Укажи название задачи.");
@@ -818,7 +854,8 @@
         difficulty,
         language,
         type,
-        tags
+        tags,
+        groups
       };
 
       const base = window.TASKS_API_BASE || "";
@@ -867,7 +904,7 @@
         const row = document.createElement("div");
         row.className = "test-row";
         row.innerHTML = `
-          <div class="test-index">Тест ${idx + 1} · ${t.visibility || "open"}</div>
+          <div class="test-index">Тест ${idx + 1} · ${t.visibility || "open"} · group ${t.group || t.subtask || 1}${t.points ? ` · ${t.points}p` : ""}</div>
           <button type="button" class="admin-secondary" data-index="${idx}">Удалить</button>
         `;
         row.querySelector("button").addEventListener("click", (e) => {
@@ -883,6 +920,8 @@
       const input = document.getElementById("taskTestInput");
       const output = document.getElementById("taskTestOutput");
       const visibility = document.getElementById("taskTestVisibility");
+      const groupEl = document.getElementById("taskTestGroup");
+      const pointsEl = document.getElementById("taskTestPoints");
       if (!input || !output) return;
       const inp = input.value;
       const out = output.value;
@@ -890,9 +929,20 @@
         setAdminLog("Пустой тест не добавлен.");
         return;
       }
-      window.taskTests.push({ input: inp, output: out, visibility: visibility?.value || "open", subtask: 1 });
+      const group = Number(groupEl?.value || 1);
+      const points = Number(pointsEl?.value || 0);
+      window.taskTests.push({
+        input: inp,
+        output: out,
+        visibility: visibility?.value || "open",
+        group: Number.isFinite(group) && group > 0 ? group : 1,
+        subtask: Number.isFinite(group) && group > 0 ? group : 1,
+        points: Number.isFinite(points) && points > 0 ? points : 0
+      });
       input.value = "";
       output.value = "";
+      if (groupEl) groupEl.value = "";
+      if (pointsEl) pointsEl.value = "";
       renderTestCases();
     }
 
@@ -994,6 +1044,7 @@
           const filesData = bundle.files || {};
           document.getElementById("editMetaTitle").value = problem.title || "";
           document.getElementById("editMetaTags").value = Array.isArray(problem.tags) ? problem.tags.join(", ") : "";
+          document.getElementById("editGroupsJson").value = JSON.stringify(problem.groups || [], null, 2);
           setCustomSelectValue("editDifficultySelect", problem.difficulty || "", "Сложность");
           setCustomSelectValue("editTypeSelect", problem.type || "", "Тип ошибки");
           setCustomSelectValue("editLanguageSelect", normalizeTaskLanguage(problem.language), "Язык");
@@ -1011,7 +1062,9 @@
                 input: test.input || "",
                 output: test.output || "",
                 visibility: test.visibility || "private",
-                subtask: test.subtask || 1
+                group: test.group || test.subtask || 1,
+                subtask: test.subtask || test.group || 1,
+                points: test.points || 0
               }))
             : [];
           renderEditTestCases();
@@ -1023,6 +1076,7 @@
         const meta = metaRes.ok ? await metaRes.json() : {};
         document.getElementById("editMetaTitle").value = meta.title || "";
         document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
+        document.getElementById("editGroupsJson").value = "[]";
         setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
         setCustomSelectValue("editTypeSelect", meta.type || "", "Тип ошибки");
         const lang = normalizeTaskLanguage(meta.language);
@@ -1044,7 +1098,7 @@
           const outRes = await loadTextFileWithStatus(`${base}/tasks/${id}/tests/${idx}.out`);
           if (!inRes.ok && !outRes.ok) break;
           if (inRes.text || outRes.text) {
-            window.editTaskTests.push({ input: inRes.text, output: outRes.text, visibility: idx <= 2 ? "open" : "private", subtask: 1 });
+            window.editTaskTests.push({ input: inRes.text, output: outRes.text, visibility: idx <= 2 ? "open" : "private", group: 1, subtask: 1, points: 0 });
           }
           idx += 1;
         }
@@ -1065,7 +1119,7 @@
         const row = document.createElement("div");
         row.className = "test-row";
         row.innerHTML = `
-          <div class="test-index">Тест ${idx + 1} · ${t.visibility || "open"}</div>
+          <div class="test-index">Тест ${idx + 1} · ${t.visibility || "open"} · group ${t.group || t.subtask || 1}${t.points ? ` · ${t.points}p` : ""}</div>
           <button type="button" class="admin-secondary" data-index="${idx}">Удалить</button>
         `;
         row.querySelector("button").addEventListener("click", (e) => {
@@ -1081,6 +1135,8 @@
       const input = document.getElementById("editTestInput");
       const output = document.getElementById("editTestOutput");
       const visibility = document.getElementById("editTestVisibility");
+      const groupEl = document.getElementById("editTestGroup");
+      const pointsEl = document.getElementById("editTestPoints");
       if (!input || !output) return;
       const inp = input.value;
       const out = output.value;
@@ -1088,9 +1144,20 @@
         setAdminLog("Пустой тест не добавлен.");
         return;
       }
-      window.editTaskTests.push({ input: inp, output: out, visibility: visibility?.value || "open", subtask: 1 });
+      const group = Number(groupEl?.value || 1);
+      const points = Number(pointsEl?.value || 0);
+      window.editTaskTests.push({
+        input: inp,
+        output: out,
+        visibility: visibility?.value || "open",
+        group: Number.isFinite(group) && group > 0 ? group : 1,
+        subtask: Number.isFinite(group) && group > 0 ? group : 1,
+        points: Number.isFinite(points) && points > 0 ? points : 0
+      });
       input.value = "";
       output.value = "";
+      if (groupEl) groupEl.value = "";
+      if (pointsEl) pointsEl.value = "";
       renderEditTestCases();
     }
 
@@ -1173,6 +1240,14 @@
       const language = (document.getElementById("editMetaLanguage").value.trim() || "cpp");
       const tagsRaw = document.getElementById("editMetaTags").value.trim();
       const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
+      let groups = [];
+
+      try {
+        groups = parseGroupsJson(document.getElementById("editGroupsJson").value);
+      } catch (err) {
+        setAdminLog("JSON групп невалидный.");
+        return;
+      }
 
       if (!title) {
         setAdminLog("Название задачи не заполнено.");
@@ -1196,7 +1271,8 @@
           difficulty,
           language,
           type,
-          tags
+          tags,
+          groups
         },
         files: {
           statement,
