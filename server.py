@@ -967,6 +967,8 @@ def tasks_file(task_id, filename):
 
 @app.route("/tasks/create", methods=["POST"])
 def tasks_create():
+    if not _is_admin_request():
+        return jsonify({"error": "admin_required"}), 403
     if not sync_tasks_repo():
         return jsonify({"error": "tasks_sync_failed"}), 500
 
@@ -1052,6 +1054,8 @@ def tasks_create():
 
 @app.route("/tasks/delete", methods=["POST"])
 def tasks_delete():
+    if not _is_admin_request():
+        return jsonify({"error": "admin_required"}), 403
     if not sync_tasks_repo():
         return jsonify({"error": "tasks_sync_failed"}), 500
 
@@ -1104,6 +1108,9 @@ def tasks_delete():
 
 @app.route("/tasks/generate-tests", methods=["POST"])
 def tasks_generate_tests():
+    if not _is_admin_request():
+        return jsonify({"error": "admin_required"}), 403
+
     data = request.get_json(silent=True) or {}
     generator_code = data.get("generator", "")
     solution_code = data.get("solution", "")
