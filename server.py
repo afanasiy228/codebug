@@ -199,6 +199,11 @@ def sync_tasks_repo(force=False):
         return True
     except Exception as e:
         print("Tasks sync failed:", e)
+        # Fallback to already cloned local repository if it exists.
+        if os.path.isdir(TASKS_REPO_DIR):
+            for name in os.listdir(TASKS_REPO_DIR):
+                if name.isdigit():
+                    return True
         return False
 
 

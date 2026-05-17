@@ -1203,6 +1203,21 @@
             }
         }
 
+        function showTaskBackendError(id, details) {
+            document.getElementById("taskTitle").innerText = `Задача #${id} временно недоступна`;
+            document.getElementById("taskStatement").innerHTML =
+                `<p>Сервер задач не смог синхронизировать репозиторий. Попробуй обновить страницу через минуту.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>${details ? `<p><code>${escapeHtml(details)}</code></p>` : ""}`;
+            document.getElementById("taskHelp").innerText = "";
+            const examples = document.getElementById("examples");
+            if (examples) examples.innerHTML = "";
+            if (window.editor) editor.setValue("// Сервер задач временно недоступен");
+            const submitBtn = document.querySelector(".btn");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Недоступно";
+            }
+        }
+
         async function loadHiddenMap() {
             try {
                 const snap = await db.ref("tasksHidden").get();
@@ -1246,7 +1261,18 @@
             let problemV2 = null;
             try {
                 const problemRes = await fetch(`${base}/tasks/${id}/problem.json`);
-                if (problemRes.ok) problemV2 = await problemRes.json();
+                if (problemRes.ok) {
+                    problemV2 = await problemRes.json();
+                } else if (problemRes.status >= 500) {
+                    let payload = null;
+                    try {
+                        payload = await problemRes.json();
+                    } catch (_) {}
+                    if (payload?.error === "tasks_sync_failed") {
+                        showTaskBackendError(id, "tasks_sync_failed");
+                        return;
+                    }
+                }
             } catch (e) {
                 problemV2 = null;
             }
@@ -1257,6 +1283,16 @@
                     const metaPath = `${base}/tasks/${id}/meta.json`;
                     const res = await fetch(metaPath);
                     if (!res.ok) {
+                        if (res.status >= 500) {
+                            let payload = null;
+                            try {
+                                payload = await res.json();
+                            } catch (_) {}
+                            if (payload?.error === "tasks_sync_failed") {
+                                showTaskBackendError(id, "tasks_sync_failed");
+                                return;
+                            }
+                        }
                         throw new Error(`meta_not_found_${res.status}`);
                     }
                     meta = await res.json();
