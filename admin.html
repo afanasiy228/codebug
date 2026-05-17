@@ -729,6 +729,11 @@
       <div class="admin-box">
         <h3>Анонс на сайте</h3>
         <p class="admin-note">Сообщение будет храниться в Firebase: site/announcement.</p>
+        <select id="adminAnnouncementFormat" class="admin-input">
+          <option value="plain">Текст (plain)</option>
+          <option value="markdown">Markdown</option>
+          <option value="latex">LaTeX</option>
+        </select>
         <textarea id="adminAnnouncement" class="admin-textarea" placeholder="Текст анонса"></textarea>
         <div class="admin-actions">
           <button type="button" onclick="adminSaveAnnouncement()">Сохранить анонс</button>
@@ -1949,6 +1954,8 @@
     async function adminSaveAnnouncement() {
       const raw = document.getElementById("adminAnnouncement").value;
       const text = raw.trim();
+      const formatRaw = document.getElementById("adminAnnouncementFormat").value;
+      const format = ["plain", "markdown", "latex"].includes(formatRaw) ? formatRaw : "plain";
       if (!text) {
         setAdminLog("Введите текст анонса.");
         return;
@@ -1956,6 +1963,7 @@
       const payload = {
         title: "Анонс",
         text,
+        format,
         author: user,
         created: Date.now()
       };

@@ -426,6 +426,31 @@
             return oneLine.slice(0, limit).trimEnd() + "...";
         }
 
+        function normalizeAnnouncementFormat(value) {
+            const v = String(value || "plain").toLowerCase().trim();
+            return v === "markdown" || v === "latex" ? v : "plain";
+        }
+
+        function announcementPreviewText(item) {
+            const format = normalizeAnnouncementFormat(item?.format);
+            const src = String(item?.text || "");
+            if (format === "markdown") {
+                return src
+                    .replace(/[`*_>#-]/g, " ")
+                    .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim();
+            }
+            if (format === "latex") {
+                return src
+                    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, "$1")
+                    .replace(/[{}\\]/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim();
+            }
+            return src;
+        }
+
         function formatDate(ts) {
             if (!ts) return "без даты";
             const d = new Date(Number(ts));
@@ -455,7 +480,7 @@
                 const article = document.createElement("article");
                 article.className = "news-item";
                 const title = item.title || "Обновление тренировки";
-                const body = trimText(item.text || "", 72) || "Новые задачи.";
+                const body = trimText(announcementPreviewText(item), 72) || "Новые задачи.";
                 article.innerHTML = `
                     <div class="news-meta">${formatDate(item.created)}</div>
                     <h3 class="news-title">${escapeHtml(title)}</h3>
@@ -501,7 +526,7 @@
             const unique = [];
             const seen = new Set();
             for (const item of items) {
-                const fingerprint = `${item.title || ""}|${item.text || ""}|${item.created || 0}|${item.author || ""}`;
+                const fingerprint = `${item.title || ""}|${item.text || ""}|${item.format || "plain"}|${item.created || 0}|${item.author || ""}`;
                 if (seen.has(fingerprint)) continue;
                 seen.add(fingerprint);
                 unique.push(item);

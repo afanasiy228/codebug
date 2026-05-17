@@ -176,6 +176,15 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+      svg: { fontCache: "global" }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <script src="firebase.js"></script>
   <script src="auth.js"></script>
 
@@ -197,8 +206,19 @@
         .replace(/'/g, "&#039;");
     }
 
-    function formatAnnouncementText(text) {
-      return escapeHtml(text).replace(/\n/g, "<br>");
+    function normalizeAnnouncementFormat(value) {
+      const v = String(value || "plain").toLowerCase().trim();
+      return v === "markdown" || v === "latex" ? v : "plain";
+    }
+
+    function formatAnnouncementText(text, formatRaw) {
+      const format = normalizeAnnouncementFormat(formatRaw);
+      const source = String(text || "");
+      if (format === "markdown") {
+        const rendered = marked.parse(source);
+        return DOMPurify.sanitize(rendered);
+      }
+      return escapeHtml(source).replace(/\n/g, "<br>");
     }
 
     let isAdmin = false;
@@ -238,7 +258,7 @@
           ${idx === 0 ? '<div class="news-badge">Новое</div>' : ""}
           <div class="news-title">${item.title || "Анонс"}</div>
           <div class="news-meta">Автор: ${item.author || "admin"} · ${formatDate(item.created)}</div>
-          <div class="news-text">${formatAnnouncementText(item.text || "")}</div>
+          <div class="news-text">${formatAnnouncementText(item.text || "", item.format)}</div>
           ${deleteBtn}
         `;
         list.appendChild(card);
@@ -246,8 +266,11 @@
           const btn = card.querySelector(".news-delete");
           if (btn) {
             btn.addEventListener("click", () => deleteAnnouncement(item));
-          }
-        }
+      }
+      if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
+        window.MathJax.typesetPromise([list]).catch((err) => console.warn("MathJax render failed", err));
+      }
+    }
       });
     }
 
@@ -288,7 +311,7 @@
       const unique = [];
       const seen = new Set();
       for (const item of items) {
-        const fingerprint = `${item.text}|${item.created}|${item.author}`;
+        const fingerprint = `${item.text}|${item.format || "plain"}|${item.created}|${item.author}`;
         if (seen.has(fingerprint)) continue;
         seen.add(fingerprint);
         unique.push(item);
