@@ -89,8 +89,14 @@ def sandbox_compile_cpp(sources, output, log, include_dirs=None):
     except SandboxError as e:
         log.write("Sandbox Error\n")
         log.write(str(e) + "\n")
+        setattr(log, "_sandbox_error", True)
         return None
     return res
+
+
+def has_sandbox_error(log):
+    return bool(getattr(log, "_sandbox_error", False))
+
 
 def compile_solution(log, problem=None, task_path=None):
     if not os.path.exists(SOURCE):
@@ -116,7 +122,7 @@ def compile_solution(log, problem=None, task_path=None):
         include_dirs = sorted({os.path.dirname(grader_src), os.path.dirname(grader_header or grader_src)})
         res = sandbox_compile_cpp([SOURCE, grader_src], BINARY, log, include_dirs=include_dirs)
         if res is None:
-            log.write("Final verdict: CE\n")
+            log.write(f"Final verdict: {'SE' if has_sandbox_error(log) else 'CE'}\n")
             return False
     elif task_type(problem) == "interactive":
         if LANG != "cpp":
@@ -126,7 +132,7 @@ def compile_solution(log, problem=None, task_path=None):
             return False
         res = sandbox_compile_cpp([SOURCE], BINARY, log)
         if res is None:
-            log.write("Final verdict: CE\n")
+            log.write(f"Final verdict: {'SE' if has_sandbox_error(log) else 'CE'}\n")
             return False
     else:
         try:
@@ -134,7 +140,7 @@ def compile_solution(log, problem=None, task_path=None):
         except SandboxError as e:
             log.write("Sandbox Error\n")
             log.write(str(e) + "\n")
-            log.write("Final verdict: CE\n")
+            log.write("Final verdict: SE\n")
             return False
 
     if res.returncode != 0:
@@ -414,18 +420,20 @@ def judge(task_id):
 
         # Компиляция
         if not compile_solution(log, problem, task_path):
-            return "CE"
+            return "SE" if has_sandbox_error(log) else "CE"
 
         checker_bin = compile_checker(task_path, problem.get("checker") if problem else None, log)
         if checker_bin is False:
-            log.write("Final verdict: CE\n")
-            return "CE"
+            final = "SE" if has_sandbox_error(log) else "CE"
+            log.write(f"Final verdict: {final}\n")
+            return final
         interactor_bin = None
         if current_task_type == "interactive":
             interactor_bin = compile_interactor(task_path, problem, log)
             if interactor_bin is False:
-                log.write("Final verdict: CE\n")
-                return "CE"
+                final = "SE" if has_sandbox_error(log) else "CE"
+                log.write(f"Final verdict: {final}\n")
+                return final
         tests = discover_tests(task_path, problem)
         tests_by_name = {str(test["name"]): test for test in tests}
         groups = normalize_groups(problem, tests)

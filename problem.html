@@ -725,6 +725,18 @@
             return normalizeTaskLanguage(lang) === "python" ? "code.py" : "code.cpp";
         }
 
+        function findFirstNonAsciiChar(text) {
+            for (let i = 0; i < text.length; i++) {
+                if (text.charCodeAt(i) > 127) {
+                    const prefix = text.slice(0, i);
+                    const line = prefix.split("\n").length;
+                    const col = i - prefix.lastIndexOf("\n");
+                    return { ch: text[i], line, col };
+                }
+            }
+            return null;
+        }
+
         async function submitCode() {
             console.log("[submitCode] старт");
 
@@ -747,6 +759,14 @@
 
             const code = editor.getValue();
             console.log("code =", code.substring(0, 100), "...");
+            const nonAscii = findFirstNonAsciiChar(code);
+            if (nonAscii) {
+                alert(
+                    `В коде найден символ "${nonAscii.ch}" (строка ${nonAscii.line}, колонка ${nonAscii.col}). ` +
+                    "Уберите его, иначе будет CE."
+                );
+                return;
+            }
             let pendingRow = null;
             try {
                 pendingRow = addPendingSubmissionRow();
