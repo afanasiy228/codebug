@@ -1,4 +1,6 @@
-import subprocess
+import os
+
+from sandbox import run_in_sandbox
 
 
 class CppRunner:
@@ -7,10 +9,11 @@ class CppRunner:
         self.binary = binary
 
     def compile(self):
-        return subprocess.run(
+        return run_in_sandbox(
             ["g++", "-std=c++17", "-O2", self.source, "-o", self.binary],
-            capture_output=True,
-            text=True
+            workdir=os.getcwd(),
+            language="cpp",
+            timeout=30,
         )
 
     def command(self):

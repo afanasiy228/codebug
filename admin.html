@@ -249,6 +249,38 @@
       font-weight: 600;
     }
 
+    .group-editor {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .group-row {
+      display: grid;
+      grid-template-columns: 70px minmax(140px, 1fr) 90px minmax(160px, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: rgba(15, 118, 110, 0.05);
+    }
+
+    .group-row select {
+      min-height: 38px;
+    }
+
+    details.admin-advanced {
+      margin-bottom: 12px;
+    }
+
+    details.admin-advanced summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
     .admin-secondary {
       border: 1px solid var(--stroke);
       background: rgba(15, 118, 110, 0.08);
@@ -482,8 +514,20 @@
           </div>
         </div>
         <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
-        <div class="admin-note">Группы тестов JSON (опционально)</div>
-        <textarea id="taskGroupsJson" class="admin-textarea" placeholder='[{"id":1,"points":40,"dependencies":[]},{"id":2,"points":60,"dependencies":[1]}]'></textarea>
+        <select id="taskMetaTaskType" class="admin-input">
+          <option value="standard">standard</option>
+          <option value="grader">grader</option>
+          <option value="interactive">interactive</option>
+        </select>
+        <div class="admin-note">Группы тестов</div>
+        <div id="taskGroupList" class="group-editor"></div>
+        <div class="admin-actions">
+          <button type="button" class="admin-secondary" onclick="addGroup('create')">Добавить группу</button>
+        </div>
+        <details class="admin-advanced">
+          <summary>Advanced/import JSON групп</summary>
+          <textarea id="taskGroupsJson" class="admin-textarea" placeholder='[{"id":1,"points":40,"dependencies":[]},{"id":2,"points":60,"dependencies":[1]}]'></textarea>
+        </details>
         <div class="admin-note">Условие</div>
         <textarea id="taskStatementText" class="admin-textarea" placeholder="statement/russian.tex"></textarea>
         <div class="admin-note">Пояснение</div>
@@ -496,7 +540,7 @@
         <div class="test-form">
           <textarea id="taskTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
           <textarea id="taskTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
-          <input id="taskTestGroup" class="admin-input" type="number" min="1" placeholder="Группа, например 1">
+          <select id="taskTestGroup" class="admin-input"></select>
           <input id="taskTestPoints" class="admin-input" type="number" min="0" placeholder="Баллы теста, опционально">
           <select id="taskTestVisibility" class="admin-input">
             <option value="open">open</option>
@@ -509,6 +553,12 @@
         <textarea id="taskCheckerText" class="admin-textarea" placeholder="checker.cpp"></textarea>
         <div class="admin-note">validator.cpp (опционально)</div>
         <textarea id="taskValidatorText" class="admin-textarea" placeholder="validator.cpp"></textarea>
+        <div class="admin-note">grader/grader.cpp (для grader)</div>
+        <textarea id="taskGraderText" class="admin-textarea" placeholder="grader.cpp"></textarea>
+        <div class="admin-note">grader/grader.h (для grader)</div>
+        <textarea id="taskGraderHeaderText" class="admin-textarea" placeholder="grader.h"></textarea>
+        <div class="admin-note">interactor/interactor.cpp (для interactive)</div>
+        <textarea id="taskInteractorText" class="admin-textarea" placeholder="interactor.cpp"></textarea>
         <div class="admin-note">Генератор (на том же языке)</div>
         <textarea id="taskGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
@@ -517,6 +567,15 @@
         </div>
         <div class="admin-actions">
           <button type="button" onclick="adminUploadTaskFromForm()">Сохранить задачу</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3>Импорт Polygon</h3>
+        <p class="admin-note">Загрузи polygon.zip. Импорт не сохранит задачу, если архив неполный или statement не компилируется.</p>
+        <input id="polygonArchive" class="admin-input" type="file" accept=".zip,application/zip">
+        <div class="admin-actions">
+          <button type="button" onclick="adminImportPolygon()">Импортировать polygon.zip</button>
         </div>
       </div>
 
@@ -564,8 +623,20 @@
           </div>
         </div>
         <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
-        <div class="admin-note">Группы тестов JSON (опционально)</div>
-        <textarea id="editGroupsJson" class="admin-textarea" placeholder='[{"id":1,"points":40,"dependencies":[]},{"id":2,"points":60,"dependencies":[1]}]'></textarea>
+        <select id="editMetaTaskType" class="admin-input">
+          <option value="standard">standard</option>
+          <option value="grader">grader</option>
+          <option value="interactive">interactive</option>
+        </select>
+        <div class="admin-note">Группы тестов</div>
+        <div id="editGroupList" class="group-editor"></div>
+        <div class="admin-actions">
+          <button type="button" class="admin-secondary" onclick="addGroup('edit')">Добавить группу</button>
+        </div>
+        <details class="admin-advanced">
+          <summary>Advanced/import JSON групп</summary>
+          <textarea id="editGroupsJson" class="admin-textarea" placeholder='[{"id":1,"points":40,"dependencies":[]},{"id":2,"points":60,"dependencies":[1]}]'></textarea>
+        </details>
         <div class="admin-note">Условие</div>
         <textarea id="editStatementText" class="admin-textarea" placeholder="statement/russian.tex"></textarea>
         <div class="admin-note">Пояснение</div>
@@ -578,7 +649,7 @@
         <div class="test-form">
           <textarea id="editTestInput" class="admin-textarea" placeholder="Ввод"></textarea>
           <textarea id="editTestOutput" class="admin-textarea" placeholder="Вывод"></textarea>
-          <input id="editTestGroup" class="admin-input" type="number" min="1" placeholder="Группа, например 1">
+          <select id="editTestGroup" class="admin-input"></select>
           <input id="editTestPoints" class="admin-input" type="number" min="0" placeholder="Баллы теста, опционально">
           <select id="editTestVisibility" class="admin-input">
             <option value="open">open</option>
@@ -592,6 +663,12 @@
         <textarea id="editCheckerText" class="admin-textarea" placeholder="checker.cpp"></textarea>
         <div class="admin-note">validator.cpp (опционально)</div>
         <textarea id="editValidatorText" class="admin-textarea" placeholder="validator.cpp"></textarea>
+        <div class="admin-note">grader/grader.cpp (для grader)</div>
+        <textarea id="editGraderText" class="admin-textarea" placeholder="grader.cpp"></textarea>
+        <div class="admin-note">grader/grader.h (для grader)</div>
+        <textarea id="editGraderHeaderText" class="admin-textarea" placeholder="grader.h"></textarea>
+        <div class="admin-note">interactor/interactor.cpp (для interactive)</div>
+        <textarea id="editInteractorText" class="admin-textarea" placeholder="interactor.cpp"></textarea>
         <div class="admin-note">Генератор (на том же языке)</div>
         <textarea id="editGeneratorText" class="admin-textarea" placeholder="generator.cpp"></textarea>
         <div class="admin-actions">
@@ -745,6 +822,10 @@
         initCustomSelect("editLanguageSelect");
         setCustomSelectValue("languageSelect", "cpp", "Язык");
         setCustomSelectValue("editLanguageSelect", "cpp", "Язык");
+        window.taskGroups = [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
+        window.editTaskGroups = [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
+        renderGroupEditor("create");
+        renderGroupEditor("edit");
         await adminReloadTasks();
         const editSelect = document.getElementById("editTaskSelect");
         if (editSelect) {
@@ -809,16 +890,126 @@
       })).filter(group => Number.isFinite(group.id) && group.id > 0);
     }
 
+    function groupsStore(mode) {
+      return mode === "edit" ? "editTaskGroups" : "taskGroups";
+    }
+
+    function groupListId(mode) {
+      return mode === "edit" ? "editGroupList" : "taskGroupList";
+    }
+
+    function groupSelectId(mode) {
+      return mode === "edit" ? "editTestGroup" : "taskTestGroup";
+    }
+
+    function currentGroups(mode) {
+      const key = groupsStore(mode);
+      if (!Array.isArray(window[key]) || !window[key].length) {
+        window[key] = [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
+      }
+      return window[key];
+    }
+
+    function renderGroupEditor(mode) {
+      const root = document.getElementById(groupListId(mode));
+      if (!root) return;
+      const groups = currentGroups(mode);
+      root.innerHTML = "";
+      groups.forEach((group, index) => {
+        const row = document.createElement("div");
+        row.className = "group-row";
+        const dependencyOptions = groups
+          .filter(item => Number(item.id) !== Number(group.id))
+          .map(item => `<option value="${item.id}" ${(group.dependencies || []).includes(Number(item.id)) ? "selected" : ""}>${item.id}</option>`)
+          .join("");
+        row.innerHTML = `
+          <input class="admin-input group-id" type="number" min="1" value="${group.id}">
+          <input class="admin-input group-name" type="text" value="${group.name || ""}" placeholder="name">
+          <input class="admin-input group-points" type="number" min="0" value="${group.points || 0}">
+          <select class="admin-input group-deps" multiple>${dependencyOptions}</select>
+          <button type="button" class="admin-secondary">Удалить</button>
+        `;
+        row.querySelector("button").addEventListener("click", () => {
+          groups.splice(index, 1);
+          renderGroupEditor(mode);
+        });
+        row.querySelectorAll("input, select").forEach(el => {
+          el.addEventListener("change", () => syncGroupsFromEditor(mode));
+        });
+        root.appendChild(row);
+      });
+      updateGroupDropdowns(mode);
+    }
+
+    function syncGroupsFromEditor(mode) {
+      const root = document.getElementById(groupListId(mode));
+      if (!root) return;
+      const groups = Array.from(root.querySelectorAll(".group-row")).map(row => {
+        const id = Number(row.querySelector(".group-id").value);
+        const deps = Array.from(row.querySelector(".group-deps").selectedOptions)
+          .map(opt => Number(opt.value))
+          .filter(value => Number.isFinite(value) && value > 0 && value !== id);
+        return {
+          id,
+          name: row.querySelector(".group-name").value || `group ${id}`,
+          points: Number(row.querySelector(".group-points").value || 0),
+          dependencies: [...new Set(deps)]
+        };
+      }).filter(group => Number.isFinite(group.id) && group.id > 0);
+      window[groupsStore(mode)] = groups.length ? groups : [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
+      updateGroupDropdowns(mode);
+    }
+
+    function collectGroups(mode) {
+      syncGroupsFromEditor(mode);
+      const groups = currentGroups(mode).map(group => ({
+        id: Number(group.id),
+        name: group.name || `group ${Number(group.id)}`,
+        points: Number(group.points || 0),
+        dependencies: Array.isArray(group.dependencies) ? group.dependencies.map(Number).filter(Number.isFinite) : []
+      })).filter(group => Number.isFinite(group.id) && group.id > 0);
+      const advancedId = mode === "edit" ? "editGroupsJson" : "taskGroupsJson";
+      const advancedEl = document.getElementById(advancedId);
+      const advancedRaw = advancedEl?.value.trim();
+      if (advancedRaw && advancedEl.closest("details")?.open) {
+        return parseGroupsJson(advancedRaw);
+      }
+      return groups;
+    }
+
+    function addGroup(mode) {
+      syncGroupsFromEditor(mode);
+      const groups = currentGroups(mode);
+      const nextId = groups.reduce((max, group) => Math.max(max, Number(group.id) || 0), 0) + 1;
+      groups.push({ id: nextId, name: `group ${nextId}`, points: 0, dependencies: [] });
+      renderGroupEditor(mode);
+    }
+
+    function updateGroupDropdowns(mode) {
+      const select = document.getElementById(groupSelectId(mode));
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = "";
+      currentGroups(mode).forEach(group => {
+        const opt = document.createElement("option");
+        opt.value = group.id;
+        opt.textContent = `${group.id} — ${group.name || `group ${group.id}`}`;
+        select.appendChild(opt);
+      });
+      if (current) select.value = current;
+    }
+
     async function adminUploadTaskFromForm() {
       const title = document.getElementById("taskMetaTitle").value.trim();
       const difficulty = document.getElementById("taskMetaDifficulty").value.trim();
       const type = document.getElementById("taskMetaType").value.trim();
       const language = (document.getElementById("taskMetaLanguage").value.trim() || "cpp");
+      const taskType = document.getElementById("taskMetaTaskType").value || "standard";
       const tagsRaw = document.getElementById("taskMetaTags").value.trim();
       let groups = [];
 
       try {
-        groups = parseGroupsJson(document.getElementById("taskGroupsJson").value);
+        groups = collectGroups("create");
       } catch (err) {
         setAdminLog("JSON групп невалидный.");
         return;
@@ -846,6 +1037,9 @@
       const generatorText = document.getElementById("taskGeneratorText").value;
       const checkerText = document.getElementById("taskCheckerText").value;
       const validatorText = document.getElementById("taskValidatorText").value;
+      const graderText = document.getElementById("taskGraderText").value;
+      const graderHeaderText = document.getElementById("taskGraderHeaderText").value;
+      const interactorText = document.getElementById("taskInteractorText").value;
       const tests = window.taskTests || [];
 
       const meta = {
@@ -853,6 +1047,7 @@
         title,
         difficulty,
         language,
+        taskType,
         type,
         tags,
         groups
@@ -868,7 +1063,10 @@
           solution: solutionText,
           generator: generatorText,
           checker: checkerText,
-          validator: validatorText
+          validator: validatorText,
+          grader: graderText,
+          graderHeader: graderHeaderText,
+          interactor: interactorText
         },
         tests
       };
@@ -888,6 +1086,38 @@
         const data = await res.json();
         setAdminLog(`Задача сохранена в репозиторий. ID: ${data.id}`);
         adminTasks = await loadTaskList();
+      } catch (err) {
+        console.error(err);
+        setAdminLog("Ошибка соединения с сервером.");
+      }
+    }
+
+    async function adminImportPolygon() {
+      const input = document.getElementById("polygonArchive");
+      const file = input?.files?.[0];
+      if (!file) {
+        setAdminLog("Выбери polygon.zip.");
+        return;
+      }
+      const form = new FormData();
+      form.append("archive", file);
+      const base = window.TASKS_API_BASE || "";
+      try {
+        setAdminLog("Импорт Polygon начался.");
+        const headers = await adminRequestHeaders(false);
+        const res = await fetch(`${base}/tasks/import-polygon`, {
+          method: "POST",
+          headers,
+          body: form
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setAdminLog(`Ошибка импорта: ${data.details || data.error || res.status}`);
+          return;
+        }
+        setAdminLog(`Polygon-задача импортирована. ID: ${data.id}`);
+        adminTasks = await loadTaskList();
+        renderEditTaskSelect();
       } catch (err) {
         console.error(err);
         setAdminLog("Ошибка соединения с сервером.");
@@ -1045,6 +1275,16 @@
           document.getElementById("editMetaTitle").value = problem.title || "";
           document.getElementById("editMetaTags").value = Array.isArray(problem.tags) ? problem.tags.join(", ") : "";
           document.getElementById("editGroupsJson").value = JSON.stringify(problem.groups || [], null, 2);
+          document.getElementById("editMetaTaskType").value = problem.taskType || "standard";
+          window.editTaskGroups = Array.isArray(problem.groups) && problem.groups.length
+            ? problem.groups.map(group => ({
+                id: Number(group.id),
+                name: group.name || `group ${Number(group.id)}`,
+                points: Number(group.points || group.score || 0),
+                dependencies: Array.isArray(group.dependencies) ? group.dependencies.map(Number).filter(Number.isFinite) : []
+              }))
+            : [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
+          renderGroupEditor("edit");
           setCustomSelectValue("editDifficultySelect", problem.difficulty || "", "Сложность");
           setCustomSelectValue("editTypeSelect", problem.type || "", "Тип ошибки");
           setCustomSelectValue("editLanguageSelect", normalizeTaskLanguage(problem.language), "Язык");
@@ -1056,6 +1296,9 @@
           document.getElementById("editGeneratorText").value = filesData.generator || "";
           document.getElementById("editCheckerText").value = filesData.checker || "";
           document.getElementById("editValidatorText").value = filesData.validator || "";
+          document.getElementById("editGraderText").value = filesData.grader || "";
+          document.getElementById("editGraderHeaderText").value = filesData.graderHeader || "";
+          document.getElementById("editInteractorText").value = filesData.interactor || "";
 
           window.editTaskTests = Array.isArray(bundle.tests)
             ? bundle.tests.map(test => ({
@@ -1077,6 +1320,9 @@
         document.getElementById("editMetaTitle").value = meta.title || "";
         document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
         document.getElementById("editGroupsJson").value = "[]";
+        document.getElementById("editMetaTaskType").value = "standard";
+        window.editTaskGroups = [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
+        renderGroupEditor("edit");
         setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
         setCustomSelectValue("editTypeSelect", meta.type || "", "Тип ошибки");
         const lang = normalizeTaskLanguage(meta.language);
@@ -1238,12 +1484,13 @@
       const difficulty = document.getElementById("editMetaDifficulty").value.trim();
       const type = document.getElementById("editMetaType").value.trim();
       const language = (document.getElementById("editMetaLanguage").value.trim() || "cpp");
+      const taskType = document.getElementById("editMetaTaskType").value || "standard";
       const tagsRaw = document.getElementById("editMetaTags").value.trim();
       const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
       let groups = [];
 
       try {
-        groups = parseGroupsJson(document.getElementById("editGroupsJson").value);
+        groups = collectGroups("edit");
       } catch (err) {
         setAdminLog("JSON групп невалидный.");
         return;
@@ -1261,6 +1508,9 @@
       const generator = document.getElementById("editGeneratorText").value;
       const checker = document.getElementById("editCheckerText").value;
       const validator = document.getElementById("editValidatorText").value;
+      const grader = document.getElementById("editGraderText").value;
+      const graderHeader = document.getElementById("editGraderHeaderText").value;
+      const interactor = document.getElementById("editInteractorText").value;
       const tests = window.editTaskTests || [];
 
       const base = window.TASKS_API_BASE || "";
@@ -1270,6 +1520,7 @@
           title,
           difficulty,
           language,
+          taskType,
           type,
           tags,
           groups
@@ -1281,7 +1532,10 @@
           solution,
           generator,
           checker,
-          validator
+          validator,
+          grader,
+          graderHeader,
+          interactor
         },
         tests
       };

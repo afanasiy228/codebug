@@ -1,0 +1,96 @@
+import os
+import shutil
+import subprocess
+from dataclasses import dataclass
+
+
+class SandboxError(RuntimeError):
+    pass
+
+
+@dataclass
+class SandboxResult:
+    returncode: int
+    stdout: str
+    stderr: str
+    timeout: bool = False
+
+
+def _allow_unsafe_runner():
+    return os.getenv("ALLOW_UNSAFE_RUNNER") == "1"
+
+
+def _docker_available():
+    return shutil.which("docker") is not None
+
+
+def _image_for(language):
+    lang = str(language or "").strip().lower()
+    if lang in ("py", "python", "python3"):
+        return "codebug-runner-python"
+    return "codebug-runner-cpp"
+
+
+def run_in_sandbox(
+    command,
+    *,
+    workdir,
+    language="cpp",
+    input_data=None,
+    timeout=5,
+    memory="256m",
+    cpus="1",
+    pids_limit=64,
+):
+    if _docker_available():
+        docker_cmd = [
+            "docker",
+            "run",
+            "--rm",
+            "--network=none",
+            f"--memory={memory}",
+            f"--cpus={cpus}",
+            f"--pids-limit={pids_limit}",
+            "--read-only",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,size=64m",
+            "--user",
+            f"{os.getuid()}:{os.getgid()}",
+            "--cap-drop=ALL",
+            "-v",
+            f"{os.path.abspath(workdir)}:/work:rw",
+            "-w",
+            "/work",
+            _image_for(language),
+            *command,
+        ]
+        try:
+            proc = subprocess.run(
+                docker_cmd,
+                input=input_data,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            return SandboxResult(proc.returncode, proc.stdout, proc.stderr)
+        except subprocess.TimeoutExpired as e:
+            return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)
+
+    if not _allow_unsafe_runner():
+        raise SandboxError(
+            "Docker is required for CodeBug sandbox. "
+            "Set ALLOW_UNSAFE_RUNNER=1 only for local development."
+        )
+
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=workdir,
+            input=input_data,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return SandboxResult(proc.returncode, proc.stdout, proc.stderr)
+    except subprocess.TimeoutExpired as e:
+        return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)

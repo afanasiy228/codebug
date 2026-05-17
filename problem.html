@@ -455,6 +455,13 @@
 <!-- Firebase -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script>
+    window.MathJax = {
+        tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+        svg: { fontCache: "global" }
+    };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -1180,6 +1187,9 @@
                     const html = await res.text();
                     document.getElementById("taskStatement").innerHTML =
                         window.DOMPurify ? DOMPurify.sanitize(html) : html;
+                    if (window.MathJax?.typesetPromise) {
+                        MathJax.typesetPromise([document.getElementById("taskStatement")]).catch(console.warn);
+                    }
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement/russian.html не найден";
                 }

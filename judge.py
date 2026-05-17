@@ -4,7 +4,9 @@ import sys
 import glob
 import json
 import tempfile
+import shutil
 from runner import get_runner
+from sandbox import SandboxError, run_in_sandbox
 
 # --- Настройки ---
 TIME_LIMIT = int(os.getenv("TIME_LIMIT", "5"))  # лимит времени на один тест
@@ -40,14 +42,100 @@ def load_problem(task):
         return problem
     return None
 
-def compile_solution(log):
+
+def task_type(problem):
+    value = (problem or {}).get("taskType", "standard")
+    value = str(value or "standard").strip().lower()
+    return value if value in ("standard", "grader", "interactive") else "standard"
+
+
+def copy_task_file(task_path, relpath, dest_relpath=None):
+    if not relpath:
+        return None
+    src = os.path.abspath(os.path.join(task_path, relpath))
+    base = os.path.abspath(task_path)
+    if src != base and not src.startswith(base + os.sep):
+        return None
+    if not os.path.isfile(src):
+        return None
+    dest = os.path.abspath(dest_relpath or relpath)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.copyfile(src, dest)
+    return os.path.relpath(dest, os.getcwd())
+
+
+def write_text(path, content):
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+def read_text(path):
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        return f.read()
+
+
+def sandbox_compile_cpp(sources, output, log, include_dirs=None):
+    include_args = []
+    for item in include_dirs or []:
+        include_args.extend(["-I", item])
+    try:
+        res = run_in_sandbox(
+            ["g++", "-std=c++17", "-O2", *include_args, *sources, "-o", output],
+            workdir=os.getcwd(),
+            language="cpp",
+            timeout=30,
+        )
+    except SandboxError as e:
+        log.write("Sandbox Error\n")
+        log.write(str(e) + "\n")
+        return None
+    return res
+
+def compile_solution(log, problem=None, task_path=None):
     if not os.path.exists(SOURCE):
         log.write("Compilation Error\n")
         log.write(f"{SOURCE} not found\n")
         log.write("Final verdict: CE\n")
         return False
 
-    res = RUNNER.compile()
+    if task_type(problem) == "grader":
+        if LANG != "cpp":
+            log.write("Compilation Error\n")
+            log.write("grader tasks currently require C++ submissions\n")
+            log.write("Final verdict: CE\n")
+            return False
+        grader_cfg = (problem or {}).get("grader") or {}
+        grader_src = copy_task_file(task_path, grader_cfg.get("source") or "grader/grader.cpp")
+        grader_header = copy_task_file(task_path, grader_cfg.get("header") or "grader/grader.h")
+        if not grader_src:
+            log.write("Compilation Error\n")
+            log.write("grader/grader.cpp not found\n")
+            log.write("Final verdict: CE\n")
+            return False
+        include_dirs = sorted({os.path.dirname(grader_src), os.path.dirname(grader_header or grader_src)})
+        res = sandbox_compile_cpp([SOURCE, grader_src], BINARY, log, include_dirs=include_dirs)
+        if res is None:
+            log.write("Final verdict: CE\n")
+            return False
+    elif task_type(problem) == "interactive":
+        if LANG != "cpp":
+            log.write("Compilation Error\n")
+            log.write("interactive tasks currently require C++ submissions\n")
+            log.write("Final verdict: CE\n")
+            return False
+        res = sandbox_compile_cpp([SOURCE], BINARY, log)
+        if res is None:
+            log.write("Final verdict: CE\n")
+            return False
+    else:
+        try:
+            res = RUNNER.compile()
+        except SandboxError as e:
+            log.write("Sandbox Error\n")
+            log.write(str(e) + "\n")
+            log.write("Final verdict: CE\n")
+            return False
 
     if res.returncode != 0:
         log.write("Compilation Error\n")
@@ -63,16 +151,14 @@ def compile_solution(log):
 def compile_checker(task_path, checker_cfg, log):
     if not checker_cfg or checker_cfg.get("type") != "custom":
         return None
-    checker_path = os.path.join(task_path, checker_cfg.get("path") or "checker/checker.cpp")
-    if not os.path.isfile(checker_path):
+    checker_src = copy_task_file(task_path, checker_cfg.get("path") or "checker/checker.cpp")
+    if not checker_src:
         log.write("Checker Error: checker.cpp not found\n")
         return False
-    checker_bin = os.path.abspath("checker_bin")
-    res = subprocess.run(
-        ["g++", "-std=c++17", "-O2", checker_path, "-o", checker_bin],
-        capture_output=True,
-        text=True
-    )
+    checker_bin = "checker_bin"
+    res = sandbox_compile_cpp([checker_src], checker_bin, log)
+    if res is None:
+        return False
     if res.returncode != 0:
         log.write("Checker Compilation Error\n")
         log.write(res.stderr)
@@ -83,50 +169,41 @@ def compile_checker(task_path, checker_cfg, log):
 
 
 def compare_with_checker(checker_bin, inp_file, answer_file, program_output):
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as out:
-        out.write(program_output)
-        out_path = out.name
+    local_in = "checker_input.txt"
+    local_answer = "checker_answer.txt"
+    local_out = "checker_output.txt"
+    write_text(local_in, read_text(inp_file))
+    write_text(local_answer, read_text(answer_file))
+    write_text(local_out, program_output)
     try:
-        res = subprocess.run(
-            [checker_bin, inp_file, out_path, answer_file],
-            capture_output=True,
-            text=True,
+        res = run_in_sandbox(
+            [f"./{checker_bin}", local_in, local_out, local_answer],
+            workdir=os.getcwd(),
+            language="cpp",
             timeout=5
         )
-    except subprocess.TimeoutExpired:
-        try:
-            os.remove(out_path)
-        except OSError:
-            pass
-        return "TL"
-    except Exception:
-        try:
-            os.remove(out_path)
-        except OSError:
-            pass
+    except SandboxError:
         return "RE"
-    finally:
-        try:
-            os.remove(out_path)
-        except OSError:
-            pass
+    if res.timeout:
+        return "TL"
     return "OK" if res.returncode == 0 else "WA"
 
 
-def run_test(inp_file, out_file, checker_bin=None):
+def run_standard_test(inp_file, out_file, checker_bin=None):
     try:
-        with open(inp_file, "r") as fin:
-            proc = subprocess.run(
-                RUNNER.command(),
-                stdin=fin,
-                capture_output=True,
-                timeout=TIME_LIMIT,
-                text=True
-            )
-    except subprocess.TimeoutExpired:
-        return "TL"
-    except Exception:
+        input_data = read_text(inp_file)
+        proc = run_in_sandbox(
+            RUNNER.command(),
+            workdir=os.getcwd(),
+            language=LANG,
+            input_data=input_data,
+            timeout=TIME_LIMIT,
+        )
+    except SandboxError:
         return "RE"
+
+    if proc.timeout:
+        return "TL"
 
     if proc.returncode != 0:
         return "RE"
@@ -142,6 +219,75 @@ def run_test(inp_file, out_file, checker_bin=None):
 
     program_output = proc.stdout.strip()
     return "OK" if program_output == correct_output else "WA"
+
+
+def compile_interactor(task_path, problem, log):
+    interactor_cfg = (problem or {}).get("interactor") or {}
+    interactor_src = copy_task_file(task_path, interactor_cfg.get("source") or "interactor/interactor.cpp")
+    if not interactor_src:
+        log.write("Interactor Error: interactor/interactor.cpp not found\n")
+        return False
+    res = sandbox_compile_cpp([interactor_src], "interactor_bin", log)
+    if res is None:
+        return False
+    if res.returncode != 0:
+        log.write("Interactor Compilation Error\n")
+        log.write(res.stderr)
+        if not str(res.stderr).endswith("\n"):
+            log.write("\n")
+        return False
+    return "interactor_bin"
+
+
+def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
+    local_in = f"interactive_{test_name}.in"
+    local_answer = f"interactive_{test_name}.ans"
+    protocol = f"protocol_{test_name}.log"
+    write_text(local_in, read_text(inp_file))
+    write_text(local_answer, read_text(out_file))
+    script = (
+        "rm -f to_solution to_interactor; "
+        "mkfifo to_solution to_interactor; "
+        "exec 3<>to_solution; "
+        "exec 4<>to_interactor; "
+        f"./{BINARY} <&3 >&4 2> solution.err & "
+        "solution_pid=$!; "
+        f"./{interactor_bin} {local_in} {local_answer} {protocol} "
+        "<&4 >&3 2> interactor.err; "
+        "interactor_code=$?; "
+        "exec 3>&-; exec 4>&-; "
+        "wait $solution_pid; "
+        "solution_code=$?; "
+        "cat solution.err interactor.err >&2; "
+        "if [ $interactor_code -ne 0 ]; then exit $interactor_code; fi; "
+        "exit $solution_code"
+    )
+    try:
+        res = run_in_sandbox(
+            ["sh", "-c", script],
+            workdir=os.getcwd(),
+            language="cpp",
+            timeout=TIME_LIMIT,
+        )
+    except SandboxError as e:
+        write_text(protocol, str(e) + "\n")
+        return "RE"
+    protocol_text = read_text(protocol) if os.path.isfile(protocol) else ""
+    if res.stderr:
+        protocol_text += ("\n" if protocol_text else "") + res.stderr
+    if protocol_text:
+        log.write(f"Protocol log {test_name}:\n{protocol_text}\n")
+    if res.timeout:
+        return "TL"
+    return "OK" if res.returncode == 0 else "WA"
+
+
+def run_test(inp_file, out_file, checker_bin=None, problem=None, interactor_bin=None, test_name="test", log=None):
+    if task_type(problem) == "interactive":
+        if not interactor_bin:
+            return "RE"
+        return run_interactive_test(inp_file, out_file, interactor_bin, test_name, log)
+    return run_standard_test(inp_file, out_file, checker_bin)
 
 
 def discover_tests(task_path, problem):
@@ -250,6 +396,8 @@ def judge(task_id):
         log.write(f"Task {task_id}\n")
         if problem:
             log.write(f"Task format: v{problem.get('formatVersion', problem.get('schemaVersion', 2))}\n")
+        current_task_type = task_type(problem)
+        log.write(f"Task type: {current_task_type}\n")
 
         if not os.path.isdir(tests_path):
             log.write("Error: tests folder not found\n")
@@ -257,13 +405,19 @@ def judge(task_id):
             return "NO_TESTS"
 
         # Компиляция
-        if not compile_solution(log):
+        if not compile_solution(log, problem, task_path):
             return "CE"
 
         checker_bin = compile_checker(task_path, problem.get("checker") if problem else None, log)
         if checker_bin is False:
             log.write("Final verdict: CE\n")
             return "CE"
+        interactor_bin = None
+        if current_task_type == "interactive":
+            interactor_bin = compile_interactor(task_path, problem, log)
+            if interactor_bin is False:
+                log.write("Final verdict: CE\n")
+                return "CE"
         tests = discover_tests(task_path, problem)
         tests_by_name = {str(test["name"]): test for test in tests}
         groups = normalize_groups(problem, tests)
@@ -296,7 +450,15 @@ def judge(task_id):
                 test = tests_by_name.get(str(name))
                 if not test:
                     continue
-                verdict = run_test(test["input"], test["answer"], checker_bin)
+                verdict = run_test(
+                    test["input"],
+                    test["answer"],
+                    checker_bin,
+                    problem=problem,
+                    interactor_bin=interactor_bin,
+                    test_name=str(test["name"]),
+                    log=log,
+                )
                 log.write(
                     f"Test {test['name']}: {verdict}"
                     f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}]\n"
@@ -318,7 +480,15 @@ def judge(task_id):
             str(name) for group in groups for name in group.get("tests", [])
         }]
         for test in missing_tests:
-            verdict = run_test(test["input"], test["answer"], checker_bin)
+            verdict = run_test(
+                test["input"],
+                test["answer"],
+                checker_bin,
+                problem=problem,
+                interactor_bin=interactor_bin,
+                test_name=str(test["name"]),
+                log=log,
+            )
             log.write(
                 f"Test {test['name']}: {verdict}"
                 f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}]\n"

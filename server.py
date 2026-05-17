@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import re
 import shutil
+import zipfile
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
@@ -16,6 +17,9 @@ import html
 import firebase_admin
 from firebase_admin import credentials, db
 from firebase_admin import auth as admin_auth
+from polygon_importer import PolygonImportError, parse_polygon_package
+from sandbox import SandboxError, run_in_sandbox
+from statement_compiler import compile_latex_statement
 
 app = Flask(__name__)
 CORS(app)  # разрешаем CORS всем источникам
@@ -376,6 +380,8 @@ def public_problem_meta(problem):
         "type": problem.get("type", ""),
         "tags": problem.get("tags") or [],
         "taskType": problem.get("taskType", "standard"),
+        "grader": problem.get("grader") if problem.get("taskType") == "grader" else None,
+        "interactor": problem.get("interactor") if problem.get("taskType") == "interactive" else None,
         "statement": problem.get("statement") or {},
         "files": {
             "code": files.get("code")
@@ -599,6 +605,8 @@ def _normalize_groups(raw_groups, test_manifest):
 def _build_problem_v2(task_id, meta, files, tests):
     lang = normalize_language(meta.get("language"))
     ext = "py" if lang == "python" else "cpp"
+    raw_task_type = str(meta.get("taskType") or "standard").strip().lower()
+    task_type = raw_task_type if raw_task_type in ("standard", "grader", "interactive") else "standard"
     test_manifest = []
     for idx, t in enumerate(tests, start=1):
         name = _pad_test_name(idx)
@@ -637,7 +645,7 @@ def _build_problem_v2(task_id, meta, files, tests):
         "tests": group["tests"]
     } for group in groups]
 
-    return {
+    problem = {
         "formatVersion": 2,
         "schemaVersion": 2,
         "id": task_id,
@@ -646,7 +654,7 @@ def _build_problem_v2(task_id, meta, files, tests):
         "language": lang,
         "type": meta.get("type", ""),
         "tags": meta.get("tags") or [],
-        "taskType": meta.get("taskType", "standard"),
+        "taskType": task_type,
         "statement": {
             "language": "ru",
             "tex": "statement/russian.tex",
@@ -666,26 +674,150 @@ def _build_problem_v2(task_id, meta, files, tests):
         "groups": groups,
         "subtasks": subtasks
     }
+    if task_type == "grader":
+        problem["grader"] = {
+            "language": "cpp",
+            "source": "grader/grader.cpp",
+            "header": "grader/grader.h"
+        }
+    if task_type == "interactive":
+        problem["interactor"] = {
+            "language": "cpp",
+            "source": "interactor/interactor.cpp"
+        }
+    return problem
+
+
+def _commit_task_change(task_id, message):
+    _ensure_git_identity()
+    subprocess.run(
+        ["git", "-C", TASKS_REPO_DIR, "add", "-A", f"{task_id}"],
+        check=True,
+        capture_output=True,
+        text=True
+    )
+    diff = subprocess.run(
+        ["git", "-C", TASKS_REPO_DIR, "diff", "--cached", "--quiet"],
+        capture_output=True,
+        text=True
+    )
+    if diff.returncode == 0:
+        return
+    subprocess.run(
+        ["git", "-C", TASKS_REPO_DIR, "commit", "-m", message],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=_git_env()
+    )
+    subprocess.run(
+        ["git", "-C", TASKS_REPO_DIR, "push"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=_git_env()
+    )
+
+
+def _write_task_tree(task_path, problem_v2, files, tests):
+    tests_path = os.path.join(task_path, "tests")
+
+    _write_text(os.path.join(task_path, "problem.json"), json.dumps(problem_v2, ensure_ascii=False, indent=2))
+    statement_text = files.get("statement", "")
+    statement_tex = files.get("statementTex") or statement_text
+    tex_path = os.path.join(task_path, "statement", "russian.tex")
+    html_path = os.path.join(task_path, "statement", "russian.html")
+    _write_text(tex_path, statement_tex)
+    os.makedirs(os.path.join(task_path, "statement", "assets"), exist_ok=True)
+    compile_result = compile_latex_statement(tex_path, html_path)
+    if not compile_result.ok:
+        return compile_result
+
+    if files.get("help"):
+        _write_text(os.path.join(task_path, "statement", "hint.md"), files["help"])
+    if files.get("code"):
+        _write_text(os.path.join(task_path, problem_v2["files"]["code"]), files["code"])
+    if files.get("solution"):
+        _write_text(os.path.join(task_path, problem_v2["files"]["solution"]), files["solution"])
+    if files.get("generator"):
+        _write_text(os.path.join(task_path, problem_v2["files"]["generator"]), files["generator"])
+    if files.get("checker"):
+        _write_text(os.path.join(task_path, "checker", "checker.cpp"), files["checker"])
+    if files.get("validator"):
+        _write_text(os.path.join(task_path, "validator", "validator.cpp"), files["validator"])
+    if files.get("grader"):
+        _write_text(os.path.join(task_path, "grader", "grader.cpp"), files["grader"])
+    if files.get("graderHeader"):
+        _write_text(os.path.join(task_path, "grader", "grader.h"), files["graderHeader"])
+    if files.get("interactor"):
+        _write_text(os.path.join(task_path, "interactor", "interactor.cpp"), files["interactor"])
+    for idx, t in enumerate(tests, start=1):
+        name = _pad_test_name(idx)
+        _write_text(os.path.join(tests_path, name), t.get("input", ""))
+        _write_text(os.path.join(tests_path, f"{name}.a"), t.get("output", ""))
+    return compile_result
+
+
+def _save_task_payload(task_id, meta, files, tests, commit_message):
+    problem_v2 = _build_problem_v2(task_id, meta, files, tests)
+    parent = os.path.abspath(TASKS_REPO_DIR)
+    os.makedirs(parent, exist_ok=True)
+    tmp_path = tempfile.mkdtemp(prefix=f".task_{task_id}_", dir=parent)
+    final_path = task_dir(task_id)
+    backup_path = None
+    try:
+        compile_result = _write_task_tree(tmp_path, problem_v2, files, tests)
+        if not compile_result.ok:
+            shutil.rmtree(tmp_path, ignore_errors=True)
+            return False, {
+                "error": "statement_compile_failed",
+                "details": compile_result.stderr
+            }
+        if os.path.isdir(final_path):
+            backup_path = tempfile.mkdtemp(prefix=f".task_{task_id}_old_", dir=parent)
+            shutil.rmtree(backup_path)
+            os.replace(final_path, backup_path)
+        os.replace(tmp_path, final_path)
+        try:
+            _commit_task_change(task_id, commit_message)
+        except Exception:
+            if os.path.isdir(final_path):
+                shutil.rmtree(final_path, ignore_errors=True)
+            if backup_path and os.path.isdir(backup_path):
+                os.replace(backup_path, final_path)
+            raise
+        if backup_path:
+            shutil.rmtree(backup_path, ignore_errors=True)
+        return True, {"status": "ok", "id": task_id}
+    finally:
+        if os.path.isdir(tmp_path):
+            shutil.rmtree(tmp_path, ignore_errors=True)
+        if backup_path and os.path.isdir(backup_path):
+            shutil.rmtree(backup_path, ignore_errors=True)
 
 
 def _compile_cpp(src_path, out_path):
-    result = subprocess.run(
-        ["g++", "-std=c++17", "-O2", src_path, "-o", out_path],
-        capture_output=True,
-        text=True
+    workdir = os.path.dirname(os.path.abspath(src_path)) or os.getcwd()
+    result = run_in_sandbox(
+        ["g++", "-std=c++17", "-O2", os.path.basename(src_path), "-o", os.path.basename(out_path)],
+        workdir=workdir,
+        language="cpp",
+        timeout=30,
     )
     return result
 
 
 def _compile_python(src_path):
-    return subprocess.run(
-        ["python3", "-m", "py_compile", src_path],
-        capture_output=True,
-        text=True
+    workdir = os.path.dirname(os.path.abspath(src_path)) or os.getcwd()
+    return run_in_sandbox(
+        ["python3", "-m", "py_compile", os.path.basename(src_path)],
+        workdir=workdir,
+        language="python",
+        timeout=30,
     )
 
 
-def _run_with_limits(cmd, input_data, timeout_sec):
+def _run_with_limits(cmd, input_data, timeout_sec, workdir=None, language="cpp"):
     time_cmd = "/usr/bin/time"
     mem_kb = None
     start = time.perf_counter()
@@ -693,12 +825,12 @@ def _run_with_limits(cmd, input_data, timeout_sec):
         try:
             if os.path.exists(time_cmd):
                 mem_file = os.path.join(tmp, "mem.txt")
-                run_res = subprocess.run(
-                    [time_cmd, "-f", "%M", "-o", mem_file, *cmd],
-                    input=input_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout_sec
+                run_res = run_in_sandbox(
+                    cmd,
+                    workdir=workdir or os.getcwd(),
+                    language=language,
+                    input_data=input_data,
+                    timeout=timeout_sec,
                 )
                 try:
                     with open(mem_file, "r") as mf:
@@ -707,17 +839,17 @@ def _run_with_limits(cmd, input_data, timeout_sec):
                     mem_kb = None
             else:
                 before = resource.getrusage(resource.RUSAGE_CHILDREN)
-                run_res = subprocess.run(
+                run_res = run_in_sandbox(
                     cmd,
-                    input=input_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout_sec
+                    workdir=workdir or os.getcwd(),
+                    language=language,
+                    input_data=input_data,
+                    timeout=timeout_sec,
                 )
                 after = resource.getrusage(resource.RUSAGE_CHILDREN)
                 delta = max(0, after.ru_maxrss - before.ru_maxrss)
                 mem_kb = delta or after.ru_maxrss
-        except subprocess.TimeoutExpired:
+        except (subprocess.TimeoutExpired, SandboxError):
             elapsed_ms = int((time.perf_counter() - start) * 1000)
             return {
                 "timeout": True,
@@ -757,7 +889,7 @@ def _run_cpp_single(code, input_data):
                 "details": compile_res.stderr.strip() or "compile_error"
             }
 
-        run_info = _run_with_limits([bin_path], input_data, 5)
+        run_info = _run_with_limits(["./main"], input_data, 5, workdir=tmp, language="cpp")
         if run_info["timeout"]:
             return {
                 "status": "TL",
@@ -798,7 +930,7 @@ def _run_python_single(code, input_data):
                 "details": compile_res.stderr.strip() or "compile_error"
             }
 
-        run_info = _run_with_limits(["python3", src_path], input_data, 5)
+        run_info = _run_with_limits(["python3", "main.py"], input_data, 5, workdir=tmp, language="python")
         if run_info["timeout"]:
             return {
                 "status": "TL",
@@ -1006,6 +1138,8 @@ def tasks_admin_bundle(task_id):
     statement = problem.get("statement") or {}
     files = problem.get("files") or {}
     checker = problem.get("checker") or {}
+    grader = problem.get("grader") or {}
+    interactor = problem.get("interactor") or {}
 
     tests = []
     for item in problem.get("tests") or []:
@@ -1031,6 +1165,9 @@ def tasks_admin_bundle(task_id):
             "generator": _task_text(task_id, files.get("generator")),
             "validator": _task_text(task_id, files.get("validator")),
             "checker": _task_text(task_id, checker.get("path") or files.get("checker")),
+            "grader": _task_text(task_id, grader.get("source")),
+            "graderHeader": _task_text(task_id, grader.get("header")),
+            "interactor": _task_text(task_id, interactor.get("source")),
         },
         "tests": tests
     })
@@ -1081,66 +1218,63 @@ def tasks_create():
     if lang not in SUPPORTED_LANGUAGES:
         return jsonify({"error": "language_not_supported"}), 400
     meta["language"] = lang
-    problem_v2 = _build_problem_v2(task_id, meta, files, tests)
 
-    task_path = task_dir(task_id)
-    if os.path.isdir(task_path):
-        shutil.rmtree(task_path)
-    os.makedirs(task_path, exist_ok=True)
-    tests_path = os.path.join(task_path, "tests")
-
-    # v2 Polygon-compatible layout
-    _write_text(os.path.join(task_path, "problem.json"), json.dumps(problem_v2, ensure_ascii=False, indent=2))
-    statement_text = files.get("statement", "")
-    statement_tex = files.get("statementTex") or statement_text
-    statement_html = files.get("statementHtml") or _statement_to_html(statement_text)
-    _write_text(os.path.join(task_path, "statement", "russian.tex"), statement_tex)
-    _write_text(os.path.join(task_path, "statement", "russian.html"), statement_html)
-    os.makedirs(os.path.join(task_path, "statement", "assets"), exist_ok=True)
-    if files.get("help"):
-        _write_text(os.path.join(task_path, "statement", "hint.md"), files["help"])
-    if files.get("code"):
-        _write_text(os.path.join(task_path, problem_v2["files"]["code"]), files["code"])
-    if files.get("solution"):
-        _write_text(os.path.join(task_path, problem_v2["files"]["solution"]), files["solution"])
-    if files.get("generator"):
-        _write_text(os.path.join(task_path, problem_v2["files"]["generator"]), files["generator"])
-    if files.get("checker"):
-        _write_text(os.path.join(task_path, "checker", "checker.cpp"), files["checker"])
-    if files.get("validator"):
-        _write_text(os.path.join(task_path, "validator", "validator.cpp"), files["validator"])
-    for idx, t in enumerate(tests, start=1):
-        name = _pad_test_name(idx)
-        _write_text(os.path.join(tests_path, name), t.get("input", ""))
-        _write_text(os.path.join(tests_path, f"{name}.a"), t.get("output", ""))
-
-    _ensure_git_identity()
     try:
-        subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "add", f"{task_id}"],
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "commit", "-m", f"Add task {task_id}"],
-            check=True,
-            capture_output=True,
-            text=True,
-            env=_git_env()
-        )
-        subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "push"],
-            check=True,
-            capture_output=True,
-            text=True,
-            env=_git_env()
-        )
+        ok, payload = _save_task_payload(task_id, meta, files, tests, f"Add task {task_id}")
     except Exception as e:
         print("Task create git failed:", e)
         return jsonify({"error": "git_failed"}), 500
+    if not ok:
+        return jsonify(payload), 400
+    return jsonify(payload)
 
-    return jsonify({"status": "ok", "id": task_id})
+
+def _safe_extract_zip(archive, dest_dir):
+    with zipfile.ZipFile(archive) as zf:
+        dest_abs = os.path.abspath(dest_dir)
+        for info in zf.infolist():
+            target = os.path.abspath(os.path.join(dest_abs, info.filename))
+            if target != dest_abs and not target.startswith(dest_abs + os.sep):
+                raise ValueError("unsafe_zip_path")
+        zf.extractall(dest_abs)
+
+
+@app.route("/tasks/import-polygon", methods=["POST"])
+def tasks_import_polygon():
+    if not _is_admin_request():
+        return jsonify({"error": "admin_required"}), 403
+    if not sync_tasks_repo():
+        return jsonify({"error": "tasks_sync_failed"}), 500
+
+    upload = request.files.get("archive")
+    if not upload:
+        return jsonify({"error": "archive_required"}), 400
+    task_id = _next_task_id()
+
+    with tempfile.TemporaryDirectory(prefix="polygon_import_") as tmp:
+        archive_path = os.path.join(tmp, "polygon.zip")
+        extract_path = os.path.join(tmp, "extract")
+        os.makedirs(extract_path, exist_ok=True)
+        upload.save(archive_path)
+        try:
+            _safe_extract_zip(archive_path, extract_path)
+            payload = parse_polygon_package(extract_path, task_id)
+            ok, result = _save_task_payload(
+                task_id,
+                payload["meta"],
+                payload["files"],
+                payload["tests"],
+                f"Import Polygon task {task_id}"
+            )
+        except (PolygonImportError, zipfile.BadZipFile, ValueError) as e:
+            return jsonify({"error": "polygon_import_failed", "details": str(e)}), 400
+        except Exception as e:
+            print("Polygon import git failed:", e)
+            return jsonify({"error": "git_failed"}), 500
+
+    if not ok:
+        return jsonify(result), 400
+    return jsonify(result)
 
 
 @app.route("/tasks/delete", methods=["POST"])
@@ -1263,20 +1397,20 @@ def tasks_generate_tests():
         for i in range(1, count + 1):
             try:
                 if lang == "python":
-                    gen_run = subprocess.run(
-                        ["python3", gen_src, str(i)],
-                        capture_output=True,
-                        text=True,
-                        timeout=5
+                    gen_run = run_in_sandbox(
+                        ["python3", "generator.py", str(i)],
+                        workdir=tmp,
+                        language="python",
+                        timeout=5,
                     )
                 else:
-                    gen_run = subprocess.run(
-                        [gen_bin, str(i)],
-                        capture_output=True,
-                        text=True,
-                        timeout=5
+                    gen_run = run_in_sandbox(
+                        ["./gen", str(i)],
+                        workdir=tmp,
+                        language="cpp",
+                        timeout=5,
                     )
-            except subprocess.TimeoutExpired:
+            except (subprocess.TimeoutExpired, SandboxError):
                 return jsonify({
                     "error": "generator_timeout",
                     "index": i
@@ -1284,7 +1418,7 @@ def tasks_generate_tests():
 
             if gen_run.returncode != 0:
                 return jsonify({
-                    "error": "generator_runtime_failed",
+                    "error": "generator_timeout" if getattr(gen_run, "timeout", False) else "generator_runtime_failed",
                     "details": gen_run.stderr,
                     "index": i
                 }), 400
@@ -1292,22 +1426,22 @@ def tasks_generate_tests():
             inp = gen_run.stdout
             try:
                 if lang == "python":
-                    sol_run = subprocess.run(
-                        ["python3", sol_src],
-                        input=inp,
-                        capture_output=True,
-                        text=True,
-                        timeout=5
+                    sol_run = run_in_sandbox(
+                        ["python3", "solution.py"],
+                        workdir=tmp,
+                        language="python",
+                        input_data=inp,
+                        timeout=5,
                     )
                 else:
-                    sol_run = subprocess.run(
-                        [sol_bin],
-                        input=inp,
-                        capture_output=True,
-                        text=True,
-                        timeout=5
+                    sol_run = run_in_sandbox(
+                        ["./sol"],
+                        workdir=tmp,
+                        language="cpp",
+                        input_data=inp,
+                        timeout=5,
                     )
-            except subprocess.TimeoutExpired:
+            except (subprocess.TimeoutExpired, SandboxError):
                 return jsonify({
                     "error": "solution_timeout",
                     "index": i
@@ -1315,7 +1449,7 @@ def tasks_generate_tests():
 
             if sol_run.returncode != 0:
                 return jsonify({
-                    "error": "solution_runtime_failed",
+                    "error": "solution_timeout" if getattr(sol_run, "timeout", False) else "solution_runtime_failed",
                     "details": sol_run.stderr,
                     "index": i
                 }), 400

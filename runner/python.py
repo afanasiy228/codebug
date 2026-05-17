@@ -1,4 +1,6 @@
-import subprocess
+import os
+
+from sandbox import run_in_sandbox
 
 
 class PythonRunner:
@@ -6,10 +8,11 @@ class PythonRunner:
         self.source = source
 
     def compile(self):
-        return subprocess.run(
+        return run_in_sandbox(
             ["python3", "-m", "py_compile", self.source],
-            capture_output=True,
-            text=True
+            workdir=os.getcwd(),
+            language="python",
+            timeout=30,
         )
 
     def command(self):
