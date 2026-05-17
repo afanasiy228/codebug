@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeBug</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+         :root {
+            --bg: #080a0b;
+            --bg2: #0c1012;
+            --text: #5f6e79;
+            --text-hover: #8c9eaa;
+            --green: rgba(95, 178, 127, .18);
+            --red: rgba(173, 84, 84, .16);
+            --mono: "JetBrains Mono", monospace;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            position: relative;
+            font-family: var(--mono);
+        }
+        
+        .fog {
+            position: absolute;
+            inset: -15%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .layer {
+            position: absolute;
+            width: 180vw;
+            left: -40vw;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .layer-1 {
+            top: -10vh;
+            transform: rotate(-1deg);
+            opacity: .24;
+            filter: blur(.6px);
+        }
+        
+        .layer-2 {
+            top: 22vh;
+            transform: rotate(.5deg);
+            opacity: .18;
+            filter: blur(.9px);
+        }
+        
+        .layer-3 {
+            top: 54vh;
+            transform: rotate(-.6deg);
+            opacity: .22;
+            filter: blur(.7px);
+        }
+        
+        .row {
+            display: grid;
+            grid-template-columns: 52px 1fr;
+            align-items: center;
+            min-height: 18px;
+            padding: 1px 0;
+            width: 180vw;
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--text);
+            opacity: .14;
+            transition: opacity .5s ease, color .5s ease, background-color .7s ease, filter .5s ease;
+        }
+        
+        .row:nth-child(2n) {
+            opacity: .18;
+        }
+        
+        .row .ln {
+            text-align: right;
+            padding-right: 10px;
+            color: #42505a;
+            user-select: none;
+        }
+        
+        .row .txt {
+            white-space: pre;
+        }
+        
+        .row.hover {
+            opacity: .28;
+            color: #8a98a3;
+            filter: blur(.08px);
+        }
+        
+        .row.green {
+            opacity: .92;
+            color: #d7ffe6;
+            background: rgba(52, 145, 91, .28);
+            text-shadow: 0 0 10px rgba(109, 220, 154, .35);
+        }
+        
+        .row.red {
+            opacity: .92;
+            color: #ffd0d0;
+            background: rgba(165, 62, 62, .28);
+            text-shadow: 0 0 10px rgba(255, 120, 120, .32);
+        }
+        
+        .row.fade {
+            opacity: .03;
+        }
+        
+        .defect {
+            display: inline-block;
+            padding: 0 1px;
+            border-radius: 2px;
+            transform: translateY(-1px);
+        }
+        
+        .defect-green {
+            color: #d7ffe5;
+            background: rgba(52, 145, 91, .55);
+            box-shadow: 0 0 8px rgba(95, 255, 155, .45), 0 0 18px rgba(95, 255, 155, .18);
+        }
+        
+        .defect-red {
+            color: #ffe0e0;
+            background: rgba(180, 62, 62, .55);
+            box-shadow: 0 0 8px rgba(255, 120, 120, .4), 0 0 18px rgba(255, 120, 120, .18);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="ambient-blob"></div>
+    <div class="fog" id="fog"></div>
+
+    <script>
+        const fog = document.getElementById("fog");
+
+        const snippets = [
+            "for (int i = 0; i <= n; ++i) pref[i] = pref[i - 1] + a[i];",
+            "while (l <= r) { int mid = l + (r - l) / 2; }",
+            "if (dist[to] > dist[v] + w) dist[to] = dist[v] + w;",
+            "dp[i][mask] = min(dp[i][mask], dp[i - 1][mask]);",
+            "while (ptr < n && sum + a[ptr] <= limit) sum += a[ptr++];",
+            "if (balance = 0) ok = true;",
+            "vector<long long> pref(n + 1, 0LL);",
+            "if (used <= budget) answer = max(answer, cur);",
+            "for (auto [to, w] : graph[v]) relax(to, w);",
+            "best = min(best, abs(pref[r] - pref[l - 1]));",
+            "if (left <= right) mid = left + (right - left) / 2;",
+            "while (pos <= n && a[pos] <= x) ++pos;",
+            "if (a[mid] = x) return mid;",
+            "for (int bit = 0; bit < 20; ++bit) mask ^= (1 << bit);",
+            "if (state[v] == 1) cycle = true;",
+            "sum += max(0LL, r - l + 1);",
+            "if (node == parent) continue;",
+            "auto it = lower_bound(a.begin(), a.end(), x);",
+            "if (ok && cnt == need) return true;",
+            "answer += a[i] * b[i];"
+        ];
+
+        const rows = [];
+        let lineNo = 100;
+
+        const layers = [{
+            className: "layer-1",
+            rotate: -1
+        }, {
+            className: "layer-2",
+            rotate: .5
+        }, {
+            className: "layer-3",
+            rotate: -.4
+        }];
+
+        for (const layerCfg of layers) {
+
+            const layer = document.createElement("div");
+
+            layer.className = `layer ${layerCfg.className}`;
+
+            for (let i = 0; i < 60; i++) {
+
+                const row = document.createElement("div");
+                row.className = "row";
+
+                const ln = document.createElement("span");
+                ln.className = "ln";
+                ln.textContent = String(lineNo++);
+
+                const txt = document.createElement("span");
+                txt.className = "txt";
+
+                let line = "";
+
+                for (let j = 0; j < 5; j++) {
+
+                    line += snippets[
+                        (i + j + rows.length) % snippets.length
+                    ] + "   ";
+                }
+
+                txt.textContent = line;
+
+                row.appendChild(ln);
+                row.appendChild(txt);
+
+                layer.appendChild(row);
+
+                rows.push(row);
+            }
+
+            fog.appendChild(layer);
+        }
+
+        function mutateLine(text) {
+
+            const swaps = [
+                ["<=", "<"],
+                ["==", "="],
+                ["+ 1", "- 1"],
+                ["r]", "r - 1]"]
+            ];
+
+            for (const [from, to] of swaps) {
+
+                if (text.includes(from)) {
+                    return text.replace(from, to);
+                }
+            }
+
+            return text;
+        }
+
+        document.addEventListener("mousemove", (e) => {
+
+            rows.forEach(row => {
+
+                const rect = row.getBoundingClientRect();
+
+                const dx = Math.abs(
+                    e.clientX - (rect.left + rect.width / 2)
+                );
+
+                const dy = Math.abs(
+                    e.clientY - (rect.top + rect.height / 2)
+                );
+
+                if (dx < 700 && dy < 46) {
+                    row.classList.add("hover");
+                } else {
+                    row.classList.remove("hover");
+                }
+            });
+        });
+
+        function pulseRandomRow() {
+
+            const row =
+                rows[Math.floor(Math.random() * rows.length)];
+
+            const txt = row.querySelector(".txt");
+
+            const original = txt.textContent;
+
+            const green = Math.random() > .5;
+
+            const index = Math.floor(
+                Math.random() * original.length
+            );
+
+            const char = original[index] || "=";
+
+            const wrapped = `
+                ${original.slice(0, index)}<span class="defect ${green ? "defect-green" : "defect-red"}">${char}</span>${original.slice(index + 1)}
+            `;
+
+            txt.innerHTML = wrapped;
+
+            row.classList.add(
+                green ? "green" : "red"
+            );
+
+            setTimeout(() => {
+
+                row.classList.remove(
+                    "green",
+                    "red"
+                );
+
+                txt.textContent = original;
+
+            }, 1200);
+
+            setTimeout(
+                pulseRandomRow,
+                4000 + Math.random() * 5000
+            );
+        }
+
+        function driftRandomRow() {
+
+            const row =
+                rows[Math.floor(Math.random() * rows.length)];
+
+            const txt = row.querySelector(".txt");
+
+            const original = txt.textContent;
+
+            const mode =
+                Math.floor(Math.random() * 4);
+
+            if (mode === 0) {
+
+                txt.textContent += " // check";
+
+            } else if (mode === 1) {
+
+                txt.textContent =
+                    original.slice(
+                        0,
+                        original.length - 10
+                    );
+
+            } else if (mode === 2) {
+
+                txt.textContent =
+                    mutateLine(original);
+
+            } else {
+
+                row.classList.add("fade");
+            }
+
+            setTimeout(() => {
+
+                row.classList.remove("fade");
+
+                txt.textContent = original;
+
+            }, 1800);
+
+            setTimeout(
+                driftRandomRow,
+                2500 + Math.random() * 4500
+            );
+        }
+
+        pulseRandomRow();
+        driftRandomRow();
+    </script>
+
+    <div class="brand">CodeBug</div>
+
+    <style>
+        .brand {
+            position: absolute;
+            top: 64px;
+            right: 72px;
+            z-index: 20;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(22px, 2.4vw, 36px);
+            font-weight: 700;
+            letter-spacing: -.05em;
+            color: rgba(220, 235, 226, .82);
+            text-shadow: 0 0 18px rgba(90, 180, 130, .06);
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        .ambient-blob {
+            position: absolute;
+            width: 56vw;
+            height: 56vw;
+            top: -22vw;
+            right: -18vw;
+            border-radius: 50%;
+            background: radial-gradient( circle, rgba(70, 140, 98, .14) 0%, rgba(70, 140, 98, .08) 28%, rgba(70, 140, 98, .03) 52%, transparent 74%);
+            filter: blur(90px);
+            opacity: .9;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</body>
+
+</html>

@@ -7,7 +7,7 @@
     <title>CodeBug</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
+         :root {
             --bg: #07090b;
             --bg2: #0a0f12;
             --line: #1a232a;
@@ -15,22 +15,24 @@
             --muted: #8d9aa7;
             --accent: #2e7755;
             --accent-border: rgba(71, 144, 106, 0.52);
-            --code: rgba(120, 140, 155, 0.32);
-            --code-hover: rgba(166, 185, 201, 0.56);
-            --flash-red: rgba(170, 84, 84, 0.28);
-            --flash-red-ink: rgba(236, 195, 195, 0.8);
+            --code: rgba(148, 168, 184, 0.52);
+            --code-hover: rgba(205, 221, 234, 0.78);
+            --flash-red: rgba(178, 76, 76, 0.085);
+            --flash-red-ink: rgba(255, 219, 219, 0.46);
+            --flash-green: rgba(62, 141, 98, 0.085);
+            --flash-green-ink: rgba(219, 255, 233, 0.46);
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
-
+        
         * {
             box-sizing: border-box;
         }
-
+        
         html,
         body {
             height: 100%;
         }
-
+        
         body {
             margin: 0;
             font-family: Inter, sans-serif;
@@ -41,13 +43,13 @@
             scrollbar-width: thin;
             scrollbar-color: #27323a #0a0d10;
         }
-
+        
         .screen {
             min-height: 100vh;
             scroll-snap-align: start;
             scroll-snap-stop: always;
         }
-
+        
         .top-nav {
             position: fixed;
             inset: 0 0 auto 0;
@@ -60,25 +62,25 @@
             background: rgba(7, 10, 12, 0.34);
             backdrop-filter: blur(4px);
         }
-
+        
         .top-nav-inner {
             width: min(1180px, 96vw);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
+        
         .top-nav .logo {
             font-size: 14px;
             font-weight: 700;
             color: #d2dce5;
         }
-
+        
         .top-nav nav {
             display: flex;
             gap: 14px;
         }
-
+        
         .top-nav nav a {
             color: #91a0ad;
             text-decoration: none;
@@ -86,11 +88,11 @@
             font-weight: 600;
             white-space: nowrap;
         }
-
+        
         .top-nav nav a:hover {
             color: #ccd7e1;
         }
-
+        
         .hero {
             position: relative;
             overflow: hidden;
@@ -98,20 +100,18 @@
             align-items: center;
             padding: 24px;
         }
-
+        
         .hero::before {
             content: "";
             position: absolute;
             inset: 0;
-            background:
-                radial-gradient(920px 480px at 74% 18%, rgba(40, 94, 69, 0.14), transparent 72%),
-                radial-gradient(720px 420px at 14% 80%, rgba(23, 52, 41, 0.12), transparent 70%);
+            background: radial-gradient(920px 480px at 74% 18%, rgba(40, 94, 69, 0.14), transparent 72%), radial-gradient(720px 420px at 14% 80%, rgba(23, 52, 41, 0.12), transparent 70%);
             pointer-events: none;
         }
-
+        
         .code-fog {
             position: absolute;
-            inset: -15%;
+            inset: -12% -20% -12% -4%;
             z-index: 1;
             overflow: hidden;
             pointer-events: none;
@@ -119,123 +119,115 @@
 
         .layer {
             position: absolute;
-            width: 180vw;
-            left: -40vw;
+            width: 165vw;
+            left: -8vw;
             display: flex;
             flex-direction: column;
             gap: 0;
             will-change: transform, opacity;
+            top: -6vh;
+            transform: rotate(-0.3deg);
+            opacity: .34;
+            filter: blur(.55px);
         }
-
-        .layer-1 {
-            top: -10vh;
-            transform: rotate(-1deg);
-            opacity: .22;
-            filter: blur(1px);
-        }
-
-        .layer-2 {
-            top: 22vh;
-            transform: rotate(.5deg);
-            opacity: .16;
-            filter: blur(1.6px);
-        }
-
-        .layer-3 {
-            top: 54vh;
-            transform: rotate(-.6deg);
-            opacity: .2;
-            filter: blur(1.1px);
-        }
-
+        
         .code-row {
             display: grid;
             grid-template-columns: 52px 1fr;
             align-items: center;
             min-height: 18px;
             padding: 1px 0;
-            width: 180vw;
+            width: 165vw;
             font-family: var(--mono);
-            font-size: 12px;
+            font-size: 13px;
             line-height: 1.45;
-            color: rgba(116, 134, 148, .76);
-            opacity: .14;
+            color: var(--code);
+            opacity: .26;
             transition: opacity .3s ease, color .3s ease, background-color .25s linear, filter .3s ease;
         }
-
+        
         .code-row:nth-child(2n) {
-            opacity: .18;
+            opacity: .3;
         }
-
+        
         .code-row .ln {
             text-align: right;
             padding-right: 10px;
             color: #43515c;
             user-select: none;
         }
-
+        
         .code-row .txt {
             white-space: pre;
             padding-right: 18px;
         }
-
+        
         .code-row.wide .txt {
-            font-size: 13px;
+            font-size: 14px;
         }
-
+        
         .code-row.hover {
-            opacity: .34;
-            color: var(--code-hover);
-            filter: blur(.2px);
+            opacity: .44;
+            color: rgba(189, 204, 216, 0.62);
+            filter: blur(0);
         }
 
         .code-row.red {
-            opacity: .62;
-            color: #e0b7b7;
+            opacity: .42;
+            color: var(--flash-red-ink);
             background: var(--flash-red);
+            box-shadow: inset 0 0 0 1px rgba(217, 118, 118, 0.11);
         }
-
+        
         .code-row.green {
-            opacity: .62;
-            color: #b7d8c5;
-            background: rgba(95, 178, 127, .18);
+            opacity: .42;
+            color: var(--flash-green-ink);
+            background: var(--flash-green);
+            box-shadow: inset 0 0 0 1px rgba(117, 201, 150, 0.11);
         }
-
+        
         .code-row.fade {
             opacity: .03;
         }
-
+        
         .hero-content {
             position: relative;
             z-index: 2;
-            width: min(1020px, 94vw);
-            display: grid;
-            justify-items: end;
-            gap: 10px;
+            width: 100%;
+            min-height: calc(100vh - 52px);
         }
-
+        
         .hero-right {
-            width: min(420px, 42vw);
+            position: absolute;
+            left: clamp(24px, 7vw, 120px);
+            top: 50%;
+            transform: translateY(-50%);
+            width: min(420px, 36vw);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
             text-align: left;
-            justify-self: end;
+            z-index: 3;
         }
-
+        
         .brand {
             margin: 0;
             font-size: clamp(32px, 4.9vw, 52px);
             line-height: 1;
             font-weight: 700;
-            color: rgba(120, 170, 145, 0.68);
+            color: rgba(159, 212, 183, 0.92);
             letter-spacing: .2px;
+            text-shadow: 0 0 20px rgba(54, 111, 81, 0.24);
         }
-
+        
         .subtitle {
             margin: 10px 0 0;
-            color: #9aa7b3;
+            color: #c3d0dc;
             font-size: clamp(16px, 2vw, 23px);
             line-height: 1.26;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
         }
-
+        
         .cta {
             margin-top: 16px;
             display: inline-flex;
@@ -251,26 +243,26 @@
             font-weight: 600;
             transition: border-color .14s linear, color .14s linear, background-color .14s linear;
         }
-
+        
         .cta:hover {
             border-color: rgba(84, 163, 122, 0.64);
             color: #d0e0d7;
             background: rgba(27, 57, 43, 0.5);
         }
-
+        
         .news {
             padding: 84px 18px 34px;
             display: grid;
             align-content: center;
         }
-
+        
         .news-shell {
             width: min(780px, 100%);
             margin: 0 auto;
             display: grid;
             gap: 10px;
         }
-
+        
         .news-head {
             display: flex;
             align-items: center;
@@ -279,14 +271,14 @@
             padding-bottom: 8px;
             border-bottom: 1px solid var(--line);
         }
-
+        
         .news-head h2 {
             margin: 0;
             font-size: 26px;
             font-weight: 700;
             color: #d6dfe8;
         }
-
+        
         .news-head a {
             border: 1px solid #2a3640;
             border-radius: 8px;
@@ -296,29 +288,29 @@
             text-decoration: none;
             padding: 5px 9px;
         }
-
+        
         .news-list {
             display: grid;
             gap: 0;
         }
-
+        
         .news-item {
             display: grid;
             gap: 4px;
             padding: 10px 0;
             border-bottom: 1px solid #19242b;
         }
-
+        
         .news-item:last-child {
             border-bottom: none;
         }
-
+        
         .news-meta {
             font-family: var(--mono);
             color: #7f8d9b;
             font-size: 11px;
         }
-
+        
         .news-title {
             margin: 0;
             font-size: 16px;
@@ -326,14 +318,14 @@
             line-height: 1.3;
             color: #d2dce5;
         }
-
+        
         .news-text {
             margin: 0;
             color: var(--muted);
             font-size: 14px;
             line-height: 1.35;
         }
-
+        
         .news-open {
             margin-top: 2px;
             width: fit-content;
@@ -343,37 +335,36 @@
             border-bottom: 1px solid #2b3741;
             padding-bottom: 1px;
         }
-
+        
         .news-empty {
             margin-top: 8px;
             color: var(--muted);
             font-size: 14px;
         }
-
+        
         @media (max-width: 760px) {
             .top-nav {
                 height: 50px;
             }
-
             .top-nav-inner {
                 width: calc(100vw - 22px);
             }
-
             .hero-content {
-                justify-items: center;
+                min-height: calc(100vh - 50px);
             }
-
             .hero-right {
+                position: static;
+                transform: none;
                 width: min(520px, 92vw);
+                display: block;
                 text-align: center;
-                justify-self: center;
+                margin: 0 auto;
+                padding-top: 12vh;
             }
-
             .layer,
             .code-row {
-                width: 220vw;
+                width: 205vw;
             }
-
             .subtitle {
                 font-size: 21px;
             }
@@ -395,7 +386,7 @@
         <div class="hero-content">
             <div class="hero-right">
                 <h1 class="brand">CodeBug</h1>
-                <p class="subtitle">Где-то здесь ошибка.</p>
+                <p class="subtitle">Платформа для тренировки дебага.</p>
                 <a class="cta" href="train.html">К тренировке</a>
             </div>
         </div>
@@ -534,35 +525,29 @@
             if (!source.trim()) {
                 source = `#include <bits/stdc++.h>
 using namespace std;
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    int n; cin >> n;
-    vector<long long> a(n);
-    for (int i = 0; i < n; ++i) cin >> a[i];
-    long long ans = 0;
-    for (int i = 0; i <= n; ++i) ans += a[i];
-    cout << ans << "\\n";
-}`;
+using ll = long long;
+static inline ll norm_mod(ll x, ll mod) { ll r = x % mod; return r < 0 ? r + mod : r; }
+static inline ll pow_mod(ll a, ll e, ll mod) { ll res = 1 % mod, base = norm_mod(a, mod); while (e > 0) { if (e & 1) res = (ll)((__int128)res * base % mod); base = (ll)((__int128)base * base % mod); e >>= 1; } return res; }
+vector<int> prefix_function(const string& s) { vector<int> pi((int)s.size(), 0); for (int i = 1; i < (int)s.size(); ++i) { int j = pi[i - 1]; while (j > 0 && s[i] != s[j]) j = pi[j - 1]; if (s[i] == s[j]) ++j; pi[i] = j; } return pi; }
+vector<int> z_function(const string& s) { vector<int> z((int)s.size(), 0); for (int i = 1, l = 0, r = 0; i < (int)s.size(); ++i) { if (i <= r) z[i] = min(r - i + 1, z[i - l]); while (i + z[i] < (int)s.size() && s[z[i]] == s[i + z[i]]) ++z[i]; if (i + z[i] - 1 > r) l = i, r = i + z[i] - 1; } return z; }
+int main() { ios::sync_with_stdio(false); cin.tie(nullptr); int n = 0, q = 0; cin >> n >> q; vector<ll> a(n, 0); for (int i = 0; i < n; ++i) cin >> a[i]; vector<ll> pref(n + 1, 0); for (int i = 0; i < n; ++i) pref[i + 1] = pref[i] + a[i]; ll checksum = 0;
+while (q--) { int type = 0; cin >> type; if (type == 1) { int idx = 1; ll x = 0; cin >> idx >> x; checksum ^= (x + idx + pow_mod(x + 7, 3, 1000000007LL)); a[idx - 1] = x; } else if (type == 2) { int l = 1, r = n; cin >> l >> r; cout << pref[r] - pref[l - 1] + (checksum & 7) << "\\n"; } else { string s; cin >> s; auto pi = prefix_function(s); cout << (pi.empty() ? 0 : pi.back()) + (checksum % 11) << "\\n"; } }
+return 0; }`;
             }
 
             const baseLines = source.split(/\r?\n/).map(s => s.trimEnd()).filter(Boolean);
             fog.innerHTML = "";
             const layers = [{
-                className: "layer-1"
-            }, {
-                className: "layer-2"
-            }, {
-                className: "layer-3"
+                className: "layer"
             }];
 
             const rows = [];
             let lineNo = 100;
             for (const layerCfg of layers) {
                 const block = document.createElement("div");
-                block.className = `layer ${layerCfg.className}`;
+                block.className = layerCfg.className;
 
-                for (let i = 0; i < 60; i++) {
+                for (let i = 0; i < 132; i++) {
                     const row = document.createElement("div");
                     row.className = "code-row";
                     const ln = document.createElement("span");
@@ -570,35 +555,43 @@ int main() {
                     ln.textContent = String(lineNo++);
                     const txt = document.createElement("span");
                     txt.className = "txt";
+
                     const line = baseLines[(i + rows.length) % baseLines.length] || " ";
                     txt.textContent = line;
-                    if (line.length > 90 || i % 13 === 0) row.classList.add("wide");
+
+                    if (line.length > 140 || i % 11 === 0) {
+                        row.classList.add("wide");
+                    }
+
                     row.appendChild(ln);
                     row.appendChild(txt);
                     block.appendChild(row);
-                    rows.push(row);
+                    rows.push({
+                        row,
+                        txt
+                    });
                 }
                 fog.appendChild(block);
             }
 
-            const baseText = rows.map(r => r.querySelector(".txt").textContent);
+            const baseText = rows.map(r => r.txt.textContent);
             let pulseTimer = null;
             let driftTimer = null;
 
             function setHoverByPointer(clientX, clientY) {
                 const heroRect = hero.getBoundingClientRect();
                 if (clientY < heroRect.top || clientY > heroRect.bottom) {
-                    rows.forEach(row => row.classList.remove("hover"));
+                    rows.forEach((item) => item.row.classList.remove("hover"));
                     return;
                 }
-                rows.forEach((row) => {
-                    const r = row.getBoundingClientRect();
+                rows.forEach((item) => {
+                    const r = item.row.getBoundingClientRect();
                     const cx = r.left + r.width / 2;
                     const cy = r.top + r.height / 2;
                     const dx = Math.abs(clientX - cx);
                     const dy = Math.abs(clientY - cy);
-                    if (dx < 760 && dy < 52) row.classList.add("hover");
-                    else row.classList.remove("hover");
+                    if (dx < 760 && dy < 56) item.row.classList.add("hover");
+                    else item.row.classList.remove("hover");
                 });
             }
 
@@ -625,17 +618,20 @@ int main() {
             function runPulse() {
                 const idx = Math.floor(Math.random() * rows.length);
                 const row = rows[idx];
-                const txt = row.querySelector(".txt");
+                const txt = row.txt;
                 const original = baseText[idx];
                 const green = Math.random() > 0.55;
 
-                row.classList.remove("red", "green");
-                row.classList.add(green ? "green" : "red");
-                if (Math.random() > 0.55) txt.textContent = mutateLine(original);
+                row.row.classList.remove("red", "green");
+                row.row.classList.add(green ? "green" : "red");
+                if (Math.random() > 0.55) {
+                    const next = mutateLine(original);
+                    txt.textContent = next;
+                }
 
                 if (pulseTimer) clearTimeout(pulseTimer);
                 pulseTimer = setTimeout(() => {
-                    row.classList.remove("red", "green");
+                    row.row.classList.remove("red", "green");
                     txt.textContent = original;
                 }, 1000);
             }
@@ -643,23 +639,25 @@ int main() {
             function runDrift() {
                 const idx = Math.floor(Math.random() * rows.length);
                 const row = rows[idx];
-                const txt = row.querySelector(".txt");
+                const txt = row.txt;
                 const original = baseText[idx];
                 const mode = Math.floor(Math.random() * 4);
+                let nextText = original;
 
                 if (mode === 0) {
-                    txt.textContent = original + " // check";
+                    nextText = original + " // check";
                 } else if (mode === 1) {
-                    txt.textContent = original.slice(0, Math.max(0, original.length - 12));
+                    nextText = original.slice(0, Math.max(0, original.length - 12));
                 } else if (mode === 2) {
-                    txt.textContent = mutateLine(original);
+                    nextText = mutateLine(original);
                 } else {
-                    row.classList.add("fade");
+                    row.row.classList.add("fade");
                 }
+                txt.textContent = nextText;
 
                 if (driftTimer) clearTimeout(driftTimer);
                 driftTimer = setTimeout(() => {
-                    row.classList.remove("fade");
+                    row.row.classList.remove("fade");
                     txt.textContent = original;
                 }, 1800);
             }
@@ -683,7 +681,7 @@ int main() {
             document.addEventListener("mousemove", (e) => setHoverByPointer(e.clientX, e.clientY), {
                 passive: true
             });
-            document.addEventListener("mouseleave", () => rows.forEach(row => row.classList.remove("hover")));
+            document.addEventListener("mouseleave", () => rows.forEach((item) => item.row.classList.remove("hover")));
 
             schedulePulse();
             scheduleDrift();
@@ -698,3 +696,4 @@ int main() {
 </body>
 
 </html>
+1

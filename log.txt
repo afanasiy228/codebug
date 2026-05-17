@@ -1,7 +1,5 @@
 Task 0
-Test 1: OK
-Test 2: OK
-Test 3: OK
-Test 4: OK
-Test 5: OK
-Final verdict: OK
+Test 1: WA
+Final verdict: WA
+found
+Final verdict: CE
