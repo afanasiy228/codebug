@@ -1,7 +1,21 @@
 /* ============================
    FIREBASE INIT
 ============================ */
-const db = firebase.database();
+const db = (() => {
+    try {
+        if (window.db) return window.db;
+        if (window.firebase && window.firebase.apps && window.firebase.apps.length) {
+            return window.firebase.database();
+        }
+    } catch (err) {
+        console.warn("Firebase DB init failed", err);
+    }
+    return null;
+})();
+
+function getDb() {
+    return window.db || db || null;
+}
 
 
 /* ============================
@@ -205,8 +219,10 @@ function bindMobileNav(nav) {
 async function checkAdminAccess() {
     const user = getUser();
     if (!user) return false;
+    const dbRef = getDb();
+    if (!dbRef) return false;
     try {
-        const snap = await db.ref("admins/" + user).get();
+        const snap = await dbRef.ref("admins/" + user).get();
         return snap.exists();
     } catch (err) {
         console.warn("Admin check failed", err);
@@ -931,7 +947,7 @@ window.logout = logout;
 
 window.getUser = getUser;
 window.getUid = getUid;
-window.db = db;
+if (!window.db && db) window.db = db;
 window.uploadAvatarBase64 = uploadAvatarBase64;
 window.saveAvatar = saveAvatar;
 window.startPresence = startPresence;

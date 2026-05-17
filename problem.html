@@ -910,11 +910,22 @@
                 return;
             }
 
+            const dbRef = window.db || null;
+            if (!dbRef) {
+                tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Firebase временно недоступен</td></tr>";
+                return;
+            }
+
             tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Загрузка…</td></tr>";
 
-            const snap = await firebase.database()
-                .ref("submissions/global")
-                .get();
+            let snap;
+            try {
+                snap = await dbRef.ref("submissions/global").get();
+            } catch (err) {
+                console.warn("⚠ Не удалось загрузить посылки:", err);
+                tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Не удалось загрузить посылки</td></tr>";
+                return;
+            }
 
             if (!snap.exists()) {
                 tbody.innerHTML = "<tr><td colspan='3'>Пока нет посылок…</td></tr>";
@@ -973,7 +984,12 @@
                 return;
             }
 
-            const ref = firebase.database().ref("users/" + user + "/stats");
+            const dbRef = window.db || null;
+            if (!dbRef) {
+                console.warn("⚠ submitOK skipped: Firebase DB недоступна");
+                return;
+            }
+            const ref = dbRef.ref("users/" + user + "/stats");
 
             let snap;
             try {
@@ -1219,8 +1235,10 @@
         }
 
         async function loadHiddenMap() {
+            const dbRef = window.db || null;
+            if (!dbRef) return {};
             try {
-                const snap = await db.ref("tasksHidden").get();
+                const snap = await dbRef.ref("tasksHidden").get();
                 return snap.exists() ? snap.val() : {};
             } catch (err) {
                 console.warn("[problem] hidden map load failed", err);
