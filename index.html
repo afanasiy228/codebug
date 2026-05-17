@@ -326,16 +326,6 @@
             line-height: 1.35;
         }
         
-        .news-open {
-            margin-top: 2px;
-            width: fit-content;
-            color: #b7c4d0;
-            text-decoration: none;
-            font-size: 12px;
-            border-bottom: 1px solid #2b3741;
-            padding-bottom: 1px;
-        }
-        
         .news-empty {
             margin-top: 8px;
             color: var(--muted);
@@ -396,7 +386,6 @@
         <div class="news-shell">
             <div class="news-head">
                 <h2>Новости</h2>
-                <a href="news.html" id="homeNewsArchiveLink">Открыть</a>
             </div>
             <div id="homeNewsList" class="news-list"></div>
             <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
@@ -503,17 +492,14 @@
         function renderHomeNews(items) {
             const list = document.getElementById("homeNewsList");
             const empty = document.getElementById("homeNewsEmpty");
-            const archiveLink = document.getElementById("homeNewsArchiveLink");
             list.innerHTML = "";
 
             if (!items.length) {
                 empty.style.display = "block";
-                if (archiveLink) archiveLink.style.display = "none";
                 return;
             }
 
             empty.style.display = "none";
-            if (archiveLink) archiveLink.style.display = "inline-flex";
 
             items.slice(0, 5).forEach(item => {
                 const article = document.createElement("article");
@@ -524,7 +510,6 @@
                     <div class="news-meta">${formatDate(item.created)}</div>
                     <h3 class="news-title">${escapeHtml(title)}</h3>
                     <div class="news-text">${body}</div>
-                    <a class="news-open" href="news.html">Подробнее</a>
                 `;
                 list.appendChild(article);
             });
