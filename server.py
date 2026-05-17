@@ -51,6 +51,10 @@ PUBLIC_FIREBASE_WEB_STORAGE_BUCKET = os.getenv("PUBLIC_FIREBASE_WEB_STORAGE_BUCK
 PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID = os.getenv("PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID", "")
 PUBLIC_FIREBASE_WEB_APP_ID = os.getenv("PUBLIC_FIREBASE_WEB_APP_ID", "")
 RUNTIME_WORK_DIR = os.getenv("CODEBUG_WORK_DIR", os.path.abspath(".codebug_work"))
+SEED_ADMIN_LOGINS = [
+    login.strip() for login in os.getenv("SEED_ADMIN_LOGINS", "afanasy").split(",")
+    if login.strip()
+]
 
 
 def init_firebase():
@@ -78,6 +82,13 @@ def init_firebase():
     firebase_admin.initialize_app(cred, {
         "databaseURL": FIREBASE_DB_URL
     })
+    if SEED_ADMIN_LOGINS:
+        try:
+            for login in SEED_ADMIN_LOGINS:
+                db.reference(f"admins/{login}").set(True)
+            print("Seed admins applied:", ", ".join(SEED_ADMIN_LOGINS))
+        except Exception as e:
+            print("Seed admins apply failed:", e)
     print("Firebase Admin init OK")
     return True
 
