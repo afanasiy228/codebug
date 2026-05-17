@@ -14,6 +14,7 @@ class SandboxResult:
     stdout: str
     stderr: str
     timeout: bool = False
+    memory_exceeded: bool = False
 
 
 def _allow_unsafe_runner():
@@ -73,7 +74,12 @@ def run_in_sandbox(
                 text=True,
                 timeout=timeout,
             )
-            return SandboxResult(proc.returncode, proc.stdout, proc.stderr)
+            return SandboxResult(
+                proc.returncode,
+                proc.stdout,
+                proc.stderr,
+                memory_exceeded=proc.returncode in (137, 139),
+            )
         except subprocess.TimeoutExpired as e:
             return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)
 

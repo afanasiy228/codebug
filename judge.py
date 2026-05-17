@@ -186,6 +186,8 @@ def compare_with_checker(checker_bin, inp_file, answer_file, program_output):
         return "RE"
     if res.timeout:
         return "TL"
+    if getattr(res, "memory_exceeded", False) or res.returncode in (137, 139):
+        return "ML"
     return "OK" if res.returncode == 0 else "WA"
 
 
@@ -204,6 +206,8 @@ def run_standard_test(inp_file, out_file, checker_bin=None):
 
     if proc.timeout:
         return "TL"
+    if getattr(proc, "memory_exceeded", False) or proc.returncode in (137, 139):
+        return "ML"
 
     if proc.returncode != 0:
         return "RE"
@@ -279,6 +283,8 @@ def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
         log.write(f"Protocol log {test_name}:\n{protocol_text}\n")
     if res.timeout:
         return "TL"
+    if getattr(res, "memory_exceeded", False) or res.returncode in (137, 139):
+        return "ML"
     return "OK" if res.returncode == 0 else "WA"
 
 
@@ -378,6 +384,8 @@ def normalize_groups(problem, tests):
 def final_from_results(results):
     if "RE" in results:
         return "RE"
+    if "ML" in results:
+        return "ML"
     if "TL" in results:
         return "TL"
     if "WA" in results:
