@@ -291,6 +291,39 @@
             gap: 8px;
             margin: 12px 0 18px;
         }
+
+        .statement-toolbar {
+            display: flex;
+            justify-content: flex-start;
+            margin: 10px 0 14px;
+        }
+
+        .language-switch {
+            display: inline-flex;
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid rgba(226, 214, 196, 0.85);
+            border-radius: 12px;
+            background: rgba(255, 250, 242, 0.75);
+        }
+
+        .lang-btn {
+            min-width: 44px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 9px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: none;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
         
         .task-tag {
             padding: 4px 10px;
@@ -492,6 +525,12 @@
         <div class="left reveal" id="leftPanel" style="--delay: 0s;">
             <h1 id="taskTitle">...</h1>
             <div id="taskTags" class="task-tags"></div>
+            <div class="statement-toolbar">
+                <div class="language-switch" aria-label="Язык условия">
+                    <button type="button" class="lang-btn active" data-lang="ru">RU</button>
+                    <button type="button" class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
             <div id="taskStatement">Загружаю условие…</div>
             <h2 class="section-title">Примеры тестов</h2>
             <div id="examples"></div>
@@ -1054,6 +1093,49 @@
             return (md || "").replace(/\n/g, "<br>");
         }
 
+        let currentStatementLang = localStorage.getItem("codebugStatementLang") || "ru";
+        let statementSections = { ru: "", en: "" };
+
+        function setStatementLanguage(lang) {
+            currentStatementLang = lang === "en" ? "en" : "ru";
+            localStorage.setItem("codebugStatementLang", currentStatementLang);
+            document.querySelectorAll(".lang-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.lang === currentStatementLang);
+            });
+            const target = document.getElementById("taskStatement");
+            if (!target) return;
+            target.innerHTML = statementSections[currentStatementLang] || statementSections.ru || "";
+            if (window.MathJax?.typesetPromise) {
+                MathJax.typesetPromise([target]).catch(console.warn);
+            }
+        }
+
+        function splitStatementByLanguage(rawHtml) {
+            const template = document.createElement("template");
+            template.innerHTML = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
+            const nodes = Array.from(template.content.childNodes);
+            const sections = { ru: [], en: [] };
+            let lang = "ru";
+            let headingCount = 0;
+            for (const node of nodes) {
+                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "H1") {
+                    headingCount += 1;
+                    lang = headingCount >= 2 ? "en" : "ru";
+                    continue;
+                }
+                sections[lang].push(node.cloneNode(true));
+            }
+            const serialize = items => items.map(node => {
+                const holder = document.createElement("div");
+                holder.appendChild(node);
+                return holder.innerHTML;
+            }).join("");
+            return {
+                ru: serialize(sections.ru),
+                en: serialize(sections.en)
+            };
+        }
+
         function normalizeTag(tag) {
             const t = String(tag || "").trim();
             const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
@@ -1186,11 +1268,8 @@
                     const res = await fetch(`${base}/tasks/${id}/${statementHtmlPath}`);
                     if (!res.ok) throw new Error(`statement_html_${res.status}`);
                     const html = await res.text();
-                    document.getElementById("taskStatement").innerHTML =
-                        window.DOMPurify ? DOMPurify.sanitize(html) : html;
-                    if (window.MathJax?.typesetPromise) {
-                        MathJax.typesetPromise([document.getElementById("taskStatement")]).catch(console.warn);
-                    }
+                    statementSections = splitStatementByLanguage(html);
+                    setStatementLanguage(currentStatementLang);
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement/russian.html не найден";
                 }
@@ -1201,7 +1280,8 @@
 
                     const md = await res.text();
 
-                    document.getElementById("taskStatement").innerHTML = renderMarkdown(md);
+                    statementSections = { ru: renderMarkdown(md), en: "" };
+                    setStatementLanguage("ru");
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement.md не найден";
                 }
@@ -1383,6 +1463,10 @@
         document.addEventListener("DOMContentLoaded", () => {
             // редактор и задача
             initializeTextEditor();
+            document.querySelectorAll(".lang-btn").forEach(btn => {
+                btn.addEventListener("click", () => setStatementLanguage(btn.dataset.lang));
+            });
+            setStatementLanguage(currentStatementLang);
             loadTask();
         });
     </script>
