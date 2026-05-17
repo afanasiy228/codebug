@@ -211,12 +211,65 @@
       return v === "markdown" || v === "latex" ? v : "plain";
     }
 
+    function latexAnnouncementToHtml(source) {
+      const text = String(source || "").replace(/\r/g, "");
+
+      let html = text
+        .replace(/\\section\*\{([^}]*)\}/g, "<h2>$1</h2>")
+        .replace(/\\subsection\*\{([^}]*)\}/g, "<h3>$1</h3>")
+        .replace(/\\texttt\{([^}]*)\}/g, "<code>$1</code>")
+        .replace(/\\textbf\{([^}]*)\}/g, "<strong>$1</strong>");
+
+      html = html
+        .replace(/\\begin\{itemize\}/g, "<ul>")
+        .replace(/\\end\{itemize\}/g, "</ul>");
+
+      const lines = html.split("\n");
+      const out = [];
+      let inList = false;
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        if (line === "<ul>") {
+          inList = true;
+          out.push("<ul>");
+          continue;
+        }
+        if (line === "</ul>") {
+          inList = false;
+          out.push("</ul>");
+          continue;
+        }
+        if (line.startsWith("\\item ")) {
+          const itemText = line.slice(6).trim();
+          if (!inList) {
+            inList = true;
+            out.push("<ul>");
+          }
+          out.push(`<li>${itemText}</li>`);
+          continue;
+        }
+
+        if (inList) {
+          inList = false;
+          out.push("</ul>");
+        }
+        out.push(`<p>${line}</p>`);
+      }
+      if (inList) out.push("</ul>");
+      return out.join("\n");
+    }
+
     function formatAnnouncementText(text, formatRaw) {
       const format = normalizeAnnouncementFormat(formatRaw);
       const source = String(text || "");
       if (format === "markdown") {
         const rendered = marked.parse(source);
         return DOMPurify.sanitize(rendered);
+      }
+      if (format === "latex") {
+        return DOMPurify.sanitize(latexAnnouncementToHtml(source));
       }
       return escapeHtml(source).replace(/\n/g, "<br>");
     }
