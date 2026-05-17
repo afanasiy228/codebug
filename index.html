@@ -405,6 +405,15 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+            svg: { fontCache: "global" }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <script src="firebase.js"></script>
     <script src="auth.js"></script>
     <script src="globalsubmissions.js"></script>
@@ -419,36 +428,66 @@
                 .replace(/'/g, "&#039;");
         }
 
-        function trimText(text, limit) {
-            if (!text) return "";
-            const oneLine = text.replace(/\s+/g, " ").trim();
-            if (oneLine.length <= limit) return oneLine;
-            return oneLine.slice(0, limit).trimEnd() + "...";
-        }
-
         function normalizeAnnouncementFormat(value) {
             const v = String(value || "plain").toLowerCase().trim();
             return v === "markdown" || v === "latex" ? v : "plain";
         }
 
-        function announcementPreviewText(item) {
+        function latexAnnouncementToHtml(source) {
+            const text = String(source || "").replace(/\r/g, "");
+            let html = text
+                .replace(/\\section\*\{([^}]*)\}/g, "<h3>$1</h3>")
+                .replace(/\\subsection\*\{([^}]*)\}/g, "<h4>$1</h4>")
+                .replace(/\\texttt\{([^}]*)\}/g, "<code>$1</code>")
+                .replace(/\\textbf\{([^}]*)\}/g, "<strong>$1</strong>")
+                .replace(/\\begin\{itemize\}/g, "<ul>")
+                .replace(/\\end\{itemize\}/g, "</ul>");
+
+            const lines = html.split("\n");
+            const out = [];
+            let inList = false;
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line) continue;
+                if (line === "<ul>") {
+                    inList = true;
+                    out.push("<ul>");
+                    continue;
+                }
+                if (line === "</ul>") {
+                    inList = false;
+                    out.push("</ul>");
+                    continue;
+                }
+                if (line.startsWith("\\item ")) {
+                    const itemText = line.slice(6).trim();
+                    if (!inList) {
+                        inList = true;
+                        out.push("<ul>");
+                    }
+                    out.push(`<li>${itemText}</li>`);
+                    continue;
+                }
+                if (inList) {
+                    inList = false;
+                    out.push("</ul>");
+                }
+                out.push(`<p>${line}</p>`);
+            }
+            if (inList) out.push("</ul>");
+            return out.join("\n");
+        }
+
+        function formatAnnouncementText(item) {
             const format = normalizeAnnouncementFormat(item?.format);
             const src = String(item?.text || "");
             if (format === "markdown") {
-                return src
-                    .replace(/[`*_>#-]/g, " ")
-                    .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
-                    .replace(/\s+/g, " ")
-                    .trim();
+                return DOMPurify.sanitize(marked.parse(src));
             }
             if (format === "latex") {
-                return src
-                    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, "$1")
-                    .replace(/[{}\\]/g, " ")
-                    .replace(/\s+/g, " ")
-                    .trim();
+                return DOMPurify.sanitize(latexAnnouncementToHtml(src));
             }
-            return src;
+            return escapeHtml(src).replace(/\n/g, "<br>");
         }
 
         function formatDate(ts) {
@@ -480,15 +519,18 @@
                 const article = document.createElement("article");
                 article.className = "news-item";
                 const title = item.title || "Обновление тренировки";
-                const body = trimText(announcementPreviewText(item), 72) || "Новые задачи.";
+                const body = formatAnnouncementText(item) || "Новые задачи.";
                 article.innerHTML = `
                     <div class="news-meta">${formatDate(item.created)}</div>
                     <h3 class="news-title">${escapeHtml(title)}</h3>
-                    <p class="news-text">${escapeHtml(body)}</p>
+                    <div class="news-text">${body}</div>
                     <a class="news-open" href="news.html">Подробнее</a>
                 `;
                 list.appendChild(article);
             });
+            if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
+                window.MathJax.typesetPromise([list]).catch((err) => console.warn("MathJax render failed", err));
+            }
         }
 
         async function loadHomeNews() {
