@@ -47,6 +47,7 @@ def run_in_sandbox(
             "docker",
             "run",
             "--rm",
+            "-i",
             "--network=none",
             f"--memory={memory}",
             f"--cpus={cpus}",
