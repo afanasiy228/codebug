@@ -523,22 +523,23 @@
                 function highlightCpp(code) {
                     let text = escapeHtml(code);
                     const stash = [];
+                    const tokenRegex = /\uE000(\d+)\uE001/g;
 
                     const stashToken = (regex, cls) => {
                         text = text.replace(regex, (match) => {
                             const id = stash.length;
                             stash.push(`<span class="${cls}">${match}</span>`);
-                            return `{{{${id}}}}`;
+                            return `\uE000${id}\uE001`;
                         });
                     };
 
-                    stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
-                    stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
+                    stashToken(/^\s*#.*$/gm, "hl-prep");
                     stashToken(/\/\*[\s\S]*?\*\//g, "hl-comment");
                     stashToken(/\/\/.*$/gm, "hl-comment");
-                    stashToken(/^\s*#.*$/gm, "hl-prep");
+                    stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
+                    stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
 
-                    const parts = text.split(/{{{(\d+)}}}/g);
+                    const parts = text.split(tokenRegex);
                     for (let i = 0; i < parts.length; i++) {
                         if (i % 2 === 0) {
                             let segment = parts[i];
