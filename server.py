@@ -1078,6 +1078,11 @@ def submit():
         })
     except Exception as e:
         print("Judge launch error:", e)
+        if submission_ref is not None:
+            try:
+                submission_ref.update({"verdict": "SE"})
+            except Exception as update_error:
+                print("Firebase update error:", update_error)
         return jsonify({"error": "judge_launch_failed"}), 500
 
     print("judge.py завершён")
@@ -1087,6 +1092,12 @@ def submit():
     for line in log_text.splitlines():
         if line.startswith("Final verdict:"):
             final = line.split(":")[1].strip()
+            break
+
+    # Fallback: if judge terminated abnormally without explicit final verdict.
+    if "Final verdict:" not in log_text:
+        if "Sandbox Error" in log_text or result.returncode != 0:
+            final = "SE"
 
     print("Final verdict =", final)
     if submission_ref is not None:
