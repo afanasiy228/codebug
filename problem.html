@@ -532,6 +532,7 @@
                 </div>
             </div>
             <div id="taskStatement">Загружаю условие…</div>
+            <div id="groupTable"></div>
             <h2 class="section-title">Примеры тестов</h2>
             <div id="examples"></div>
             <h3 class="section-title">Пояснение</h3>
@@ -872,7 +873,9 @@
 
         function updateSubmissionRow(row, verdict, colorOverride) {
             if (!row) return;
+            const numericVerdict = /^\d+$/.test(String(verdict || "").trim());
             const verdictColor = colorOverride || (
+                numericVerdict ? "#7fff7f" :
                 verdict === "OK" ? "#7fff7f" :
                 verdict === "WA" ? "#ff7777" :
                 verdict === "RE" ? "#ffb37c" :
@@ -948,7 +951,9 @@
 
             for (let s of mine) {
                 const verdict = s.verdict || s.status || "ERROR";
+                const numericVerdict = /^\d+$/.test(String(verdict).trim());
                 const verdictColor =
+                    numericVerdict ? "#7fff7f" :
                     verdict === "OK" ? "#7fff7f" :
                     verdict === "WA" ? "#ff7777" :
                     verdict === "RE" ? "#ffb37c" :
@@ -958,6 +963,7 @@
                     "#ffd451";
 
                 const verdictLabel =
+                    numericVerdict ? verdict :
                     verdict === "QUEUE" ? "В очереди" :
                     verdict === "TESTING" ? "Тестируется" :
                     verdict === "ERROR" ? "Ошибка" :
@@ -1209,6 +1215,8 @@
             document.getElementById("taskStatement").innerHTML =
                 `<p>Мы не нашли эту задачу. Проверь ID или вернись в список задач.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`;
             document.getElementById("taskHelp").innerText = "";
+            const groupTable = document.getElementById("groupTable");
+            if (groupTable) groupTable.innerHTML = "";
             const examples = document.getElementById("examples");
             if (examples) examples.innerHTML = "";
             if (window.editor) editor.setValue("// Задача не найдена");
@@ -1224,6 +1232,8 @@
             document.getElementById("taskStatement").innerHTML =
                 `<p>Сервер задач не смог синхронизировать репозиторий. Попробуй обновить страницу через минуту.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>${details ? `<p><code>${escapeHtml(details)}</code></p>` : ""}`;
             document.getElementById("taskHelp").innerText = "";
+            const groupTable = document.getElementById("groupTable");
+            if (groupTable) groupTable.innerHTML = "";
             const examples = document.getElementById("examples");
             if (examples) examples.innerHTML = "";
             if (window.editor) editor.setValue("// Сервер задач временно недоступен");
@@ -1232,6 +1242,36 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = "Недоступно";
             }
+        }
+
+        function renderGroupTable(groups) {
+            const list = Array.isArray(groups) ? groups : [];
+            if (!list.length) return "";
+            const rows = list
+                .slice()
+                .sort((a, b) => Number(a.id || 0) - Number(b.id || 0))
+                .map((g) => {
+                    const gid = Number(g.id || 0);
+                    const name = escapeHtml(String(g.name || `group ${gid}`));
+                    const points = Number(g.points || g.score || 0);
+                    const deps = Array.isArray(g.dependencies) && g.dependencies.length
+                        ? g.dependencies.join(", ")
+                        : "—";
+                    const tests = Array.isArray(g.tests) && g.tests.length
+                        ? g.tests.join(", ")
+                        : "—";
+                    return `<tr><td>${gid}</td><td>${name}</td><td>${points}</td><td>${escapeHtml(String(deps))}</td><td>${escapeHtml(String(tests))}</td></tr>`;
+                })
+                .join("");
+            return `
+                <h3 class="section-title">Подгруппы</h3>
+                <table class="test-table">
+                    <thead>
+                        <tr><th>ID</th><th>Название</th><th>Баллы</th><th>Зависимости</th><th>Тесты</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
         }
 
         async function loadHiddenMap() {
@@ -1265,6 +1305,8 @@
                 document.getElementById("taskTitle").innerText = "Задача скрыта";
                 document.getElementById("taskStatement").innerText = "Доступ к этой задаче есть только у администраторов.";
                 document.getElementById("taskHelp").innerText = "";
+                const groupTable = document.getElementById("groupTable");
+                if (groupTable) groupTable.innerHTML = "";
                 if (window.editor) editor.setValue("// Недоступно");
                 const examples = document.getElementById("examples");
                 if (examples) examples.innerHTML = "";
@@ -1327,6 +1369,11 @@
                     tagsRoot.innerHTML = tags.length ?
                         tags.map(tag => `<span class="task-tag">${normalizeTag(tag)}</span>`).join("") :
                         "";
+                }
+                const groupTable = document.getElementById("groupTable");
+                if (groupTable) {
+                    const groups = (problemV2 && (problemV2.groups || problemV2.subtasks)) || [];
+                    groupTable.innerHTML = renderGroupTable(groups);
                 }
             } catch (e) {
                 showTaskNotFound(id);

@@ -1105,7 +1105,13 @@ def submit():
 
     # --- определение финального вердикта ---
     final = "CE"
+    score_value = None
     for line in log_text.splitlines():
+        if line.startswith("Score:"):
+            try:
+                score_value = int(line.split(":", 1)[1].strip())
+            except (TypeError, ValueError):
+                score_value = None
         if line.startswith("Final verdict:"):
             final = line.split(":")[1].strip()
             break
@@ -1115,16 +1121,25 @@ def submit():
         if "Sandbox Error" in log_text or result.returncode != 0:
             final = "SE"
 
-    print("Final verdict =", final)
+    public_status = final
+    problem_cfg = read_problem_config(task)
+    has_groups = bool((problem_cfg or {}).get("groups"))
+    terminal_errors = {"CE", "TL", "RE", "ML", "SE", "NO_TESTS"}
+    if has_groups and final not in terminal_errors and score_value is not None:
+        public_status = str(score_value)
+
+    print("Final verdict =", final, "public status =", public_status, "score =", score_value)
     if submission_ref is not None:
         try:
-            submission_ref.update({"verdict": final})
+            submission_ref.update({"verdict": public_status})
         except Exception as e:
             firebase_error = f"firebase_update_error: {e}"
             print(firebase_error)
 
     return jsonify({
-        "status": final,
+        "status": public_status,
+        "rawVerdict": final,
+        "score": score_value,
         "log": log_text,
         "submissionId": submission_ref.key if submission_ref is not None else None,
         "firebaseSaved": firebase_saved,
