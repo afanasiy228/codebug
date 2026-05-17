@@ -50,6 +50,7 @@ PUBLIC_FIREBASE_WEB_PROJECT_ID = os.getenv("PUBLIC_FIREBASE_WEB_PROJECT_ID", "")
 PUBLIC_FIREBASE_WEB_STORAGE_BUCKET = os.getenv("PUBLIC_FIREBASE_WEB_STORAGE_BUCKET", "")
 PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID = os.getenv("PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID", "")
 PUBLIC_FIREBASE_WEB_APP_ID = os.getenv("PUBLIC_FIREBASE_WEB_APP_ID", "")
+RUNTIME_WORK_DIR = os.getenv("CODEBUG_WORK_DIR", os.path.abspath(".codebug_work"))
 
 
 def init_firebase():
@@ -511,6 +512,11 @@ def _write_text(path, content):
         f.write(content)
 
 
+def _runtime_tempdir(prefix):
+    os.makedirs(RUNTIME_WORK_DIR, exist_ok=True)
+    return tempfile.TemporaryDirectory(prefix=prefix, dir=RUNTIME_WORK_DIR)
+
+
 def _read_text(path):
     if not path or not os.path.isfile(path):
         return ""
@@ -876,7 +882,7 @@ def _format_memory_mb(kb_value):
 
 
 def _run_cpp_single(code, input_data):
-    with tempfile.TemporaryDirectory() as tmp:
+    with _runtime_tempdir("run_cpp_") as tmp:
         src_path = os.path.join(tmp, "main.cpp")
         bin_path = os.path.join(tmp, "main")
         _write_text(src_path, code)
@@ -918,7 +924,7 @@ def _run_cpp_single(code, input_data):
 
 
 def _run_python_single(code, input_data):
-    with tempfile.TemporaryDirectory() as tmp:
+    with _runtime_tempdir("run_python_") as tmp:
         src_path = os.path.join(tmp, "main.py")
         _write_text(src_path, code)
 
@@ -1032,7 +1038,7 @@ def submit():
     task_lang = normalize_language(task_meta.get("language"))
     source_name = "sol.py" if task_lang == "python" else "sol.cpp"
     try:
-        with tempfile.TemporaryDirectory(prefix="codebug_submit_") as workdir:
+        with _runtime_tempdir("codebug_submit_") as workdir:
             source_path = os.path.join(workdir, source_name)
             with open(source_path, "w") as f:
                 f.write(code)
@@ -1351,7 +1357,7 @@ def tasks_generate_tests():
     if not solution_code.strip():
         return jsonify({"error": "solution_required"}), 400
 
-    with tempfile.TemporaryDirectory() as tmp:
+    with _runtime_tempdir("generate_tests_") as tmp:
         if lang == "python":
             gen_src = os.path.join(tmp, "generator.py")
             sol_src = os.path.join(tmp, "solution.py")

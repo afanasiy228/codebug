@@ -3,3 +3,4 @@ codebug_tasks_deploy.pub
 .DS_Store
 tasks/
 .tasks_repo/
+.codebug_work/
