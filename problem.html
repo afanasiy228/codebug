@@ -738,6 +738,13 @@
             return null;
         }
 
+        function isSolvedVerdict(verdict) {
+            if (!verdict || typeof verdict !== "object") return false;
+            const status = String(verdict.status || "").trim().toUpperCase();
+            const raw = String(verdict.rawVerdict || "").trim().toUpperCase();
+            return status === "OK" || raw === "OK";
+        }
+
         async function submitCode() {
             console.log("[submitCode] старт");
 
@@ -784,7 +791,7 @@
                 } else {
                     loadMySubsForThisProblem();
                 }
-                if (verdict.status === "OK") submitOK(user, taskId, TASK_DIFFICULTY);
+                if (isSolvedVerdict(verdict)) submitOK(user, taskId, TASK_DIFFICULTY);
                 console.log("💾 Firebase сохранено OK");
 
             } catch (e) {
