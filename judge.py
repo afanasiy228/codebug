@@ -266,10 +266,15 @@ def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
         "<&4 >&3 2> interactor.err; "
         "interactor_code=$?; "
         "exec 3>&-; exec 4>&-; "
+        "if [ $interactor_code -ne 0 ]; then "
+        "kill $solution_pid 2>/dev/null || true; "
+        "wait $solution_pid 2>/dev/null || true; "
+        "cat solution.err interactor.err >&2; "
+        "exit $interactor_code; "
+        "fi; "
         "wait $solution_pid; "
         "solution_code=$?; "
         "cat solution.err interactor.err >&2; "
-        "if [ $interactor_code -ne 0 ]; then exit $interactor_code; fi; "
         "exit $solution_code"
     )
     try:
