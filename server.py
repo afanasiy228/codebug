@@ -1255,8 +1255,15 @@ def tasks_create():
 
     task_id = meta.get("id")
     if not isinstance(task_id, int):
-        task_id = _next_task_id()
-        meta["id"] = task_id
+        return jsonify({
+            "error": "new_task_creation_disabled",
+            "details": "Use /tasks/import-polygon to create new tasks"
+        }), 400
+    if not os.path.isdir(task_dir(task_id)):
+        return jsonify({
+            "error": "new_task_creation_disabled",
+            "details": "Use /tasks/import-polygon to create new tasks"
+        }), 400
 
     title = meta.get("title")
     if not title:
@@ -1297,6 +1304,23 @@ def tasks_import_polygon():
     upload = request.files.get("archive")
     if not upload:
         return jsonify({"error": "archive_required"}), 400
+    buggy_code = (request.form.get("buggyCode") or "").strip()
+    if not buggy_code:
+        return jsonify({"error": "buggy_code_required"}), 400
+
+    language = normalize_language(request.form.get("language"))
+    if language not in SUPPORTED_LANGUAGES:
+        return jsonify({"error": "language_not_supported"}), 400
+    task_type = str(request.form.get("taskType") or "standard").strip().lower()
+    if task_type not in ("standard", "grader", "interactive"):
+        task_type = "standard"
+
+    title_override = (request.form.get("title") or "").strip()
+    difficulty_override = (request.form.get("difficulty") or "").strip()
+    type_override = (request.form.get("type") or "").strip()
+    tags_raw = (request.form.get("tags") or "").strip()
+    tags_override = [item.strip() for item in tags_raw.split(",") if item.strip()] if tags_raw else None
+
     task_id = _next_task_id()
 
     with tempfile.TemporaryDirectory(prefix="polygon_import_") as tmp:
@@ -1307,6 +1331,17 @@ def tasks_import_polygon():
         try:
             _safe_extract_zip(archive_path, extract_path)
             payload = parse_polygon_package(extract_path, task_id)
+            if title_override:
+                payload["meta"]["title"] = title_override
+            payload["meta"]["language"] = language
+            payload["meta"]["taskType"] = task_type
+            if difficulty_override:
+                payload["meta"]["difficulty"] = difficulty_override
+            if type_override:
+                payload["meta"]["type"] = type_override
+            if tags_override is not None:
+                payload["meta"]["tags"] = tags_override
+            payload["files"]["code"] = buggy_code
             ok, result = _save_task_payload(
                 task_id,
                 payload["meta"],

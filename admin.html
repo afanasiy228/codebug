@@ -463,7 +463,7 @@
 
       <div class="admin-grid">
 
-      <div class="admin-box">
+      <div class="admin-box" id="legacyCreateBox" style="display:none;">
         <h3>Firebase: обзор и правка</h3>
         <p class="admin-note">Загрузить текущее состояние базы, отредактировать JSON и сохранить назад.</p>
         <textarea id="adminDbDump" class="admin-textarea" placeholder="Здесь появится JSON всей базы..."></textarea>
@@ -572,8 +572,22 @@
 
       <div class="admin-box">
         <h3>Импорт Polygon</h3>
-        <p class="admin-note">Загрузи polygon.zip. Импорт не сохранит задачу, если архив неполный или statement не компилируется.</p>
+        <p class="admin-note">Единственный способ добавить новую задачу: загрузить polygon.zip, затем указать багнутый код и мета-данные.</p>
         <input id="polygonArchive" class="admin-input" type="file" accept=".zip,application/zip">
+        <textarea id="polygonBuggyCode" class="admin-textarea" placeholder="Код с ошибкой (обязательно)" style="min-height:180px;"></textarea>
+        <input id="polygonMetaTitle" class="admin-input" type="text" placeholder="Название (опционально, иначе из Polygon)">
+        <input id="polygonMetaDifficulty" class="admin-input" type="text" placeholder="Сложность: easy / normal / hard ...">
+        <input id="polygonMetaType" class="admin-input" type="text" placeholder="Тип: например Алгоритмическая / Интерактив / Структуры">
+        <input id="polygonMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <select id="polygonMetaLanguage" class="admin-input">
+          <option value="cpp">C++</option>
+          <option value="python">Python</option>
+        </select>
+        <select id="polygonMetaTaskType" class="admin-input">
+          <option value="standard">standard</option>
+          <option value="grader">grader</option>
+          <option value="interactive">interactive</option>
+        </select>
         <div class="admin-actions">
           <button type="button" onclick="adminImportPolygon()">Импортировать polygon.zip</button>
         </div>
@@ -1104,8 +1118,28 @@
         setAdminLog("Выбери polygon.zip.");
         return;
       }
+      const buggyCode = (document.getElementById("polygonBuggyCode")?.value || "").trim();
+      if (!buggyCode) {
+        setAdminLog("Вставь код с ошибкой (обязательно).");
+        return;
+      }
+
+      const title = (document.getElementById("polygonMetaTitle")?.value || "").trim();
+      const difficulty = (document.getElementById("polygonMetaDifficulty")?.value || "").trim();
+      const type = (document.getElementById("polygonMetaType")?.value || "").trim();
+      const tags = (document.getElementById("polygonMetaTags")?.value || "").trim();
+      const language = normalizeTaskLanguage(document.getElementById("polygonMetaLanguage")?.value || "cpp");
+      const taskType = (document.getElementById("polygonMetaTaskType")?.value || "standard").trim();
+
       const form = new FormData();
       form.append("archive", file);
+      form.append("buggyCode", buggyCode);
+      form.append("language", language);
+      form.append("taskType", taskType);
+      if (title) form.append("title", title);
+      if (difficulty) form.append("difficulty", difficulty);
+      if (type) form.append("type", type);
+      if (tags) form.append("tags", tags);
       const base = window.TASKS_API_BASE || "";
       try {
         setAdminLog("Импорт Polygon начался.");
