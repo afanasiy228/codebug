@@ -314,6 +314,14 @@
         tr:hover {
             background: rgba(15, 118, 110, 0.06);
         }
+
+        tr.solved-row {
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        tr.solved-row:hover {
+            background: rgba(56, 189, 248, 0.14);
+        }
         /* PILL TAGS */
         
         .pill {
@@ -334,6 +342,20 @@
         
         .link:hover {
             text-decoration: underline;
+        }
+
+        .solved-badge {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #0b3a2b;
+            background: #9bf3b7;
+            border: 1px solid rgba(11, 58, 43, 0.18);
+            vertical-align: middle;
         }
         
         .empty {
@@ -426,14 +448,13 @@
             </select>
             </div>
 
-            <label>Тип ошибки</label>
+            <label>Тип задачи</label>
             <div class="select">
-                <select id="errorType">
+                <select id="taskType">
                 <option value="">Любая</option>
-                <option value="Алгоритмическая">Алгоритмическая</option>
-                <option value="Память">Память</option>
-                <option value="Время">Время</option>
-                <option value="Формулы">Формулы</option>
+                <option value="standard">Стандартная</option>
+                <option value="grader">Grader</option>
+                <option value="interactive">Интерактивная</option>
             </select>
             </div>
 
@@ -480,7 +501,7 @@
                         <th>Название</th>
                         <th>Сложность</th>
                         <th>Язык</th>
-                        <th>Тип ошибки</th>
+                        <th>Тип задачи</th>
                         <th>Теги</th>
                     </tr>
                 </thead>
@@ -518,7 +539,7 @@
                     title: meta.title || ("Задача " + meta.id),
                     difficulty: meta.difficulty || "",
                     language: (meta.language || "cpp"),
-                    type: meta.type || "",
+                    taskType: meta.taskType || "standard",
                     tags: meta.tags || []
                 }));
             } catch (e) {
@@ -542,6 +563,21 @@
         let hiddenMap = {};
         let isAdmin = false;
         let dailyProblem = null;
+        let solvedMap = {};
+
+        async function loadSolvedMap() {
+            const user = getUser();
+            if (!user) return {};
+            const dbRef = window.db || null;
+            if (!dbRef) return {};
+            try {
+                const snap = await dbRef.ref("users/" + user + "/stats/solved").get();
+                return snap.exists() ? (snap.val() || {}) : {};
+            } catch (err) {
+                console.warn("[training] solved map load failed", err);
+                return {};
+            }
+        }
 
         async function initTraining() {
             console.log("[training] initTraining()");
@@ -549,6 +585,7 @@
             problems = await loadProblems();
             hiddenMap = await loadHiddenMap();
             isAdmin = await checkAdminAccess();
+            solvedMap = await loadSolvedMap();
             visibleProblems = problems.filter(p => !hiddenMap[p.id]);
 
             if (visibleProblems.length === 0) {
@@ -599,9 +636,15 @@
             return `<span class="pill" style="${map[diff] || ""}">${text || "-"}</span>`;
         }
 
-        function typePill(type) {
-            if (!type) return `<span class="pill">—</span>`;
-            return `<span class="pill" style="background:#264d7a; color:#d9ecff;">${type}</span>`;
+        function taskTypePill(taskType) {
+            const t = (taskType || "standard").toLowerCase();
+            if (t === "interactive") {
+                return `<span class="pill" style="background:#4b2d71; color:#f0dcff;">Интерактивная</span>`;
+            }
+            if (t === "grader") {
+                return `<span class="pill" style="background:#2d4f71; color:#d8efff;">Grader</span>`;
+            }
+            return `<span class="pill" style="background:#284d39; color:#d9ffea;">Стандартная</span>`;
         }
 
         function languagePill(language) {
@@ -653,14 +696,14 @@
             console.log("[training] renderTable()");
 
             const diff = document.getElementById("difficulty").value;
-            const err = document.getElementById("errorType").value;
+            const taskType = document.getElementById("taskType").value;
             const lang = document.getElementById("languageFilter").value;
             const query = document.getElementById("search").value.toLowerCase();
 
             const baseList = isAdmin ? problems : visibleProblems;
             const filtered = baseList.filter(p =>
                 (!diff || p.difficulty === diff) &&
-                (!err || p.type === err) &&
+                (!taskType || (p.taskType || "standard") === taskType) &&
                 (!lang || (p.language || "cpp") === lang) &&
                 (!query || p.title.toLowerCase().includes(query))
             );
@@ -673,14 +716,19 @@
 
             filtered.forEach(p => {
                 const tr = document.createElement("tr");
+                const solved = !!solvedMap[String(p.id)] || !!solvedMap[p.id];
+                if (solved) tr.classList.add("solved-row");
                 const hiddenBadge = isAdmin && hiddenMap[p.id]
                     ? `<span class="pill" style="background:#3b1d1d; color:#ffb3b3;">Скрыта</span>`
                     : "";
+                const solvedBadge = solved
+                    ? `<span class="solved-badge">Сдано</span>`
+                    : "";
                 tr.innerHTML = `
-                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a> ${hiddenBadge}</td>
+                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a>${solvedBadge} ${hiddenBadge}</td>
                 <td>${diffPill(p.difficulty)}</td>
                 <td>${languagePill(p.language)}</td>
-                <td>${typePill(p.type)}</td>
+                <td>${taskTypePill(p.taskType)}</td>
                 <td>${tagsPill(p.tags)}</td>
             `;
                 tbody.appendChild(tr);
@@ -726,7 +774,7 @@
 
             // фильтры
             document.getElementById("difficulty").addEventListener("change", renderTable);
-            document.getElementById("errorType").addEventListener("change", renderTable);
+            document.getElementById("taskType").addEventListener("change", renderTable);
             document.getElementById("languageFilter").addEventListener("change", renderTable);
             document.getElementById("search").addEventListener("input", renderTable);
 
