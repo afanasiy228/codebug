@@ -661,13 +661,7 @@ def _build_problem_v2(task_id, meta, files, tests):
     scoring_mode = str(meta.get("scoringMode") or "ioi").strip().lower()
     groups = _normalize_groups(meta.get("groups"), test_manifest)
     if scoring_mode == "icpc":
-        groups = [{
-            "id": 1,
-            "name": "all tests",
-            "points": 100,
-            "dependencies": [],
-            "tests": [t["name"] for t in test_manifest]
-        }]
+        groups = []
     subtasks = [{
         "id": group["id"],
         "name": group["name"],
@@ -1133,7 +1127,8 @@ def submit():
 
     public_status = final
     problem_cfg = read_problem_config(task)
-    has_groups = bool((problem_cfg or {}).get("groups"))
+    scoring_mode = str((problem_cfg or {}).get("scoringMode") or "ioi").strip().lower()
+    has_groups = bool((problem_cfg or {}).get("groups")) and scoring_mode != "icpc"
     terminal_errors = {"CE", "TL", "RE", "ML", "SE", "NO_TESTS"}
     if has_groups and final not in terminal_errors and score_value is not None:
         public_status = str(score_value)
@@ -1331,8 +1326,7 @@ def tasks_import_polygon():
     title_override = (request.form.get("title") or "").strip()
     difficulty_override = (request.form.get("difficulty") or "").strip()
     type_override = (request.form.get("type") or "").strip()
-    tags_raw = (request.form.get("tags") or "").strip()
-    tags_override = [item.strip() for item in tags_raw.split(",") if item.strip()] if tags_raw else None
+    code_explanation_latex = (request.form.get("codeExplanationLatex") or "").strip()
 
     task_id = _next_task_id()
 
@@ -1353,9 +1347,9 @@ def tasks_import_polygon():
                 payload["meta"]["difficulty"] = difficulty_override
             if type_override:
                 payload["meta"]["type"] = type_override
-            if tags_override is not None:
-                payload["meta"]["tags"] = tags_override
             payload["files"]["code"] = buggy_code
+            if code_explanation_latex:
+                payload["files"]["help"] = code_explanation_latex
             ok, result = _save_task_payload(
                 task_id,
                 payload["meta"],

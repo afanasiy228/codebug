@@ -1156,7 +1156,8 @@
             const target = document.getElementById("taskStatement");
             if (!target) return;
             statementPreludeHtml = buildStatementPrelude(currentStatementLang);
-            target.innerHTML = `${statementPreludeHtml}${statementSections[currentStatementLang] || statementSections.ru || ""}`;
+            const bodyHtml = stripDuplicatedIoMetaHtml(statementSections[currentStatementLang] || statementSections.ru || "");
+            target.innerHTML = `${statementPreludeHtml}${bodyHtml}`;
             if (window.MathJax?.typesetPromise) {
                 MathJax.typesetPromise([target]).catch(console.warn);
             }
@@ -1165,14 +1166,27 @@
         function buildStatementPrelude(lang) {
             if (lang === "en") {
                 return `
-                  <div class="io-meta-block" style="margin:0 0 14px;padding:10px 12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.03);font-weight:600;">
-                    Standard input<br>Standard output<br>1 second<br>256 MB
+                  <div class="io-meta-block" style="margin:0 0 12px;color:var(--muted);font-size:14px;font-weight:600;">
+                    Standard input | Standard output | 1 second | 256 MB
                   </div>`;
             }
             return `
-              <div class="io-meta-block" style="margin:0 0 14px;padding:10px 12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.03);font-weight:600;">
-                стандартный ввод<br>стандартный вывод<br>1 секунда<br>256 мегабайт
+              <div class="io-meta-block" style="margin:0 0 12px;color:var(--muted);font-size:14px;font-weight:600;">
+                стандартный ввод | стандартный вывод | 1 секунда | 256 мегабайт
               </div>`;
+        }
+
+        function stripDuplicatedIoMetaHtml(rawHtml) {
+            let html = String(rawHtml || "");
+            const patterns = [
+                /Количество\s+учениковстандартный\s+вводстандартный\s+вывод1\s*секунда256\s*мегабайт/gi,
+                /стандартный\s+вводстандартный\s+вывод1\s*секунда256\s*мегабайт/gi,
+                /standard\s+inputstandard\s+output1\s*second256\s*megabytes/gi
+            ];
+            for (const pattern of patterns) {
+                html = html.replace(pattern, "");
+            }
+            return html;
         }
 
         function splitStatementByLanguage(rawHtml) {
@@ -1267,7 +1281,8 @@
             }
         }
 
-        function renderGroupTable(groups) {
+        function renderGroupTable(groups, scoringMode) {
+            if (String(scoringMode || "").toLowerCase() === "icpc") return "";
             const list = Array.isArray(groups) ? groups : [];
             if (!list.length) return "";
             const rows = list
@@ -1393,7 +1408,7 @@
                 const groupTable = document.getElementById("groupTable");
                 if (groupTable) {
                     const groups = (problemV2 && (problemV2.groups || problemV2.subtasks)) || [];
-                    groupTable.innerHTML = renderGroupTable(groups);
+                    groupTable.innerHTML = renderGroupTable(groups, problemV2?.scoringMode);
                 }
             } catch (e) {
                 showTaskNotFound(id);

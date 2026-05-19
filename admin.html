@@ -579,7 +579,6 @@
         <input id="polygonMetaTitle" class="admin-input" type="text" placeholder="Название (опционально, иначе из Polygon)">
         <input id="polygonMetaDifficulty" class="admin-input" type="text" placeholder="Сложность: easy / normal / hard ...">
         <input id="polygonMetaType" class="admin-input" type="text" placeholder="Тип: например Алгоритмическая / Интерактив / Структуры">
-        <input id="polygonMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
         <select id="polygonMetaLanguage" class="admin-input">
           <option value="cpp">C++</option>
           <option value="python">Python</option>
@@ -593,6 +592,7 @@
           <option value="ioi">IOI (подгруппы)</option>
           <option value="icpc">ICPC (без подгрупп)</option>
         </select>
+        <textarea id="polygonCodeExplanationLatex" class="admin-textarea" placeholder="Пояснение к коду (LaTeX, опционально)" style="min-height:140px;"></textarea>
         <div class="admin-actions">
           <button type="button" onclick="adminImportPolygon()">Импортировать polygon.zip</button>
         </div>
@@ -1132,7 +1132,7 @@
       const title = (document.getElementById("polygonMetaTitle")?.value || "").trim();
       const difficulty = (document.getElementById("polygonMetaDifficulty")?.value || "").trim();
       const type = (document.getElementById("polygonMetaType")?.value || "").trim();
-      const tags = (document.getElementById("polygonMetaTags")?.value || "").trim();
+      const codeExplanationLatex = (document.getElementById("polygonCodeExplanationLatex")?.value || "").trim();
       const language = normalizeTaskLanguage(document.getElementById("polygonMetaLanguage")?.value || "cpp");
       const taskType = (document.getElementById("polygonMetaTaskType")?.value || "standard").trim();
       const scoringMode = (document.getElementById("polygonScoringMode")?.value || "ioi").trim().toLowerCase();
@@ -1146,7 +1146,7 @@
       if (title) form.append("title", title);
       if (difficulty) form.append("difficulty", difficulty);
       if (type) form.append("type", type);
-      if (tags) form.append("tags", tags);
+      if (codeExplanationLatex) form.append("codeExplanationLatex", codeExplanationLatex);
       const base = window.TASKS_API_BASE || "";
       try {
         setAdminLog("Импорт Polygon начался.");

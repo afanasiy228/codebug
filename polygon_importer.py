@@ -48,6 +48,19 @@ def _normalize_statement_tex(raw_text):
     for token in glued_tokens:
         text = text.replace(token, "")
 
+    # Polygon often wraps statement in custom environment:
+    # \begin{problem}{Title}{stdin}{stdout}{1 second}{256 megabytes}
+    # ... body ...
+    # \end{problem}
+    text = re.sub(
+        r"\\begin\{problem\}\{[^{}]*\}\{[^{}]*\}\{[^{}]*\}\{[^{}]*\}\{[^{}]*\}",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+    text = re.sub(r"\\end\{problem\}", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\\(InputFile|OutputFile|Interaction|Examples?)\b", r"\\section*{\1}", text)
+
     # Если в statement почти нет TeX-команд, приводим к аккуратному plain-LaTeX блоку.
     has_tex = bool(re.search(r"\\(section|subsection|begin|end|item|textbf|emph|frac|sum|cdot|le|ge)", text))
     if not has_tex:
@@ -58,6 +71,28 @@ def _normalize_statement_tex(raw_text):
             lines.pop()
         return "\n\n".join(line for line in lines if line.strip())
     return text
+
+
+def _extract_tags(xml_root):
+    tags = []
+    seen = set()
+    candidates = xml_root.findall(".//tag") + xml_root.findall(".//keyword")
+    for node in candidates:
+        value = (
+            node.get("value")
+            or node.get("name")
+            or node.get("title")
+            or (node.text or "").strip()
+        )
+        value = str(value or "").strip()
+        if not value:
+            continue
+        key = value.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        tags.append(value)
+    return tags
 
 
 def _find_problem_xml(root):
@@ -154,7 +189,7 @@ def parse_polygon_package(extracted_dir, task_id):
         "difficulty": "",
         "language": "cpp",
         "type": "",
-        "tags": [],
+        "tags": _extract_tags(xml_root),
         "taskType": "standard",
         "groups": [{
             "id": 1,
