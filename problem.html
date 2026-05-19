@@ -659,12 +659,14 @@
                         <tr>
                             <th>#</th>
                             <th>Статус</th>
+                            <th>MS</th>
+                            <th>MB</th>
                             <th>Время</th>
                         </tr>
                     </thead>
                     <tbody id="subs">
                         <tr>
-                            <td colspan="4" style="color:var(--muted);text-align:center;">Пока нет посылок</td>
+                            <td colspan="5" style="color:var(--muted);text-align:center;">Пока нет посылок</td>
                         </tr>
                     </tbody>
                 </table>
@@ -803,7 +805,8 @@
                 renderSubmitLog(verdict);
 
                 clearTimeout(queueTimer);
-                updateSubmissionRow(pendingRow, verdict.status || "ERROR");
+                updateSubmissionRow(pendingRow, verdict.statusLabel || verdict.status || "ERROR");
+                updateSubmissionRowDetails(pendingRow, verdict);
                 if (verdict.firebaseSaved === false) {
                     console.warn("Firebase save failed:", verdict.firebaseError);
                 } else {
@@ -890,6 +893,8 @@
             tr.innerHTML = `
                 <td>—</td>
                 <td style="color:#c9c9c9; font-weight:600;">В очереди</td>
+                <td>—</td>
+                <td>—</td>
                 <td>${time}</td>
             `;
             tbody.prepend(tr);
@@ -913,6 +918,22 @@
             if (cell) {
                 cell.textContent = verdict;
                 cell.style.color = verdictColor;
+            }
+        }
+
+        function updateSubmissionRowDetails(row, verdictObj) {
+            if (!row || !verdictObj) return;
+            const msCell = row.children[2];
+            const mbCell = row.children[3];
+            if (msCell) {
+                msCell.textContent = Number.isFinite(Number(verdictObj.timeMs))
+                    ? String(Math.round(Number(verdictObj.timeMs)))
+                    : "—";
+            }
+            if (mbCell) {
+                mbCell.textContent = Number.isFinite(Number(verdictObj.memoryMb))
+                    ? Number(verdictObj.memoryMb).toFixed(2)
+                    : "—";
             }
         }
 
@@ -960,23 +981,23 @@
 
             const dbRef = window.db || null;
             if (!dbRef) {
-                tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Firebase временно недоступен</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5' style='color:#999'>Firebase временно недоступен</td></tr>";
                 return;
             }
 
-            tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Загрузка…</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='5' style='color:#999'>Загрузка…</td></tr>";
 
             let snap;
             try {
                 snap = await dbRef.ref("submissions/global").get();
             } catch (err) {
                 console.warn("⚠ Не удалось загрузить посылки:", err);
-                tbody.innerHTML = "<tr><td colspan='3' style='color:#999'>Не удалось загрузить посылки</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5' style='color:#999'>Не удалось загрузить посылки</td></tr>";
                 return;
             }
 
             if (!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='3'>Пока нет посылок…</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5'>Пока нет посылок…</td></tr>";
                 return;
             }
 
@@ -987,7 +1008,7 @@
                 .sort((a, b) => b.date - a.date);
 
             if (mine.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='3'>Пока нет посылок…</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5'>Пока нет посылок…</td></tr>";
                 return;
             }
 
@@ -995,13 +1016,15 @@
             let i = mine.length;
 
             for (let s of mine) {
-                const verdict = s.verdict || s.status || "ERROR";
+                const verdict = s.statusLabel || s.verdict || s.status || "ERROR";
                 const numericVerdict = /^\d+$/.test(String(verdict).trim());
                 const verdictColor =
                     numericVerdict ? "#7fff7f" :
+                    String(verdict).startsWith("WA") ? "#ff7777" :
+                    String(verdict).startsWith("TL") ? "#ffd451" :
+                    String(verdict).startsWith("ML") ? "#ffd451" :
+                    String(verdict).startsWith("RE") ? "#ffb37c" :
                     verdict === "OK" ? "#7fff7f" :
-                    verdict === "WA" ? "#ff7777" :
-                    verdict === "RE" ? "#ffb37c" :
                     verdict === "QUEUE" ? "#c9c9c9" :
                     verdict === "TESTING" ? "#c9c9c9" :
                     verdict === "ERROR" ? "#ffb37c" :
@@ -1013,6 +1036,8 @@
                     verdict === "TESTING" ? "Тестируется" :
                     verdict === "ERROR" ? "Ошибка" :
                     verdict;
+                const timeMs = Number.isFinite(Number(s.timeMs)) ? Math.round(Number(s.timeMs)) : "—";
+                const memoryMb = Number.isFinite(Number(s.memoryMb)) ? Number(s.memoryMb).toFixed(2) : "—";
 
                 tbody.innerHTML += `
         <tr>
@@ -1020,6 +1045,8 @@
             <td style="color:${verdictColor}; font-weight:600;">
                 ${verdictLabel}
             </td>
+            <td>${timeMs}</td>
+            <td>${memoryMb}</td>
             <td>${new Date(s.date).toLocaleTimeString()}</td>
         </tr>`;
             }
@@ -1222,6 +1249,20 @@
             ];
             for (const pattern of patterns) {
                 html = html.replace(pattern, "");
+            }
+            const latexTextMap = [
+                [/\\leq?/g, "≤"],
+                [/\\geq?/g, "≥"],
+                [/\\neq/g, "≠"],
+                [/\\times/g, "×"],
+                [/\\cdot/g, "·"],
+                [/\\to/g, "→"],
+                [/\\infty/g, "∞"],
+                [/\\ldots/g, "..."],
+                [/\\dots/g, "..."]
+            ];
+            for (const [re, val] of latexTextMap) {
+                html = html.replace(re, val);
             }
             return html;
         }

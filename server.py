@@ -1110,12 +1110,27 @@ def submit():
     # --- определение финального вердикта ---
     final = "CE"
     score_value = None
+    peak_time_ms = None
+    peak_memory_mb = None
+    first_fail_label = None
     for line in log_text.splitlines():
         if line.startswith("Score:"):
             try:
                 score_value = int(line.split(":", 1)[1].strip())
             except (TypeError, ValueError):
                 score_value = None
+        if line.startswith("Peak time:"):
+            try:
+                peak_time_ms = int(line.split(":", 1)[1].strip().split()[0])
+            except (TypeError, ValueError, IndexError):
+                peak_time_ms = None
+        if line.startswith("Peak memory:"):
+            try:
+                peak_memory_mb = float(line.split(":", 1)[1].strip().split()[0])
+            except (TypeError, ValueError, IndexError):
+                peak_memory_mb = None
+        if line.startswith("First failing test:"):
+            first_fail_label = line.split(":", 1)[1].strip() or None
         if line.startswith("Final verdict:"):
             final = line.split(":")[1].strip()
             break
@@ -1133,18 +1148,31 @@ def submit():
     if has_groups and final not in terminal_errors and score_value is not None:
         public_status = str(score_value)
 
-    print("Final verdict =", final, "public status =", public_status, "score =", score_value)
+    status_label = public_status
+    if first_fail_label and final in {"WA", "TL", "ML", "RE"}:
+        status_label = first_fail_label
+
+    print("Final verdict =", final, "public status =", public_status, "score =", score_value, "time_ms =", peak_time_ms, "memory_mb =", peak_memory_mb, "first_fail =", first_fail_label)
     if submission_ref is not None:
         try:
-            submission_ref.update({"verdict": public_status})
+            submission_ref.update({
+                "verdict": public_status,
+                "statusLabel": status_label,
+                "timeMs": peak_time_ms,
+                "memoryMb": peak_memory_mb
+            })
         except Exception as e:
             firebase_error = f"firebase_update_error: {e}"
             print(firebase_error)
 
     return jsonify({
         "status": public_status,
+        "statusLabel": status_label,
         "rawVerdict": final,
         "score": score_value,
+        "timeMs": peak_time_ms,
+        "memoryMb": peak_memory_mb,
+        "firstFail": first_fail_label,
         "log": log_text,
         "submissionId": submission_ref.key if submission_ref is not None else None,
         "firebaseSaved": firebase_saved,

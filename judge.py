@@ -455,7 +455,7 @@ def judge(task_id):
         results = []
         group_results = {}
         total_score = 0
-        first_wa_test = None
+        first_fail_label = None
         max_time_ms = 0
         max_memory_mb = None
 
@@ -500,8 +500,8 @@ def judge(task_id):
                 max_time_ms = max(max_time_ms, test_time)
                 if isinstance(mem, (int, float)):
                     max_memory_mb = mem if max_memory_mb is None else max(max_memory_mb, mem)
-                if verdict == "WA" and first_wa_test is None:
-                    first_wa_test = test["name"]
+                if verdict in {"WA", "TL", "ML", "RE"} and first_fail_label is None:
+                    first_fail_label = f"{verdict}{test['name']}"
                 log.write(
                     f"Test {test['name']}: {verdict}"
                     f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_time} ms, memory={mem_text} MB]\n"
@@ -539,8 +539,8 @@ def judge(task_id):
             max_time_ms = max(max_time_ms, test_time)
             if isinstance(mem, (int, float)):
                 max_memory_mb = mem if max_memory_mb is None else max(max_memory_mb, mem)
-            if verdict == "WA" and first_wa_test is None:
-                first_wa_test = test["name"]
+            if verdict in {"WA", "TL", "ML", "RE"} and first_fail_label is None:
+                first_fail_label = f"{verdict}{test['name']}"
             log.write(
                 f"Test {test['name']}: {verdict}"
                 f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_time} ms, memory={mem_text} MB]\n"
@@ -553,8 +553,8 @@ def judge(task_id):
         log.write(f"Peak time: {max_time_ms} ms\n")
         log.write(f"Peak memory: {peak_memory_text} MB\n")
         log.write(f"Score: {total_score}\n")
-        if first_wa_test is not None:
-            log.write(f"First WA test: {first_wa_test}\n")
+        if first_fail_label is not None:
+            log.write(f"First failing test: {first_fail_label}\n")
         log.write(f"Final verdict: {final}\n")
         return final
 
