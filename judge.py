@@ -456,6 +456,8 @@ def judge(task_id):
         group_results = {}
         total_score = 0
         first_wa_test = None
+        max_time_ms = 0
+        max_memory_mb = None
 
         if not tests:
             log.write("Error: no tests found\n")
@@ -492,13 +494,17 @@ def judge(task_id):
                     log=log,
                 )
                 verdict = test_result["verdict"]
+                test_time = int(test_result.get("time_ms", 0) or 0)
                 mem = test_result.get("memory_mb")
                 mem_text = f"{mem:.2f}" if isinstance(mem, (int, float)) else "?"
+                max_time_ms = max(max_time_ms, test_time)
+                if isinstance(mem, (int, float)):
+                    max_memory_mb = mem if max_memory_mb is None else max(max_memory_mb, mem)
                 if verdict == "WA" and first_wa_test is None:
                     first_wa_test = test["name"]
                 log.write(
                     f"Test {test['name']}: {verdict}"
-                    f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_result.get('time_ms', 0)} ms, memory={mem_text} MB]\n"
+                    f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_time} ms, memory={mem_text} MB]\n"
                 )
                 group_test_results.append(verdict)
                 results.append(verdict)
@@ -527,18 +533,25 @@ def judge(task_id):
                 log=log,
             )
             verdict = test_result["verdict"]
+            test_time = int(test_result.get("time_ms", 0) or 0)
             mem = test_result.get("memory_mb")
             mem_text = f"{mem:.2f}" if isinstance(mem, (int, float)) else "?"
+            max_time_ms = max(max_time_ms, test_time)
+            if isinstance(mem, (int, float)):
+                max_memory_mb = mem if max_memory_mb is None else max(max_memory_mb, mem)
             if verdict == "WA" and first_wa_test is None:
                 first_wa_test = test["name"]
             log.write(
                 f"Test {test['name']}: {verdict}"
-                f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_result.get('time_ms', 0)} ms, memory={mem_text} MB]\n"
+                f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_time} ms, memory={mem_text} MB]\n"
             )
             results.append(verdict)
 
         final = final_from_results(results)
 
+        peak_memory_text = f"{max_memory_mb:.2f}" if isinstance(max_memory_mb, (int, float)) else "?"
+        log.write(f"Peak time: {max_time_ms} ms\n")
+        log.write(f"Peak memory: {peak_memory_text} MB\n")
         log.write(f"Score: {total_score}\n")
         if first_wa_test is not None:
             log.write(f"First WA test: {first_wa_test}\n")
