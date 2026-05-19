@@ -242,21 +242,6 @@
             overflow-y: auto;
         }
 
-        #submitLog {
-            margin-top: 12px;
-            padding: 10px 12px;
-            border: 1px solid rgba(226, 214, 196, 0.8);
-            border-radius: 10px;
-            background: #0b1119;
-            color: #cdd9e5;
-            font-family: "IBM Plex Mono", monospace;
-            font-size: 12px;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            max-height: 220px;
-            overflow: auto;
-        }
-        
         .panel-title {
             margin: 0 0 10px;
             color: var(--ink);
@@ -670,7 +655,6 @@
                         </tr>
                     </tbody>
                 </table>
-                <pre id="submitLog"></pre>
             </div>
 
             <div class="ctrl">
@@ -802,8 +786,6 @@
                 }, 800);
                 const verdict = await sendToJudge(taskId, code);
                 console.log("⬅ Вердикт от сервера:", verdict);
-                renderSubmitLog(verdict);
-
                 clearTimeout(queueTimer);
                 updateSubmissionRow(pendingRow, verdict.statusLabel || verdict.status || "ERROR");
                 updateSubmissionRowDetails(pendingRow, verdict);
@@ -937,26 +919,6 @@
             }
         }
 
-        function renderSubmitLog(verdict) {
-            const el = document.getElementById("submitLog");
-            if (!el) return;
-            if (!verdict || typeof verdict !== "object") {
-                el.textContent = "";
-                return;
-            }
-            const status = verdict.status || "ERROR";
-            const raw = verdict.rawVerdict || status;
-            const score = verdict.score;
-            const header = [
-                `Status: ${status}`,
-                `Raw verdict: ${raw}`,
-                typeof score === "number" ? `Score: ${score}` : null
-            ].filter(Boolean).join(" | ");
-            const body = String(verdict.log || "").trim() || "Пустой лог.";
-            el.textContent = `${header}\n\n${body}`;
-            el.scrollTop = 0;
-        }
-
         /* ============================================================
    LOAD USER SUBMISSIONS (посылки одного пользователя по задаче)
    ============================================================ */
@@ -1036,8 +998,8 @@
                     verdict === "TESTING" ? "Тестируется" :
                     verdict === "ERROR" ? "Ошибка" :
                     verdict;
-                const timeMs = Number.isFinite(Number(s.timeMs)) ? Math.round(Number(s.timeMs)) : "—";
-                const memoryMb = Number.isFinite(Number(s.memoryMb)) ? Number(s.memoryMb).toFixed(2) : "—";
+                const timeMs = Number.isFinite(Number(s.timeMs)) ? Math.round(Number(s.timeMs)) : 0;
+                const memoryMb = Number.isFinite(Number(s.memoryMb)) ? Number(s.memoryMb).toFixed(2) : "0.00";
 
                 tbody.innerHTML += `
         <tr>
