@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -35,6 +36,37 @@ def _image_for(language):
     return "codebug-runner-cpp"
 
 
+_RSS_MARKER = "__CB_MAXRSS_KB__:"
+
+
+def _extract_rss(stderr_text):
+    text = stderr_text or ""
+    memory_mb = None
+    cleaned_lines = []
+    for line in text.splitlines():
+        m = re.search(rf"{re.escape(_RSS_MARKER)}(\d+)", line.strip())
+        if m:
+            try:
+                kb = int(m.group(1))
+                memory_mb = kb / 1024.0
+            except (TypeError, ValueError):
+                pass
+            continue
+        cleaned_lines.append(line)
+    cleaned = "\n".join(cleaned_lines)
+    if text.endswith("\n"):
+        cleaned += "\n"
+    return cleaned, memory_mb
+
+
+def _with_time(command):
+    if shutil.which("time"):
+        return ["time", "-f", f"{_RSS_MARKER}%M", *command]
+    if os.path.exists("/usr/bin/time"):
+        return ["/usr/bin/time", "-f", f"{_RSS_MARKER}%M", *command]
+    return list(command)
+
+
 def run_in_sandbox(
     command,
     *,
@@ -47,6 +79,7 @@ def run_in_sandbox(
     pids_limit=64,
 ):
     if _docker_available():
+        wrapped_command = _with_time(command)
         docker_cmd = [
             "docker",
             "run",
@@ -67,7 +100,7 @@ def run_in_sandbox(
             "-w",
             "/work",
             _image_for(language),
-            *command,
+            *wrapped_command,
         ]
         try:
             started = time.monotonic()
@@ -79,15 +112,26 @@ def run_in_sandbox(
                 timeout=timeout,
             )
             elapsed_ms = int((time.monotonic() - started) * 1000)
+            stderr_clean, memory_mb_value = _extract_rss(proc.stderr)
             return SandboxResult(
                 proc.returncode,
                 proc.stdout,
-                proc.stderr,
+                stderr_clean,
                 memory_exceeded=proc.returncode in (137, 139),
                 duration_ms=elapsed_ms,
+                memory_mb=memory_mb_value,
             )
         except subprocess.TimeoutExpired as e:
-            return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)
+            elapsed_ms = int((time.monotonic() - started) * 1000)
+            stderr_clean, memory_mb_value = _extract_rss(e.stderr or "")
+            return SandboxResult(
+                -1,
+                e.stdout or "",
+                stderr_clean,
+                timeout=True,
+                duration_ms=elapsed_ms,
+                memory_mb=memory_mb_value,
+            )
 
     if not _allow_unsafe_runner():
         raise SandboxError(
@@ -98,7 +142,7 @@ def run_in_sandbox(
     try:
         started = time.monotonic()
         proc = subprocess.run(
-            command,
+            _with_time(command),
             cwd=workdir,
             input=input_data,
             capture_output=True,
@@ -106,6 +150,22 @@ def run_in_sandbox(
             timeout=timeout,
         )
         elapsed_ms = int((time.monotonic() - started) * 1000)
-        return SandboxResult(proc.returncode, proc.stdout, proc.stderr, duration_ms=elapsed_ms)
+        stderr_clean, memory_mb_value = _extract_rss(proc.stderr)
+        return SandboxResult(
+            proc.returncode,
+            proc.stdout,
+            stderr_clean,
+            duration_ms=elapsed_ms,
+            memory_mb=memory_mb_value,
+        )
     except subprocess.TimeoutExpired as e:
-        return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        stderr_clean, memory_mb_value = _extract_rss(e.stderr or "")
+        return SandboxResult(
+            -1,
+            e.stdout or "",
+            stderr_clean,
+            timeout=True,
+            duration_ms=elapsed_ms,
+            memory_mb=memory_mb_value,
+        )
