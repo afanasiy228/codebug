@@ -670,7 +670,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <pre id="submitLog">Лог последней посылки появится здесь.</pre>
+                <pre id="submitLog"></pre>
             </div>
 
             <div class="ctrl">
@@ -941,7 +941,7 @@
             const el = document.getElementById("submitLog");
             if (!el) return;
             if (!verdict || typeof verdict !== "object") {
-                el.textContent = "Лог недоступен.";
+                el.textContent = "";
                 return;
             }
             const status = verdict.status || "ERROR";
