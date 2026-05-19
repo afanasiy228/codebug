@@ -5,6 +5,7 @@ import glob
 import json
 import tempfile
 import shutil
+import time
 from runner import get_runner
 from sandbox import SandboxError, run_in_sandbox
 
@@ -189,15 +190,16 @@ def compare_with_checker(checker_bin, inp_file, answer_file, program_output):
             timeout=5
         )
     except SandboxError:
-        return "RE"
+        return {"verdict": "RE", "time_ms": 0, "memory_mb": None}
     if res.timeout:
-        return "TL"
+        return {"verdict": "TL", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
     if getattr(res, "memory_exceeded", False) or res.returncode in (137, 139):
-        return "ML"
-    return "OK" if res.returncode == 0 else "WA"
+        return {"verdict": "ML", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
+    return {"verdict": ("OK" if res.returncode == 0 else "WA"), "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
 
 
 def run_standard_test(inp_file, out_file, checker_bin=None):
+    started = time.monotonic()
     try:
         input_data = read_text(inp_file)
         proc = run_in_sandbox(
@@ -208,27 +210,34 @@ def run_standard_test(inp_file, out_file, checker_bin=None):
             timeout=TIME_LIMIT,
         )
     except SandboxError:
-        return "RE"
+        return {"verdict": "RE", "time_ms": int((time.monotonic() - started) * 1000), "memory_mb": None}
 
     if proc.timeout:
-        return "TL"
+        return {"verdict": "TL", "time_ms": proc.duration_ms, "memory_mb": proc.memory_mb}
     if getattr(proc, "memory_exceeded", False) or proc.returncode in (137, 139):
-        return "ML"
+        return {"verdict": "ML", "time_ms": proc.duration_ms, "memory_mb": proc.memory_mb}
 
     if proc.returncode != 0:
-        return "RE"
+        return {"verdict": "RE", "time_ms": proc.duration_ms, "memory_mb": proc.memory_mb}
 
     if checker_bin:
-        return compare_with_checker(checker_bin, inp_file, out_file, proc.stdout)
+        checker_result = compare_with_checker(checker_bin, inp_file, out_file, proc.stdout)
+        checker_result["time_ms"] = max(proc.duration_ms, checker_result.get("time_ms", 0))
+        checker_result["memory_mb"] = proc.memory_mb
+        return checker_result
 
     try:
         with open(out_file, "r") as f:
             correct_output = f.read().strip()
     except Exception:
-        return "RE"
+        return {"verdict": "RE", "time_ms": proc.duration_ms, "memory_mb": proc.memory_mb}
 
     program_output = proc.stdout.strip()
-    return "OK" if program_output == correct_output else "WA"
+    return {
+        "verdict": ("OK" if program_output == correct_output else "WA"),
+        "time_ms": proc.duration_ms,
+        "memory_mb": proc.memory_mb
+    }
 
 
 def compile_interactor(task_path, problem, log):
@@ -250,6 +259,7 @@ def compile_interactor(task_path, problem, log):
 
 
 def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
+    started = time.monotonic()
     local_in = f"interactive_{test_name}.in"
     local_answer = f"interactive_{test_name}.ans"
     protocol = f"protocol_{test_name}.log"
@@ -286,23 +296,23 @@ def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
         )
     except SandboxError as e:
         write_text(protocol, str(e) + "\n")
-        return "RE"
+        return {"verdict": "RE", "time_ms": int((time.monotonic() - started) * 1000), "memory_mb": None}
     protocol_text = read_text(protocol) if os.path.isfile(protocol) else ""
     if res.stderr:
         protocol_text += ("\n" if protocol_text else "") + res.stderr
     if protocol_text:
         log.write(f"Protocol log {test_name}:\n{protocol_text}\n")
     if res.timeout:
-        return "TL"
+        return {"verdict": "TL", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
     if getattr(res, "memory_exceeded", False) or res.returncode in (137, 139):
-        return "ML"
-    return "OK" if res.returncode == 0 else "WA"
+        return {"verdict": "ML", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
+    return {"verdict": ("OK" if res.returncode == 0 else "WA"), "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
 
 
 def run_test(inp_file, out_file, checker_bin=None, problem=None, interactor_bin=None, test_name="test", log=None):
     if task_type(problem) == "interactive":
         if not interactor_bin:
-            return "RE"
+            return {"verdict": "RE", "time_ms": 0, "memory_mb": None}
         return run_interactive_test(inp_file, out_file, interactor_bin, test_name, log)
     return run_standard_test(inp_file, out_file, checker_bin)
 
@@ -445,6 +455,7 @@ def judge(task_id):
         results = []
         group_results = {}
         total_score = 0
+        first_wa_test = None
 
         if not tests:
             log.write("Error: no tests found\n")
@@ -471,7 +482,7 @@ def judge(task_id):
                 test = tests_by_name.get(str(name))
                 if not test:
                     continue
-                verdict = run_test(
+                test_result = run_test(
                     test["input"],
                     test["answer"],
                     checker_bin,
@@ -480,9 +491,14 @@ def judge(task_id):
                     test_name=str(test["name"]),
                     log=log,
                 )
+                verdict = test_result["verdict"]
+                mem = test_result.get("memory_mb")
+                mem_text = f"{mem:.2f}" if isinstance(mem, (int, float)) else "?"
+                if verdict == "WA" and first_wa_test is None:
+                    first_wa_test = test["name"]
                 log.write(
                     f"Test {test['name']}: {verdict}"
-                    f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}]\n"
+                    f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_result.get('time_ms', 0)} ms, memory={mem_text} MB]\n"
                 )
                 group_test_results.append(verdict)
                 results.append(verdict)
@@ -501,7 +517,7 @@ def judge(task_id):
             str(name) for group in groups for name in group.get("tests", [])
         }]
         for test in missing_tests:
-            verdict = run_test(
+            test_result = run_test(
                 test["input"],
                 test["answer"],
                 checker_bin,
@@ -510,15 +526,22 @@ def judge(task_id):
                 test_name=str(test["name"]),
                 log=log,
             )
+            verdict = test_result["verdict"]
+            mem = test_result.get("memory_mb")
+            mem_text = f"{mem:.2f}" if isinstance(mem, (int, float)) else "?"
+            if verdict == "WA" and first_wa_test is None:
+                first_wa_test = test["name"]
             log.write(
                 f"Test {test['name']}: {verdict}"
-                f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}]\n"
+                f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_result.get('time_ms', 0)} ms, memory={mem_text} MB]\n"
             )
             results.append(verdict)
 
         final = final_from_results(results)
 
         log.write(f"Score: {total_score}\n")
+        if first_wa_test is not None:
+            log.write(f"First WA test: {first_wa_test}\n")
         log.write(f"Final verdict: {final}\n")
         return final
 

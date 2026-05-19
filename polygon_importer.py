@@ -35,6 +35,31 @@ def _natural_key(value):
     return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", value)]
 
 
+def _normalize_statement_tex(raw_text):
+    text = str(raw_text or "")
+    if not text.strip():
+        return text
+
+    # Часто в Polygon-пакете в plain-тексте лимиты склеиваются в одну строку.
+    glued_tokens = [
+        "стандартный вводстандартный вывод1 секунда256 мегабайт",
+        "standard inputstandard output1 second256 megabytes",
+    ]
+    for token in glued_tokens:
+        text = text.replace(token, "")
+
+    # Если в statement почти нет TeX-команд, приводим к аккуратному plain-LaTeX блоку.
+    has_tex = bool(re.search(r"\\(section|subsection|begin|end|item|textbf|emph|frac|sum|cdot|le|ge)", text))
+    if not has_tex:
+        lines = [line.rstrip() for line in text.splitlines()]
+        while lines and not lines[0].strip():
+            lines.pop(0)
+        while lines and not lines[-1].strip():
+            lines.pop()
+        return "\n\n".join(line for line in lines if line.strip())
+    return text
+
+
 def _find_problem_xml(root):
     direct = os.path.join(root, "problem.xml")
     if os.path.isfile(direct):
@@ -119,6 +144,7 @@ def parse_polygon_package(extracted_dir, task_id):
     ])
     if not statement_tex.strip():
         raise PolygonImportError("russian statement tex not found")
+    statement_tex = _normalize_statement_tex(statement_tex)
 
     tests = _discover_tests(root_dir, xml_root)
 

@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 
 
@@ -15,6 +16,8 @@ class SandboxResult:
     stderr: str
     timeout: bool = False
     memory_exceeded: bool = False
+    duration_ms: int = 0
+    memory_mb: float | None = None
 
 
 def _allow_unsafe_runner():
@@ -67,6 +70,7 @@ def run_in_sandbox(
             *command,
         ]
         try:
+            started = time.monotonic()
             proc = subprocess.run(
                 docker_cmd,
                 input=input_data,
@@ -74,11 +78,13 @@ def run_in_sandbox(
                 text=True,
                 timeout=timeout,
             )
+            elapsed_ms = int((time.monotonic() - started) * 1000)
             return SandboxResult(
                 proc.returncode,
                 proc.stdout,
                 proc.stderr,
                 memory_exceeded=proc.returncode in (137, 139),
+                duration_ms=elapsed_ms,
             )
         except subprocess.TimeoutExpired as e:
             return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)
@@ -90,6 +96,7 @@ def run_in_sandbox(
         )
 
     try:
+        started = time.monotonic()
         proc = subprocess.run(
             command,
             cwd=workdir,
@@ -98,6 +105,7 @@ def run_in_sandbox(
             text=True,
             timeout=timeout,
         )
-        return SandboxResult(proc.returncode, proc.stdout, proc.stderr)
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        return SandboxResult(proc.returncode, proc.stdout, proc.stderr, duration_ms=elapsed_ms)
     except subprocess.TimeoutExpired as e:
         return SandboxResult(-1, e.stdout or "", e.stderr or "", timeout=True)

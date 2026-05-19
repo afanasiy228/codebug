@@ -1144,6 +1144,7 @@
 
         let currentStatementLang = localStorage.getItem("codebugStatementLang") || "ru";
         let statementSections = { ru: "", en: "" };
+        let statementPreludeHtml = "";
 
         function setStatementLanguage(lang) {
             currentStatementLang = lang === "en" ? "en" : "ru";
@@ -1153,10 +1154,24 @@
             });
             const target = document.getElementById("taskStatement");
             if (!target) return;
-            target.innerHTML = statementSections[currentStatementLang] || statementSections.ru || "";
+            statementPreludeHtml = buildStatementPrelude(currentStatementLang);
+            target.innerHTML = `${statementPreludeHtml}${statementSections[currentStatementLang] || statementSections.ru || ""}`;
             if (window.MathJax?.typesetPromise) {
                 MathJax.typesetPromise([target]).catch(console.warn);
             }
+        }
+
+        function buildStatementPrelude(lang) {
+            if (lang === "en") {
+                return `
+                  <div class="io-meta-block" style="margin:0 0 14px;padding:10px 12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.03);font-weight:600;">
+                    Standard input<br>Standard output<br>1 second<br>256 MB
+                  </div>`;
+            }
+            return `
+              <div class="io-meta-block" style="margin:0 0 14px;padding:10px 12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.03);font-weight:600;">
+                стандартный ввод<br>стандартный вывод<br>1 секунда<br>256 мегабайт
+              </div>`;
         }
 
         function splitStatementByLanguage(rawHtml) {
@@ -1264,17 +1279,14 @@
                     const deps = Array.isArray(g.dependencies) && g.dependencies.length
                         ? g.dependencies.join(", ")
                         : "—";
-                    const tests = Array.isArray(g.tests) && g.tests.length
-                        ? g.tests.join(", ")
-                        : "—";
-                    return `<tr><td>${gid}</td><td>${name}</td><td>${points}</td><td>${escapeHtml(String(deps))}</td><td>${escapeHtml(String(tests))}</td></tr>`;
+                    return `<tr><td>${gid}</td><td>${name}</td><td>${points}</td><td>${escapeHtml(String(deps))}</td></tr>`;
                 })
                 .join("");
             return `
                 <h3 class="section-title">Подгруппы</h3>
                 <table class="test-table">
                     <thead>
-                        <tr><th>ID</th><th>Название</th><th>Баллы</th><th>Зависимости</th><th>Тесты</th></tr>
+                        <tr><th>ID</th><th>Название</th><th>Баллы</th><th>Зависимости</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
@@ -1397,6 +1409,7 @@
                     if (!res.ok) throw new Error(`statement_html_${res.status}`);
                     const html = await res.text();
                     statementSections = splitStatementByLanguage(html);
+                    statementPreludeHtml = buildStatementPrelude(currentStatementLang);
                     setStatementLanguage(currentStatementLang);
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement/russian.html не найден";
@@ -1409,6 +1422,7 @@
                     const md = await res.text();
 
                     statementSections = { ru: renderMarkdown(md), en: "" };
+                    statementPreludeHtml = buildStatementPrelude("ru");
                     setStatementLanguage("ru");
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement.md не найден";

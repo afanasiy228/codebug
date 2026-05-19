@@ -658,7 +658,16 @@ def _build_problem_v2(task_id, meta, files, tests):
     if checker_path:
         checker["path"] = checker_path
 
+    scoring_mode = str(meta.get("scoringMode") or "ioi").strip().lower()
     groups = _normalize_groups(meta.get("groups"), test_manifest)
+    if scoring_mode == "icpc":
+        groups = [{
+            "id": 1,
+            "name": "all tests",
+            "points": 100,
+            "dependencies": [],
+            "tests": [t["name"] for t in test_manifest]
+        }]
     subtasks = [{
         "id": group["id"],
         "name": group["name"],
@@ -677,6 +686,7 @@ def _build_problem_v2(task_id, meta, files, tests):
         "type": meta.get("type", ""),
         "tags": meta.get("tags") or [],
         "taskType": task_type,
+        "scoringMode": "icpc" if scoring_mode == "icpc" else "ioi",
         "statement": {
             "language": "ru",
             "tex": "statement/russian.tex",
@@ -1314,6 +1324,9 @@ def tasks_import_polygon():
     task_type = str(request.form.get("taskType") or "standard").strip().lower()
     if task_type not in ("standard", "grader", "interactive"):
         task_type = "standard"
+    scoring_mode = str(request.form.get("scoringMode") or "ioi").strip().lower()
+    if scoring_mode not in ("ioi", "icpc"):
+        scoring_mode = "ioi"
 
     title_override = (request.form.get("title") or "").strip()
     difficulty_override = (request.form.get("difficulty") or "").strip()
@@ -1335,6 +1348,7 @@ def tasks_import_polygon():
                 payload["meta"]["title"] = title_override
             payload["meta"]["language"] = language
             payload["meta"]["taskType"] = task_type
+            payload["meta"]["scoringMode"] = scoring_mode
             if difficulty_override:
                 payload["meta"]["difficulty"] = difficulty_override
             if type_override:

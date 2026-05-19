@@ -588,6 +588,10 @@
           <option value="grader">grader</option>
           <option value="interactive">interactive</option>
         </select>
+        <select id="polygonScoringMode" class="admin-input">
+          <option value="ioi">IOI (подгруппы)</option>
+          <option value="icpc">ICPC (без подгрупп)</option>
+        </select>
         <div class="admin-actions">
           <button type="button" onclick="adminImportPolygon()">Импортировать polygon.zip</button>
         </div>
@@ -1130,12 +1134,14 @@
       const tags = (document.getElementById("polygonMetaTags")?.value || "").trim();
       const language = normalizeTaskLanguage(document.getElementById("polygonMetaLanguage")?.value || "cpp");
       const taskType = (document.getElementById("polygonMetaTaskType")?.value || "standard").trim();
+      const scoringMode = (document.getElementById("polygonScoringMode")?.value || "ioi").trim().toLowerCase();
 
       const form = new FormData();
       form.append("archive", file);
       form.append("buggyCode", buggyCode);
       form.append("language", language);
       form.append("taskType", taskType);
+      form.append("scoringMode", scoringMode);
       if (title) form.append("title", title);
       if (difficulty) form.append("difficulty", difficulty);
       if (type) form.append("type", type);
