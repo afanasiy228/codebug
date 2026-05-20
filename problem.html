@@ -813,7 +813,18 @@
             if (!verdict || typeof verdict !== "object") return false;
             const status = String(verdict.status || "").trim().toUpperCase();
             const raw = String(verdict.rawVerdict || "").trim().toUpperCase();
-            return status === "OK" || raw === "OK";
+            if (status === "OK" || raw === "OK") return true;
+
+            const scoreField = Number(verdict.score);
+            if (Number.isFinite(scoreField) && scoreField >= 100) return true;
+
+            const numericStatus = Number(String(verdict.status || "").replace(",", "."));
+            if (Number.isFinite(numericStatus) && numericStatus >= 100) return true;
+
+            const numericLabel = Number(String(verdict.statusLabel || "").replace(",", "."));
+            if (Number.isFinite(numericLabel) && numericLabel >= 100) return true;
+
+            return false;
         }
 
         async function submitCode() {
