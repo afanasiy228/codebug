@@ -447,7 +447,13 @@
             const stats = data.stats || {};
 
             // ---- BASIC INFO ----
-            document.getElementById("username").innerText = data.login;
+            const usernameEl = document.getElementById("username");
+            usernameEl.innerText = data.login;
+            if (currentUser === "ADMIN" && data.login === "ADMIN") {
+                usernameEl.style.color = "#ff0000";
+            } else {
+                usernameEl.style.color = "";
+            }
             document.getElementById("userid").innerText = data.id || "—";
             document.getElementById("created").innerText =
                 data.created ? new Date(data.created).toLocaleDateString() : "—";

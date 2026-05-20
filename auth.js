@@ -259,7 +259,7 @@ function updateNavbar() {
     const accountLinks = user
         ? `
            <a href="submissions.html">Посылки</a>
-           <a href="profile.html" class="nav-profile">${user}</a>`
+           <a href="profile.html" class="nav-profile"${user === "ADMIN" ? ' style="color:#ff0000;"' : ""}>${user}</a>`
         : `<a href="auth.html">Войти / Регистрация</a>`;
 
     const drawerLinks = `${commonLinks}${accountLinks}`;
