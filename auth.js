@@ -238,11 +238,17 @@ function updateNavbar() {
     const nav = document.getElementById("nav-links");
     if (!nav) return;
 
+    const logos = document.querySelectorAll(".logo");
+    logos.forEach((logo) => {
+        if (logo.querySelector("a")) return;
+        const text = (logo.textContent || "CodeBug").trim() || "CodeBug";
+        logo.innerHTML = `<a href="index.html" style="color:inherit;text-decoration:none;">${text}</a>`;
+    });
+
     const user = getUser();
     ensureMobileNavStyles();
 
     const commonLinks = `
-        <a href="index.html">Главная</a>
         <a href="train.html">Тренировка</a>
         <a href="contests.html">Соревнования</a>
         <a href="rating.html">Рейтинг</a>
