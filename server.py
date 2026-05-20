@@ -1113,6 +1113,7 @@ def submit():
     peak_time_ms = None
     peak_memory_mb = None
     first_fail_label = None
+    passed_groups = []
     for line in log_text.splitlines():
         if line.startswith("Score:"):
             try:
@@ -1131,6 +1132,16 @@ def submit():
                 peak_memory_mb = None
         if line.startswith("First failing test:"):
             first_fail_label = line.split(":", 1)[1].strip() or None
+        if line.startswith("Group ") and " verdict:" in line:
+            # Example: Group 3 verdict: OK
+            try:
+                left, right = line.split(" verdict:", 1)
+                gid = int(left.replace("Group", "").strip())
+                verdict_value = right.strip().upper()
+                if verdict_value == "OK":
+                    passed_groups.append(gid)
+            except Exception:
+                pass
         if line.startswith("Final verdict:"):
             final = line.split(":")[1].strip()
             break
@@ -1159,7 +1170,9 @@ def submit():
                 "verdict": public_status,
                 "statusLabel": status_label,
                 "timeMs": peak_time_ms,
-                "memoryMb": peak_memory_mb
+                "memoryMb": peak_memory_mb,
+                "score": score_value,
+                "passedGroups": sorted(set(passed_groups))
             })
         except Exception as e:
             firebase_error = f"firebase_update_error: {e}"
@@ -1173,6 +1186,7 @@ def submit():
         "timeMs": peak_time_ms,
         "memoryMb": peak_memory_mb,
         "firstFail": first_fail_label,
+        "passedGroups": sorted(set(passed_groups)),
         "log": log_text,
         "submissionId": submission_ref.key if submission_ref is not None else None,
         "firebaseSaved": firebase_saved,

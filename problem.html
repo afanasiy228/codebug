@@ -644,6 +644,8 @@
                         <tr>
                             <th>#</th>
                             <th>Статус</th>
+                            <th>Баллы</th>
+                            <th>Группы</th>
                             <th>MS</th>
                             <th>MB</th>
                             <th>Время</th>
@@ -651,7 +653,7 @@
                     </thead>
                     <tbody id="subs">
                         <tr>
-                            <td colspan="5" style="color:var(--muted);text-align:center;">Пока нет посылок</td>
+                            <td colspan="7" style="color:var(--muted);text-align:center;">Пока нет посылок</td>
                         </tr>
                     </tbody>
                 </table>
@@ -877,6 +879,8 @@
                 <td style="color:#c9c9c9; font-weight:600;">В очереди</td>
                 <td>—</td>
                 <td>—</td>
+                <td>—</td>
+                <td>—</td>
                 <td>${time}</td>
             `;
             tbody.prepend(tr);
@@ -905,8 +909,19 @@
 
         function updateSubmissionRowDetails(row, verdictObj) {
             if (!row || !verdictObj) return;
-            const msCell = row.children[2];
-            const mbCell = row.children[3];
+            const scoreCell = row.children[2];
+            const groupsCell = row.children[3];
+            const msCell = row.children[4];
+            const mbCell = row.children[5];
+            if (scoreCell) {
+                scoreCell.textContent = Number.isFinite(Number(verdictObj.score))
+                    ? String(Math.round(Number(verdictObj.score)))
+                    : "—";
+            }
+            if (groupsCell) {
+                const groups = Array.isArray(verdictObj.passedGroups) ? verdictObj.passedGroups : [];
+                groupsCell.textContent = groups.length ? groups.join(",") : "—";
+            }
             if (msCell) {
                 msCell.textContent = Number.isFinite(Number(verdictObj.timeMs))
                     ? String(Math.round(Number(verdictObj.timeMs)))
@@ -943,23 +958,23 @@
 
             const dbRef = window.db || null;
             if (!dbRef) {
-                tbody.innerHTML = "<tr><td colspan='5' style='color:#999'>Firebase временно недоступен</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Firebase временно недоступен</td></tr>";
                 return;
             }
 
-            tbody.innerHTML = "<tr><td colspan='5' style='color:#999'>Загрузка…</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Загрузка…</td></tr>";
 
             let snap;
             try {
                 snap = await dbRef.ref("submissions/global").get();
             } catch (err) {
                 console.warn("⚠ Не удалось загрузить посылки:", err);
-                tbody.innerHTML = "<tr><td colspan='5' style='color:#999'>Не удалось загрузить посылки</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Не удалось загрузить посылки</td></tr>";
                 return;
             }
 
             if (!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='5'>Пока нет посылок…</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
                 return;
             }
 
@@ -970,7 +985,7 @@
                 .sort((a, b) => b.date - a.date);
 
             if (mine.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='5'>Пока нет посылок…</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
                 return;
             }
 
@@ -998,6 +1013,10 @@
                     verdict === "TESTING" ? "Тестируется" :
                     verdict === "ERROR" ? "Ошибка" :
                     verdict;
+                const score = Number.isFinite(Number(s.score)) ? Math.round(Number(s.score)) : "—";
+                const passedGroups = Array.isArray(s.passedGroups) && s.passedGroups.length
+                    ? s.passedGroups.join(",")
+                    : "—";
                 const timeMs = Number.isFinite(Number(s.timeMs)) ? Math.round(Number(s.timeMs)) : 0;
                 const memoryMb = Number.isFinite(Number(s.memoryMb)) ? Number(s.memoryMb).toFixed(2) : "0.00";
 
@@ -1007,6 +1026,8 @@
             <td style="color:${verdictColor}; font-weight:600;">
                 ${verdictLabel}
             </td>
+            <td>${score}</td>
+            <td>${passedGroups}</td>
             <td>${timeMs}</td>
             <td>${memoryMb}</td>
             <td>${new Date(s.date).toLocaleTimeString()}</td>
