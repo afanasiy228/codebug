@@ -720,6 +720,22 @@
 
         let TASK_DIFFICULTY = "easy";
         let TASK_LANGUAGE = "cpp";
+        let SUBS_POLL_TIMER = null;
+
+        function startSubmissionPolling() {
+            if (SUBS_POLL_TIMER) clearInterval(SUBS_POLL_TIMER);
+            let ticks = 0;
+            SUBS_POLL_TIMER = setInterval(async () => {
+                ticks += 1;
+                await loadMySubsForThisProblem();
+                const firstStatus = document.querySelector("#subs tr td:nth-child(2)")?.textContent?.trim()?.toUpperCase() || "";
+                const stillPending = firstStatus === "В ОЧЕРЕДИ" || firstStatus === "ТЕСТИРУЕТСЯ" || firstStatus === "QUEUE" || firstStatus === "TESTING";
+                if (!stillPending || ticks > 120) {
+                    clearInterval(SUBS_POLL_TIMER);
+                    SUBS_POLL_TIMER = null;
+                }
+            }, 1500);
+        }
 
         function normalizeTaskLanguage(lang) {
             const value = String(lang || "").toLowerCase().trim();
@@ -795,6 +811,9 @@
                     console.warn("Firebase save failed:", verdict.firebaseError);
                 } else {
                     loadMySubsForThisProblem();
+                    if ((verdict.statusLabel || verdict.status) === "QUEUE") {
+                        startSubmissionPolling();
+                    }
                 }
                 if (isSolvedVerdict(verdict)) submitOK(user, taskId, TASK_DIFFICULTY);
                 console.log("💾 Firebase сохранено OK");

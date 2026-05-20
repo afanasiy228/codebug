@@ -5,6 +5,8 @@ import tempfile
 import re
 import shutil
 import zipfile
+import threading
+from collections import deque
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
@@ -94,6 +96,10 @@ def init_firebase():
 
 
 FIREBASE_READY = init_firebase()
+SUBMIT_QUEUE = deque()
+SUBMIT_QUEUE_LOCK = threading.Lock()
+SUBMIT_QUEUE_COND = threading.Condition(SUBMIT_QUEUE_LOCK)
+SUBMIT_WORKER_STARTED = False
 
 
 def _is_admin_request():
@@ -216,6 +222,185 @@ def sync_tasks_repo(force=False):
                 if name.isdigit():
                     return True
         return False
+
+
+def _parse_judge_log(log_text):
+    final = "CE"
+    score_value = None
+    peak_time_ms = None
+    peak_memory_mb = None
+    first_fail_label = None
+    passed_groups = []
+    for line in log_text.splitlines():
+        if line.startswith("Score:"):
+            try:
+                score_value = int(line.split(":", 1)[1].strip())
+            except (TypeError, ValueError):
+                score_value = None
+        if line.startswith("Peak time:"):
+            try:
+                peak_time_ms = int(line.split(":", 1)[1].strip().split()[0])
+            except (TypeError, ValueError, IndexError):
+                peak_time_ms = None
+        if line.startswith("Peak memory:"):
+            try:
+                peak_memory_mb = float(line.split(":", 1)[1].strip().split()[0])
+            except (TypeError, ValueError, IndexError):
+                peak_memory_mb = None
+        if line.startswith("First failing test:"):
+            first_fail_label = line.split(":", 1)[1].strip() or None
+        if line.startswith("Group ") and " verdict:" in line:
+            try:
+                left, right = line.split(" verdict:", 1)
+                gid = int(left.replace("Group", "").strip())
+                verdict_value = right.strip().upper()
+                if verdict_value == "OK":
+                    passed_groups.append(gid)
+            except Exception:
+                pass
+        if line.startswith("Final verdict:"):
+            final = line.split(":")[1].strip()
+            break
+    return {
+        "final": final,
+        "score": score_value,
+        "timeMs": peak_time_ms,
+        "memoryMb": peak_memory_mb,
+        "firstFail": first_fail_label,
+        "passedGroups": sorted(set(passed_groups)),
+    }
+
+
+def _run_submission_job(job):
+    task = str(job["task"])
+    code = str(job["code"])
+    submission_id = job.get("submission_id")
+    task_meta = read_task_meta(task)
+    task_lang = normalize_language(task_meta.get("language"))
+    source_name = "sol.py" if task_lang == "python" else "sol.cpp"
+
+    if submission_id and FIREBASE_READY:
+        try:
+            db.reference(f"submissions/global/{submission_id}").update({"verdict": "TESTING"})
+        except Exception as e:
+            print("Queue update TESTING failed:", e)
+
+    log_text = "(log.txt не найден)"
+    result_obj = {
+        "status": "SE",
+        "statusLabel": "SE",
+        "rawVerdict": "SE",
+        "score": None,
+        "timeMs": None,
+        "memoryMb": None,
+        "firstFail": None,
+        "passedGroups": [],
+        "log": log_text,
+    }
+    try:
+        with _runtime_tempdir("codebug_submit_") as workdir:
+            source_path = os.path.join(workdir, source_name)
+            with open(source_path, "w") as f:
+                f.write(code)
+
+            judge_env = {
+                **os.environ,
+                "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
+                "JUDGE_SOURCE": source_name,
+                "JUDGE_BINARY": "sol",
+                "JUDGE_LANG": task_lang,
+                "JUDGE_LOG_FILE": "log.txt"
+            }
+            result = subprocess.run(
+                ["python3", os.path.abspath(JUDGE_SCRIPT), task],
+                capture_output=True,
+                text=True,
+                timeout=JUDGE_PROCESS_TIMEOUT,
+                cwd=workdir,
+                env=judge_env
+            )
+            log_path = os.path.join(workdir, "log.txt")
+            if os.path.exists(log_path):
+                with open(log_path, "r") as f:
+                    log_text = f.read()
+            else:
+                log_text = (result.stdout or "") + "\n" + (result.stderr or "")
+    except subprocess.TimeoutExpired:
+        log_text = "Judge timeout"
+        result_obj.update({
+            "status": "TL",
+            "statusLabel": "TL",
+            "rawVerdict": "TL",
+            "log": log_text
+        })
+    except Exception as e:
+        print("Judge launch error in queue worker:", e)
+        log_text = "judge_launch_failed"
+        result_obj.update({
+            "status": "SE",
+            "statusLabel": "SE",
+            "rawVerdict": "SE",
+            "log": log_text
+        })
+    else:
+        parsed = _parse_judge_log(log_text)
+        final = parsed["final"]
+        public_status = final
+        problem_cfg = read_problem_config(task)
+        scoring_mode = str((problem_cfg or {}).get("scoringMode") or "ioi").strip().lower()
+        has_groups = bool((problem_cfg or {}).get("groups")) and scoring_mode != "icpc"
+        terminal_errors = {"CE", "TL", "RE", "ML", "SE", "NO_TESTS"}
+        if has_groups and final not in terminal_errors and parsed["score"] is not None:
+            public_status = str(parsed["score"])
+        status_label = public_status
+        if parsed["firstFail"] and final in {"WA", "TL", "ML", "RE"}:
+            status_label = parsed["firstFail"]
+        result_obj.update({
+            "status": public_status,
+            "statusLabel": status_label,
+            "rawVerdict": final,
+            "score": parsed["score"],
+            "timeMs": parsed["timeMs"],
+            "memoryMb": parsed["memoryMb"],
+            "firstFail": parsed["firstFail"],
+            "passedGroups": parsed["passedGroups"],
+            "log": log_text,
+        })
+
+    if submission_id and FIREBASE_READY:
+        try:
+            db.reference(f"submissions/global/{submission_id}").update({
+                "verdict": result_obj["status"],
+                "statusLabel": result_obj["statusLabel"],
+                "timeMs": result_obj["timeMs"],
+                "memoryMb": result_obj["memoryMb"],
+                "score": result_obj["score"],
+                "passedGroups": result_obj["passedGroups"],
+            })
+        except Exception as e:
+            print("Queue final firebase update failed:", e)
+
+
+def _submit_worker():
+    while True:
+        with SUBMIT_QUEUE_COND:
+            while not SUBMIT_QUEUE:
+                SUBMIT_QUEUE_COND.wait()
+            job = SUBMIT_QUEUE.popleft()
+        try:
+            _run_submission_job(job)
+        except Exception as e:
+            print("Submission worker fatal job error:", e)
+
+
+def _ensure_submit_worker():
+    global SUBMIT_WORKER_STARTED
+    with SUBMIT_QUEUE_LOCK:
+        if SUBMIT_WORKER_STARTED:
+            return
+        t = threading.Thread(target=_submit_worker, daemon=True, name="submit-worker")
+        t.start()
+        SUBMIT_WORKER_STARTED = True
 
 
 def task_dir(task_id):
@@ -1017,6 +1202,7 @@ def submit():
     print(f"Task = {task}")
     print("Code length:", len(code))
     print("User =", login)
+    _ensure_submit_worker()
 
     if not sync_tasks_repo():
         return jsonify({
@@ -1043,7 +1229,6 @@ def submit():
         try:
             submission_ref = db.reference("submissions/global").push()
             submission_ref.set(record)
-            submission_ref.update({"verdict": "TESTING"})
             firebase_saved = True
         except Exception as e:
             firebase_error = f"firebase_write_error: {e}"
@@ -1051,144 +1236,23 @@ def submit():
     else:
         firebase_error = "firebase_not_ready"
 
-    # --- изолированный запуск judge для конкретной посылки ---
-    print("Запуск judge.py...")
-    log_text = "(log.txt не найден)"
-    task_meta = read_task_meta(task)
-    task_lang = normalize_language(task_meta.get("language"))
-    source_name = "sol.py" if task_lang == "python" else "sol.cpp"
-    try:
-        with _runtime_tempdir("codebug_submit_") as workdir:
-            source_path = os.path.join(workdir, source_name)
-            with open(source_path, "w") as f:
-                f.write(code)
-
-            judge_env = {
-                **os.environ,
-                "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
-                "JUDGE_SOURCE": source_name,
-                "JUDGE_BINARY": "sol",
-                "JUDGE_LANG": task_lang,
-                "JUDGE_LOG_FILE": "log.txt"
-            }
-            result = subprocess.run(
-                ["python3", os.path.abspath(JUDGE_SCRIPT), task],
-                capture_output=True,
-                text=True,
-                timeout=JUDGE_PROCESS_TIMEOUT,
-                cwd=workdir,
-                env=judge_env
-            )
-
-            log_path = os.path.join(workdir, "log.txt")
-            if os.path.exists(log_path):
-                with open(log_path, "r") as f:
-                    log_text = f.read()
-            else:
-                log_text = (result.stdout or "") + "\n" + (result.stderr or "")
-    except subprocess.TimeoutExpired:
-        if submission_ref is not None:
-            submission_ref.update({"verdict": "TL"})
-        return jsonify({
-            "status": "TL",
-            "log": "Judge timeout",
-            "submissionId": submission_ref.key if submission_ref is not None else None,
-            "firebaseSaved": firebase_saved,
-            "firebaseError": firebase_error
+    submission_id = submission_ref.key if submission_ref is not None else None
+    with SUBMIT_QUEUE_COND:
+        SUBMIT_QUEUE.append({
+            "task": task,
+            "code": code,
+            "submission_id": submission_id,
+            "login": str(login),
+            "contestId": contest_id or None,
         })
-    except Exception as e:
-        print("Judge launch error:", e)
-        if submission_ref is not None:
-            try:
-                submission_ref.update({"verdict": "SE"})
-            except Exception as update_error:
-                print("Firebase update error:", update_error)
-        return jsonify({"error": "judge_launch_failed"}), 500
-
-    print("judge.py завершён")
-
-    # --- определение финального вердикта ---
-    final = "CE"
-    score_value = None
-    peak_time_ms = None
-    peak_memory_mb = None
-    first_fail_label = None
-    passed_groups = []
-    for line in log_text.splitlines():
-        if line.startswith("Score:"):
-            try:
-                score_value = int(line.split(":", 1)[1].strip())
-            except (TypeError, ValueError):
-                score_value = None
-        if line.startswith("Peak time:"):
-            try:
-                peak_time_ms = int(line.split(":", 1)[1].strip().split()[0])
-            except (TypeError, ValueError, IndexError):
-                peak_time_ms = None
-        if line.startswith("Peak memory:"):
-            try:
-                peak_memory_mb = float(line.split(":", 1)[1].strip().split()[0])
-            except (TypeError, ValueError, IndexError):
-                peak_memory_mb = None
-        if line.startswith("First failing test:"):
-            first_fail_label = line.split(":", 1)[1].strip() or None
-        if line.startswith("Group ") and " verdict:" in line:
-            # Example: Group 3 verdict: OK
-            try:
-                left, right = line.split(" verdict:", 1)
-                gid = int(left.replace("Group", "").strip())
-                verdict_value = right.strip().upper()
-                if verdict_value == "OK":
-                    passed_groups.append(gid)
-            except Exception:
-                pass
-        if line.startswith("Final verdict:"):
-            final = line.split(":")[1].strip()
-            break
-
-    # Fallback: if judge terminated abnormally without explicit final verdict.
-    if "Final verdict:" not in log_text:
-        if "Sandbox Error" in log_text or result.returncode != 0:
-            final = "SE"
-
-    public_status = final
-    problem_cfg = read_problem_config(task)
-    scoring_mode = str((problem_cfg or {}).get("scoringMode") or "ioi").strip().lower()
-    has_groups = bool((problem_cfg or {}).get("groups")) and scoring_mode != "icpc"
-    terminal_errors = {"CE", "TL", "RE", "ML", "SE", "NO_TESTS"}
-    if has_groups and final not in terminal_errors and score_value is not None:
-        public_status = str(score_value)
-
-    status_label = public_status
-    if first_fail_label and final in {"WA", "TL", "ML", "RE"}:
-        status_label = first_fail_label
-
-    print("Final verdict =", final, "public status =", public_status, "score =", score_value, "time_ms =", peak_time_ms, "memory_mb =", peak_memory_mb, "first_fail =", first_fail_label)
-    if submission_ref is not None:
-        try:
-            submission_ref.update({
-                "verdict": public_status,
-                "statusLabel": status_label,
-                "timeMs": peak_time_ms,
-                "memoryMb": peak_memory_mb,
-                "score": score_value,
-                "passedGroups": sorted(set(passed_groups))
-            })
-        except Exception as e:
-            firebase_error = f"firebase_update_error: {e}"
-            print(firebase_error)
+        queue_position = len(SUBMIT_QUEUE)
+        SUBMIT_QUEUE_COND.notify()
 
     return jsonify({
-        "status": public_status,
-        "statusLabel": status_label,
-        "rawVerdict": final,
-        "score": score_value,
-        "timeMs": peak_time_ms,
-        "memoryMb": peak_memory_mb,
-        "firstFail": first_fail_label,
-        "passedGroups": sorted(set(passed_groups)),
-        "log": log_text,
-        "submissionId": submission_ref.key if submission_ref is not None else None,
+        "status": "QUEUE",
+        "statusLabel": "QUEUE",
+        "submissionId": submission_id,
+        "queuePosition": queue_position,
         "firebaseSaved": firebase_saved,
         "firebaseError": firebase_error
     })
