@@ -308,6 +308,7 @@
             arr.forEach((u, index) => {
                 const profileUrl = `profile.html?user=${encodeURIComponent(u.login)}`;
                 const safeLogin = escapeHtml(u.login);
+                const loginColor = u.login === "ADMIN" ? "#ff0000" : "inherit";
                 let avatarHTML = u.avatar ?
                     `<a href="${profileUrl}"><img class="ava" src="${u.avatar}"></a>` :
                     `<a href="${profileUrl}" style="text-decoration:none;"><div class="ava default">${safeLogin[0].toUpperCase()}</div></a>`;
@@ -330,7 +331,7 @@
             <div class="user-block">
                 ${avatarHTML}
                 <div>
-                    <div class="user-name"><a href="${profileUrl}">${safeLogin}</a></div>
+                    <div class="user-name"><a href="${profileUrl}" style="color:${loginColor};">${safeLogin}</a></div>
                     <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
             </div>
