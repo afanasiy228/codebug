@@ -61,6 +61,19 @@ def _normalize_statement_tex(raw_text):
     text = re.sub(r"\\end\{problem\}", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\\(InputFile|OutputFile|Interaction|Examples?)\b", r"\\section*{\1}", text)
 
+    # Если statement был вставлен через экранированный JSON, там часто двойные слэши:
+    # \\[ ... \\], \\left, \\sum и т.п. Для TeX нужен один слэш.
+    text = re.sub(r"\\\\(\[|\]|\(|\)|\{|\})", r"\\\1", text)
+    text = re.sub(
+        r"\\\\(left|right|le|leq|ge|geq|neq|sum|max|min|mid|cdot|times|to|infty|text|mathrm|operatorname)\b",
+        r"\\\1",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # Нормализуем типографские «<< >>» в текстовой части.
+    text = re.sub(r"<<\s*([^<>]+?)\s*>>", r"«\1»", text)
+
     # Если в statement почти нет TeX-команд, приводим к аккуратному plain-LaTeX блоку.
     has_tex = bool(re.search(r"\\(section|subsection|begin|end|item|textbf|emph|frac|sum|cdot|le|ge)", text))
     if not has_tex:

@@ -1212,25 +1212,6 @@
             for (const pattern of patterns) {
                 html = html.replace(pattern, "");
             }
-            const latexTextMap = [
-                [/\\leq?/g, "≤"],
-                [/\\geq?/g, "≥"],
-                [/\\neq/g, "≠"],
-                [/\\times/g, "×"],
-                [/\\cdot/g, "·"],
-                [/\\to/g, "→"],
-                [/\\infty/g, "∞"],
-                [/\\ldots/g, "..."],
-                [/\\dots/g, "..."]
-            ];
-            for (const [re, val] of latexTextMap) {
-                html = html.replace(re, val);
-            }
-            html = html.replace(/<<\s*([^<>]+?)\s*>>/g, "«$1»");
-            html = html.replace(
-                /(^|[\s(>])([A-Za-zА-Яа-я0-9]+)\^([0-9]{1,4})(?=[$\s).,;:!?<])/g,
-                "$1$2<sup>$3</sup>"
-            );
             return html;
         }
 
