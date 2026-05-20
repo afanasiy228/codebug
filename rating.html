@@ -190,28 +190,6 @@
             color: var(--accent);
         }
 
-        .user-name.admin a {
-            color: #6b5a08;
-            text-shadow: 0 0 0.2px #3e3202;
-        }
-
-        .user-name.admin a:hover {
-            color: #7d6a0c;
-        }
-
-        .admin-badge {
-            display: inline-flex;
-            align-items: center;
-            margin-left: 8px;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.2px;
-            color: #2e2401;
-            border: 1px solid #85701a;
-            background: linear-gradient(180deg, #8c7a1f, #6e5f18);
-        }
         
         .user-rank {
             font-size: 14px;
@@ -304,12 +282,8 @@
               ЗАГРУЗКА РЕЙТИНГА
         ====================== */
         async function loadRating() {
-            const [snap, adminsSnap] = await Promise.all([
-                firebase.database().ref("users").get(),
-                firebase.database().ref("admins").get()
-            ]);
+            const snap = await firebase.database().ref("users").get();
             if (!snap.exists()) return;
-            const adminsMap = adminsSnap.exists() ? (adminsSnap.val() || {}) : {};
 
             const list = document.getElementById("rating-list");
             const users = snap.val();
@@ -325,7 +299,6 @@
                     avatar: u.avatar || null,
                     exp: st.exp || 0,
                     solved: st.solved || {}, // объект решённых
-                    isAdmin: Boolean(adminsMap[login]),
                 });
             }
 
@@ -357,7 +330,7 @@
             <div class="user-block">
                 ${avatarHTML}
                 <div>
-                    <div class="user-name ${u.isAdmin ? "admin" : ""}"><a href="${profileUrl}">${safeLogin}</a>${u.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ""}</div>
+                    <div class="user-name"><a href="${profileUrl}">${safeLogin}</a></div>
                     <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
             </div>
