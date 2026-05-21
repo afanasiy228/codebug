@@ -315,6 +315,7 @@
         const editorModels = {};
         let diagnosticsTimer = null;
         const DIAG_OWNER = "codebug-diagnostics";
+        const ENABLE_DIAGNOSTICS = false;
 
         const TEMPLATE_CPP = `#include <bits/stdc++.h>
 using namespace std;
@@ -404,6 +405,7 @@ if __name__ == "__main__":
         }
 
         function scheduleDiagnostics() {
+            if (!ENABLE_DIAGNOSTICS) return;
             if (!monacoEditor) return;
             clearTimeout(diagnosticsTimer);
             diagnosticsTimer = setTimeout(() => {
@@ -412,6 +414,11 @@ if __name__ == "__main__":
         }
 
         async function runDiagnostics(manual = true) {
+            if (!ENABLE_DIAGNOSTICS) {
+                const model = currentModel();
+                if (model && window.monaco) monaco.editor.setModelMarkers(model, DIAG_OWNER, []);
+                return;
+            }
             if (!monacoEditor || !window.monaco) return;
             const code = getEditorCode();
             const language = getCurrentLang();
@@ -639,7 +646,7 @@ if __name__ == "__main__":
                     }
 
                     document.querySelector(".title").textContent = `Код ${langLabel(initialLang)}`;
-                    runDiagnostics(false);
+                    if (ENABLE_DIAGNOSTICS) runDiagnostics(false);
                     resolve();
                 });
             });
