@@ -913,7 +913,12 @@
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
             usernameEl.innerText = data.login;
-            usernameEl.style.color = getRankColor(Number(stats.exp || 0), data.login);
+            const nickColor = getRankColor(Number(stats.exp || 0), data.login);
+            usernameEl.style.color = nickColor;
+            const navProfileEl = document.querySelector("#nav-links .nav-profile");
+            if (navProfileEl && viewedUser === currentUser) {
+                navProfileEl.style.color = nickColor;
+            }
             document.getElementById("userid").innerText = data.id || "—";
             document.getElementById("created").innerText =
                 data.created ? new Date(data.created).toLocaleDateString() : "—";
