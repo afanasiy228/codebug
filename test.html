@@ -408,7 +408,7 @@ if __name__ == "__main__":
             clearTimeout(diagnosticsTimer);
             diagnosticsTimer = setTimeout(() => {
                 runDiagnostics(false);
-            }, 700);
+            }, 450);
         }
 
         async function runDiagnostics(manual = true) {
@@ -638,8 +638,6 @@ if __name__ == "__main__":
                         });
                     }
 
-                    document.getElementById("formatBtn")?.addEventListener("click", formatDocument);
-                    document.getElementById("diagBtn")?.addEventListener("click", () => runDiagnostics(true));
                     document.querySelector(".title").textContent = `Код ${langLabel(initialLang)}`;
                     runDiagnostics(false);
                     resolve();
