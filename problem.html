@@ -681,11 +681,17 @@
             return false;
         }
 
+        function hasTaskIdInLocation() {
+            const url = new URL(window.location.href);
+            return url.searchParams.has("id") || url.searchParams.has("task");
+        }
+
         function resolveTaskIdFromLocation() {
             const url = new URL(window.location.href);
-            const raw = url.searchParams.get("id") || url.searchParams.get("task") || "";
+            const raw = (url.searchParams.get("id") ?? url.searchParams.get("task") ?? "").trim();
+            if (!raw) return null;
             const parsed = Number(raw);
-            if (!Number.isInteger(parsed) || parsed <= 0) return null;
+            if (!Number.isInteger(parsed) || parsed < 0) return null;
             return parsed;
         }
 
@@ -696,7 +702,7 @@
 
             console.log("taskId =", taskId);
 
-            if (!taskId) {
+            if (taskId === null) {
                 alert("Нет ID задачи");
                 return;
             }
@@ -888,7 +894,7 @@
             }
 
             const taskId = resolveTaskIdFromLocation();
-            if (!taskId) {
+            if (taskId === null) {
                 tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
                 return null;
             }
@@ -1324,12 +1330,16 @@
         async function loadTask() {
 
             const resolvedId = resolveTaskIdFromLocation();
-            const id = resolvedId ? String(resolvedId) : "";
+            const id = resolvedId === null ? "" : String(resolvedId);
             const parsedId = Number(resolvedId || 0);
             const base = window.TASKS_API_BASE || "";
 
-            if (!Number.isInteger(parsedId) || parsedId <= 0) {
-                showTaskNotFound("?");
+            if (resolvedId === null) {
+                if (hasTaskIdInLocation()) {
+                    showTaskNotFound("?");
+                } else {
+                    showTaskNotFound("");
+                }
                 return;
             }
 
