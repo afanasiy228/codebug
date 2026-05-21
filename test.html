@@ -46,7 +46,8 @@
             display: grid;
             grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
             gap: 12px;
-            min-height: 62vh;
+            height: min(70vh, 780px);
+            min-height: 460px;
         }
         
         .panel {
@@ -55,6 +56,12 @@
             background: linear-gradient(180deg, var(--card), var(--card-2));
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
             overflow: hidden;
+            min-height: 0;
+        }
+
+        .top .panel {
+            display: flex;
+            flex-direction: column;
             min-height: 0;
         }
         
@@ -117,8 +124,9 @@
         
         .editor-wrap {
             position: relative;
-            height: calc(100% - 45px);
-            min-height: 420px;
+            flex: 1;
+            min-height: 0;
+            height: auto;
         }
 
         #editor {
@@ -128,8 +136,9 @@
         
         #inputData {
             width: 100%;
-            height: calc(100% - 45px);
-            min-height: 420px;
+            flex: 1;
+            min-height: 0;
+            height: auto;
             border: 0;
             outline: 0;
             resize: none;
@@ -232,6 +241,8 @@
     @media (max-width: 980px) {
       .top {
         grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
       }
       .editor-wrap,
       #inputData {
