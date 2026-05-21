@@ -681,11 +681,18 @@
             return false;
         }
 
+        function resolveTaskIdFromLocation() {
+            const url = new URL(window.location.href);
+            const raw = url.searchParams.get("id") || url.searchParams.get("task") || "";
+            const parsed = Number(raw);
+            if (!Number.isInteger(parsed) || parsed <= 0) return null;
+            return parsed;
+        }
+
         async function submitCode() {
             console.log("[submitCode] старт");
 
-            const url = new URL(window.location.href);
-            const taskId = url.searchParams.get("id");
+            const taskId = resolveTaskIdFromLocation();
 
             console.log("taskId =", taskId);
 
@@ -794,8 +801,7 @@
         // Firebase verdict updates now handled by server.
 
         function getCurrentTaskId() {
-            const url = new URL(location.href);
-            return Number(url.searchParams.get("id") || 0);
+            return resolveTaskIdFromLocation() || 0;
         }
 
         function addPendingSubmissionRow() {
@@ -881,8 +887,11 @@
                 return null;
             }
 
-            const url = new URL(location.href);
-            const taskId = Number(url.searchParams.get("id"));
+            const taskId = resolveTaskIdFromLocation();
+            if (!taskId) {
+                tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
+                return null;
+            }
 
             const tbody = document.getElementById("subs");
             if (!tbody) {
@@ -1230,11 +1239,16 @@
         }
 
         function showTaskNotFound(id) {
-            document.getElementById("taskTitle").innerText = `Задача #${id} не найдена`;
+            const hasNumericId = /^\d+$/.test(String(id || ""));
+            document.getElementById("taskTitle").innerText = hasNumericId
+                ? `Задача #${id} не найдена`
+                : "Не указан ID задачи";
             const tags = document.getElementById("taskTags");
             if (tags) tags.innerHTML = "";
             document.getElementById("taskStatement").innerHTML =
-                `<p>Мы не нашли эту задачу. Проверь ID или вернись в список задач.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`;
+                hasNumericId
+                    ? `<p>Мы не нашли эту задачу. Проверь ID или вернись в список задач.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`
+                    : `<p>Открой задачу из списка тренировок: ссылка должна быть вида <code>problem.html?id=123</code>.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`;
             document.getElementById("taskHelp").innerText = "";
             const groupTable = document.getElementById("groupTable");
             if (groupTable) groupTable.innerHTML = "";
@@ -1309,13 +1323,13 @@
 
         async function loadTask() {
 
-            const url = new URL(location.href);
-            const id = url.searchParams.get("id") || "0";
-            const parsedId = Number(id);
+            const resolvedId = resolveTaskIdFromLocation();
+            const id = resolvedId ? String(resolvedId) : "";
+            const parsedId = Number(resolvedId || 0);
             const base = window.TASKS_API_BASE || "";
 
-            if (!Number.isInteger(parsedId) || parsedId < 0) {
-                showTaskNotFound(id);
+            if (!Number.isInteger(parsedId) || parsedId <= 0) {
+                showTaskNotFound("?");
                 return;
             }
 
