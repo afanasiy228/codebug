@@ -1587,19 +1587,67 @@
             }
         }
 
-        function initializeMonacoEditor(initialLang = "cpp") {
+        function getMonacoRequire() {
+            const candidates = [window.require, window.requirejs];
+            for (const candidate of candidates) {
+                if (typeof candidate === "function" && typeof candidate.config === "function") {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+
+        function loadMonacoLoaderIfNeeded() {
             return new Promise((resolve) => {
-                if (!window.require) {
+                if (getMonacoRequire()) {
+                    resolve();
+                    return;
+                }
+                const existing = document.getElementById("monaco-loader-runtime");
+                if (existing) {
+                    existing.addEventListener("load", () => resolve(), { once: true });
+                    existing.addEventListener("error", () => resolve(), { once: true });
+                    return;
+                }
+                const script = document.createElement("script");
+                script.id = "monaco-loader-runtime";
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js";
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.head.appendChild(script);
+            });
+        }
+
+        async function initializeMonacoEditor(initialLang = "cpp") {
+            await loadMonacoLoaderIfNeeded();
+            return new Promise((resolve) => {
+                const monacoRequire = getMonacoRequire();
+                if (!monacoRequire) {
                     console.error("monaco loader missing");
                     resolve();
                     return;
                 }
-                window.require.config({
+
+                const editorRoot = document.getElementById("editor");
+                if (!editorRoot) {
+                    console.error("editor root missing");
+                    resolve();
+                    return;
+                }
+
+                monacoRequire.config({
                     paths: {
                         vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
                     }
                 });
-                window.require(["vs/editor/editor.main"], () => {
+
+                monacoRequire(["vs/editor/editor.main"], () => {
+                    if (!window.monaco || !window.monaco.editor) {
+                        console.error("monaco core missing after loader");
+                        resolve();
+                        return;
+                    }
+
                     monaco.editor.defineTheme("codebug-dark-problem", {
                         base: "vs-dark",
                         inherit: true,
@@ -1616,7 +1664,7 @@
                         monacoLangForTask(initialLang)
                     );
 
-                    monacoEditor = monaco.editor.create(document.getElementById("editor"), {
+                    monacoEditor = monaco.editor.create(editorRoot, {
                         model,
                         theme: "codebug-dark-problem",
                         automaticLayout: true,
@@ -1656,6 +1704,11 @@
                         }
                     };
                     window.editor = editor;
+                    window.addEventListener("resize", () => {
+                        try {
+                            monacoEditor.layout();
+                        } catch (_) {}
+                    });
 
                     resolve();
                 });
