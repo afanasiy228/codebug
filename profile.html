@@ -299,6 +299,7 @@
             overflow-x: auto;
             padding-bottom: 4px;
             max-width: 100%;
+            scroll-behavior: smooth;
         }
 
         .heatmap-months {
@@ -321,6 +322,7 @@
             display: flex;
             gap: 8px;
             min-width: max-content;
+            align-items: flex-start;
         }
 
         .heatmap-weekdays {
@@ -738,9 +740,10 @@
         }
 
         function renderHeatmap(solvedByDay) {
+            const wrap = document.querySelector(".heatmap-wrap");
             const grid = document.getElementById("heatmapGrid");
             const months = document.getElementById("heatmapMonths");
-            if (!grid || !months) return;
+            if (!grid || !months || !wrap) return;
 
             const dayMs = 24 * 60 * 60 * 1000;
             const today = new Date();
@@ -784,6 +787,11 @@
                 }
             }
             grid.innerHTML = cells.join("");
+
+            // По умолчанию показываем самые новые дни (правый край).
+            requestAnimationFrame(() => {
+                wrap.scrollLeft = wrap.scrollWidth;
+            });
         }
 
         async function loadAnalytics() {
