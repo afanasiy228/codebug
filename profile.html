@@ -326,7 +326,7 @@
         }
 
         .heatmap-weekdays {
-            width: 22px;
+            width: 26px;
             display: grid;
             grid-template-rows: repeat(7, 12px);
             gap: 4px;
@@ -357,6 +357,10 @@
         .hm-l2 { background: rgba(34, 197, 94, 0.55); }
         .hm-l3 { background: rgba(34, 197, 94, 0.75); }
         .hm-l4 { background: rgba(34, 197, 94, 0.95); }
+        .hm-empty {
+            background: transparent;
+            border-color: transparent;
+        }
 
         .heatmap-legend {
             margin-top: 10px;
@@ -554,7 +558,7 @@
                         <div class="heatmap-months" id="heatmapMonths"></div>
                         <div class="heatmap-body">
                             <div class="heatmap-weekdays">
-                                <span>Пн</span><span></span><span>Ср</span><span></span><span>Пт</span><span></span><span>Вс</span>
+                                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
                             </div>
                             <div class="heatmap-grid" id="heatmapGrid"></div>
                         </div>
@@ -778,11 +782,12 @@
                     const inRange = d >= new Date(today.getTime() - 364 * dayMs) && d <= today;
                     const count = inRange ? (solvedByDay[key] || 0) : 0;
                     let level = "";
-                    if (count >= 7) level = "hm-l4";
+                    if (!inRange) level = "hm-empty";
+                    else if (count >= 7) level = "hm-l4";
                     else if (count >= 4) level = "hm-l3";
                     else if (count >= 2) level = "hm-l2";
                     else if (count >= 1) level = "hm-l1";
-                    const title = `${d.toLocaleDateString()} — ${count}`;
+                    const title = inRange ? `${d.toLocaleDateString()} — ${count}` : "";
                     cells.push(`<div class="heatmap-cell ${level}" title="${title}"></div>`);
                 }
             }
