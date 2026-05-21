@@ -780,7 +780,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="firebase.js"></script>
+  <script src="firebase.js?v=20260521-3"></script>
   <script src="auth.js"></script>
 
   <script>
@@ -1077,7 +1077,7 @@
         groups
       };
 
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const payload = {
         meta,
         files: {
@@ -1147,7 +1147,7 @@
       if (difficulty) form.append("difficulty", difficulty);
       if (type) form.append("type", type);
       if (codeExplanationLatex) form.append("codeExplanationLatex", codeExplanationLatex);
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       try {
         setAdminLog("Импорт Polygon начался.");
         const headers = await adminRequestHeaders(false);
@@ -1309,7 +1309,7 @@
         setAdminLog("Некорректный ID задачи.");
         return;
       }
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       try {
         const bundleRes = await fetch(`${base}/tasks/${id}/admin-bundle`, {
           headers: await adminRequestHeaders(false)
@@ -1480,7 +1480,7 @@
         return;
       }
 
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       setAdminLog("Начал генерацию тестов. Не перезагружай страницу.");
       try {
         const res = await fetch(`${base}/tasks/generate-tests`, {
@@ -1559,7 +1559,7 @@
       const interactor = document.getElementById("editInteractorText").value;
       const tests = window.editTaskTests || [];
 
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const payload = {
         meta: {
           id,
@@ -1621,7 +1621,7 @@
       }
       if (!confirm(`Удалить задачу ${id}? Это необратимо.`)) return;
 
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       try {
         setAdminLog("Удаление задачи. Не перезагружай страницу.");
         const res = await fetch(`${base}/tasks/delete`, {
@@ -1748,7 +1748,7 @@
     }
 
     async function loadTaskList() {
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       try {
         const res = await fetch(`${base}/tasks/list`);
         if (!res.ok) return [];
@@ -1933,7 +1933,7 @@
       if (fromList && fromList.difficulty) {
         return fromList.difficulty;
       }
-      const base = window.TASKS_API_BASE || "";
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       try {
         const res = await fetch(`${base}/tasks/${taskId}/meta.json`);
         if (!res.ok) return "";

@@ -472,7 +472,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<script src="firebase.js"></script>
+<script src="firebase.js?v=20260521-3"></script>
 <!-- обязательно первой! -->
 <script src="auth.js"></script>
 <!-- использует db -->
@@ -605,7 +605,14 @@
            SETTINGS
            ============================================================ */
 
-        const SUBMIT_URL = (window.TASKS_API_BASE || "") + "/submit";
+        function getTasksApiBase() {
+            const fallback = location.hostname === "localhost"
+                ? "http://localhost:7777"
+                : "https://codebug.onrender.com";
+            return (window.TASKS_API_BASE || window.CODEBUG_API_BASE || fallback).replace(/\/$/, "");
+        }
+
+        const SUBMIT_URL = getTasksApiBase() + "/submit";
 
         if (!window.firebase) {
             console.error("🔥 Firebase не загружен!");
@@ -1332,7 +1339,7 @@
             const resolvedId = resolveTaskIdFromLocation();
             const id = resolvedId === null ? "" : String(resolvedId);
             const parsedId = Number(resolvedId || 0);
-            const base = window.TASKS_API_BASE || "";
+            const base = getTasksApiBase();
 
             if (resolvedId === null) {
                 if (hasTaskIdInLocation()) {

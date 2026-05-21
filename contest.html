@@ -270,7 +270,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="firebase.js"></script>
+  <script src="firebase.js?v=20260521-3"></script>
   <script src="auth.js"></script>
 
   <script>
@@ -422,7 +422,7 @@
       for (const taskId of contestData.tasks) {
         let title = `Задача #${taskId}`;
         try {
-          const base = window.TASKS_API_BASE || "";
+          const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
           const res = await fetch(`${base}/tasks/${taskId}/meta.json`);
           const meta = await res.json();
           title = meta.title || title;

@@ -6,6 +6,9 @@
         : "https://codebug.onrender.com";
 
     window.TASKS_API_BASE = (window.TASKS_API_BASE || window.CODEBUG_API_BASE || defaultApiBase).replace(/\/$/, "");
+    window.getTasksApiBase = function getTasksApiBase() {
+        return (window.TASKS_API_BASE || window.CODEBUG_API_BASE || defaultApiBase).replace(/\/$/, "");
+    };
 
     function loadPublicConfigSync() {
         if (window.CODEBUG_PUBLIC_CONFIG && typeof window.CODEBUG_PUBLIC_CONFIG === "object") {
