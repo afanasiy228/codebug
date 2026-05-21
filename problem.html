@@ -1231,6 +1231,8 @@
 
         function showTaskNotFound(id) {
             document.getElementById("taskTitle").innerText = `Задача #${id} не найдена`;
+            const tags = document.getElementById("taskTags");
+            if (tags) tags.innerHTML = "";
             document.getElementById("taskStatement").innerHTML =
                 `<p>Мы не нашли эту задачу. Проверь ID или вернись в список задач.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`;
             document.getElementById("taskHelp").innerText = "";
@@ -1248,6 +1250,8 @@
 
         function showTaskBackendError(id, details) {
             document.getElementById("taskTitle").innerText = `Задача #${id} временно недоступна`;
+            const tags = document.getElementById("taskTags");
+            if (tags) tags.innerHTML = "";
             document.getElementById("taskStatement").innerHTML =
                 `<p>Сервер задач не смог синхронизировать репозиторий. Попробуй обновить страницу через минуту.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>${details ? `<p><code>${escapeHtml(details)}</code></p>` : ""}`;
             document.getElementById("taskHelp").innerText = "";
@@ -1561,10 +1565,13 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
     <script>
+        let pendingEditorValue = "// Загружаю код задачи...";
         let editor = {
-            setValue() {},
+            setValue(text) {
+                pendingEditorValue = text == null ? "" : String(text);
+            },
             getValue() {
-                return "";
+                return pendingEditorValue;
             }
         };
         window.editor = editor;
@@ -1660,7 +1667,7 @@
                     });
 
                     const model = monaco.editor.createModel(
-                        "// Загружаю код задачи...",
+                        pendingEditorValue,
                         monacoLangForTask(initialLang)
                     );
 
@@ -1697,7 +1704,9 @@
 
                     editor = {
                         setValue(text) {
-                            monacoEditor.setValue(text == null ? "" : String(text));
+                            const value = text == null ? "" : String(text);
+                            pendingEditorValue = value;
+                            monacoEditor.setValue(value);
                         },
                         getValue() {
                             return monacoEditor.getValue();
