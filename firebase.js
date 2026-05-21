@@ -53,6 +53,19 @@
         return;
     }
 
+    // Иногда SDK залипает в long-polling после единичного websocket-сбоя.
+    // Сбрасываем этот флаг и принудительно используем websocket-транспорт.
+    try {
+        localStorage.removeItem("firebase:previous_websocket_failure");
+    } catch (_) {}
+    try {
+        if (window.firebase.database?.INTERNAL?.forceWebSockets) {
+            window.firebase.database.INTERNAL.forceWebSockets();
+        }
+    } catch (err) {
+        console.warn("forceWebSockets failed:", err);
+    }
+
     if (!firebase.apps || !firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
