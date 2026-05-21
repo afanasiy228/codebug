@@ -427,7 +427,31 @@ if __name__ == "__main__":
                 code,
                 language
             });
-            const markers = Array.isArray(data.markers) ? data.markers : [];
+            const markers = Array.isArray(data.markers) ? data.markers.map((m) => ({
+                startLineNumber: Math.max(1, Number(m.startLineNumber) || 1),
+                startColumn: Math.max(1, Number(m.startColumn) || 1),
+                endLineNumber: Math.max(1, Number(m.endLineNumber) || Number(m.startLineNumber) || 1),
+                endColumn: Math.max(2, Number(m.endColumn) || ((Number(m.startColumn) || 1) + 1)),
+                message: String(m.message || "error"),
+                severity: Number(m.severity) || monaco.MarkerSeverity.Error
+            })) : [];
+            if (!markers.length && !ok && typeof data.details === "string") {
+                const lines = data.details.split("\n");
+                for (const line of lines) {
+                    const match = line.match(/:(\d+):(\d+):\s*(?:fatal error|error|warning):\s*(.+)$/i);
+                    if (!match) continue;
+                    const ln = Number(match[1]) || 1;
+                    const col = Number(match[2]) || 1;
+                    markers.push({
+                        startLineNumber: Math.max(1, ln),
+                        startColumn: Math.max(1, col),
+                        endLineNumber: Math.max(1, ln),
+                        endColumn: Math.max(2, col + 1),
+                        message: match[3],
+                        severity: monaco.MarkerSeverity.Error
+                    });
+                }
+            }
             monaco.editor.setModelMarkers(model, DIAG_OWNER, markers);
             if (manual) {
                 const statusEl = document.getElementById("status");
@@ -573,16 +597,18 @@ if __name__ == "__main__":
                         smoothScrolling: true,
                         scrollBeyondLastLine: false,
                         linkedEditing: true,
+                        renderValidationDecorations: "on",
+                        matchBrackets: "never",
                         folding: true,
                         foldingStrategy: "auto",
                         showFoldingControls: "mouseover",
                         guides: {
-                            indentation: true,
-                            bracketPairs: true,
-                            highlightActiveIndentation: true
+                            indentation: false,
+                            bracketPairs: false,
+                            highlightActiveIndentation: false
                         },
                         bracketPairColorization: {
-                            enabled: true
+                            enabled: false
                         },
                         autoClosingBrackets: "languageDefined",
                         autoClosingQuotes: "languageDefined",
