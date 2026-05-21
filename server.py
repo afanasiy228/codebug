@@ -1730,6 +1730,66 @@ def admin_purge_users():
     })
 
 
+def _is_solved_submission(item):
+    verdict = str((item or {}).get("verdict", "")).strip().upper()
+    if verdict == "OK":
+        return True
+    try:
+        value = float(verdict.replace(",", "."))
+        return value >= 100.0
+    except Exception:
+        return False
+
+
+@app.route("/admin/rebuild-user-stats", methods=["POST"])
+def admin_rebuild_user_stats():
+    if not _is_admin_request():
+        return jsonify({"error": "forbidden"}), 403
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return jsonify({"error": "firebase_not_ready"}), 500
+
+    users_raw = db.reference("users").get() or {}
+    submissions_raw = db.reference("submissions/global").get() or {}
+
+    solved_by_user = {}
+    for _, sub in (submissions_raw or {}).items():
+        if not isinstance(sub, dict):
+            continue
+        login = str(sub.get("login") or "").strip()
+        if not login:
+            continue
+        task = str(sub.get("task") or "").strip()
+        if not task or not task.isdigit():
+            continue
+        if not _is_solved_submission(sub):
+            continue
+        solved_by_user.setdefault(login, {})[task] = True
+
+    updated = 0
+    for login, udata in (users_raw or {}).items():
+        if not isinstance(udata, dict):
+            continue
+        stats = udata.get("stats") or {}
+        if not isinstance(stats, dict):
+            stats = {}
+        solved_map = solved_by_user.get(login, {})
+        stats["solved"] = solved_map
+        stats["cnt"] = len(solved_map)
+        db.reference(f"users/{login}/stats").update(stats)
+        updated += 1
+
+    return jsonify({
+        "status": "ok",
+        "usersUpdated": updated,
+        "usersWithSolved": len(solved_by_user),
+        "submissionsScanned": len(submissions_raw or {})
+    })
+
+
 @app.route("/public-config", methods=["GET"])
 def public_config():
     firebase_public = {
