@@ -85,67 +85,11 @@
             position: relative;
             height: calc(100% - 45px);
             min-height: 420px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 15px;
-            line-height: 1.55;
         }
-        
-        #editorHighlight,
+
         #editor {
-            position: absolute;
-            inset: 0;
-            margin: 0;
-            padding: 14px 16px;
-            border: 0;
-            outline: 0;
-            resize: none;
-            white-space: pre;
-            overflow: auto;
-            font: inherit;
-            line-height: inherit;
-            tab-size: 4;
-        }
-        
-        #editorHighlight {
-            color: #c8d8f6;
-            pointer-events: none;
-        }
-        
-        #editor {
-            background: transparent;
-            color: transparent;
-            caret-color: #f0f6ff;
-        }
-        
-        #editor::selection {
-            background: rgba(131, 163, 214, 0.3);
-            color: transparent;
-        }
-        
-        .hl-keyword {
-            color: #7ec8ff;
-            font-weight: 700;
-        }
-        
-        .hl-type {
-            color: #ffcb7b;
-        }
-        
-        .hl-number {
-            color: #92f3ff;
-        }
-        
-        .hl-string {
-            color: #b4f7b4;
-        }
-        
-        .hl-comment {
-            color: #7f96b8;
-            font-style: italic;
-        }
-        
-        .hl-prep {
-            color: #f48bd8;
+            width: 100%;
+            height: 100%;
         }
         
         #inputData {
@@ -281,8 +225,7 @@
                     <div class="hint">Ctrl/Cmd + Enter для запуска</div>
                 </div>
                 <div class="editor-wrap">
-                    <pre id="editorHighlight" aria-hidden="true"></pre>
-                    <textarea id="editor" spellcheck="false"></textarea>
+                    <div id="editor" aria-label="Code editor"></div>
                 </div>
             </div>
 
@@ -315,64 +258,95 @@
     </section>
   </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
     <script>
-        function escapeHtml(str) {
-            return String(str ?? "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+        let monacoEditor = null;
+
+        function getEditorCode() {
+            if (!monacoEditor) return "";
+            return monacoEditor.getValue();
         }
 
-        function highlightCpp(code) {
-            let text = escapeHtml(code);
-            const stash = [];
-
-            const stashToken = (regex, cls) => {
-                text = text.replace(regex, (match) => {
-                    const id = stash.length;
-                    stash.push(`<span class="${cls}">${match}</span>`);
-                    return `{{{${id}}}}`;
-                });
-            };
-
-            stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
-            stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
-            stashToken(/\/\*[\s\S]*?\*\//g, "hl-comment");
-            stashToken(/\/\/.*$/gm, "hl-comment");
-            stashToken(/^\s*#.*$/gm, "hl-prep");
-
-            const parts = text.split(/{{{(\d+)}}}/g);
-            for (let i = 0; i < parts.length; i++) {
-                if (i % 2 === 0) {
-                    let segment = parts[i];
-                    segment = segment.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '<span class="hl-number">$&</span>');
-                    segment = segment.replace(/\b(?:int|long|double|float|bool|char|void|string|size_t|auto|const|constexpr|signed|unsigned|short)\b/g, '<span class="hl-type">$&</span>');
-                    segment = segment.replace(/\b(?:if|else|for|while|do|switch|case|break|continue|return|struct|public|private|protected|template|typename|using|namespace|try|catch|throw|new|delete|this|static|inline|virtual|override|final|sizeof|typedef)\b/g, '<span class="hl-keyword">$&</span>');
-                    parts[i] = segment;
-                } else {
-                    parts[i] = stash[Number(parts[i])] || "";
+        function initMonacoEditor() {
+            return new Promise((resolve) => {
+                if (!window.require) {
+                    resolve();
+                    return;
                 }
-            }
+                window.require.config({
+                    paths: {
+                        vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
+                    }
+                });
+                window.require(["vs/editor/editor.main"], () => {
+                    monaco.editor.defineTheme("codebug-dark", {
+                        base: "vs-dark",
+                        inherit: true,
+                        rules: [],
+                        colors: {
+                            "editor.background": "#0a162b",
+                            "editor.lineHighlightBackground": "#112240",
+                            "editorCursor.foreground": "#f0f6ff",
+                            "editorBracketMatch.background": "#204a7030",
+                            "editorBracketMatch.border": "#4fa3ff"
+                        }
+                    });
 
-            return parts.join("");
+                    monacoEditor = monaco.editor.create(document.getElementById("editor"), {
+                        value: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long a, b;
+    cin >> a >> b;
+    cout << a + b << "\\n";
+    return 0;
+}`,
+                        language: "cpp",
+                        theme: "codebug-dark",
+                        automaticLayout: true,
+                        minimap: {
+                            enabled: false
+                        },
+                        fontSize: 15,
+                        lineHeight: 24,
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                        tabSize: 4,
+                        insertSpaces: true,
+                        smoothScrolling: true,
+                        scrollBeyondLastLine: false,
+                        linkedEditing: true,
+                        bracketPairColorization: {
+                            enabled: true
+                        },
+                        autoClosingBrackets: "languageDefined",
+                        autoClosingQuotes: "languageDefined",
+                        autoSurround: "languageDefined",
+                        suggestOnTriggerCharacters: true,
+                        quickSuggestions: {
+                            other: true,
+                            comments: false,
+                            strings: true
+                        },
+                        wordBasedSuggestions: "allDocuments",
+                        formatOnType: true,
+                        formatOnPaste: true
+                    });
+
+                    monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+                        runSingle();
+                    });
+
+                    resolve();
+                });
+            });
         }
 
-        function syncHighlight() {
-            const input = document.getElementById("editor");
-            const highlight = document.getElementById("editorHighlight");
-            highlight.scrollTop = input.scrollTop;
-            highlight.scrollLeft = input.scrollLeft;
-        }
-
-        function updateHighlight() {
-            const input = document.getElementById("editor");
-            const highlight = document.getElementById("editorHighlight");
-            highlight.innerHTML = highlightCpp(input.value) + "\n";
-            syncHighlight();
-        }
-
-    async function runSingle() {
-            const code = document.getElementById("editor").value;
+        async function runSingle() {
+            const code = getEditorCode();
             const input = document.getElementById("inputData").value;
       const outputEl = document.getElementById("outputData");
       const logEl = document.getElementById("runLog");
@@ -440,32 +414,10 @@
 
         document.getElementById("runBtn").addEventListener("click", runSingle);
 
-        const editor = document.getElementById("editor");
-        editor.addEventListener("input", updateHighlight);
-        editor.addEventListener("scroll", syncHighlight);
-        editor.addEventListener("keydown", (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                e.preventDefault();
-                runSingle();
-            }
-        });
-
-        editor.value = `#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    long long a, b;
-    cin >> a >> b;
-    cout << a + b << "\\n";
-    return 0;
-}`;
-    document.getElementById("inputData").value = "2 3\n";
-    updateHighlight();
-    document.getElementById("runLog").value = `[${new Date().toLocaleTimeString()}] Готово к запуску\n`;
-  </script>
+        document.getElementById("inputData").value = "2 3\n";
+        document.getElementById("runLog").value = `[${new Date().toLocaleTimeString()}] Готово к запуску\n`;
+        initMonacoEditor();
+    </script>
 </body>
 
 </html>
