@@ -263,6 +263,167 @@
             font-size: 14px;
         }
 
+        .analytics-section {
+            margin-top: 24px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.65);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+
+        .analytics-title {
+            margin: 0 0 12px;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
+            color: var(--ink);
+        }
+
+        .analytics-sub {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .heatmap-wrap {
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .heatmap-months {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 14px;
+            gap: 4px;
+            margin-left: 30px;
+            margin-bottom: 6px;
+            min-width: max-content;
+        }
+
+        .heatmap-month {
+            color: var(--muted);
+            font-size: 11px;
+            transform: translateX(-2px);
+        }
+
+        .heatmap-body {
+            display: flex;
+            gap: 8px;
+            min-width: max-content;
+        }
+
+        .heatmap-weekdays {
+            width: 22px;
+            display: grid;
+            grid-template-rows: repeat(7, 12px);
+            gap: 4px;
+            color: var(--muted);
+            font-size: 10px;
+            align-items: center;
+            text-align: right;
+            padding-right: 2px;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 12px;
+            grid-template-rows: repeat(7, 12px);
+            gap: 4px;
+        }
+
+        .heatmap-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            background: rgba(120, 130, 150, 0.18);
+            border: 1px solid rgba(120, 130, 150, 0.15);
+        }
+
+        .hm-l1 { background: rgba(34, 197, 94, 0.28); }
+        .hm-l2 { background: rgba(34, 197, 94, 0.48); }
+        .hm-l3 { background: rgba(34, 197, 94, 0.68); }
+        .hm-l4 { background: rgba(34, 197, 94, 0.9); }
+
+        .heatmap-legend {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .legend-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(120, 130, 150, 0.15);
+        }
+
+        .bars {
+            display: grid;
+            gap: 8px;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 170px minmax(0, 1fr) 46px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bar-label {
+            color: var(--ink);
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(120, 130, 150, 0.2);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #10b981, #0ea5e9);
+        }
+
+        .bar-value {
+            text-align: right;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .analytics-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .analytics-controls select {
+            border: 1px solid var(--stroke);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--ink);
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
         .admin-panel {
             margin-top: 28px;
             padding: 20px;
@@ -377,6 +538,52 @@
                 <div class="stat-item">Рейтинг: <span id="rating2">0</span></div>
             </div>
 
+            <section class="analytics-section">
+                <article class="analytics-card">
+                    <h3 class="analytics-title">Активность</h3>
+                    <p class="analytics-sub">Решённые задачи по дням за последний год.</p>
+                    <div class="heatmap-wrap">
+                        <div class="heatmap-months" id="heatmapMonths"></div>
+                        <div class="heatmap-body">
+                            <div class="heatmap-weekdays">
+                                <span>Пн</span><span></span><span>Ср</span><span></span><span>Пт</span><span></span><span>Вс</span>
+                            </div>
+                            <div class="heatmap-grid" id="heatmapGrid"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-legend">
+                        <span>меньше</span>
+                        <span class="legend-cell"></span>
+                        <span class="legend-cell hm-l1"></span>
+                        <span class="legend-cell hm-l2"></span>
+                        <span class="legend-cell hm-l3"></span>
+                        <span class="legend-cell hm-l4"></span>
+                        <span>больше</span>
+                    </div>
+                </article>
+
+                <article class="analytics-card">
+                    <h3 class="analytics-title">По сложности</h3>
+                    <p class="analytics-sub">Сколько задач каждого уровня уже решено.</p>
+                    <div class="bars" id="difficultyBars"></div>
+                </article>
+
+                <article class="analytics-card">
+                    <h3 class="analytics-title">По тегам</h3>
+                    <div class="analytics-controls">
+                        <select id="tagMetricSelect">
+                            <option value="solved">Решённые задачи</option>
+                            <option value="attempts">Все попытки</option>
+                        </select>
+                        <select id="tagLimitSelect">
+                            <option value="10">Топ 10</option>
+                            <option value="20">Топ 20</option>
+                            <option value="999">Все</option>
+                        </select>
+                    </div>
+                    <div class="bars" id="tagBars"></div>
+                </article>
+            </section>
 
             <div id="emptyLast" class="empty-last" style="display:none;">Пока нет попыток…</div>
 
@@ -448,6 +655,231 @@
             if (exp < 1200) return "#e67e22";
             if (exp < 2000) return "#e74c3c";
             return "#c0392b";
+        }
+
+        function isSolvedSubmission(sub) {
+            if (!sub || typeof sub !== "object") return false;
+            const status = String(sub.status || sub.verdict || "").trim().toUpperCase();
+            const statusLabel = String(sub.statusLabel || "").trim().toUpperCase();
+            const raw = String(sub.rawVerdict || "").trim().toUpperCase();
+            if (status === "OK" || statusLabel === "OK" || raw === "OK") return true;
+
+            const score = Number(sub.score);
+            if (Number.isFinite(score) && score >= 100) return true;
+
+            const numericStatus = Number(status.replace(",", "."));
+            if (Number.isFinite(numericStatus) && numericStatus >= 100) return true;
+
+            const numericLabel = Number(statusLabel.replace(",", "."));
+            if (Number.isFinite(numericLabel) && numericLabel >= 100) return true;
+
+            return false;
+        }
+
+        function normalizeDifficulty(difficulty) {
+            const d = String(difficulty || "").toLowerCase().trim();
+            if (!d) return "unknown";
+            return d;
+        }
+
+        function difficultyLabel(key) {
+            const map = {
+                tutorial: "Tutorial",
+                easy: "Easy",
+                casual: "Casual",
+                normal: "Normal",
+                hard: "Hard",
+                insane: "Insane",
+                extreme: "Extreme",
+                ultra: "Ultra",
+                impossible: "Impossible",
+                tourist: "Tourist",
+                unknown: "Unknown"
+            };
+            return map[key] || key;
+        }
+
+        function makeDateKey(ts) {
+            const d = new Date(ts);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${y}-${m}-${day}`;
+        }
+
+        function renderBars(containerId, entries) {
+            const root = document.getElementById(containerId);
+            if (!root) return;
+            if (!entries.length) {
+                root.innerHTML = `<div class="analytics-sub">Пока нет данных.</div>`;
+                return;
+            }
+            const maxValue = Math.max(...entries.map(item => item.value), 1);
+            root.innerHTML = entries.map((item) => {
+                const width = Math.max(4, Math.round((item.value / maxValue) * 100));
+                const safeLabel = String(item.label)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+                return `
+                    <div class="bar-row">
+                        <div class="bar-label" title="${safeLabel}">${safeLabel}</div>
+                        <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+                        <div class="bar-value">${item.value}</div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function renderHeatmap(solvedByDay) {
+            const grid = document.getElementById("heatmapGrid");
+            const months = document.getElementById("heatmapMonths");
+            if (!grid || !months) return;
+
+            const dayMs = 24 * 60 * 60 * 1000;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const start = new Date(today.getTime() - 364 * dayMs);
+            start.setHours(0, 0, 0, 0);
+            const startWeekday = (start.getDay() + 6) % 7;
+            start.setDate(start.getDate() - startWeekday);
+
+            const totalDays = Math.ceil((today - start) / dayMs) + 1;
+            const totalWeeks = Math.ceil(totalDays / 7);
+
+            const monthNames = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+            const monthLabels = [];
+            for (let w = 0; w < totalWeeks; w++) {
+                const d = new Date(start.getTime() + w * 7 * dayMs);
+                if (d.getDate() <= 7 || w === 0) {
+                    monthLabels.push(`<span class="heatmap-month">${monthNames[d.getMonth()]}</span>`);
+                } else {
+                    monthLabels.push(`<span class="heatmap-month"></span>`);
+                }
+            }
+            months.innerHTML = monthLabels.join("");
+
+            const cells = [];
+            for (let w = 0; w < totalWeeks; w++) {
+                for (let dow = 0; dow < 7; dow++) {
+                    const idx = w * 7 + dow;
+                    const d = new Date(start.getTime() + idx * dayMs);
+                    const key = makeDateKey(d.getTime());
+                    const inRange = d >= new Date(today.getTime() - 364 * dayMs) && d <= today;
+                    const count = inRange ? (solvedByDay[key] || 0) : 0;
+                    let level = "";
+                    if (count >= 7) level = "hm-l4";
+                    else if (count >= 4) level = "hm-l3";
+                    else if (count >= 2) level = "hm-l2";
+                    else if (count >= 1) level = "hm-l1";
+                    const title = `${d.toLocaleDateString()} — ${count}`;
+                    cells.push(`<div class="heatmap-cell ${level}" title="${title}"></div>`);
+                }
+            }
+            grid.innerHTML = cells.join("");
+        }
+
+        async function loadAnalytics() {
+            const dbRef = window.db || null;
+            if (!dbRef) return;
+
+            let submissions = [];
+            try {
+                const snap = await dbRef.ref("submissions/global").get();
+                if (snap.exists()) {
+                    submissions = Object.values(snap.val() || {});
+                }
+            } catch (e) {
+                console.warn("analytics submissions load failed", e);
+            }
+
+            const mySubmissions = submissions
+                .filter(item => item && item.login === viewedUser)
+                .sort((a, b) => Number(a.date || 0) - Number(b.date || 0));
+
+            const solvedSubs = mySubmissions.filter(isSolvedSubmission);
+
+            const solvedByDay = {};
+            for (const sub of solvedSubs) {
+                const ts = Number(sub.date || 0);
+                if (!ts) continue;
+                const key = makeDateKey(ts);
+                solvedByDay[key] = (solvedByDay[key] || 0) + 1;
+            }
+            renderHeatmap(solvedByDay);
+
+            let taskList = [];
+            try {
+                const res = await fetch((window.TASKS_API_BASE || "") + "/tasks/list", { cache: "no-store" });
+                if (res.ok) taskList = await res.json();
+            } catch (e) {
+                console.warn("analytics tasks list load failed", e);
+            }
+
+            const tasksById = {};
+            for (const task of (Array.isArray(taskList) ? taskList : [])) {
+                tasksById[String(task.id)] = task;
+            }
+
+            const solvedTaskIds = new Set(
+                solvedSubs
+                    .map(item => String(item.task ?? ""))
+                    .filter(Boolean)
+            );
+
+            const diffCounts = {};
+            for (const tid of solvedTaskIds) {
+                const task = tasksById[tid];
+                const key = normalizeDifficulty(task?.difficulty);
+                diffCounts[key] = (diffCounts[key] || 0) + 1;
+            }
+
+            const diffOrder = ["tutorial", "easy", "casual", "normal", "hard", "insane", "extreme", "ultra", "impossible", "tourist", "unknown"];
+            const diffEntries = diffOrder
+                .filter(key => (diffCounts[key] || 0) > 0)
+                .map(key => ({ label: difficultyLabel(key), value: diffCounts[key] }));
+            renderBars("difficultyBars", diffEntries);
+
+            const tagMetricSelect = document.getElementById("tagMetricSelect");
+            const tagLimitSelect = document.getElementById("tagLimitSelect");
+            const renderTagChart = () => {
+                const metric = tagMetricSelect?.value || "solved";
+                const limit = Number(tagLimitSelect?.value || 10);
+                const tagCounts = {};
+
+                if (metric === "attempts") {
+                    for (const sub of mySubmissions) {
+                        const task = tasksById[String(sub.task ?? "")];
+                        const tags = Array.isArray(task?.tags) ? task.tags : [];
+                        for (const tag of tags) {
+                            const key = String(tag || "").trim().toLowerCase();
+                            if (!key) continue;
+                            tagCounts[key] = (tagCounts[key] || 0) + 1;
+                        }
+                    }
+                } else {
+                    for (const tid of solvedTaskIds) {
+                        const task = tasksById[String(tid)];
+                        const tags = Array.isArray(task?.tags) ? task.tags : [];
+                        for (const tag of tags) {
+                            const key = String(tag || "").trim().toLowerCase();
+                            if (!key) continue;
+                            tagCounts[key] = (tagCounts[key] || 0) + 1;
+                        }
+                    }
+                }
+
+                const entries = Object.entries(tagCounts)
+                    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+                    .slice(0, Number.isFinite(limit) ? limit : 10)
+                    .map(([label, value]) => ({ label, value }));
+                renderBars("tagBars", entries);
+            };
+
+            if (tagMetricSelect) tagMetricSelect.onchange = renderTagChart;
+            if (tagLimitSelect) tagLimitSelect.onchange = renderTagChart;
+            renderTagChart();
         }
 
         /* ============================
@@ -555,6 +987,7 @@
 
         loadProfile();
         loadLastActivity();
+        loadAnalytics();
         startPresence();
 
         async function searchFriend() {
