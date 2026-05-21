@@ -187,70 +187,12 @@
             pointer-events: none;
         }
         
-        #editorHighlight {
-            position: absolute;
-            inset: 0;
-            margin: 0;
-            padding: 14px;
-            font-family: "IBM Plex Mono", monospace;
-            font-size: 14px;
-            line-height: 1.45;
-            white-space: pre-wrap;
-            word-break: break-word;
-            color: #e6edf3;
-            pointer-events: none;
-            overflow: auto;
-            scrollbar-width: none;
-        }
-        
-        #editorHighlight::-webkit-scrollbar {
-            width: 0;
-            height: 0;
-        }
-        
-        #editorHighlight .hl-keyword {
-            color: #7dd3fc;
-        }
-        
-        #editorHighlight .hl-type {
-            color: #c4b5fd;
-        }
-        
-        #editorHighlight .hl-number {
-            color: #fbbf24;
-        }
-        
-        #editorHighlight .hl-string {
-            color: #86efac;
-        }
-        
-        #editorHighlight .hl-comment {
-            color: #64748b;
-            font-style: italic;
-        }
-        
-        #editorHighlight .hl-prep {
-            color: #f472b6;
-        }
-        
         #editor {
             height: 100%;
             width: 100%;
             background: transparent;
-            color: transparent;
-            resize: none;
-            padding: 14px;
-            box-sizing: border-box;
-            font-family: "IBM Plex Mono", monospace;
-            font-size: 14px;
-            line-height: 1.45;
             border: none;
-            caret-color: #e6edf3;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        #editor::selection {
-            background: rgba(124, 255, 167, 0.2);
+            outline: none;
         }
         
         .splitter-h {
@@ -584,105 +526,10 @@
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
                     </button>
-                    <pre id="editorHighlight" aria-hidden="true"></pre>
-                    <textarea id="editor" spellcheck="false"></textarea>
+                    <div id="editor" aria-label="Code editor"></div>
                 </div>
 
             </div>
-
-            <script>
-                function escapeHtml(str) {
-                    return str
-                        .replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;");
-                }
-
-                function highlightCpp(code) {
-                    let text = escapeHtml(code);
-                    const stash = [];
-                    const tokenRegex = /\uE000(\d+)\uE001/g;
-
-                    const stashToken = (regex, cls) => {
-                        text = text.replace(regex, (match) => {
-                            const id = stash.length;
-                            stash.push(`<span class="${cls}">${match}</span>`);
-                            return `\uE000${id}\uE001`;
-                        });
-                    };
-
-                    stashToken(/^\s*#.*$/gm, "hl-prep");
-                    stashToken(/\/\*[\s\S]*?\*\//g, "hl-comment");
-                    stashToken(/\/\/.*$/gm, "hl-comment");
-                    stashToken(/"(?:\\.|[^"\\])*"/g, "hl-string");
-                    stashToken(/'(?:\\.|[^'\\])*'/g, "hl-string");
-
-                    const parts = text.split(tokenRegex);
-                    for (let i = 0; i < parts.length; i++) {
-                        if (i % 2 === 0) {
-                            let segment = parts[i];
-                            segment = segment.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '<span class="hl-number">$&</span>');
-                            segment = segment.replace(/\b(?:int|long|double|float|bool|char|void|string|size_t|auto|const|constexpr|signed|unsigned|short)\b/g, '<span class="hl-type">$&</span>');
-                            segment = segment.replace(/\b(?:if|else|for|while|do|switch|case|break|continue|return|struct|public|private|protected|template|typename|using|namespace|try|catch|throw|new|delete|this|static|inline|virtual|override|final|sizeof|typedef)\b/g, '<span class="hl-keyword">$&</span>');
-                            parts[i] = segment;
-                        } else {
-                            parts[i] = stash[Number(parts[i])] || "";
-                        }
-                    }
-
-                    return parts.join("");
-                }
-
-                function syncHighlight() {
-                    const input = document.getElementById("editor");
-                    const highlight = document.getElementById("editorHighlight");
-                    if (!input || !highlight) return;
-                    highlight.scrollTop = input.scrollTop;
-                    highlight.scrollLeft = input.scrollLeft;
-                }
-
-                function updateHighlight() {
-                    const input = document.getElementById("editor");
-                    const highlight = document.getElementById("editorHighlight");
-                    if (!input || !highlight) return;
-                    highlight.innerHTML = highlightCpp(input.value) + "\n";
-                    syncHighlight();
-                }
-
-                async function copyEditorCode(btn) {
-                    const text = window.editor?.getValue?.() || "";
-                    if (!text) return;
-                    try {
-                        await navigator.clipboard.writeText(text);
-                        const old = btn.style.opacity;
-                        btn.style.opacity = "0.55";
-                        setTimeout(() => { btn.style.opacity = old || ""; }, 180);
-                    } catch (e) {
-                        console.warn("copy failed", e);
-                    }
-                }
-
-                window.editor = {
-                    getValue: function() {
-                        var el = document.getElementById("editor");
-                        if (!el) return "";
-                        return el.value;
-                    },
-
-                    setValue: function(text) {
-                        var el = document.getElementById("editor");
-                        if (!el) return;
-                        if (text === undefined || text === null) {
-                            el.value = "";
-                        } else {
-                            el.value = text;
-                        }
-                        updateHighlight();
-                    }
-                };
-
-                console.log("[editor] textarea mode enabled");
-            </script>
 
             <div class="splitter-h" id="hSplit"></div>
 
@@ -1530,6 +1377,7 @@
 
                 TASK_DIFFICULTY = meta.difficulty;
                 TASK_LANGUAGE = normalizeTaskLanguage(meta.language);
+                updateEditorLanguageFromTask();
                 console.log("Загружена сложность:", TASK_DIFFICULTY);
 
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
@@ -1711,7 +1559,7 @@
         }
     </script>
 
-    <!-- ===================== SIMPLE TEXT EDITOR вместо Monaco ===================== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
     <script>
         let editor = {
             setValue() {},
@@ -1719,43 +1567,110 @@
                 return "";
             }
         };
+        window.editor = editor;
+        let monacoEditor = null;
 
-        function initializeTextEditor() {
-            const el = document.getElementById("editor");
-            if (!el) {
-                console.error("editor element not found");
-                return;
-            }
+        function monacoLangForTask(lang) {
+            return normalizeTaskLanguage(lang) === "python" ? "python" : "cpp";
+        }
 
-            editor = {
-                setValue(text) {
-                    el.value = text ? text : "";
-                    if (typeof updateHighlight === "function") {
-                        updateHighlight();
-                    }
-                },
-                getValue() {
-                    return el.value;
-                }
-            };
-
-            // начальное содержимое
-            el.value = "// Загружаю код задачи...";
-            if (typeof updateHighlight === "function") {
-                updateHighlight();
-            }
-
-            if (typeof updateHighlight === "function") {
-                el.addEventListener("input", updateHighlight);
-            }
-            if (typeof syncHighlight === "function") {
-                el.addEventListener("scroll", syncHighlight);
+        async function copyEditorCode(btn) {
+            const text = editor.getValue ? editor.getValue() : "";
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                const old = btn.style.opacity;
+                btn.style.opacity = "0.55";
+                setTimeout(() => { btn.style.opacity = old || ""; }, 180);
+            } catch (e) {
+                console.warn("copy failed", e);
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            // редактор и задача
-            initializeTextEditor();
+        function initializeMonacoEditor(initialLang = "cpp") {
+            return new Promise((resolve) => {
+                if (!window.require) {
+                    console.error("monaco loader missing");
+                    resolve();
+                    return;
+                }
+                window.require.config({
+                    paths: {
+                        vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
+                    }
+                });
+                window.require(["vs/editor/editor.main"], () => {
+                    monaco.editor.defineTheme("codebug-dark-problem", {
+                        base: "vs-dark",
+                        inherit: true,
+                        rules: [],
+                        colors: {
+                            "editor.background": "#0b1119",
+                            "editor.lineHighlightBackground": "#112240",
+                            "editorCursor.foreground": "#f0f6ff"
+                        }
+                    });
+
+                    const model = monaco.editor.createModel(
+                        "// Загружаю код задачи...",
+                        monacoLangForTask(initialLang)
+                    );
+
+                    monacoEditor = monaco.editor.create(document.getElementById("editor"), {
+                        model,
+                        theme: "codebug-dark-problem",
+                        automaticLayout: true,
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineHeight: 20,
+                        fontFamily: "\"IBM Plex Mono\", monospace",
+                        tabSize: 4,
+                        insertSpaces: true,
+                        smoothScrolling: true,
+                        scrollBeyondLastLine: false,
+                        autoClosingBrackets: "languageDefined",
+                        autoClosingQuotes: "languageDefined",
+                        autoSurround: "languageDefined",
+                        quickSuggestions: { other: true, comments: false, strings: true },
+                        wordBasedSuggestions: "allDocuments",
+                        folding: true,
+                        guides: {
+                            indentation: false,
+                            bracketPairs: false,
+                            highlightActiveIndentation: false
+                        },
+                        bracketPairColorization: { enabled: false },
+                        matchBrackets: "never"
+                    });
+
+                    monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+                        submitCode();
+                    });
+
+                    editor = {
+                        setValue(text) {
+                            monacoEditor.setValue(text == null ? "" : String(text));
+                        },
+                        getValue() {
+                            return monacoEditor.getValue();
+                        }
+                    };
+                    window.editor = editor;
+
+                    resolve();
+                });
+            });
+        }
+
+        function updateEditorLanguageFromTask() {
+            if (!window.monaco || !monacoEditor) return;
+            const model = monacoEditor.getModel();
+            if (!model) return;
+            monaco.editor.setModelLanguage(model, monacoLangForTask(TASK_LANGUAGE));
+        }
+
+        document.addEventListener("DOMContentLoaded", async() => {
+            await initializeMonacoEditor(TASK_LANGUAGE);
             document.querySelectorAll(".lang-btn").forEach(btn => {
                 btn.addEventListener("click", () => setStatementLanguage(btn.dataset.lang));
             });
