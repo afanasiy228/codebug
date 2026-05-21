@@ -269,6 +269,20 @@
             return "Легенда CodeBug";
         }
 
+        function getRankColor(exp, login) {
+            if (login === "ADMIN") return "#ff0000";
+            if (exp < 10) return "#9aa4b8";
+            if (exp < 50) return "#7cc8ff";
+            if (exp < 100) return "#58d68d";
+            if (exp < 200) return "#2ecc71";
+            if (exp < 300) return "#27ae60";
+            if (exp < 500) return "#f1c40f";
+            if (exp < 800) return "#f39c12";
+            if (exp < 1200) return "#e67e22";
+            if (exp < 2000) return "#e74c3c";
+            return "#c0392b";
+        }
+
         function escapeHtml(value) {
             return String(value ?? "")
                 .replace(/&/g, "&amp;")
@@ -308,7 +322,7 @@
             arr.forEach((u, index) => {
                 const profileUrl = `profile.html?user=${encodeURIComponent(u.login)}`;
                 const safeLogin = escapeHtml(u.login);
-                const loginColor = u.login === "ADMIN" ? "#ff0000" : "inherit";
+                const loginColor = getRankColor(Number(u.exp || 0), u.login);
                 let avatarHTML = u.avatar ?
                     `<a href="${profileUrl}"><img class="ava" src="${u.avatar}"></a>` :
                     `<a href="${profileUrl}" style="text-decoration:none;"><div class="ava default">${safeLogin[0].toUpperCase()}</div></a>`;

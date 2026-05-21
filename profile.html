@@ -436,6 +436,20 @@
             return "Легенда CodeBug";
         }
 
+        function getRankColor(exp, login) {
+            if (login === "ADMIN") return "#ff0000";
+            if (exp < 10) return "#9aa4b8";
+            if (exp < 50) return "#7cc8ff";
+            if (exp < 100) return "#58d68d";
+            if (exp < 200) return "#2ecc71";
+            if (exp < 300) return "#27ae60";
+            if (exp < 500) return "#f1c40f";
+            if (exp < 800) return "#f39c12";
+            if (exp < 1200) return "#e67e22";
+            if (exp < 2000) return "#e74c3c";
+            return "#c0392b";
+        }
+
         /* ============================
            LOAD PROFILE DATA
         ============================ */
@@ -449,11 +463,7 @@
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
             usernameEl.innerText = data.login;
-            if (currentUser === "ADMIN" && data.login === "ADMIN") {
-                usernameEl.style.color = "#ff0000";
-            } else {
-                usernameEl.style.color = "";
-            }
+            usernameEl.style.color = getRankColor(Number(stats.exp || 0), data.login);
             document.getElementById("userid").innerText = data.id || "—";
             document.getElementById("created").innerText =
                 data.created ? new Date(data.created).toLocaleDateString() : "—";
