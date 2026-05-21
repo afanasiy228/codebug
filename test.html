@@ -80,6 +80,40 @@
             color: var(--muted);
             font-size: 12px;
         }
+
+        .editor-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .select {
+            border: 1px solid var(--stroke);
+            background: rgba(9, 20, 38, 0.95);
+            color: var(--text);
+            border-radius: 9px;
+            padding: 6px 10px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .tool-btn {
+            border: 1px solid rgba(60, 95, 140, 0.6);
+            background: rgba(10, 26, 48, 0.75);
+            color: #b9cdec;
+            border-radius: 9px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .tool-btn:hover {
+            background: rgba(16, 38, 68, 0.85);
+            color: #d7e7ff;
+        }
         
         .editor-wrap {
             position: relative;
@@ -222,7 +256,15 @@
             <div class="panel">
                 <div class="panel-head">
                     <div class="title">Код C++</div>
-                    <div class="hint">Ctrl/Cmd + Enter для запуска</div>
+                    <div class="editor-actions">
+                        <span class="hint">Ctrl/Cmd + Enter</span>
+                        <select id="langSelect" class="select" aria-label="Language">
+                            <option value="cpp">C++17</option>
+                            <option value="python">Python 3</option>
+                        </select>
+                        <button id="formatBtn" class="tool-btn" type="button">Format</button>
+                        <button id="diagBtn" class="tool-btn" type="button">Check</button>
+                    </div>
                 </div>
                 <div class="editor-wrap">
                     <div id="editor" aria-label="Code editor"></div>
@@ -261,10 +303,218 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
     <script>
         let monacoEditor = null;
+        const editorModels = {};
+        let diagnosticsTimer = null;
+        const DIAG_OWNER = "codebug-diagnostics";
+
+        const TEMPLATE_CPP = `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    long long a, b;
+    cin >> a >> b;
+    cout << a + b << "\\n";
+    return 0;
+}`;
+
+        const TEMPLATE_PY = `import sys
+
+def main():
+    data = sys.stdin.read().strip().split()
+    if len(data) < 2:
+        return
+    a, b = map(int, data[:2])
+    print(a + b)
+
+if __name__ == "__main__":
+    main()
+`;
+
+        function draftKey(lang) {
+            return `codebug:test:monaco:draft:${lang}`;
+        }
+
+        function langLabel(lang) {
+            return lang === "python" ? "Python 3" : "C++17";
+        }
+
+        function getCurrentLang() {
+            return document.getElementById("langSelect")?.value || "cpp";
+        }
+
+        function defaultTemplate(lang) {
+            return lang === "python" ? TEMPLATE_PY : TEMPLATE_CPP;
+        }
 
         function getEditorCode() {
             if (!monacoEditor) return "";
             return monacoEditor.getValue();
+        }
+
+        function currentModel() {
+            return monacoEditor ? monacoEditor.getModel() : null;
+        }
+
+        function saveDraft(lang) {
+            const model = editorModels[lang];
+            if (!model) return;
+            localStorage.setItem(draftKey(lang), model.getValue());
+        }
+
+        function ensureModel(monaco, lang) {
+            if (editorModels[lang]) return editorModels[lang];
+            const ext = lang === "python" ? "py" : "cpp";
+            const uri = monaco.Uri.parse(`inmemory://codebug/main.${ext}`);
+            const draft = localStorage.getItem(draftKey(lang));
+            const model = monaco.editor.createModel(draft || defaultTemplate(lang), lang, uri);
+            editorModels[lang] = model;
+            model.onDidChangeContent(() => {
+                saveDraft(lang);
+                scheduleDiagnostics();
+            });
+            return model;
+        }
+
+        async function fetchJson(url, payload) {
+            const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || (location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com");
+            const res = await fetch(`${base}${url}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload || {})
+            });
+            const data = await res.json().catch(() => ({}));
+            return {
+                ok: res.ok,
+                data
+            };
+        }
+
+        function scheduleDiagnostics() {
+            if (!monacoEditor) return;
+            clearTimeout(diagnosticsTimer);
+            diagnosticsTimer = setTimeout(() => {
+                runDiagnostics(false);
+            }, 700);
+        }
+
+        async function runDiagnostics(manual = true) {
+            if (!monacoEditor || !window.monaco) return;
+            const code = getEditorCode();
+            const language = getCurrentLang();
+            const model = currentModel();
+            if (!model) return;
+            if (!code.trim()) {
+                monaco.editor.setModelMarkers(model, DIAG_OWNER, []);
+                return;
+            }
+            const { ok, data } = await fetchJson("/editor/diagnostics", {
+                code,
+                language
+            });
+            const markers = Array.isArray(data.markers) ? data.markers : [];
+            monaco.editor.setModelMarkers(model, DIAG_OWNER, markers);
+            if (manual) {
+                const statusEl = document.getElementById("status");
+                if (!ok) {
+                    statusEl.textContent = "Diagnostics error";
+                    statusEl.classList.add("bad");
+                } else if (markers.length) {
+                    statusEl.textContent = `Найдено: ${markers.length}`;
+                    statusEl.classList.add("bad");
+                } else {
+                    statusEl.textContent = "Ошибок нет";
+                    statusEl.classList.remove("bad");
+                }
+            }
+        }
+
+        async function formatDocument() {
+            if (!monacoEditor) return;
+            const code = getEditorCode();
+            const language = getCurrentLang();
+            const statusEl = document.getElementById("status");
+            if (!code.trim()) return;
+            statusEl.textContent = "Форматирование...";
+            statusEl.classList.remove("bad");
+            const { ok, data } = await fetchJson("/editor/format", {
+                code,
+                language
+            });
+            if (!ok || !data.ok) {
+                statusEl.textContent = "Format error";
+                statusEl.classList.add("bad");
+                return;
+            }
+            if (typeof data.formatted === "string") {
+                monacoEditor.setValue(data.formatted);
+            }
+            statusEl.textContent = "Отформатировано";
+            statusEl.classList.remove("bad");
+            runDiagnostics(false);
+        }
+
+        function registerSnippets(monaco) {
+            monaco.languages.registerCompletionItemProvider("cpp", {
+                provideCompletionItems: function(model, position) {
+                    const suggestions = [{
+                            label: "fastio",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            documentation: "Fast IO template",
+                            insertText: "ios::sync_with_stdio(false);\\ncin.tie(nullptr);",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
+                            label: "fori",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "for (int ${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++) {\\n    ${0}\\n}",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
+                            label: "all",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "begin(${1:v}), end(${1:v})",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
+                            label: "vecin",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "vector<${1:int}> ${2:a}(${3:n});\\nfor (auto &x : ${2:a}) cin >> x;",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        }
+                    ];
+                    return { suggestions };
+                }
+            });
+
+            monaco.languages.registerCompletionItemProvider("python", {
+                provideCompletionItems: function(model, position) {
+                    const suggestions = [{
+                            label: "ifmain",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "if __name__ == \"__main__\":\\n    ${0}",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
+                            label: "fori",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "for ${1:i} in range(${2:n}):\\n    ${0}",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
+                            label: "fastio",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "import sys\\ninput = sys.stdin.readline",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        }
+                    ];
+                    return { suggestions };
+                }
+            });
         }
 
         function initMonacoEditor() {
@@ -288,24 +538,17 @@
                             "editor.lineHighlightBackground": "#112240",
                             "editorCursor.foreground": "#f0f6ff",
                             "editorBracketMatch.background": "#204a7030",
-                            "editorBracketMatch.border": "#4fa3ff"
+                            "editorBracketMatch.border": "#4fa3ff",
+                            "editorIndentGuide.background1": "#233b5d",
+                            "editorIndentGuide.activeBackground1": "#4f89cf"
                         }
                     });
 
+                    registerSnippets(monaco);
+                    const initialLang = getCurrentLang();
+                    const initialModel = ensureModel(monaco, initialLang);
                     monacoEditor = monaco.editor.create(document.getElementById("editor"), {
-                        value: `#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    long long a, b;
-    cin >> a >> b;
-    cout << a + b << "\\n";
-    return 0;
-}`,
-                        language: "cpp",
+                        model: initialModel,
                         theme: "codebug-dark",
                         automaticLayout: true,
                         minimap: {
@@ -319,6 +562,14 @@ int main() {
                         smoothScrolling: true,
                         scrollBeyondLastLine: false,
                         linkedEditing: true,
+                        folding: true,
+                        foldingStrategy: "auto",
+                        showFoldingControls: "mouseover",
+                        guides: {
+                            indentation: true,
+                            bracketPairs: true,
+                            highlightActiveIndentation: true
+                        },
                         bracketPairColorization: {
                             enabled: true
                         },
@@ -340,6 +591,21 @@ int main() {
                         runSingle();
                     });
 
+                    const langSelect = document.getElementById("langSelect");
+                    if (langSelect) {
+                        langSelect.addEventListener("change", () => {
+                            const lang = getCurrentLang();
+                            const model = ensureModel(monaco, lang);
+                            monacoEditor.setModel(model);
+                            document.querySelector(".title").textContent = `Код ${langLabel(lang)}`;
+                            runDiagnostics(false);
+                        });
+                    }
+
+                    document.getElementById("formatBtn")?.addEventListener("click", formatDocument);
+                    document.getElementById("diagBtn")?.addEventListener("click", () => runDiagnostics(true));
+                    document.querySelector(".title").textContent = `Код ${langLabel(initialLang)}`;
+                    runDiagnostics(false);
                     resolve();
                 });
             });
@@ -373,22 +639,15 @@ int main() {
       memoryEl.textContent = "— MB";
       outputEl.value = "";
       appendRunLog(`Старт запуска (${nowText})`);
-
-      const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || (location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com");
       try {
-                const res = await fetch(`${base}/run-single`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        code,
-                        input
-                    })
+                const language = getCurrentLang();
+                const { ok: fetchOk, data } = await fetchJson("/run-single", {
+                    code,
+                    input,
+                    language
                 });
-                const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          statusEl.textContent = data.error || `Ошибка ${res.status}`;
+        if (!fetchOk) {
+          statusEl.textContent = data.error || "Ошибка запуска";
           statusEl.classList.add("bad");
           outputEl.value = data.details || "";
           appendRunLog(`Ошибка запуска: ${statusEl.textContent}`);

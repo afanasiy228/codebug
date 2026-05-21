@@ -1169,6 +1169,133 @@ def _run_python_single(code, input_data):
         }
 
 
+def _parse_cpp_diagnostics(stderr_text):
+    markers = []
+    if not stderr_text:
+        return markers
+    pattern = re.compile(r"^(?:[^:\n]+):(\d+):(\d+):\s*(fatal error|error|warning|note):\s*(.+)$")
+    severity_map = {
+        "fatal error": 8,
+        "error": 8,
+        "warning": 4,
+        "note": 2,
+    }
+    for raw_line in stderr_text.splitlines():
+        line = raw_line.strip()
+        m = pattern.match(line)
+        if not m:
+            continue
+        line_no = int(m.group(1))
+        col_no = int(m.group(2))
+        kind = m.group(3).lower()
+        msg = m.group(4).strip()
+        markers.append({
+            "startLineNumber": line_no,
+            "startColumn": max(1, col_no),
+            "endLineNumber": line_no,
+            "endColumn": max(2, col_no + 1),
+            "message": f"{kind}: {msg}",
+            "severity": severity_map.get(kind, 8),
+        })
+    return markers
+
+
+def _parse_python_diagnostics(stderr_text):
+    markers = []
+    if not stderr_text:
+        return markers
+    line_no = None
+    col_no = 1
+    message = ""
+    file_line = re.search(r'File\s+"[^"]*",\s+line\s+(\d+)', stderr_text)
+    if file_line:
+        line_no = int(file_line.group(1))
+    syntax_msg = re.search(r"^(SyntaxError|IndentationError|TabError):\s*(.+)$", stderr_text, re.MULTILINE)
+    if syntax_msg:
+        message = f"{syntax_msg.group(1)}: {syntax_msg.group(2)}"
+    elif stderr_text.strip():
+        message = stderr_text.strip().splitlines()[-1]
+    if line_no:
+        markers.append({
+            "startLineNumber": line_no,
+            "startColumn": col_no,
+            "endLineNumber": line_no,
+            "endColumn": col_no + 1,
+            "message": message or "python error",
+            "severity": 8,
+        })
+    return markers
+
+
+def _diagnose_cpp(code):
+    with _runtime_tempdir("diag_cpp_") as tmp:
+        src_path = os.path.join(tmp, "main.cpp")
+        _write_text(src_path, code)
+        result = run_in_sandbox(
+            ["g++", "-std=c++17", "-fsyntax-only", "main.cpp"],
+            workdir=tmp,
+            language="cpp",
+            timeout=20,
+        )
+        stderr_text = (result.stderr or "").strip()
+        markers = _parse_cpp_diagnostics(stderr_text)
+        return {
+            "ok": result.returncode == 0,
+            "markers": markers,
+            "details": stderr_text
+        }
+
+
+def _diagnose_python(code):
+    with _runtime_tempdir("diag_py_") as tmp:
+        src_path = os.path.join(tmp, "main.py")
+        _write_text(src_path, code)
+        result = _compile_python(src_path)
+        stderr_text = (result.stderr or "").strip()
+        markers = _parse_python_diagnostics(stderr_text)
+        return {
+            "ok": result.returncode == 0,
+            "markers": markers,
+            "details": stderr_text
+        }
+
+
+def _format_cpp(code):
+    with _runtime_tempdir("fmt_cpp_") as tmp:
+        src_path = os.path.join(tmp, "main.cpp")
+        _write_text(src_path, code)
+        result = run_in_sandbox(
+            ["clang-format", "-i", "main.cpp"],
+            workdir=tmp,
+            language="cpp",
+            timeout=20,
+        )
+        if result.returncode != 0:
+            details = (result.stderr or "").strip() or "clang-format failed"
+            return {"ok": False, "formatted": code, "details": details}
+        with open(src_path, "r", encoding="utf-8") as f:
+            formatted = f.read()
+        return {"ok": True, "formatted": formatted, "details": ""}
+
+
+def _format_python(code):
+    with _runtime_tempdir("fmt_py_") as tmp:
+        src_path = os.path.join(tmp, "main.py")
+        _write_text(src_path, code)
+        result = run_in_sandbox(
+            ["python3", "-m", "black", "--quiet", "main.py"],
+            workdir=tmp,
+            language="python",
+            timeout=20,
+        )
+        if result.returncode != 0:
+            details = (result.stderr or "").strip() or "black failed"
+            return {"ok": False, "formatted": code, "details": details}
+        with open(src_path, "r", encoding="utf-8") as f:
+            formatted = f.read()
+        return {"ok": True, "formatted": formatted, "details": ""}
+
+
 @app.route("/submit", methods=["POST", "OPTIONS"])
 def submit():
     # --- OPTIONS preflight ---
@@ -1672,6 +1799,60 @@ def run_single():
         result = _run_python_single(code, input_data)
     else:
         result = _run_cpp_single(code, input_data)
+    return jsonify(result)
+
+
+@app.route("/editor/diagnostics", methods=["POST"])
+def editor_diagnostics():
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "")
+    lang = normalize_language(data.get("language"))
+    if not code.strip():
+        return jsonify({"ok": True, "markers": [], "details": ""})
+    try:
+        if lang == "python":
+            result = _diagnose_python(code)
+        else:
+            result = _diagnose_cpp(code)
+    except (subprocess.TimeoutExpired, SandboxError) as e:
+        return jsonify({
+            "ok": False,
+            "markers": [],
+            "details": str(e) or "diagnostics_timeout"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "markers": [],
+            "details": str(e) or "diagnostics_failed"
+        }), 500
+    return jsonify(result)
+
+
+@app.route("/editor/format", methods=["POST"])
+def editor_format():
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "")
+    lang = normalize_language(data.get("language"))
+    if not code.strip():
+        return jsonify({"ok": True, "formatted": "", "details": ""})
+    try:
+        if lang == "python":
+            result = _format_python(code)
+        else:
+            result = _format_cpp(code)
+    except (subprocess.TimeoutExpired, SandboxError) as e:
+        return jsonify({
+            "ok": False,
+            "formatted": code,
+            "details": str(e) or "format_timeout"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "formatted": code,
+            "details": str(e) or "format_failed"
+        }), 500
     return jsonify(result)
 
 
