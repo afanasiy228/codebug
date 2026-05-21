@@ -423,10 +423,11 @@ if __name__ == "__main__":
                 monaco.editor.setModelMarkers(model, DIAG_OWNER, []);
                 return;
             }
-            const { ok, data } = await fetchJson("/editor/diagnostics", {
+            const { ok: httpOk, data } = await fetchJson("/editor/diagnostics", {
                 code,
                 language
             });
+            const diagOk = !!data.ok;
             const markers = Array.isArray(data.markers) ? data.markers.map((m) => ({
                 startLineNumber: Math.max(1, Number(m.startLineNumber) || 1),
                 startColumn: Math.max(1, Number(m.startColumn) || 1),
@@ -435,7 +436,7 @@ if __name__ == "__main__":
                 message: String(m.message || "error"),
                 severity: Number(m.severity) || monaco.MarkerSeverity.Error
             })) : [];
-            if (!markers.length && !ok && typeof data.details === "string") {
+            if (!markers.length && !diagOk && typeof data.details === "string") {
                 const lines = data.details.split("\n");
                 for (const line of lines) {
                     const match = line.match(/:(\d+):(\d+):\s*(?:fatal error|error|warning):\s*(.+)$/i);
@@ -455,7 +456,7 @@ if __name__ == "__main__":
             monaco.editor.setModelMarkers(model, DIAG_OWNER, markers);
             if (manual) {
                 const statusEl = document.getElementById("status");
-                if (!ok) {
+                if (!httpOk || !diagOk) {
                     statusEl.textContent = "Diagnostics error";
                     statusEl.classList.add("bad");
                 } else if (markers.length) {
