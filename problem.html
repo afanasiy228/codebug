@@ -777,7 +777,14 @@
             let ticks = 0;
             SUBS_POLL_TIMER = setInterval(async () => {
                 ticks += 1;
-                await loadMySubsForThisProblem();
+                const latest = await loadMySubsForThisProblem();
+                if (latest && isSolvedVerdict(latest)) {
+                    const user = getUser();
+                    const taskId = getCurrentTaskId();
+                    if (user && Number.isFinite(taskId)) {
+                        submitOK(user, String(taskId), TASK_DIFFICULTY);
+                    }
+                }
                 const firstStatus = document.querySelector("#subs tr td:nth-child(2)")?.textContent?.trim()?.toUpperCase() || "";
                 const stillPending = firstStatus === "В ОЧЕРЕДИ" || firstStatus === "ТЕСТИРУЕТСЯ" || firstStatus === "QUEUE" || firstStatus === "TESTING";
                 if (!stillPending || ticks > 120) {
@@ -811,7 +818,7 @@
 
         function isSolvedVerdict(verdict) {
             if (!verdict || typeof verdict !== "object") return false;
-            const status = String(verdict.status || "").trim().toUpperCase();
+            const status = String(verdict.status || verdict.verdict || "").trim().toUpperCase();
             const raw = String(verdict.rawVerdict || "").trim().toUpperCase();
             if (status === "OK" || raw === "OK") return true;
 
@@ -1024,7 +1031,7 @@
             const user = getUser();
             if (!user) {
                 console.warn("⚠ Нет пользователя — таблицу не обновляем");
-                return;
+                return null;
             }
 
             const url = new URL(location.href);
@@ -1033,13 +1040,13 @@
             const tbody = document.getElementById("subs");
             if (!tbody) {
                 console.error("❌ tbody #subs не найден!");
-                return;
+                return null;
             }
 
             const dbRef = window.db || null;
             if (!dbRef) {
                 tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Firebase временно недоступен</td></tr>";
-                return;
+                return null;
             }
 
             tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Загрузка…</td></tr>";
@@ -1050,12 +1057,12 @@
             } catch (err) {
                 console.warn("⚠ Не удалось загрузить посылки:", err);
                 tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Не удалось загрузить посылки</td></tr>";
-                return;
+                return null;
             }
 
             if (!snap.exists()) {
                 tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
-                return;
+                return null;
             }
 
             const all = Object.values(snap.val());
@@ -1066,7 +1073,7 @@
 
             if (mine.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
-                return;
+                return null;
             }
 
             tbody.innerHTML = "";
@@ -1113,6 +1120,7 @@
             <td>${new Date(s.date).toLocaleTimeString()}</td>
         </tr>`;
             }
+            return mine[0];
         }
 
 
