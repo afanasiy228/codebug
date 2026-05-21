@@ -94,6 +94,7 @@
             padding: 28px;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
+            min-width: 0;
         }
         
         .username {
@@ -146,8 +147,10 @@
             text-align: center;
             box-shadow: var(--shadow);
             align-self: start;
-            position: sticky;
-            top: 92px;
+            justify-self: end;
+            position: static;
+            top: auto;
+            z-index: 1;
         }
         
         .avatar-block img {
@@ -270,10 +273,12 @@
         }
 
         .analytics-card {
-            background: rgba(255, 255, 255, 0.65);
-            border: 1px solid var(--stroke);
+            background: rgba(8, 20, 40, 0.9);
+            border: 1px solid rgba(60, 95, 140, 0.45);
             border-radius: var(--radius-md);
             padding: 16px;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .analytics-title {
@@ -281,18 +286,19 @@
             font-size: 18px;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
-            color: var(--ink);
+            color: #e8f0ff;
         }
 
         .analytics-sub {
             margin: 0 0 10px;
-            color: var(--muted);
+            color: #9bb3d3;
             font-size: 13px;
         }
 
         .heatmap-wrap {
             overflow-x: auto;
             padding-bottom: 4px;
+            max-width: 100%;
         }
 
         .heatmap-months {
@@ -306,7 +312,7 @@
         }
 
         .heatmap-month {
-            color: var(--muted);
+            color: #90a9cc;
             font-size: 11px;
             transform: translateX(-2px);
         }
@@ -322,7 +328,7 @@
             display: grid;
             grid-template-rows: repeat(7, 12px);
             gap: 4px;
-            color: var(--muted);
+            color: #90a9cc;
             font-size: 10px;
             align-items: center;
             text-align: right;
@@ -341,14 +347,14 @@
             width: 12px;
             height: 12px;
             border-radius: 3px;
-            background: rgba(120, 130, 150, 0.18);
-            border: 1px solid rgba(120, 130, 150, 0.15);
+            background: rgba(90, 120, 160, 0.2);
+            border: 1px solid rgba(90, 120, 160, 0.25);
         }
 
-        .hm-l1 { background: rgba(34, 197, 94, 0.28); }
-        .hm-l2 { background: rgba(34, 197, 94, 0.48); }
-        .hm-l3 { background: rgba(34, 197, 94, 0.68); }
-        .hm-l4 { background: rgba(34, 197, 94, 0.9); }
+        .hm-l1 { background: rgba(34, 197, 94, 0.35); }
+        .hm-l2 { background: rgba(34, 197, 94, 0.55); }
+        .hm-l3 { background: rgba(34, 197, 94, 0.75); }
+        .hm-l4 { background: rgba(34, 197, 94, 0.95); }
 
         .heatmap-legend {
             margin-top: 10px;
@@ -356,7 +362,7 @@
             justify-content: flex-end;
             align-items: center;
             gap: 6px;
-            color: var(--muted);
+            color: #90a9cc;
             font-size: 12px;
         }
 
@@ -380,7 +386,7 @@
         }
 
         .bar-label {
-            color: var(--ink);
+            color: #d7e4f7;
             font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
@@ -391,19 +397,19 @@
             width: 100%;
             height: 10px;
             border-radius: 999px;
-            background: rgba(120, 130, 150, 0.2);
+            background: rgba(80, 110, 145, 0.35);
             overflow: hidden;
         }
 
         .bar-fill {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(90deg, #10b981, #0ea5e9);
+            background: linear-gradient(90deg, #22c55e, #38bdf8);
         }
 
         .bar-value {
             text-align: right;
-            color: var(--muted);
+            color: #9bb3d3;
             font-size: 12px;
             font-weight: 600;
         }
@@ -416,10 +422,10 @@
         }
 
         .analytics-controls select {
-            border: 1px solid var(--stroke);
+            border: 1px solid rgba(72, 106, 150, 0.5);
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.72);
-            color: var(--ink);
+            background: rgba(8, 20, 40, 0.8);
+            color: #dce8f8;
             padding: 6px 10px;
             font-size: 13px;
         }
