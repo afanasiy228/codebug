@@ -380,6 +380,15 @@ def _run_submission_job(job):
         except Exception as e:
             print("Queue final firebase update failed:", e)
 
+    solved_like = _is_solved_submission({
+        "verdict": result_obj.get("status"),
+        "statusLabel": result_obj.get("statusLabel"),
+        "rawVerdict": result_obj.get("rawVerdict"),
+        "score": result_obj.get("score"),
+    })
+    if solved_like:
+        _mark_task_solved_for_user(login, task)
+
 
 def _submit_worker():
     while True:
@@ -1912,14 +1921,51 @@ def admin_purge_users():
 
 
 def _is_solved_submission(item):
-    verdict = str((item or {}).get("verdict", "")).strip().upper()
-    if verdict == "OK":
+    item = item or {}
+    verdict = str(item.get("verdict", "")).strip().upper()
+    status_label = str(item.get("statusLabel", "")).strip().upper()
+    status = str(item.get("status", "")).strip().upper()
+    raw_verdict = str(item.get("rawVerdict", "")).strip().upper()
+
+    if verdict == "OK" or status_label == "OK" or status == "OK" or raw_verdict == "OK":
         return True
+
+    score = item.get("score")
     try:
-        value = float(verdict.replace(",", "."))
-        return value >= 100.0
+        if score is not None and float(str(score).replace(",", ".")) >= 100.0:
+            return True
     except Exception:
-        return False
+        pass
+
+    for field in (verdict, status_label, status):
+        try:
+            if field and float(str(field).replace(",", ".")) >= 100.0:
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _mark_task_solved_for_user(login, task):
+    if not FIREBASE_READY:
+        return
+    login = str(login or "").strip()
+    task = str(task or "").strip()
+    if not login or not task:
+        return
+    try:
+        solved_item_ref = db.reference(f"users/{login}/stats/solved/{task}")
+        solved_item_ref.set(True)
+
+        solved_map = db.reference(f"users/{login}/stats/solved").get() or {}
+        if not isinstance(solved_map, dict):
+            solved_map = {}
+        cnt = sum(1 for value in solved_map.values() if bool(value))
+        db.reference(f"users/{login}/stats").update({
+            "cnt": cnt
+        })
+    except Exception as e:
+        print("mark solved stats update failed:", e)
 
 
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
