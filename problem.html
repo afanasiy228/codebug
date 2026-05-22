@@ -1147,6 +1147,15 @@
             return (md || "").replace(/\n/g, "<br>");
         }
 
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         let currentStatementLang = localStorage.getItem("codebugStatementLang") || "ru";
         let statementSections = { ru: "", en: "" };
         let statementPreludeHtml = "";
@@ -1429,7 +1438,8 @@
                     groupTable.innerHTML = renderGroupTable(groups, problemV2?.scoringMode);
                 }
             } catch (e) {
-                showTaskNotFound(id);
+                console.error("[problem] task render failed:", e);
+                showTaskBackendError(id, e?.message || "task_render_failed");
                 return;
             }
 
