@@ -332,10 +332,15 @@ tr:hover {
 
 #editor {
   background: transparent !important;
-  color: transparent !important;
+  color: #e6edf3 !important;
   border: none !important;
   caret-color: #e6edf3 !important;
-  -webkit-text-fill-color: transparent !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+#editor .monaco-editor,
+#editor .monaco-editor * {
+  -webkit-text-fill-color: initial !important;
 }
 
 .btn:hover,
