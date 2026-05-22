@@ -318,6 +318,7 @@
         const ENABLE_DIAGNOSTICS = false;
         const AI_COMPLETION_CACHE = new Map();
         let aiCompletionDisabled = false;
+        let lastAiBlockCompletion = null;
 
         const TEMPLATE_CPP = `#include <bits/stdc++.h>
 using namespace std;
@@ -509,6 +510,20 @@ if __name__ == "__main__":
                 endColumn: position.column
             });
 
+            function findBlockCursorDelta(text) {
+                const open = text.indexOf("{");
+                const close = text.lastIndexOf("}");
+                if (open === -1 || close === -1 || close <= open) return null;
+                const between = text.slice(open + 1, close);
+                if (between.trim()) return null;
+                const beforeTarget = text.slice(0, open + 1);
+                const lines = beforeTarget.split("\n");
+                return {
+                    lineDelta: lines.length - 1,
+                    column: lines[lines.length - 1].length + 1
+                };
+            }
+
             async function requestAiCompletion(language, model, position) {
                 if (aiCompletionDisabled) return "";
                 const offset = model.getOffsetAt(position);
@@ -518,13 +533,15 @@ if __name__ == "__main__":
                 const beforeCursor = prefix.slice(-80);
                 const wordMatch = beforeCursor.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
                 const lastChar = prefix[prefix.length - 1] || "";
-                const looksUseful = (wordMatch && wordMatch[1].length >= 2) || /[)\]}:;]|\n/.test(lastChar);
+                const lineBeforeCursor = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
+                const isIndentedEmptyLine = /^\s{2,}$/.test(lineBeforeCursor);
+                const looksUseful = (wordMatch && wordMatch[1].length >= 2) || isIndentedEmptyLine || /[)\]}:;]|\n/.test(lastChar);
                 if (!looksUseful) return "";
 
                 const cacheKey = [
                     language,
-                    prefix.slice(-1200),
-                    suffix.slice(0, 400)
+                    prefix.split("\n").slice(-8).join("\n"),
+                    suffix.split("\n").slice(0, 4).join("\n")
                 ].join("\u0000");
                 if (AI_COMPLETION_CACHE.has(cacheKey)) {
                     return AI_COMPLETION_CACHE.get(cacheKey);
@@ -545,9 +562,19 @@ if __name__ == "__main__":
                 if (wordMatch && completion.startsWith(wordMatch[1])) {
                     completion = completion.slice(wordMatch[1].length);
                 }
-                if (completion.length > 1200) {
-                    completion = completion.slice(0, 1200);
+                completion = completion.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/^\n+/, "");
+                if (completion.includes("\n")) {
+                    completion = completion.split("\n", 1)[0];
                 }
+                if (completion.length > 240) {
+                    completion = completion.slice(0, 240);
+                }
+                const cursorDelta = findBlockCursorDelta(completion);
+                lastAiBlockCompletion = cursorDelta ? {
+                    text: completion,
+                    cursorDelta,
+                    createdAt: Date.now()
+                } : null;
                 AI_COMPLETION_CACHE.set(cacheKey, completion);
                 if (AI_COMPLETION_CACHE.size > 40) {
                     AI_COMPLETION_CACHE.delete(AI_COMPLETION_CACHE.keys().next().value);
@@ -563,7 +590,12 @@ if __name__ == "__main__":
                         return {
                             items: [{
                                 insertText,
-                                range: emptyRangeAt(position)
+                                range: emptyRangeAt(position),
+                                command: {
+                                    id: "codebug.cursorInsideAiBlock",
+                                    title: "Move cursor inside AI block",
+                                    arguments: [position, insertText]
+                                }
                             }]
                         };
                     },
@@ -573,6 +605,20 @@ if __name__ == "__main__":
 
             registerInlineProvider("cpp");
             registerInlineProvider("python");
+
+            monaco.editor.registerCommand("codebug.cursorInsideAiBlock", function(_, position, insertText) {
+                if (!monacoEditor) return;
+                const delta = findBlockCursorDelta(String(insertText || ""));
+                if (!delta) return;
+                const target = {
+                    lineNumber: position.lineNumber + delta.lineDelta,
+                    column: delta.column
+                };
+                requestAnimationFrame(() => {
+                    monacoEditor.setPosition(target);
+                    monacoEditor.focus();
+                });
+            });
         }
 
         function registerSnippets(monaco) {
@@ -718,6 +764,38 @@ input = sys.stdin.readline`,
                         wordBasedSuggestions: "allDocuments",
                         formatOnType: true,
                         formatOnPaste: true
+                    });
+
+                    monacoEditor.onDidChangeModelContent((event) => {
+                        if (!lastAiBlockCompletion || Date.now() - lastAiBlockCompletion.createdAt > 2500) return;
+                        const change = event.changes && event.changes[event.changes.length - 1];
+                        if (!change || !change.text) return;
+                        const delta = lastAiBlockCompletion.cursorDelta;
+                        lastAiBlockCompletion = null;
+                        if (!delta) return;
+                        const target = {
+                            lineNumber: change.range.startLineNumber + delta.lineDelta,
+                            column: delta.column
+                        };
+                        requestAnimationFrame(() => {
+                            const model = monacoEditor.getModel();
+                            if (model) {
+                                const from = Math.max(1, change.range.startLineNumber);
+                                const to = Math.min(model.getLineCount(), from + 5);
+                                for (let lineNo = from + 1; lineNo <= to; lineNo++) {
+                                    const line = model.getLineContent(lineNo);
+                                    const prev = model.getLineContent(lineNo - 1);
+                                    const next = lineNo < model.getLineCount() ? model.getLineContent(lineNo + 1) : "";
+                                    if (/^\s*$/.test(line) && prev.includes("{") && next.includes("}")) {
+                                        target.lineNumber = lineNo;
+                                        target.column = line.length + 1;
+                                        break;
+                                    }
+                                }
+                            }
+                            monacoEditor.setPosition(target);
+                            monacoEditor.focus();
+                        });
                     });
 
                     monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {

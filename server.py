@@ -204,13 +204,11 @@ def _strip_code_fences(text):
 def _trim_ai_completion(completion):
     completion = _strip_code_fences(completion)
     completion = completion.replace("\r\n", "\n").replace("\r", "\n")
-    # Inline completions should be small. Large answers feel like full solution dumps,
-    # not editor assistance.
-    lines = completion.split("\n")
-    if len(lines) > 12:
-        completion = "\n".join(lines[:12])
-    if len(completion) > 1200:
-        completion = completion[:1200]
+    completion = completion.lstrip("\n")
+    if "\n" in completion:
+        completion = completion.split("\n", 1)[0]
+    if len(completion) > 240:
+        completion = completion[:240]
     return completion
 
 
@@ -220,15 +218,17 @@ def _request_ai_code_completion(language, prefix, suffix):
 
     lang = normalize_language(language)
     language_hint = "# Python 3\n" if lang == "python" else "// C++17\n"
-    prefix = (prefix or "")[-6000:]
-    suffix = (suffix or "")[:2000]
+    prefix_lines = (prefix or "").splitlines(keepends=True)
+    prefix = "".join(prefix_lines[-8:])
+    suffix_lines = (suffix or "").splitlines(keepends=True)
+    suffix = "".join(suffix_lines[:4])
     payload = {
         "model": AI_COMPLETION_MODEL,
         "temperature": 0.15,
-        "max_tokens": 180,
+        "max_tokens": 64,
         "prompt": language_hint + prefix,
         "suffix": suffix,
-        "stop": ["```"]
+        "stop": ["\n", "```"]
     }
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
