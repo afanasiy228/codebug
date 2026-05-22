@@ -500,19 +500,78 @@ if __name__ == "__main__":
         }
 
         function registerSnippets(monaco) {
+            const emptyRangeAt = (position) => ({
+                startLineNumber: position.lineNumber,
+                endLineNumber: position.lineNumber,
+                startColumn: position.column,
+                endColumn: position.column
+            });
+
+            const cppInlineCompletions = {
+                for: " (int i = 0; i < n; i++) {\n    \n}",
+                if: " () {\n    \n}",
+                while: " () {\n    \n}",
+                vec: "tor<int> a(n);",
+                fastio: "ios::sync_with_stdio(false);\ncin.tie(nullptr);"
+            };
+
+            const pyInlineCompletions = {
+                for: " i in range(n):\n    ",
+                if: " :\n    ",
+                while: " :\n    ",
+                def: " solve():\n    ",
+                inp: "ut = sys.stdin.readline"
+            };
+
+            function registerInlineProvider(language, completions) {
+                monaco.languages.registerInlineCompletionsProvider(language, {
+                    provideInlineCompletions(model, position) {
+                        const linePrefix = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
+                        const match = linePrefix.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
+                        if (!match) return { items: [] };
+                        const word = match[1];
+                        const insertText = completions[word];
+                        if (!insertText) return { items: [] };
+                        return {
+                            items: [{
+                                insertText,
+                                range: emptyRangeAt(position)
+                            }]
+                        };
+                    },
+                    freeInlineCompletions() {}
+                });
+            }
+
+            registerInlineProvider("cpp", cppInlineCompletions);
+            registerInlineProvider("python", pyInlineCompletions);
+
             monaco.languages.registerCompletionItemProvider("cpp", {
+                triggerCharacters: ["f", "i", "w", "v"],
                 provideCompletionItems: function(model, position) {
                     const suggestions = [{
+                            label: "for",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            documentation: "Classic CP loop",
+                            insertText: `for (int \${1:i} = 0; \${1:i} < \${2:n}; \${1:i}++) {
+    \${0}
+}`,
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
                             label: "fastio",
                             kind: monaco.languages.CompletionItemKind.Snippet,
                             documentation: "Fast IO template",
-                            insertText: "ios::sync_with_stdio(false);\\ncin.tie(nullptr);",
+                            insertText: `ios::sync_with_stdio(false);
+cin.tie(nullptr);`,
                             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                         },
                         {
                             label: "fori",
                             kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: "for (int ${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++) {\\n    ${0}\\n}",
+                            insertText: `for (int \${1:i} = 0; \${1:i} < \${2:n}; \${1:i}++) {
+    \${0}
+}`,
                             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                         },
                         {
@@ -524,7 +583,8 @@ if __name__ == "__main__":
                         {
                             label: "vecin",
                             kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: "vector<${1:int}> ${2:a}(${3:n});\\nfor (auto &x : ${2:a}) cin >> x;",
+                            insertText: `vector<\${1:int}> \${2:a}(\${3:n});
+for (auto &x : \${2:a}) cin >> x;`,
                             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                         }
                     ];
@@ -533,23 +593,34 @@ if __name__ == "__main__":
             });
 
             monaco.languages.registerCompletionItemProvider("python", {
+                triggerCharacters: ["f", "i", "w"],
                 provideCompletionItems: function(model, position) {
                     const suggestions = [{
+                            label: "for",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: `for \${1:i} in range(\${2:n}):
+    \${0}`,
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                        },
+                        {
                             label: "ifmain",
                             kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: "if __name__ == \"__main__\":\\n    ${0}",
+                            insertText: `if __name__ == "__main__":
+    \${0}`,
                             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                         },
                         {
                             label: "fori",
                             kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: "for ${1:i} in range(${2:n}):\\n    ${0}",
+                            insertText: `for \${1:i} in range(\${2:n}):
+    \${0}`,
                             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                         },
                         {
                             label: "fastio",
                             kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: "import sys\\ninput = sys.stdin.readline",
+                            insertText: `import sys
+input = sys.stdin.readline`,
                             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                         }
                     ];
@@ -619,6 +690,10 @@ if __name__ == "__main__":
                         autoClosingBrackets: "languageDefined",
                         autoClosingQuotes: "languageDefined",
                         autoSurround: "languageDefined",
+                        inlineSuggest: {
+                            enabled: true,
+                            suppressSuggestions: false
+                        },
                         suggestOnTriggerCharacters: true,
                         quickSuggestions: {
                             other: true,
