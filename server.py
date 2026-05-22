@@ -45,6 +45,10 @@ ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
 RECAPTCHA_VERIFY_URL = os.getenv("RECAPTCHA_VERIFY_URL", "https://www.google.com/recaptcha/api/siteverify")
 RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY", "")
+AI_COMPLETION_API_KEY = os.getenv("AI_COMPLETION_API_KEY") or os.getenv("OPENAI_API_KEY", "")
+AI_COMPLETION_API_URL = os.getenv("AI_COMPLETION_API_URL", "https://api.openai.com/v1/chat/completions")
+AI_COMPLETION_MODEL = os.getenv("AI_COMPLETION_MODEL", "gpt-4o-mini")
+AI_COMPLETION_TIMEOUT = int(os.getenv("AI_COMPLETION_TIMEOUT", "12"))
 PUBLIC_FIREBASE_WEB_API_KEY = os.getenv("PUBLIC_FIREBASE_WEB_API_KEY", "")
 PUBLIC_FIREBASE_WEB_AUTH_DOMAIN = os.getenv("PUBLIC_FIREBASE_WEB_AUTH_DOMAIN", "")
 PUBLIC_FIREBASE_WEB_DATABASE_URL = os.getenv("PUBLIC_FIREBASE_WEB_DATABASE_URL", "")
@@ -182,6 +186,92 @@ def _verify_captcha_token(token, remote_ip=None):
     if isinstance(codes, list) and codes:
         return False, "captcha_" + str(codes[0]).replace("-", "_")
     return False, "captcha_invalid"
+
+
+def _strip_code_fences(text):
+    text = (text or "").strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```[A-Za-z0-9_+-]*\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+    return text
+
+
+def _trim_ai_completion(completion):
+    completion = _strip_code_fences(completion)
+    completion = completion.replace("\r\n", "\n").replace("\r", "\n")
+    # Inline completions should be small. Large answers feel like full solution dumps,
+    # not editor assistance.
+    lines = completion.split("\n")
+    if len(lines) > 12:
+        completion = "\n".join(lines[:12])
+    if len(completion) > 1200:
+        completion = completion[:1200]
+    return completion
+
+
+def _request_ai_code_completion(language, prefix, suffix):
+    if not AI_COMPLETION_API_KEY or not AI_COMPLETION_MODEL:
+        return None, "ai_completion_not_configured"
+
+    language_name = "Python 3" if normalize_language(language) == "python" else "C++17"
+    prefix = (prefix or "")[-6000:]
+    suffix = (suffix or "")[:2000]
+    payload = {
+        "model": AI_COMPLETION_MODEL,
+        "temperature": 0.15,
+        "max_tokens": 180,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are an inline code completion engine for competitive programming. "
+                    "Return only the code suffix that should be inserted at the cursor. "
+                    "Do not use markdown, explanations, or code fences. "
+                    "Keep the completion short and continue the user's style."
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Language: {language_name}\n"
+                    "Complete at <CURSOR>. Return only inserted code.\n\n"
+                    "<PREFIX>\n"
+                    f"{prefix}\n"
+                    "</PREFIX>\n"
+                    "<SUFFIX>\n"
+                    f"{suffix}\n"
+                    "</SUFFIX>"
+                )
+            }
+        ]
+    }
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        AI_COMPLETION_API_URL,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {AI_COMPLETION_API_KEY}"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=AI_COMPLETION_TIMEOUT) as resp:
+            raw = resp.read().decode("utf-8")
+            data = json.loads(raw)
+    except Exception as e:
+        print("AI completion request failed:", e)
+        return None, "ai_completion_failed"
+
+    completion = ""
+    choices = data.get("choices")
+    if isinstance(choices, list) and choices:
+        message = choices[0].get("message") or {}
+        completion = message.get("content") or ""
+    completion = _trim_ai_completion(completion)
+    if not completion:
+        return None, "empty_completion"
+    return completion, None
 
 
 def sync_tasks_repo(force=False):
@@ -1863,6 +1953,25 @@ def editor_format():
             "details": str(e) or "format_failed"
         }), 500
     return jsonify(result)
+
+
+@app.route("/editor/ai-complete", methods=["POST"])
+def editor_ai_complete():
+    data = request.get_json(silent=True) or {}
+    language = normalize_language(data.get("language"))
+    prefix = data.get("prefix", "")
+    suffix = data.get("suffix", "")
+
+    if not isinstance(prefix, str) or not isinstance(suffix, str):
+        return jsonify({"ok": False, "completion": "", "error": "invalid_payload"}), 400
+    if not prefix.strip():
+        return jsonify({"ok": True, "completion": ""})
+
+    completion, error = _request_ai_code_completion(language, prefix, suffix)
+    if error:
+        status = 503 if error == "ai_completion_not_configured" else 502
+        return jsonify({"ok": False, "completion": "", "error": error}), status
+    return jsonify({"ok": True, "completion": completion})
 
 
 @app.route("/admin/purge-users", methods=["POST"])

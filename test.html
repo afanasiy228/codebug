@@ -316,6 +316,8 @@
         let diagnosticsTimer = null;
         const DIAG_OWNER = "codebug-diagnostics";
         const ENABLE_DIAGNOSTICS = false;
+        const AI_COMPLETION_CACHE = new Map();
+        let aiCompletionDisabled = false;
 
         const TEMPLATE_CPP = `#include <bits/stdc++.h>
 using namespace std;
@@ -499,7 +501,7 @@ if __name__ == "__main__":
             runDiagnostics(false);
         }
 
-        function registerSnippets(monaco) {
+        function registerAiCompletion(monaco) {
             const emptyRangeAt = (position) => ({
                 startLineNumber: position.lineNumber,
                 endLineNumber: position.lineNumber,
@@ -507,30 +509,56 @@ if __name__ == "__main__":
                 endColumn: position.column
             });
 
-            const cppInlineCompletions = {
-                for: " (int i = 0; i < n; i++) {\n    \n}",
-                if: " () {\n    \n}",
-                while: " () {\n    \n}",
-                vec: "tor<int> a(n);",
-                fastio: "ios::sync_with_stdio(false);\ncin.tie(nullptr);"
-            };
+            async function requestAiCompletion(language, model, position) {
+                if (aiCompletionDisabled) return "";
+                const offset = model.getOffsetAt(position);
+                const text = model.getValue();
+                const prefix = text.slice(0, offset);
+                const suffix = text.slice(offset);
+                const beforeCursor = prefix.slice(-80);
+                const wordMatch = beforeCursor.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
+                const lastChar = prefix[prefix.length - 1] || "";
+                const looksUseful = (wordMatch && wordMatch[1].length >= 2) || /[)\]}:;]|\n/.test(lastChar);
+                if (!looksUseful) return "";
 
-            const pyInlineCompletions = {
-                for: " i in range(n):\n    ",
-                if: " :\n    ",
-                while: " :\n    ",
-                def: " solve():\n    ",
-                inp: "ut = sys.stdin.readline"
-            };
+                const cacheKey = [
+                    language,
+                    prefix.slice(-1200),
+                    suffix.slice(0, 400)
+                ].join("\u0000");
+                if (AI_COMPLETION_CACHE.has(cacheKey)) {
+                    return AI_COMPLETION_CACHE.get(cacheKey);
+                }
 
-            function registerInlineProvider(language, completions) {
+                const { ok, data } = await fetchJson("/editor/ai-complete", {
+                    language,
+                    prefix,
+                    suffix
+                });
+                if (!ok || !data.ok) {
+                    if (data.error === "ai_completion_not_configured") {
+                        aiCompletionDisabled = true;
+                    }
+                    return "";
+                }
+                let completion = String(data.completion || "");
+                if (wordMatch && completion.startsWith(wordMatch[1])) {
+                    completion = completion.slice(wordMatch[1].length);
+                }
+                if (completion.length > 1200) {
+                    completion = completion.slice(0, 1200);
+                }
+                AI_COMPLETION_CACHE.set(cacheKey, completion);
+                if (AI_COMPLETION_CACHE.size > 40) {
+                    AI_COMPLETION_CACHE.delete(AI_COMPLETION_CACHE.keys().next().value);
+                }
+                return completion;
+            }
+
+            function registerInlineProvider(language) {
                 monaco.languages.registerInlineCompletionsProvider(language, {
-                    provideInlineCompletions(model, position) {
-                        const linePrefix = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
-                        const match = linePrefix.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
-                        if (!match) return { items: [] };
-                        const word = match[1];
-                        const insertText = completions[word];
+                    async provideInlineCompletions(model, position) {
+                        const insertText = await requestAiCompletion(language, model, position);
                         if (!insertText) return { items: [] };
                         return {
                             items: [{
@@ -543,22 +571,15 @@ if __name__ == "__main__":
                 });
             }
 
-            registerInlineProvider("cpp", cppInlineCompletions);
-            registerInlineProvider("python", pyInlineCompletions);
+            registerInlineProvider("cpp");
+            registerInlineProvider("python");
+        }
 
+        function registerSnippets(monaco) {
             monaco.languages.registerCompletionItemProvider("cpp", {
                 triggerCharacters: ["f", "i", "w", "v"],
                 provideCompletionItems: function(model, position) {
                     const suggestions = [{
-                            label: "for",
-                            kind: monaco.languages.CompletionItemKind.Snippet,
-                            documentation: "Classic CP loop",
-                            insertText: `for (int \${1:i} = 0; \${1:i} < \${2:n}; \${1:i}++) {
-    \${0}
-}`,
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                        },
-                        {
                             label: "fastio",
                             kind: monaco.languages.CompletionItemKind.Snippet,
                             documentation: "Fast IO template",
@@ -596,13 +617,6 @@ for (auto &x : \${2:a}) cin >> x;`,
                 triggerCharacters: ["f", "i", "w"],
                 provideCompletionItems: function(model, position) {
                     const suggestions = [{
-                            label: "for",
-                            kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: `for \${1:i} in range(\${2:n}):
-    \${0}`,
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                        },
-                        {
                             label: "ifmain",
                             kind: monaco.languages.CompletionItemKind.Snippet,
                             insertText: `if __name__ == "__main__":
@@ -657,6 +671,7 @@ input = sys.stdin.readline`,
                     });
 
                     registerSnippets(monaco);
+                    registerAiCompletion(monaco);
                     const initialLang = getCurrentLang();
                     const initialModel = ensureModel(monaco, initialLang);
                     monacoEditor = monaco.editor.create(document.getElementById("editor"), {
