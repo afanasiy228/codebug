@@ -536,7 +536,12 @@ if __name__ == "__main__":
                 const lastChar = prefix[prefix.length - 1] || "";
                 const lineBeforeCursor = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
                 const isIndentedEmptyLine = /^\s{2,}$/.test(lineBeforeCursor);
-                const looksUseful = (wordMatch && wordMatch[1].length >= 2) || isIndentedEmptyLine || /[)\]}:;]|\n/.test(lastChar);
+                const previousLine = position.lineNumber > 1 ? model.getLineContent(position.lineNumber - 1).trimEnd() : "";
+                const isEmptyLineAfterBlockOpen = !lineBeforeCursor.trim() && previousLine.endsWith("{");
+                const looksUseful = (wordMatch && wordMatch[1].length >= 2)
+                    || isIndentedEmptyLine
+                    || isEmptyLineAfterBlockOpen
+                    || /[)\]}:;]|\n/.test(lastChar);
                 if (!looksUseful) return "";
 
                 const cacheKey = [

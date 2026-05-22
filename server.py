@@ -204,9 +204,12 @@ def _strip_code_fences(text):
 def _trim_ai_completion(completion):
     completion = _strip_code_fences(completion)
     completion = completion.replace("\r\n", "\n").replace("\r", "\n")
-    completion = completion.lstrip("\n")
-    if "\n" in completion:
-        completion = completion.split("\n", 1)[0]
+    lines = completion.split("\n")
+    completion = ""
+    for line in lines:
+        if line.strip():
+            completion = line
+            break
     if len(completion) > 240:
         completion = completion[:240]
     return completion
@@ -222,11 +225,18 @@ def _request_ai_code_completion(language, prefix, suffix):
     prefix = "".join(prefix_lines[-8:])
     suffix_lines = (suffix or "").splitlines(keepends=True)
     suffix = "".join(suffix_lines[:4])
+    prompt = language_hint + prefix
+    if lang == "cpp":
+        current_line = prefix.splitlines()[-1] if prefix.splitlines() else ""
+        previous_lines = prefix.splitlines()[:-1]
+        previous_line = previous_lines[-1].rstrip() if previous_lines else ""
+        if not current_line.strip() and previous_line.endswith("{"):
+            prompt += "// Complete one likely next C++ statement inside this block.\n"
     payload = {
         "model": AI_COMPLETION_MODEL,
         "temperature": 0.15,
         "max_tokens": 64,
-        "prompt": language_hint + prefix,
+        "prompt": prompt,
         "suffix": suffix,
         "stop": ["\n", "```"]
     }
