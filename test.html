@@ -319,6 +319,7 @@
         const AI_COMPLETION_CACHE = new Map();
         let aiCompletionDisabled = false;
         let lastAiBlockCompletion = null;
+        let aiInlineTriggerTimer = null;
 
         const TEMPLATE_CPP = `#include <bits/stdc++.h>
 using namespace std;
@@ -606,6 +607,16 @@ if __name__ == "__main__":
             registerInlineProvider("cpp");
             registerInlineProvider("python");
 
+            window.triggerAiInlineSuggest = function(delay = 80) {
+                if (!monacoEditor || aiCompletionDisabled) return;
+                clearTimeout(aiInlineTriggerTimer);
+                aiInlineTriggerTimer = setTimeout(() => {
+                    try {
+                        monacoEditor.trigger("codebug", "editor.action.inlineSuggest.trigger", {});
+                    } catch (_) {}
+                }, delay);
+            };
+
             monaco.editor.registerCommand("codebug.cursorInsideAiBlock", function(_, position, insertText) {
                 if (!monacoEditor) return;
                 const delta = findBlockCursorDelta(String(insertText || ""));
@@ -764,6 +775,22 @@ input = sys.stdin.readline`,
                         wordBasedSuggestions: "allDocuments",
                         formatOnType: true,
                         formatOnPaste: true
+                    });
+
+                    monacoEditor.addCommand(monaco.KeyCode.Enter, () => {
+                        monacoEditor.trigger("keyboard", "type", { text: "\n" });
+                        window.triggerAiInlineSuggest?.(120);
+                    });
+
+                    monacoEditor.addCommand(monaco.KeyCode.Space, () => {
+                        monacoEditor.trigger("keyboard", "type", { text: " " });
+                        const model = monacoEditor.getModel();
+                        const pos = monacoEditor.getPosition();
+                        if (!model || !pos) return;
+                        const before = model.getLineContent(pos.lineNumber).slice(0, pos.column - 1);
+                        if (/^\s{2,}$/.test(before)) {
+                            window.triggerAiInlineSuggest?.(120);
+                        }
                     });
 
                     monacoEditor.onDidChangeModelContent((event) => {
