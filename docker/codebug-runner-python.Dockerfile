@@ -5,6 +5,7 @@ RUN apt-get update \
         bash \
         ca-certificates \
         coreutils \
+        time \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work

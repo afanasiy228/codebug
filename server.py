@@ -10,8 +10,6 @@ from collections import deque
 from flask import Flask, request, jsonify, send_file, abort
 from flask_cors import CORS
 import time
-import platform
-import resource
 import urllib.parse
 import urllib.request
 import html
@@ -365,6 +363,7 @@ def _parse_judge_log(log_text):
 def _run_submission_job(job):
     task = str(job["task"])
     code = str(job["code"])
+    login = str(job.get("login") or "")
     submission_id = job.get("submission_id")
     task_meta = read_task_meta(task)
     task_lang = normalize_language(task_meta.get("language"))
@@ -1129,61 +1128,30 @@ def _compile_python(src_path):
 
 
 def _run_with_limits(cmd, input_data, timeout_sec, workdir=None, language="cpp"):
-    time_cmd = "/usr/bin/time"
-    mem_kb = None
     start = time.perf_counter()
-    with tempfile.TemporaryDirectory() as tmp:
-        try:
-            if os.path.exists(time_cmd):
-                mem_file = os.path.join(tmp, "mem.txt")
-                run_res = run_in_sandbox(
-                    cmd,
-                    workdir=workdir or os.getcwd(),
-                    language=language,
-                    input_data=input_data,
-                    timeout=timeout_sec,
-                )
-                try:
-                    with open(mem_file, "r") as mf:
-                        mem_kb = int(mf.read().strip() or "0")
-                except Exception:
-                    mem_kb = None
-            else:
-                before = resource.getrusage(resource.RUSAGE_CHILDREN)
-                run_res = run_in_sandbox(
-                    cmd,
-                    workdir=workdir or os.getcwd(),
-                    language=language,
-                    input_data=input_data,
-                    timeout=timeout_sec,
-                )
-                after = resource.getrusage(resource.RUSAGE_CHILDREN)
-                delta = max(0, after.ru_maxrss - before.ru_maxrss)
-                mem_kb = delta or after.ru_maxrss
-        except (subprocess.TimeoutExpired, SandboxError):
-            elapsed_ms = int((time.perf_counter() - start) * 1000)
-            return {
-                "timeout": True,
-                "timeMs": elapsed_ms,
-                "memoryMb": _format_memory_mb(mem_kb),
-                "runRes": None
-            }
-
+    try:
+        run_res = run_in_sandbox(
+            cmd,
+            workdir=workdir or os.getcwd(),
+            language=language,
+            input_data=input_data,
+            timeout=timeout_sec,
+        )
+    except (subprocess.TimeoutExpired, SandboxError):
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        return {
+            "timeout": True,
+            "timeMs": elapsed_ms,
+            "memoryMb": None,
+            "runRes": None
+        }
     elapsed_ms = int((time.perf_counter() - start) * 1000)
     return {
-        "timeout": False,
+        "timeout": bool(getattr(run_res, "timeout", False)),
         "timeMs": elapsed_ms,
-        "memoryMb": _format_memory_mb(mem_kb),
+        "memoryMb": run_res.memory_mb,
         "runRes": run_res
     }
-
-
-def _format_memory_mb(kb_value):
-    if kb_value is None:
-        return None
-    if platform.system().lower() == "darwin":
-        return round(kb_value / (1024 * 1024), 2)
-    return round(kb_value / 1024, 2)
 
 
 def _run_cpp_single(code, input_data):
@@ -1211,6 +1179,14 @@ def _run_cpp_single(code, input_data):
             }
 
         run_res = run_info["runRes"]
+        if getattr(run_res, "memory_exceeded", False):
+            return {
+                "status": "ML",
+                "output": run_res.stdout,
+                "timeMs": run_info["timeMs"],
+                "memoryMb": run_info["memoryMb"],
+                "details": "memory limit exceeded"
+            }
         if run_res.returncode != 0:
             return {
                 "status": "RE",
@@ -1252,6 +1228,14 @@ def _run_python_single(code, input_data):
             }
 
         run_res = run_info["runRes"]
+        if getattr(run_res, "memory_exceeded", False):
+            return {
+                "status": "ML",
+                "output": run_res.stdout,
+                "timeMs": run_info["timeMs"],
+                "memoryMb": run_info["memoryMb"],
+                "details": "memory limit exceeded"
+            }
         if run_res.returncode != 0:
             return {
                 "status": "RE",

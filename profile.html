@@ -915,10 +915,10 @@
             const usernameEl = document.getElementById("username");
             usernameEl.innerText = data.login;
             const nickColor = getRankColor(Number(stats.exp || 0), data.login);
-            usernameEl.style.color = nickColor;
+            usernameEl.style.setProperty("color", nickColor, "important");
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
-                navProfileEl.style.color = nickColor;
+                navProfileEl.style.setProperty("color", nickColor, "important");
             }
             document.getElementById("userid").innerText = data.id || "—";
             document.getElementById("created").innerText =
@@ -933,7 +933,11 @@
             document.getElementById("rating2").innerText = stats.rating || 0;
 
             // ---- RANK ----
-            document.getElementById("rank").innerText = getRank(stats.exp || 0);
+            const rankEl = document.getElementById("rank");
+            rankEl.innerText = getRank(stats.exp || 0);
+            rankEl.style.setProperty("color", nickColor, "important");
+            rankEl.style.border = `1px solid ${nickColor}66`;
+            rankEl.style.background = `${nickColor}1f`;
 
             // ---- AVATAR ----
             if (data.avatar) {

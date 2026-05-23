@@ -50,6 +50,12 @@ def task_type(problem):
     return value if value in ("standard", "grader", "interactive") else "standard"
 
 
+def scoring_mode(problem):
+    value = (problem or {}).get("scoringMode", "ioi")
+    value = str(value or "ioi").strip().lower()
+    return value if value in ("ioi", "icpc") else "ioi"
+
+
 def copy_task_file(task_path, relpath, dest_relpath=None):
     if not relpath:
         return None
@@ -193,7 +199,7 @@ def compare_with_checker(checker_bin, inp_file, answer_file, program_output):
         return {"verdict": "RE", "time_ms": 0, "memory_mb": None}
     if res.timeout:
         return {"verdict": "TL", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
-    if getattr(res, "memory_exceeded", False) or res.returncode in (137, 139):
+    if getattr(res, "memory_exceeded", False) or res.returncode == 137:
         return {"verdict": "ML", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
     return {"verdict": ("OK" if res.returncode == 0 else "WA"), "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
 
@@ -214,7 +220,7 @@ def run_standard_test(inp_file, out_file, checker_bin=None):
 
     if proc.timeout:
         return {"verdict": "TL", "time_ms": proc.duration_ms, "memory_mb": proc.memory_mb}
-    if getattr(proc, "memory_exceeded", False) or proc.returncode in (137, 139):
+    if getattr(proc, "memory_exceeded", False) or proc.returncode == 137:
         return {"verdict": "ML", "time_ms": proc.duration_ms, "memory_mb": proc.memory_mb}
 
     if proc.returncode != 0:
@@ -304,7 +310,7 @@ def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
         log.write(f"Protocol log {test_name}:\n{protocol_text}\n")
     if res.timeout:
         return {"verdict": "TL", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
-    if getattr(res, "memory_exceeded", False) or res.returncode in (137, 139):
+    if getattr(res, "memory_exceeded", False) or res.returncode == 137:
         return {"verdict": "ML", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
     return {"verdict": ("OK" if res.returncode == 0 else "WA"), "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
 
@@ -426,7 +432,9 @@ def judge(task_id):
         if problem:
             log.write(f"Task format: v{problem.get('formatVersion', problem.get('schemaVersion', 2))}\n")
         current_task_type = task_type(problem)
+        current_scoring_mode = scoring_mode(problem)
         log.write(f"Task type: {current_task_type}\n")
+        log.write(f"Scoring mode: {current_scoring_mode}\n")
 
         if not os.path.isdir(tests_path):
             log.write("Error: tests folder not found\n")
@@ -458,6 +466,7 @@ def judge(task_id):
         first_fail_label = None
         max_time_ms = 0
         max_memory_mb = None
+        stop_all_tests = False
 
         if not tests:
             log.write("Error: no tests found\n")
@@ -508,6 +517,10 @@ def judge(task_id):
                 )
                 group_test_results.append(verdict)
                 results.append(verdict)
+                if verdict != "OK":
+                    log.write(f"Group {gid}: STOP after first non-OK test ({verdict})\n")
+                    stop_all_tests = True
+                    break
 
             if not group_test_results:
                 group_results[gid] = "SKIP"
@@ -518,11 +531,14 @@ def judge(task_id):
             if group_final == "OK":
                 total_score += group.get("points", 0)
             log.write(f"Group {gid} verdict: {group_final}\n")
+            if stop_all_tests:
+                log.write("Testing stopped after first non-OK test\n")
+                break
 
         missing_tests = [test for test in tests if str(test["name"]) not in {
             str(name) for group in groups for name in group.get("tests", [])
         }]
-        for test in missing_tests:
+        for test in ([] if stop_all_tests else missing_tests):
             test_result = run_test(
                 test["input"],
                 test["answer"],
@@ -546,6 +562,9 @@ def judge(task_id):
                 f" [visibility={test.get('visibility', 'private')}, group={test.get('group', test.get('subtask', 1))}, points={test.get('points', 0)}, time={test_time} ms, memory={mem_text} MB]\n"
             )
             results.append(verdict)
+            if verdict != "OK":
+                log.write(f"Testing stopped after first non-OK test ({verdict})\n")
+                break
 
         final = final_from_results(results)
 

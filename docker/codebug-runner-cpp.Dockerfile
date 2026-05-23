@@ -9,6 +9,7 @@ RUN apt-get update \
         gcc \
         libc6-dev \
         make \
+        time \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
