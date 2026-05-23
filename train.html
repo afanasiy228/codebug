@@ -693,6 +693,10 @@
             return tags.map(tag => `<span class="pill">${normalizeTag(tag)}</span>`).join(" ");
         }
 
+        function isTaskSolved(taskId) {
+            return !!solvedMap[String(taskId)] || !!solvedMap[taskId];
+        }
+
         function renderTable() {
             console.log("[training] renderTable()");
 
@@ -717,7 +721,7 @@
 
             filtered.forEach(p => {
                 const tr = document.createElement("tr");
-                const solved = !!solvedMap[String(p.id)] || !!solvedMap[p.id];
+                const solved = isTaskSolved(p.id);
                 if (solved) tr.classList.add("solved-row");
                 const hiddenBadge = isAdmin && hiddenMap[p.id]
                     ? `<span class="pill" style="background:#3b1d1d; color:#ffb3b3;">Скрыта</span>`
@@ -755,8 +759,13 @@
                 alert("Нет доступных задач");
                 return;
             }
-            const idx = Math.floor(Math.random() * visibleProblems.length);
-            const p = visibleProblems[idx];
+            const unsolvedProblems = visibleProblems.filter(p => !isTaskSolved(p.id));
+            if (!unsolvedProblems.length) {
+                alert("Все доступные задачи уже решены");
+                return;
+            }
+            const idx = Math.floor(Math.random() * unsolvedProblems.length);
+            const p = unsolvedProblems[idx];
             window.location.href = "problem.html?id=" + p.id;
         }
 
