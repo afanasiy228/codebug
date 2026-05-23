@@ -186,6 +186,29 @@
             height: 14px;
             pointer-events: none;
         }
+
+        .reset-code-btn {
+            position: absolute;
+            top: 8px;
+            right: 44px;
+            height: 28px;
+            border: 1px solid rgba(226, 214, 196, 0.18);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.025);
+            color: rgba(230, 237, 243, 0.62);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 3;
+            padding: 0 9px;
+            transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .reset-code-btn:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(226, 214, 196, 0.35);
+            color: rgba(230, 237, 243, 0.9);
+        }
         
         #editor {
             height: 100%;
@@ -526,6 +549,7 @@
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
                     </button>
+                    <button type="button" class="reset-code-btn" onclick="resetEditorDraft()" title="Сбросить код к исходному шаблону">Сброс</button>
                     <div id="editor" aria-label="Code editor"></div>
                 </div>
 
@@ -625,6 +649,64 @@
         let TASK_DIFFICULTY = "easy";
         let TASK_LANGUAGE = "cpp";
         let SUBS_POLL_TIMER = null;
+        let BASELINE_CODE = "";
+        let DRAFT_SAVE_TIMER = null;
+        let SUPPRESS_DRAFT_SAVE = false;
+
+        function draftStorageKey() {
+            const taskId = resolveTaskIdFromLocation();
+            const user = getUser ? (getUser() || "anonymous") : "anonymous";
+            const lang = normalizeTaskLanguage(TASK_LANGUAGE);
+            return taskId === null ? null : `codebug:draft:${user}:${taskId}:${lang}`;
+        }
+
+        function loadEditorDraft() {
+            const key = draftStorageKey();
+            if (!key) return null;
+            try {
+                return localStorage.getItem(key);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function saveEditorDraftNow() {
+            if (SUPPRESS_DRAFT_SAVE || !window.editor || !editor.getValue) return;
+            const key = draftStorageKey();
+            if (!key) return;
+            try {
+                localStorage.setItem(key, editor.getValue());
+            } catch (e) {
+                console.warn("[draft] save failed", e);
+            }
+        }
+
+        function scheduleEditorDraftSave() {
+            if (SUPPRESS_DRAFT_SAVE) return;
+            clearTimeout(DRAFT_SAVE_TIMER);
+            DRAFT_SAVE_TIMER = setTimeout(saveEditorDraftNow, 500);
+        }
+
+        function setEditorCodeFromTask(code) {
+            BASELINE_CODE = code == null ? "" : String(code);
+            const draft = loadEditorDraft();
+            const value = draft !== null ? draft : BASELINE_CODE;
+            SUPPRESS_DRAFT_SAVE = true;
+            if (window.editor) editor.setValue(value);
+            SUPPRESS_DRAFT_SAVE = false;
+        }
+
+        function resetEditorDraft() {
+            const key = draftStorageKey();
+            if (key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (_) {}
+            }
+            SUPPRESS_DRAFT_SAVE = true;
+            if (window.editor) editor.setValue(BASELINE_CODE || "");
+            SUPPRESS_DRAFT_SAVE = false;
+        }
 
         function startSubmissionPolling() {
             if (SUBS_POLL_TIMER) clearInterval(SUBS_POLL_TIMER);
@@ -1498,13 +1580,13 @@
                     const fallbackRes = await fetch(`${base}/tasks/${id}/${fallbackCodeFile}`);
                     if (!fallbackRes.ok) throw new Error(`code_${res.status}`);
                     const fallbackCode = await fallbackRes.text();
-                    if (window.editor) editor.setValue(fallbackCode);
+                    setEditorCodeFromTask(fallbackCode);
                 } else {
                     const code = await res.text();
-                    if (window.editor) editor.setValue(code);
+                    setEditorCodeFromTask(code);
                 }
             } catch (e) {
-                if (window.editor) editor.setValue("// Файл кода не найден");
+                setEditorCodeFromTask("// Файл кода не найден");
             }
 
             const examples = document.getElementById("examples");
@@ -1741,6 +1823,10 @@
 
                     monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
                         submitCode();
+                    });
+
+                    monacoEditor.onDidChangeModelContent(() => {
+                        scheduleEditorDraftSave();
                     });
 
                     editor = {
