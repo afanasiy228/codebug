@@ -1241,6 +1241,7 @@
         let currentStatementLang = localStorage.getItem("codebugStatementLang") || "ru";
         let statementSections = { ru: "", en: "" };
         let statementPreludeHtml = "";
+        let currentProblemMeta = null;
 
         function setStatementLanguage(lang) {
             currentStatementLang = lang === "en" ? "en" : "ru";
@@ -1250,7 +1251,7 @@
             });
             const target = document.getElementById("taskStatement");
             if (!target) return;
-            statementPreludeHtml = buildStatementPrelude(currentStatementLang);
+            statementPreludeHtml = buildStatementPrelude(currentStatementLang, currentProblemMeta);
             const bodyHtml = stripDuplicatedIoMetaHtml(statementSections[currentStatementLang] || statementSections.ru || "");
             target.innerHTML = `${statementPreludeHtml}${bodyHtml}`;
             if (window.MathJax?.typesetPromise) {
@@ -1258,16 +1259,39 @@
             }
         }
 
-        function buildStatementPrelude(lang) {
+        function formatTimeLimit(meta, lang) {
+            const raw = Number(meta?.timeLimit ?? meta?.timeLimitSeconds ?? meta?.limits?.timeLimit);
+            const seconds = Number.isFinite(raw) && raw > 0 ? raw : 1;
+            const text = Number.isInteger(seconds) ? String(seconds) : String(seconds).replace(/0+$/, "").replace(/\.$/, "");
+            if (lang === "en") return `${text} ${seconds === 1 ? "second" : "seconds"}`;
+            const integer = Math.trunc(seconds);
+            const mod10 = integer % 10;
+            const mod100 = integer % 100;
+            const unit = Number.isInteger(seconds) && mod10 === 1 && mod100 !== 11
+                ? "секунда"
+                : (Number.isInteger(seconds) && mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "секунды" : "секунд");
+            return `${text} ${unit}`;
+        }
+
+        function formatMemoryLimit(meta, lang) {
+            const raw = Number(meta?.memoryLimitMb ?? meta?.memoryLimitMB ?? meta?.memoryLimit ?? meta?.limits?.memoryLimitMb);
+            const mb = Number.isFinite(raw) && raw > 0 ? raw : 256;
+            const text = Number.isInteger(mb) ? String(mb) : String(mb).replace(/0+$/, "").replace(/\.$/, "");
+            return lang === "en" ? `${text} MB` : `${text} мегабайт`;
+        }
+
+        function buildStatementPrelude(lang, meta = currentProblemMeta) {
+            const timeLimit = formatTimeLimit(meta, lang);
+            const memoryLimit = formatMemoryLimit(meta, lang);
             if (lang === "en") {
                 return `
                   <div class="io-meta-block" style="margin:0 0 12px;color:var(--muted);font-size:14px;font-weight:600;">
-                    Standard input | Standard output | 1 second | 256 MB
+                    Standard input | Standard output | ${timeLimit} | ${memoryLimit}
                   </div>`;
             }
             return `
               <div class="io-meta-block" style="margin:0 0 12px;color:var(--muted);font-size:14px;font-weight:600;">
-                стандартный ввод | стандартный вывод | 1 секунда | 256 мегабайт
+                стандартный ввод | стандартный вывод | ${timeLimit} | ${memoryLimit}
               </div>`;
         }
 
@@ -1520,6 +1544,7 @@
                 }
 
                 TASK_DIFFICULTY = meta.difficulty;
+                currentProblemMeta = meta;
                 TASK_LANGUAGE = normalizeTaskLanguage(meta.language);
                 updateEditorLanguageFromTask();
                 console.log("Загружена сложность:", TASK_DIFFICULTY);
@@ -1553,7 +1578,7 @@
                     if (!res.ok) throw new Error(`statement_html_${res.status}`);
                     const html = await res.text();
                     statementSections = splitStatementByLanguage(html);
-                    statementPreludeHtml = buildStatementPrelude(currentStatementLang);
+                    statementPreludeHtml = buildStatementPrelude(currentStatementLang, currentProblemMeta);
                     setStatementLanguage(currentStatementLang);
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement/russian.html не найден";
@@ -1566,7 +1591,7 @@
                     const md = await res.text();
 
                     statementSections = { ru: renderMarkdown(md), en: "" };
-                    statementPreludeHtml = buildStatementPrelude("ru");
+                    statementPreludeHtml = buildStatementPrelude("ru", currentProblemMeta);
                     setStatementLanguage("ru");
                 } catch (e) {
                     document.getElementById("taskStatement").innerText = "statement.md не найден";
