@@ -2095,6 +2095,20 @@ def _load_task_difficulties():
     return difficulties
 
 
+def _task_difficulty_for_xp(task_id, task_difficulties):
+    try:
+        numeric_id = int(str(task_id))
+    except (TypeError, ValueError):
+        return task_difficulties.get(str(task_id), "")
+    if 0 <= numeric_id <= 22:
+        return "normal"
+    if numeric_id in (23, 24):
+        return "hard"
+    if numeric_id in (25, 26):
+        return "impossible"
+    return task_difficulties.get(str(task_id), "")
+
+
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
 def admin_rebuild_user_stats():
     if not _is_admin_request():
@@ -2135,7 +2149,7 @@ def admin_rebuild_user_stats():
         stats["solved"] = solved_map
         stats["cnt"] = len(solved_map)
         stats["exp"] = sum(
-            _xp_for_difficulty(task_difficulties.get(str(task_id), ""))
+            _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
             for task_id in solved_map
         )
         db.reference(f"users/{login}/stats").update(stats)
