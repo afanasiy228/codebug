@@ -2062,6 +2062,39 @@ def _mark_task_solved_for_user(login, task):
         print("mark solved stats update failed:", e)
 
 
+def _xp_for_difficulty(difficulty):
+    difficulty = str(difficulty or "").strip().lower()
+    values = {
+        "tutorial": 2,
+        "easy": 4,
+        "casual": 7,
+        "normal": 12,
+        "hard": 20,
+        "insane": 30,
+        "extreme": 45,
+        "ultra": 60,
+        "impossible": 80,
+        "tourist": 110,
+    }
+    return values.get(difficulty, 5)
+
+
+def _load_task_difficulties():
+    difficulties = {}
+    if not os.path.isdir(TASKS_REPO_DIR):
+        return difficulties
+    for name in os.listdir(TASKS_REPO_DIR):
+        if not str(name).isdigit():
+            continue
+        problem = load_json(os.path.join(TASKS_REPO_DIR, name, "problem.json")) or {}
+        if problem:
+            difficulties[str(name)] = str(problem.get("difficulty") or "")
+            continue
+        meta = load_json(os.path.join(TASKS_REPO_DIR, name, "meta.json")) or {}
+        difficulties[str(name)] = str(meta.get("difficulty") or "")
+    return difficulties
+
+
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
 def admin_rebuild_user_stats():
     if not _is_admin_request():
@@ -2075,6 +2108,7 @@ def admin_rebuild_user_stats():
 
     users_raw = db.reference("users").get() or {}
     submissions_raw = db.reference("submissions/global").get() or {}
+    task_difficulties = _load_task_difficulties()
 
     solved_by_user = {}
     for _, sub in (submissions_raw or {}).items():
@@ -2100,6 +2134,10 @@ def admin_rebuild_user_stats():
         solved_map = solved_by_user.get(login, {})
         stats["solved"] = solved_map
         stats["cnt"] = len(solved_map)
+        stats["exp"] = sum(
+            _xp_for_difficulty(task_difficulties.get(str(task_id), ""))
+            for task_id in solved_map
+        )
         db.reference(f"users/{login}/stats").update(stats)
         updated += 1
 
@@ -2107,7 +2145,8 @@ def admin_rebuild_user_stats():
         "status": "ok",
         "usersUpdated": updated,
         "usersWithSolved": len(solved_by_user),
-        "submissionsScanned": len(submissions_raw or {})
+        "submissionsScanned": len(submissions_raw or {}),
+        "tasksLoaded": len(task_difficulties)
     })
 
 
