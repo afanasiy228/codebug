@@ -530,9 +530,9 @@
             </div>
             <div id="taskStatement">Загружаю условие…</div>
             <div id="groupTable"></div>
-            <h2 class="section-title">Примеры тестов</h2>
+            <h2 class="section-title" id="examplesTitle">Примеры тестов</h2>
             <div id="examples"></div>
-            <h3 class="section-title">Пояснение</h3>
+            <h3 class="section-title" id="helpTitle">Пояснение</h3>
             <div id="taskHelp">загружаю Пояснение</div>
         </div>
 
@@ -1342,6 +1342,20 @@
             return map[key] || t;
         }
 
+        function setExamplesVisible(visible) {
+            const title = document.getElementById("examplesTitle");
+            const body = document.getElementById("examples");
+            if (title) title.style.display = visible ? "" : "none";
+            if (body) body.style.display = visible ? "" : "none";
+        }
+
+        function setHelpVisible(visible) {
+            const title = document.getElementById("helpTitle");
+            const body = document.getElementById("taskHelp");
+            if (title) title.style.display = visible ? "" : "none";
+            if (body) body.style.display = visible ? "" : "none";
+        }
+
         function showTaskNotFound(id) {
             const hasNumericId = /^\d+$/.test(String(id || ""));
             document.getElementById("taskTitle").innerText = hasNumericId
@@ -1354,10 +1368,12 @@
                     ? `<p>Мы не нашли эту задачу. Проверь ID или вернись в список задач.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`
                     : `<p>Открой задачу из списка тренировок: ссылка должна быть вида <code>problem.html?id=123</code>.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>`;
             document.getElementById("taskHelp").innerText = "";
+            setHelpVisible(false);
             const groupTable = document.getElementById("groupTable");
             if (groupTable) groupTable.innerHTML = "";
             const examples = document.getElementById("examples");
             if (examples) examples.innerHTML = "";
+            setExamplesVisible(false);
             if (window.editor) editor.setValue("// Задача не найдена");
             const submitBtn = document.querySelector(".btn");
             if (submitBtn) {
@@ -1373,10 +1389,12 @@
             document.getElementById("taskStatement").innerHTML =
                 `<p>Сервер задач не смог синхронизировать репозиторий. Попробуй обновить страницу через минуту.</p><p><a href="train.html" style="color:#8dd0ff;">Вернуться к тренировке</a></p>${details ? `<p><code>${escapeHtml(details)}</code></p>` : ""}`;
             document.getElementById("taskHelp").innerText = "";
+            setHelpVisible(false);
             const groupTable = document.getElementById("groupTable");
             if (groupTable) groupTable.innerHTML = "";
             const examples = document.getElementById("examples");
             if (examples) examples.innerHTML = "";
+            setExamplesVisible(false);
             if (window.editor) editor.setValue("// Сервер задач временно недоступен");
             const submitBtn = document.querySelector(".btn");
             if (submitBtn) {
@@ -1555,17 +1573,24 @@
                 }
             }
 
-            const helpFile = problemV2?.statement?.hint || "statement/hint.md";
-            const helpPath = `${base}/tasks/${id}/${helpFile}`;
-
-            try {
-                const res = await fetch(helpPath);
-                if (!res.ok) throw new Error(`help_${res.status}`);
-                const md = await res.text();
-
-                document.getElementById("taskHelp").innerHTML = renderMarkdown(md);
-            } catch (e) {
-                document.getElementById("taskHelp").innerText = "Подсказка не добавлена";
+            const helpRoot = document.getElementById("taskHelp");
+            const helpFile = problemV2?.statement?.hint || (!problemV2 ? "help.md" : "");
+            helpRoot.innerText = "";
+            setHelpVisible(false);
+            if (helpFile) {
+                const helpPath = `${base}/tasks/${id}/${helpFile}`;
+                try {
+                    const res = await fetch(helpPath);
+                    if (!res.ok) throw new Error(`help_${res.status}`);
+                    const md = await res.text();
+                    if (md.trim()) {
+                        helpRoot.innerHTML = renderMarkdown(md);
+                        setHelpVisible(true);
+                    }
+                } catch (e) {
+                    helpRoot.innerText = "";
+                    setHelpVisible(false);
+                }
             }
 
 
@@ -1591,6 +1616,7 @@
 
             const examples = document.getElementById("examples");
             examples.innerHTML = "";
+            setExamplesVisible(false);
 
             const renderExample = (title, inp, out) => {
                 examples.innerHTML += `
@@ -1609,6 +1635,7 @@
                     </div>
                 </div>
             `;
+                setExamplesVisible(true);
             };
 
             const openTests = Array.isArray(problemV2?.openTests) ? problemV2.openTests : [];
@@ -1628,7 +1655,7 @@
                         console.error(`open test ${test.name} ERROR:`, e);
                     }
                 }
-            } else {
+            } else if (!problemV2) {
                 for (let i = 1; i <= 2; i++) {
                     console.log(`📄 test ${i}`);
 
