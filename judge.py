@@ -10,7 +10,18 @@ from runner import get_runner
 from sandbox import SandboxError, run_in_sandbox
 
 # --- Настройки ---
-TIME_LIMIT = int(os.getenv("TIME_LIMIT", "5"))  # лимит времени на один тест
+
+
+def parse_time_limit(value, default=5.0):
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed > 0 else default
+
+
+TIME_LIMIT_ENV = os.getenv("TIME_LIMIT")
+TIME_LIMIT = parse_time_limit(TIME_LIMIT_ENV, 5.0)  # лимит времени на один тест
 SOURCE = os.getenv("JUDGE_SOURCE", "sol.cpp")
 BINARY = os.getenv("JUDGE_BINARY", "sol")
 LOG_FILE = os.getenv("JUDGE_LOG_FILE", "log.txt")
@@ -423,9 +434,15 @@ def final_from_results(results):
 
 
 def judge(task_id):
+    global TIME_LIMIT
     task_path = task_dir(task_id)
     tests_path = os.path.join(task_path, "tests")
     problem = load_problem(task_id)
+    if TIME_LIMIT_ENV is None and problem:
+        TIME_LIMIT = parse_time_limit(
+            problem.get("timeLimit", problem.get("timeLimitSeconds", 5.0)),
+            5.0
+        )
 
     with open(LOG_FILE, "w") as log:
         log.write(f"Task {task_id}\n")
