@@ -2040,6 +2040,22 @@ def _is_solved_submission(item):
     return False
 
 
+def _normalize_solved_map(raw):
+    if isinstance(raw, list):
+        return {
+            str(idx): True
+            for idx, value in enumerate(raw)
+            if bool(value)
+        }
+    if isinstance(raw, dict):
+        return {
+            str(task): True
+            for task, value in raw.items()
+            if bool(value)
+        }
+    return {}
+
+
 def _mark_task_solved_for_user(login, task):
     if not FIREBASE_READY:
         return
@@ -2048,15 +2064,19 @@ def _mark_task_solved_for_user(login, task):
     if not login or not task:
         return
     try:
-        solved_item_ref = db.reference(f"users/{login}/stats/solved/{task}")
-        solved_item_ref.set(True)
+        solved_ref = db.reference(f"users/{login}/stats/solved")
+        solved_map = _normalize_solved_map(solved_ref.get())
+        solved_map[task] = True
+        solved_ref.set(solved_map)
 
-        solved_map = db.reference(f"users/{login}/stats/solved").get() or {}
-        if not isinstance(solved_map, dict):
-            solved_map = {}
-        cnt = sum(1 for value in solved_map.values() if bool(value))
+        task_difficulties = _load_task_difficulties()
+        exp = sum(
+            _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
+            for task_id in solved_map
+        )
         db.reference(f"users/{login}/stats").update({
-            "cnt": cnt
+            "cnt": len(solved_map),
+            "exp": exp
         })
     except Exception as e:
         print("mark solved stats update failed:", e)
