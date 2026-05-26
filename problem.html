@@ -848,6 +848,19 @@
         async function sendToJudge(taskId, code) {
             console.log("%c[sendToJudge()] → fetch()", "color:#aaf");
 
+            const authHeader = {};
+            try {
+                if (window.firebase?.auth) {
+                    const user = window.firebase.auth().currentUser;
+                    if (user) {
+                        const token = await user.getIdToken();
+                        if (token) authHeader.Authorization = `Bearer ${token}`;
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to get auth token for submit", e);
+            }
+
             const payload = {
                 task: taskId,
                 code: code,
@@ -864,7 +877,8 @@
                 res = await fetch(SUBMIT_URL, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        ...authHeader
                     },
                     mode: "cors",
                     body: JSON.stringify(payload)
@@ -1310,7 +1324,13 @@
 
         function splitStatementByLanguage(rawHtml) {
             const template = document.createElement("template");
-            template.innerHTML = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
+            if (window.DOMPurify) {
+                template.innerHTML = DOMPurify.sanitize(rawHtml);
+            } else {
+                const pre = document.createElement("pre");
+                pre.textContent = String(rawHtml || "");
+                template.content.appendChild(pre);
+            }
             const nodes = Array.from(template.content.childNodes);
             const sections = { ru: [], en: [] };
             let lang = "ru";

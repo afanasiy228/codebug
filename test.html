@@ -394,11 +394,23 @@ if __name__ == "__main__":
 
         async function fetchJson(url, payload) {
             const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || (location.hostname === "localhost" ? "http://localhost:7777" : "https://codebug.onrender.com");
+            const headers = {
+                "Content-Type": "application/json"
+            };
+            try {
+                if (window.firebase?.auth) {
+                    const user = window.firebase.auth().currentUser;
+                    if (user) {
+                        const token = await user.getIdToken();
+                        if (token) headers.Authorization = `Bearer ${token}`;
+                    }
+                }
+            } catch (err) {
+                console.warn("fetchJson auth token error:", err);
+            }
             const res = await fetch(`${base}${url}`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers,
                 body: JSON.stringify(payload || {})
             });
             const data = await res.json().catch(() => ({}));

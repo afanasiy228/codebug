@@ -693,6 +693,15 @@
             return tags.map(tag => `<span class="pill">${normalizeTag(tag)}</span>`).join(" ");
         }
 
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
         function isTaskSolved(taskId) {
             return !!solvedMap[String(taskId)] || !!solvedMap[taskId];
         }
@@ -729,8 +738,9 @@
                 const solvedBadge = solved
                     ? `<span class="solved-badge">Сдано</span>`
                     : "";
+                const safeTitle = escapeHtml(p.title);
                 tr.innerHTML = `
-                <td><a class="link" href="problem.html?id=${p.id}">${p.title}</a>${solvedBadge} ${hiddenBadge}</td>
+                <td><a class="link" href="problem.html?id=${p.id}">${safeTitle}</a>${solvedBadge} ${hiddenBadge}</td>
                 <td>${diffPill(p.difficulty)}</td>
                 <td>${languagePill(p.language)}</td>
                 <td>${taskTypePill(p.taskType)}</td>

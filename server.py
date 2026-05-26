@@ -22,7 +22,15 @@ from sandbox import SandboxError, run_in_sandbox
 from statement_compiler import compile_latex_statement
 
 app = Flask(__name__)
-CORS(app)  # разрешаем CORS всем источникам
+
+def _cors_origins():
+    raw = os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "https://codebug.onrender.com,http://localhost:7777,http://127.0.0.1:7777"
+    )
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+CORS(app, resources={r"/*": {"origins": _cors_origins()}}, supports_credentials=False)
 
 JUDGE_SCRIPT = "judge.py"
 TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "git@github.com:afanasiy228/taskscodebug.git")
@@ -107,6 +115,8 @@ SUBMIT_QUEUE = deque()
 SUBMIT_QUEUE_LOCK = threading.Lock()
 SUBMIT_QUEUE_COND = threading.Condition(SUBMIT_QUEUE_LOCK)
 SUBMIT_WORKER_STARTED = False
+REQUEST_RATE_STATE = {}
+RATE_LOCK = threading.Lock()
 
 
 def _is_admin_request():
@@ -120,6 +130,59 @@ def _is_admin_request():
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         return False
+
+
+def _resolve_login_from_token(token):
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return None
+    try:
+        decoded = admin_auth.verify_id_token(token)
+        uid = decoded.get("uid")
+        if not uid:
+            return None
+        login = db.reference(f"userAuthMap/{uid}").get()
+        if not login:
+            return None
+        return str(login).strip() or None
+    except Exception:
+        return None
+
+
+def _require_user_login():
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None, (jsonify({"error": "auth_required"}), 401)
+    token = auth_header.removeprefix("Bearer ").strip()
+    if not token:
+        return None, (jsonify({"error": "auth_required"}), 401)
+    login = _resolve_login_from_token(token)
+    if not login:
+        return None, (jsonify({"error": "invalid_token"}), 401)
+    return login, None
+
+
+def _rate_limit_key(route_key, user_login):
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    ip = (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr) or "unknown"
+    who = user_login or ip
+    return f"{route_key}:{who}"
+
+
+def _rate_limit(route_key, user_login, limit, per_seconds):
+    now = time.time()
+    key = _rate_limit_key(route_key, user_login)
+    with RATE_LOCK:
+        bucket = REQUEST_RATE_STATE.get(key, [])
+        bucket = [ts for ts in bucket if now - ts < per_seconds]
+        if len(bucket) >= limit:
+            REQUEST_RATE_STATE[key] = bucket
+            return False
+        bucket.append(now)
+        REQUEST_RATE_STATE[key] = bucket
+    return True
 
     global FIREBASE_READY
     if not FIREBASE_READY:
@@ -1399,9 +1462,14 @@ def submit():
             "status": "BAD_REQUEST"
         }), 400
 
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("submit", login, limit=20, per_seconds=60):
+        return jsonify({"error": "rate_limit_exceeded"}), 429
+
     task = str(data.get("task"))
     code = data.get("code")
-    login = data.get("user")
     contest_id = data.get("contestId")
 
     if not task or not code or not login:
@@ -1453,7 +1521,7 @@ def submit():
             "task": task,
             "code": code,
             "submission_id": submission_id,
-            "login": str(login),
+            "login": login,
             "contestId": contest_id or None,
         })
         queue_position = len(SUBMIT_QUEUE)
@@ -1871,6 +1939,12 @@ def tasks_generate_tests():
 
 @app.route("/run-single", methods=["POST"])
 def run_single():
+    user_login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("run_single", user_login, limit=30, per_seconds=60):
+        return jsonify({"error": "rate_limit_exceeded"}), 429
+
     data = request.get_json(silent=True) or {}
     code = data.get("code", "")
     input_data = data.get("input", "")
@@ -1888,6 +1962,12 @@ def run_single():
 
 @app.route("/editor/diagnostics", methods=["POST"])
 def editor_diagnostics():
+    user_login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("editor_diag", user_login, limit=40, per_seconds=60):
+        return jsonify({"error": "rate_limit_exceeded"}), 429
+
     data = request.get_json(silent=True) or {}
     code = data.get("code", "")
     lang = normalize_language(data.get("language"))
@@ -1915,6 +1995,12 @@ def editor_diagnostics():
 
 @app.route("/editor/format", methods=["POST"])
 def editor_format():
+    user_login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("editor_format", user_login, limit=30, per_seconds=60):
+        return jsonify({"error": "rate_limit_exceeded"}), 429
+
     data = request.get_json(silent=True) or {}
     code = data.get("code", "")
     lang = normalize_language(data.get("language"))
@@ -1942,6 +2028,12 @@ def editor_format():
 
 @app.route("/editor/ai-complete", methods=["POST"])
 def editor_ai_complete():
+    user_login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("editor_ai", user_login, limit=20, per_seconds=60):
+        return jsonify({"error": "rate_limit_exceeded"}), 429
+
     data = request.get_json(silent=True) or {}
     language = normalize_language(data.get("language"))
     prefix = data.get("prefix", "")
