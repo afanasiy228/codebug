@@ -198,6 +198,37 @@
             line-height: 1.55;
         }
 
+        .legal-box {
+            margin-top: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            border-radius: 8px;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .legal-box h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+            color: #e2e8f0;
+        }
+
+        .legal-links {
+            margin: 0;
+            padding-left: 18px;
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .legal-links a {
+            color: #7dd3fc;
+            text-decoration: none;
+        }
+
+        .legal-links a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 1024px) {
             .tiers {
                 grid-template-columns: 1fr;
@@ -286,6 +317,14 @@
         </section>
 
         <p class="footer-note">Оплата и активация подписки пока подключаются вручную. После оплаты возможности включаются на аккаунте в течение дня.</p>
+        <section class="legal-box">
+            <h3>Документы и реквизиты</h3>
+            <ul class="legal-links">
+                <li><a href="/terms" target="_blank" rel="noopener">Пользовательское соглашение</a></li>
+                <li><a href="/privacy" target="_blank" rel="noopener">Политика конфиденциальности</a></li>
+                <li><a href="/contacts" target="_blank" rel="noopener">Контакты и реквизиты</a></li>
+            </ul>
+        </section>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
