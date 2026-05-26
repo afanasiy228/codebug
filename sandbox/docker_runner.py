@@ -39,6 +39,7 @@ def _image_for(language):
 
 _RSS_MARKER = "__CB_MAXRSS_KB__:"
 _OUTPUT_LIMIT_BYTES = int(os.getenv("CODEBUG_OUTPUT_LIMIT_BYTES", str(4 * 1024 * 1024)))
+_INPUT_LIMIT_BYTES = int(os.getenv("CODEBUG_INPUT_LIMIT_BYTES", str(2 * 1024 * 1024)))
 
 
 def _parse_memory_bytes(value):
@@ -141,6 +142,8 @@ def _run_process(command, *, cwd=None, input_data=None, timeout=5, preexec_fn=No
     input_bytes = None
     if input_data is not None:
         input_bytes = str(input_data).encode("utf-8", errors="replace")
+        if len(input_bytes) > _INPUT_LIMIT_BYTES:
+            input_bytes = input_bytes[:_INPUT_LIMIT_BYTES]
 
     with tempfile.TemporaryDirectory(prefix="codebug_proc_") as tmp:
         stdout_path = os.path.join(tmp, "stdout.txt")

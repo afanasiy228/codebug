@@ -300,21 +300,24 @@
         const registerLabel = contest.status === "finished"
           ? "Регистрация закрыта"
           : (registered ? "Вы зарегистрированы" : "Зарегистрироваться");
+        const safeId = String(contest.id || "");
         card.innerHTML = `
           <div class="badge">${contest.statusLabel}</div>
-          <h3 class="contest-title">${contest.title}</h3>
+          <h3 class="contest-title">${escapeHtml(contest.title || "Соревнование")}</h3>
           <div class="contest-meta">
             <span>Старт: ${formatUtc(contest.start)}</span>
             <span>Финиш: ${formatContestEnd(contest)}</span>
             <span>Автор(ы): ${renderAuthorLinks(contest.authors)}</span>
           </div>
           <div class="contest-actions">
-            <button onclick="openContest('${contest.id}')">Открыть</button>
-            <button class="secondary" onclick="registerContest('${contest.id}', '${contest.status}')" ${registerDisabled ? "disabled" : ""}>
+            <button type="button" class="open-contest-btn">Открыть</button>
+            <button type="button" class="secondary register-contest-btn" ${registerDisabled ? "disabled" : ""}>
               ${registerLabel}
             </button>
           </div>
         `;
+        card.querySelector(".open-contest-btn")?.addEventListener("click", () => openContest(safeId));
+        card.querySelector(".register-contest-btn")?.addEventListener("click", () => registerContest(safeId, contest.status));
         container.appendChild(card);
       }
     }

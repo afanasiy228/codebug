@@ -13,6 +13,12 @@ import time
 import urllib.parse
 import urllib.request
 import html
+import traceback
+
+try:
+    import redis
+except Exception:
+    redis = None
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -117,20 +123,99 @@ SUBMIT_QUEUE_COND = threading.Condition(SUBMIT_QUEUE_LOCK)
 SUBMIT_WORKER_STARTED = False
 REQUEST_RATE_STATE = {}
 RATE_LOCK = threading.Lock()
+RATE_LIMIT_BACKEND = (os.getenv("RATE_LIMIT_BACKEND", "memory") or "memory").strip().lower()
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
+RATE_LIMIT_PREFIX = (os.getenv("RATE_LIMIT_PREFIX", "codebug:rl") or "codebug:rl").strip()
+REDIS_RATE_CLIENT = None
+
+MAX_CODE_SIZE_BYTES = int(os.getenv("MAX_CODE_SIZE_BYTES", str(512 * 1024)))
+MAX_INPUT_SIZE_BYTES = int(os.getenv("MAX_INPUT_SIZE_BYTES", str(512 * 1024)))
+MAX_EDITOR_PREFIX_BYTES = int(os.getenv("MAX_EDITOR_PREFIX_BYTES", str(512 * 1024)))
+MAX_EDITOR_SUFFIX_BYTES = int(os.getenv("MAX_EDITOR_SUFFIX_BYTES", str(512 * 1024)))
+MAX_TASK_TITLE_LEN = int(os.getenv("MAX_TASK_TITLE_LEN", "200"))
+MAX_TAGS_COUNT = int(os.getenv("MAX_TAGS_COUNT", "16"))
+MAX_TAG_LEN = int(os.getenv("MAX_TAG_LEN", "32"))
+MAX_STATEMENT_LEN = int(os.getenv("MAX_STATEMENT_LEN", str(2 * 1024 * 1024)))
+
+
+def _api_error(error, status=400, code=None):
+    payload = {"error": str(error)}
+    payload["code"] = str(code or error)
+    return jsonify(payload), status
+
+
+def _server_error(error, code, exc=None, status=500):
+    print(f"[server-error] {error} code={code}")
+    if exc is not None:
+        print(exc)
+        print(traceback.format_exc())
+    return _api_error(error, status=status, code=code)
+
+
+def _request_ip():
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    return (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr) or "unknown"
+
+
+def _allowed_origins():
+    return set(_cors_origins())
+
+
+def _origin_in_allowed(origin):
+    return bool(origin and origin in _allowed_origins())
+
+
+def _soft_check_request_origin(user_login=None):
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return
+    path = request.path or ""
+    if path in {"/ping", "/"}:
+        return
+    origin = (request.headers.get("Origin") or "").strip()
+    referer = (request.headers.get("Referer") or "").strip()
+    origin_ok = _origin_in_allowed(origin)
+    referer_ok = any(referer.startswith(allowed) for allowed in _allowed_origins()) if referer else False
+    if not origin_ok and not referer_ok:
+        print(
+            f"[security][origin-soft-fail] method={request.method} path={path} ip={_request_ip()} "
+            f"user={user_login or '-'} origin={origin or '-'} referer={referer or '-'}"
+        )
+
+
+@app.before_request
+def _before_write_request_soft_checks():
+    _soft_check_request_origin()
 
 
 def _is_admin_request():
     if ADMIN_API_KEY:
         header_key = request.headers.get("X-Admin-Key", "")
-        body = request.get_json(silent=True) or {}
-        body_key = body.get("adminKey", "")
-        if header_key == ADMIN_API_KEY or body_key == ADMIN_API_KEY:
+        if header_key == ADMIN_API_KEY:
             return True
 
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         return False
-
+    token = auth_header.removeprefix("Bearer ").strip()
+    if not token:
+        return False
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return False
+    try:
+        decoded = admin_auth.verify_id_token(token)
+        uid = decoded.get("uid")
+        if not uid:
+            return False
+        login = db.reference(f"userAuthMap/{uid}").get()
+        if not login:
+            return False
+        return bool(db.reference(f"admins/{login}").get())
+    except Exception as e:
+        print("Admin auth failed:", e)
+        return False
 
 def _resolve_login_from_token(token):
     global FIREBASE_READY
@@ -154,24 +239,39 @@ def _resolve_login_from_token(token):
 def _require_user_login():
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
-        return None, (jsonify({"error": "auth_required"}), 401)
+        return None, _api_error("auth_required", status=401, code="AUTH_REQUIRED")
     token = auth_header.removeprefix("Bearer ").strip()
     if not token:
-        return None, (jsonify({"error": "auth_required"}), 401)
+        return None, _api_error("auth_required", status=401, code="AUTH_REQUIRED")
     login = _resolve_login_from_token(token)
     if not login:
-        return None, (jsonify({"error": "invalid_token"}), 401)
+        return None, _api_error("invalid_token", status=401, code="INVALID_TOKEN")
     return login, None
 
 
 def _rate_limit_key(route_key, user_login):
-    forwarded_for = request.headers.get("X-Forwarded-For", "")
-    ip = (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr) or "unknown"
+    ip = _request_ip()
     who = user_login or ip
     return f"{route_key}:{who}"
 
 
-def _rate_limit(route_key, user_login, limit, per_seconds):
+def _redis_rate_client():
+    global REDIS_RATE_CLIENT
+    if REDIS_RATE_CLIENT is not None:
+        return REDIS_RATE_CLIENT
+    if redis is None or not REDIS_URL:
+        return None
+    try:
+        REDIS_RATE_CLIENT = redis.Redis.from_url(REDIS_URL, socket_timeout=1, socket_connect_timeout=1)
+        REDIS_RATE_CLIENT.ping()
+        return REDIS_RATE_CLIENT
+    except Exception as e:
+        print("Redis rate limit unavailable:", e)
+        REDIS_RATE_CLIENT = None
+        return None
+
+
+def _rate_limit_memory(route_key, user_login, limit, per_seconds):
     now = time.time()
     key = _rate_limit_key(route_key, user_login)
     with RATE_LOCK:
@@ -184,28 +284,29 @@ def _rate_limit(route_key, user_login, limit, per_seconds):
         REQUEST_RATE_STATE[key] = bucket
     return True
 
-    global FIREBASE_READY
-    if not FIREBASE_READY:
-        FIREBASE_READY = init_firebase()
-    if not FIREBASE_READY:
-        return False
 
-    token = auth_header.removeprefix("Bearer ").strip()
-    if not token:
-        return False
-
+def _rate_limit_redis(route_key, user_login, limit, per_seconds):
+    client = _redis_rate_client()
+    if client is None:
+        return None
+    key = f"{RATE_LIMIT_PREFIX}:{_rate_limit_key(route_key, user_login)}:{int(time.time() // per_seconds)}"
     try:
-        decoded = admin_auth.verify_id_token(token)
-        uid = decoded.get("uid")
-        if not uid:
-            return False
-        login = db.reference(f"userAuthMap/{uid}").get()
-        if not login:
-            return False
-        return bool(db.reference(f"admins/{login}").get())
+        count = client.incr(key)
+        if count == 1:
+            client.expire(key, per_seconds + 1)
+        return count <= int(limit)
     except Exception as e:
-        print("Admin auth failed:", e)
-        return False
+        print("Redis rate limit failed, falling back to memory:", e)
+        return None
+
+
+def _rate_limit(route_key, user_login, limit, per_seconds):
+    backend = RATE_LIMIT_BACKEND
+    if backend == "redis":
+        redis_allowed = _rate_limit_redis(route_key, user_login, limit, per_seconds)
+        if redis_allowed is not None:
+            return redis_allowed
+    return _rate_limit_memory(route_key, user_login, limit, per_seconds)
 
 
 def _git_env():
@@ -274,6 +375,60 @@ def _trim_ai_completion(completion):
     if len(completion) > 240:
         completion = completion[:240]
     return completion
+
+
+def _is_nonempty_string(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _validate_language(value):
+    lang = normalize_language(value)
+    if lang not in SUPPORTED_LANGUAGES:
+        return None
+    return lang
+
+
+def _validate_submit_payload(data):
+    if not isinstance(data, dict):
+        return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    task_raw = data.get("task")
+    code = data.get("code")
+    lang = _validate_language(data.get("language"))
+    if not _is_nonempty_string(code):
+        return None, _api_error("code_required", 400, "CODE_REQUIRED")
+    if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
+    try:
+        task_id = int(str(task_raw).strip())
+    except (TypeError, ValueError):
+        return None, _api_error("invalid_task", 400, "INVALID_TASK")
+    if lang is None:
+        lang = "cpp"
+    return {
+        "task_id": task_id,
+        "code": code,
+        "language": lang,
+        "contest_id": data.get("contestId")
+    }, None
+
+
+def _validate_run_payload(data):
+    if not isinstance(data, dict):
+        return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    code = data.get("code", "")
+    input_data = data.get("input", "")
+    if not _is_nonempty_string(code):
+        return None, _api_error("code_required", 400, "CODE_REQUIRED")
+    if not isinstance(input_data, str):
+        return None, _api_error("invalid_input", 400, "INVALID_INPUT")
+    if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
+    if len(input_data.encode("utf-8", errors="replace")) > MAX_INPUT_SIZE_BYTES:
+        return None, _api_error("input_too_large", 400, "INPUT_TOO_LARGE")
+    lang = _validate_language(data.get("language"))
+    if lang is None:
+        lang = "cpp"
+    return {"code": code, "input": input_data, "language": lang}, None
 
 
 def _request_ai_code_completion(language, prefix, suffix):
@@ -1141,10 +1296,10 @@ def _save_task_payload(task_id, meta, files, tests, commit_message):
     try:
         compile_result = _write_task_tree(tmp_path, problem_v2, files, tests)
         if not compile_result.ok:
+            print("statement compile failed:", (compile_result.stderr or "")[:2000])
             shutil.rmtree(tmp_path, ignore_errors=True)
             return False, {
-                "error": "statement_compile_failed",
-                "details": compile_result.stderr
+                "error": "statement_compile_failed"
             }
         if os.path.isdir(final_path):
             backup_path = tempfile.mkdtemp(prefix=f".task_{task_id}_old_", dir=parent)
@@ -1225,10 +1380,10 @@ def _run_cpp_single(code, input_data):
 
         compile_res = _compile_cpp(src_path, bin_path)
         if compile_res.returncode != 0:
+            print("run-single cpp compile failed:", (compile_res.stderr or "")[:2000])
             return {
                 "status": "CE",
-                "output": "",
-                "details": compile_res.stderr.strip() or "compile_error"
+                "output": ""
             }
 
         run_info = _run_with_limits(["./main"], input_data, 5, workdir=tmp, language="cpp")
@@ -1237,8 +1392,7 @@ def _run_cpp_single(code, input_data):
                 "status": "TL",
                 "output": "",
                 "timeMs": run_info["timeMs"],
-                "memoryMb": run_info["memoryMb"],
-                "details": "timeout"
+                "memoryMb": run_info["memoryMb"]
             }
 
         run_res = run_info["runRes"]
@@ -1247,16 +1401,15 @@ def _run_cpp_single(code, input_data):
                 "status": "ML",
                 "output": run_res.stdout,
                 "timeMs": run_info["timeMs"],
-                "memoryMb": run_info["memoryMb"],
-                "details": "memory limit exceeded"
+                "memoryMb": run_info["memoryMb"]
             }
         if run_res.returncode != 0:
+            print("run-single cpp runtime failed:", (run_res.stderr or "")[:2000])
             return {
                 "status": "RE",
                 "output": run_res.stdout,
                 "timeMs": run_info["timeMs"],
-                "memoryMb": run_info["memoryMb"],
-                "details": (run_res.stderr or "").strip() or "runtime_error"
+                "memoryMb": run_info["memoryMb"]
             }
 
         return {
@@ -1274,10 +1427,10 @@ def _run_python_single(code, input_data):
 
         compile_res = _compile_python(src_path)
         if compile_res.returncode != 0:
+            print("run-single py compile failed:", (compile_res.stderr or "")[:2000])
             return {
                 "status": "CE",
-                "output": "",
-                "details": compile_res.stderr.strip() or "compile_error"
+                "output": ""
             }
 
         run_info = _run_with_limits(["python3", "main.py"], input_data, 5, workdir=tmp, language="python")
@@ -1286,8 +1439,7 @@ def _run_python_single(code, input_data):
                 "status": "TL",
                 "output": "",
                 "timeMs": run_info["timeMs"],
-                "memoryMb": run_info["memoryMb"],
-                "details": "timeout"
+                "memoryMb": run_info["memoryMb"]
             }
 
         run_res = run_info["runRes"]
@@ -1296,16 +1448,15 @@ def _run_python_single(code, input_data):
                 "status": "ML",
                 "output": run_res.stdout,
                 "timeMs": run_info["timeMs"],
-                "memoryMb": run_info["memoryMb"],
-                "details": "memory limit exceeded"
+                "memoryMb": run_info["memoryMb"]
             }
         if run_res.returncode != 0:
+            print("run-single py runtime failed:", (run_res.stderr or "")[:2000])
             return {
                 "status": "RE",
                 "output": run_res.stdout,
                 "timeMs": run_info["timeMs"],
-                "memoryMb": run_info["memoryMb"],
-                "details": (run_res.stderr or "").strip() or "runtime_error"
+                "memoryMb": run_info["memoryMb"]
             }
 
         return {
@@ -1388,8 +1539,7 @@ def _diagnose_cpp(code):
         markers = _parse_cpp_diagnostics(stderr_text)
         return {
             "ok": result.returncode == 0,
-            "markers": markers,
-            "details": stderr_text
+            "markers": markers
         }
 
 
@@ -1402,8 +1552,7 @@ def _diagnose_python(code):
         markers = _parse_python_diagnostics(stderr_text)
         return {
             "ok": result.returncode == 0,
-            "markers": markers,
-            "details": stderr_text
+            "markers": markers
         }
 
 
@@ -1418,11 +1567,11 @@ def _format_cpp(code):
             timeout=20,
         )
         if result.returncode != 0:
-            details = (result.stderr or "").strip() or "clang-format failed"
-            return {"ok": False, "formatted": code, "details": details}
+            print("format cpp failed:", (result.stderr or "")[:2000])
+            return {"ok": False, "formatted": code}
         with open(src_path, "r", encoding="utf-8") as f:
             formatted = f.read()
-        return {"ok": True, "formatted": formatted, "details": ""}
+        return {"ok": True, "formatted": formatted}
 
 
 def _format_python(code):
@@ -1436,11 +1585,11 @@ def _format_python(code):
             timeout=20,
         )
         if result.returncode != 0:
-            details = (result.stderr or "").strip() or "black failed"
-            return {"ok": False, "formatted": code, "details": details}
+            print("format py failed:", (result.stderr or "")[:2000])
+            return {"ok": False, "formatted": code}
         with open(src_path, "r", encoding="utf-8") as f:
             formatted = f.read()
-        return {"ok": True, "formatted": formatted, "details": ""}
+        return {"ok": True, "formatted": formatted}
 
 
 @app.route("/submit", methods=["POST", "OPTIONS"])
@@ -1453,41 +1602,28 @@ def submit():
     print("\n=== ПОЛУЧЕН POST /submit ===")
 
     # --- читаем JSON ---
-    data = request.get_json(silent=True)
+    data = request.get_json(silent=True) or {}
     print("JSON RAW:", data)
-
-    if not data:
-        return jsonify({
-            "error": "No JSON received",
-            "status": "BAD_REQUEST"
-        }), 400
 
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
     if not _rate_limit("submit", login, limit=20, per_seconds=60):
-        return jsonify({"error": "rate_limit_exceeded"}), 429
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    payload, payload_error = _validate_submit_payload(data)
+    if payload_error:
+        return payload_error
 
-    task = str(data.get("task"))
-    code = data.get("code")
-    contest_id = data.get("contestId")
-
-    if not task or not code or not login:
-        return jsonify({
-            "error": "task / code / user missing",
-            "status": "BAD_REQUEST"
-        }), 400
-
+    task = str(payload["task_id"])
+    code = payload["code"]
+    contest_id = payload["contest_id"]
     print(f"Task = {task}")
     print("Code length:", len(code))
     print("User =", login)
     _ensure_submit_worker()
 
     if not sync_tasks_repo():
-        return jsonify({
-            "error": "tasks_sync_failed",
-            "status": "ERROR"
-        }), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
 
     submission_ref = None
     firebase_error = None
@@ -1532,8 +1668,7 @@ def submit():
         "statusLabel": "QUEUE",
         "submissionId": submission_id,
         "queuePosition": queue_position,
-        "firebaseSaved": firebase_saved,
-        "firebaseError": firebase_error
+        "firebaseSaved": firebase_saved
     })
 
 
@@ -1550,7 +1685,7 @@ def auth_verify_captcha():
     ok, error_code = _verify_captcha_token(token, remote_ip=remote_ip)
     if not ok:
         status = 503 if error_code == "captcha_not_configured" else 400
-        return jsonify({"ok": False, "error": error_code}), status
+        return jsonify({"ok": False, "error": error_code or "captcha_invalid"}), status
 
     return jsonify({"ok": True})
 
@@ -1558,16 +1693,16 @@ def auth_verify_captcha():
 @app.route("/tasks/list", methods=["GET"])
 def tasks_list():
     if not sync_tasks_repo():
-        return jsonify({"error": "tasks_sync_failed"}), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
     return jsonify(list_tasks())
 
 
 @app.route("/tasks/<int:task_id>/admin-bundle", methods=["GET"])
 def tasks_admin_bundle(task_id):
     if not _is_admin_request():
-        return jsonify({"error": "admin_required"}), 403
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
     if not sync_tasks_repo():
-        return jsonify({"error": "tasks_sync_failed"}), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
 
     problem = read_problem_config(task_id)
     if not problem:
@@ -1614,7 +1749,7 @@ def tasks_admin_bundle(task_id):
 @app.route("/tasks/<int:task_id>/<path:filename>", methods=["GET"])
 def tasks_file(task_id, filename):
     if not sync_tasks_repo():
-        return jsonify({"error": "tasks_sync_failed"}), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
     if filename == "problem.json":
         problem = read_problem_config(task_id)
         if not problem:
@@ -1634,43 +1769,58 @@ def tasks_file(task_id, filename):
 @app.route("/tasks/create", methods=["POST"])
 def tasks_create():
     if not _is_admin_request():
-        return jsonify({"error": "admin_required"}), 403
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
+    if not _rate_limit("tasks_create", "admin", limit=20, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not sync_tasks_repo():
-        return jsonify({"error": "tasks_sync_failed"}), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
 
     data = request.get_json(silent=True) or {}
     meta = data.get("meta") or {}
     files = data.get("files") or {}
     tests = data.get("tests") or []
+    if not isinstance(meta, dict) or not isinstance(files, dict) or not isinstance(tests, list):
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    statement_text = files.get("statement")
+    if statement_text is not None and (not isinstance(statement_text, str) or len(statement_text) > MAX_STATEMENT_LEN):
+        return _api_error("invalid_statement", 400, "INVALID_STATEMENT")
+    for key in ("code", "solution", "generator", "checker", "validator", "grader", "graderHeader", "interactor"):
+        value = files.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+        if len(value.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+            return _api_error("payload_too_large", 400, "PAYLOAD_TOO_LARGE")
 
     task_id = meta.get("id")
     if not isinstance(task_id, int):
-        return jsonify({
-            "error": "new_task_creation_disabled",
-            "details": "Use /tasks/import-polygon to create new tasks"
-        }), 400
+        return _api_error("new_task_creation_disabled", 400, "NEW_TASK_CREATION_DISABLED")
     if not os.path.isdir(task_dir(task_id)):
-        return jsonify({
-            "error": "new_task_creation_disabled",
-            "details": "Use /tasks/import-polygon to create new tasks"
-        }), 400
+        return _api_error("new_task_creation_disabled", 400, "NEW_TASK_CREATION_DISABLED")
 
     title = meta.get("title")
-    if not title:
-        return jsonify({"error": "title_required"}), 400
+    if not _is_nonempty_string(title) or len(str(title)) > MAX_TASK_TITLE_LEN:
+        return _api_error("title_required", 400, "TITLE_REQUIRED")
+    tags = meta.get("tags")
+    if tags is not None:
+        if not isinstance(tags, list) or len(tags) > MAX_TAGS_COUNT:
+            return _api_error("invalid_tags", 400, "INVALID_TAGS")
+        for tag in tags:
+            if not isinstance(tag, str) or not tag.strip() or len(tag) > MAX_TAG_LEN:
+                return _api_error("invalid_tags", 400, "INVALID_TAGS")
     meta.pop("author", None)
     lang = normalize_language(meta.get("language"))
     if lang not in SUPPORTED_LANGUAGES:
-        return jsonify({"error": "language_not_supported"}), 400
+        return _api_error("language_not_supported", 400, "LANGUAGE_NOT_SUPPORTED")
     meta["language"] = lang
 
     try:
         ok, payload = _save_task_payload(task_id, meta, files, tests, f"Add task {task_id}")
     except Exception as e:
-        print("Task create git failed:", e)
-        return jsonify({"error": "git_failed"}), 500
+        return _server_error("git_failed", "TASK_CREATE_GIT_FAILED", exc=e)
     if not ok:
-        return jsonify(payload), 400
+        return _api_error(payload.get("error", "task_create_failed"), 400, "TASK_CREATE_FAILED")
     return jsonify(payload)
 
 
@@ -1687,20 +1837,24 @@ def _safe_extract_zip(archive, dest_dir):
 @app.route("/tasks/import-polygon", methods=["POST"])
 def tasks_import_polygon():
     if not _is_admin_request():
-        return jsonify({"error": "admin_required"}), 403
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
+    if not _rate_limit("tasks_import_polygon", "admin", limit=15, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not sync_tasks_repo():
-        return jsonify({"error": "tasks_sync_failed"}), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
 
     upload = request.files.get("archive")
     if not upload:
-        return jsonify({"error": "archive_required"}), 400
+        return _api_error("archive_required", 400, "ARCHIVE_REQUIRED")
     buggy_code = (request.form.get("buggyCode") or "").strip()
     if not buggy_code:
-        return jsonify({"error": "buggy_code_required"}), 400
+        return _api_error("buggy_code_required", 400, "BUGGY_CODE_REQUIRED")
+    if len(buggy_code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return _api_error("code_too_large", 400, "CODE_TOO_LARGE")
 
     language = normalize_language(request.form.get("language"))
     if language not in SUPPORTED_LANGUAGES:
-        return jsonify({"error": "language_not_supported"}), 400
+        return _api_error("language_not_supported", 400, "LANGUAGE_NOT_SUPPORTED")
     task_type = str(request.form.get("taskType") or "standard").strip().lower()
     if task_type not in ("standard", "grader", "interactive"):
         task_type = "standard"
@@ -1743,31 +1897,33 @@ def tasks_import_polygon():
                 f"Import Polygon task {task_id}"
             )
         except (PolygonImportError, zipfile.BadZipFile, ValueError) as e:
-            return jsonify({"error": "polygon_import_failed", "details": str(e)}), 400
+            print("polygon import failed:", e)
+            return _api_error("polygon_import_failed", 400, "POLYGON_IMPORT_FAILED")
         except Exception as e:
-            print("Polygon import git failed:", e)
-            return jsonify({"error": "git_failed"}), 500
+            return _server_error("git_failed", "POLYGON_IMPORT_GIT_FAILED", exc=e)
 
     if not ok:
-        return jsonify(result), 400
+        return _api_error(result.get("error", "polygon_import_failed"), 400, "POLYGON_IMPORT_FAILED")
     return jsonify(result)
 
 
 @app.route("/tasks/delete", methods=["POST"])
 def tasks_delete():
     if not _is_admin_request():
-        return jsonify({"error": "admin_required"}), 403
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
+    if not _rate_limit("tasks_delete", "admin", limit=20, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not sync_tasks_repo():
-        return jsonify({"error": "tasks_sync_failed"}), 500
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
 
     data = request.get_json(silent=True) or {}
     task_id = data.get("id")
     if not isinstance(task_id, int):
-        return jsonify({"error": "id_required"}), 400
+        return _api_error("id_required", 400, "ID_REQUIRED")
 
     task_path = task_dir(task_id)
     if not os.path.isdir(task_path):
-        return jsonify({"error": "not_found"}), 404
+        return _api_error("not_found", 404, "NOT_FOUND")
 
     try:
         subprocess.run(
@@ -1775,8 +1931,7 @@ def tasks_delete():
             check=True
         )
     except Exception as e:
-        print("Task delete failed:", e)
-        return jsonify({"error": "delete_failed"}), 500
+        return _server_error("delete_failed", "TASK_DELETE_FAILED", exc=e)
 
     _ensure_git_identity()
     try:
@@ -1801,8 +1956,7 @@ def tasks_delete():
             env=_git_env()
         )
     except Exception as e:
-        print("Task delete git failed:", e)
-        return jsonify({"error": "git_failed"}), 500
+        return _server_error("git_failed", "TASK_DELETE_GIT_FAILED", exc=e)
 
     return jsonify({"status": "ok", "id": task_id})
 
@@ -1810,7 +1964,9 @@ def tasks_delete():
 @app.route("/tasks/generate-tests", methods=["POST"])
 def tasks_generate_tests():
     if not _is_admin_request():
-        return jsonify({"error": "admin_required"}), 403
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
+    if not _rate_limit("tasks_generate_tests", "admin", limit=10, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
     generator_code = data.get("generator", "")
@@ -1819,13 +1975,17 @@ def tasks_generate_tests():
     lang = normalize_language(data.get("language"))
 
     if not isinstance(count, int) or count <= 0:
-        return jsonify({"error": "count_required"}), 400
+        return _api_error("count_required", 400, "COUNT_REQUIRED")
     if count > MAX_GENERATED_TESTS:
-        return jsonify({"error": "count_too_large"}), 400
+        return _api_error("count_too_large", 400, "COUNT_TOO_LARGE")
     if not generator_code.strip():
-        return jsonify({"error": "generator_required"}), 400
+        return _api_error("generator_required", 400, "GENERATOR_REQUIRED")
     if not solution_code.strip():
-        return jsonify({"error": "solution_required"}), 400
+        return _api_error("solution_required", 400, "SOLUTION_REQUIRED")
+    if len(generator_code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return _api_error("generator_too_large", 400, "GENERATOR_TOO_LARGE")
+    if len(solution_code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return _api_error("solution_too_large", 400, "SOLUTION_TOO_LARGE")
 
     with _runtime_tempdir("generate_tests_") as tmp:
         if lang == "python":
@@ -1836,17 +1996,13 @@ def tasks_generate_tests():
 
             gen_compile = _compile_python(gen_src)
             if gen_compile.returncode != 0:
-                return jsonify({
-                    "error": "generator_compile_failed",
-                    "details": gen_compile.stderr
-                }), 400
+                print("generator compile failed:", (gen_compile.stderr or "")[:2000])
+                return _api_error("generator_compile_failed", 400, "GENERATOR_COMPILE_FAILED")
 
             sol_compile = _compile_python(sol_src)
             if sol_compile.returncode != 0:
-                return jsonify({
-                    "error": "solution_compile_failed",
-                    "details": sol_compile.stderr
-                }), 400
+                print("solution compile failed:", (sol_compile.stderr or "")[:2000])
+                return _api_error("solution_compile_failed", 400, "SOLUTION_COMPILE_FAILED")
         else:
             gen_src = os.path.join(tmp, "generator.cpp")
             sol_src = os.path.join(tmp, "solution.cpp")
@@ -1857,17 +2013,13 @@ def tasks_generate_tests():
 
             gen_compile = _compile_cpp(gen_src, gen_bin)
             if gen_compile.returncode != 0:
-                return jsonify({
-                    "error": "generator_compile_failed",
-                    "details": gen_compile.stderr
-                }), 400
+                print("generator compile failed:", (gen_compile.stderr or "")[:2000])
+                return _api_error("generator_compile_failed", 400, "GENERATOR_COMPILE_FAILED")
 
             sol_compile = _compile_cpp(sol_src, sol_bin)
             if sol_compile.returncode != 0:
-                return jsonify({
-                    "error": "solution_compile_failed",
-                    "details": sol_compile.stderr
-                }), 400
+                print("solution compile failed:", (sol_compile.stderr or "")[:2000])
+                return _api_error("solution_compile_failed", 400, "SOLUTION_COMPILE_FAILED")
 
         tests = []
         for i in range(1, count + 1):
@@ -1887,17 +2039,13 @@ def tasks_generate_tests():
                         timeout=5,
                     )
             except (subprocess.TimeoutExpired, SandboxError):
-                return jsonify({
-                    "error": "generator_timeout",
-                    "index": i
-                }), 400
+                return _api_error("generator_timeout", 400, "GENERATOR_TIMEOUT")
 
             if gen_run.returncode != 0:
-                return jsonify({
-                    "error": "generator_timeout" if getattr(gen_run, "timeout", False) else "generator_runtime_failed",
-                    "details": gen_run.stderr,
-                    "index": i
-                }), 400
+                print("generator runtime failed:", (gen_run.stderr or "")[:2000], "index=", i)
+                if getattr(gen_run, "timeout", False):
+                    return _api_error("generator_timeout", 400, "GENERATOR_TIMEOUT")
+                return _api_error("generator_runtime_failed", 400, "GENERATOR_RUNTIME_FAILED")
 
             inp = gen_run.stdout
             try:
@@ -1918,17 +2066,13 @@ def tasks_generate_tests():
                         timeout=5,
                     )
             except (subprocess.TimeoutExpired, SandboxError):
-                return jsonify({
-                    "error": "solution_timeout",
-                    "index": i
-                }), 400
+                return _api_error("solution_timeout", 400, "SOLUTION_TIMEOUT")
 
             if sol_run.returncode != 0:
-                return jsonify({
-                    "error": "solution_timeout" if getattr(sol_run, "timeout", False) else "solution_runtime_failed",
-                    "details": sol_run.stderr,
-                    "index": i
-                }), 400
+                print("solution runtime failed:", (sol_run.stderr or "")[:2000], "index=", i)
+                if getattr(sol_run, "timeout", False):
+                    return _api_error("solution_timeout", 400, "SOLUTION_TIMEOUT")
+                return _api_error("solution_runtime_failed", 400, "SOLUTION_RUNTIME_FAILED")
             tests.append({
                 "input": inp,
                 "output": sol_run.stdout
@@ -1943,20 +2087,15 @@ def run_single():
     if auth_error:
         return auth_error
     if not _rate_limit("run_single", user_login, limit=30, per_seconds=60):
-        return jsonify({"error": "rate_limit_exceeded"}), 429
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {})
+    if payload_error:
+        return payload_error
 
-    data = request.get_json(silent=True) or {}
-    code = data.get("code", "")
-    input_data = data.get("input", "")
-    lang = normalize_language(data.get("language"))
-
-    if not code or not code.strip():
-        return jsonify({"error": "code_required"}), 400
-
-    if lang == "python":
-        result = _run_python_single(code, input_data)
+    if payload["language"] == "python":
+        result = _run_python_single(payload["code"], payload["input"])
     else:
-        result = _run_cpp_single(code, input_data)
+        result = _run_cpp_single(payload["code"], payload["input"])
     return jsonify(result)
 
 
@@ -1966,31 +2105,28 @@ def editor_diagnostics():
     if auth_error:
         return auth_error
     if not _rate_limit("editor_diag", user_login, limit=40, per_seconds=60):
-        return jsonify({"error": "rate_limit_exceeded"}), 429
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
     code = data.get("code", "")
-    lang = normalize_language(data.get("language"))
+    if not isinstance(code, str):
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return _api_error("code_too_large", 400, "CODE_TOO_LARGE")
+    lang = _validate_language(data.get("language")) or "cpp"
     if not code.strip():
-        return jsonify({"ok": True, "markers": [], "details": ""})
+        return jsonify({"ok": True, "markers": []})
     try:
         if lang == "python":
             result = _diagnose_python(code)
         else:
             result = _diagnose_cpp(code)
     except (subprocess.TimeoutExpired, SandboxError) as e:
-        return jsonify({
-            "ok": False,
-            "markers": [],
-            "details": str(e) or "diagnostics_timeout"
-        }), 500
+        print("diagnostics timeout/error:", e)
+        return _api_error("diagnostics_failed", 500, "DIAGNOSTICS_TIMEOUT")
     except Exception as e:
-        return jsonify({
-            "ok": False,
-            "markers": [],
-            "details": str(e) or "diagnostics_failed"
-        }), 500
-    return jsonify(result)
+        return _server_error("diagnostics_failed", "DIAGNOSTICS_FAILED", exc=e)
+    return jsonify({"ok": bool(result.get("ok")), "markers": result.get("markers") or []})
 
 
 @app.route("/editor/format", methods=["POST"])
@@ -1999,31 +2135,28 @@ def editor_format():
     if auth_error:
         return auth_error
     if not _rate_limit("editor_format", user_login, limit=30, per_seconds=60):
-        return jsonify({"error": "rate_limit_exceeded"}), 429
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
     code = data.get("code", "")
-    lang = normalize_language(data.get("language"))
+    if not isinstance(code, str):
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+        return _api_error("code_too_large", 400, "CODE_TOO_LARGE")
+    lang = _validate_language(data.get("language")) or "cpp"
     if not code.strip():
-        return jsonify({"ok": True, "formatted": "", "details": ""})
+        return jsonify({"ok": True, "formatted": ""})
     try:
         if lang == "python":
             result = _format_python(code)
         else:
             result = _format_cpp(code)
     except (subprocess.TimeoutExpired, SandboxError) as e:
-        return jsonify({
-            "ok": False,
-            "formatted": code,
-            "details": str(e) or "format_timeout"
-        }), 500
+        print("format timeout/error:", e)
+        return _api_error("format_failed", 500, "FORMAT_TIMEOUT")
     except Exception as e:
-        return jsonify({
-            "ok": False,
-            "formatted": code,
-            "details": str(e) or "format_failed"
-        }), 500
-    return jsonify(result)
+        return _server_error("format_failed", "FORMAT_FAILED", exc=e)
+    return jsonify({"ok": bool(result.get("ok")), "formatted": result.get("formatted", code)})
 
 
 @app.route("/editor/ai-complete", methods=["POST"])
@@ -2032,39 +2165,45 @@ def editor_ai_complete():
     if auth_error:
         return auth_error
     if not _rate_limit("editor_ai", user_login, limit=20, per_seconds=60):
-        return jsonify({"error": "rate_limit_exceeded"}), 429
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
-    language = normalize_language(data.get("language"))
+    language = _validate_language(data.get("language")) or "cpp"
     prefix = data.get("prefix", "")
     suffix = data.get("suffix", "")
 
     if not isinstance(prefix, str) or not isinstance(suffix, str):
-        return jsonify({"ok": False, "completion": "", "error": "invalid_payload"}), 400
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    if len(prefix.encode("utf-8", errors="replace")) > MAX_EDITOR_PREFIX_BYTES:
+        return _api_error("prefix_too_large", 400, "PREFIX_TOO_LARGE")
+    if len(suffix.encode("utf-8", errors="replace")) > MAX_EDITOR_SUFFIX_BYTES:
+        return _api_error("suffix_too_large", 400, "SUFFIX_TOO_LARGE")
     if not prefix.strip():
         return jsonify({"ok": True, "completion": ""})
 
     completion, error = _request_ai_code_completion(language, prefix, suffix)
     if error:
         status = 503 if error == "ai_completion_not_configured" else 502
-        return jsonify({"ok": False, "completion": "", "error": error}), status
+        return _api_error("ai_completion_failed", status, error.upper())
     return jsonify({"ok": True, "completion": completion})
 
 
 @app.route("/admin/purge-users", methods=["POST"])
 def admin_purge_users():
     if not _is_admin_request():
-        return jsonify({"error": "forbidden"}), 403
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("admin_purge_users", "admin", limit=3, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
     if data.get("confirm") != "DELETE_ALL_USERS":
-        return jsonify({"error": "confirm_required"}), 400
+        return _api_error("confirm_required", 400, "CONFIRM_REQUIRED")
 
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
     if not FIREBASE_READY:
-        return jsonify({"error": "firebase_not_ready"}), 500
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
 
     deleted_auth = 0
     next_token = None
@@ -2081,11 +2220,7 @@ def admin_purge_users():
             if not next_token:
                 break
     except Exception as e:
-        return jsonify({
-            "error": "auth_purge_failed",
-            "details": str(e),
-            "deletedAuth": deleted_auth
-        }), 500
+        return _server_error("auth_purge_failed", "AUTH_PURGE_FAILED", exc=e)
 
     try:
         db.reference("users").set(None)
@@ -2093,11 +2228,7 @@ def admin_purge_users():
         db.reference("emailToLogin").set(None)
         db.reference("admins").set(None)
     except Exception as e:
-        return jsonify({
-            "error": "db_purge_failed",
-            "details": str(e),
-            "deletedAuth": deleted_auth
-        }), 500
+        return _server_error("db_purge_failed", "DB_PURGE_FAILED", exc=e)
 
     return jsonify({
         "status": "ok",
@@ -2224,13 +2355,15 @@ def _task_difficulty_for_xp(task_id, task_difficulties):
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
 def admin_rebuild_user_stats():
     if not _is_admin_request():
-        return jsonify({"error": "forbidden"}), 403
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("admin_rebuild_user_stats", "admin", limit=6, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
     if not FIREBASE_READY:
-        return jsonify({"error": "firebase_not_ready"}), 500
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
 
     users_raw = db.reference("users").get() or {}
     submissions_raw = db.reference("submissions/global").get() or {}

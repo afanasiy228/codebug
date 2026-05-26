@@ -431,9 +431,10 @@
         const row = document.createElement("div");
         row.className = "task-row";
         row.innerHTML = `
-          <div class="task-title">${title}</div>
-          <button onclick="openTask(${taskId})">Открыть</button>
+          <div class="task-title">${escapeHtml(title)}</div>
+          <button type="button" class="open-task-btn">Открыть</button>
         `;
+        row.querySelector(".open-task-btn")?.addEventListener("click", () => openTask(taskId));
         tasksList.appendChild(row);
       }
     }
