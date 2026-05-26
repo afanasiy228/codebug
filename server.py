@@ -121,6 +121,7 @@ SUBMIT_QUEUE = deque()
 SUBMIT_QUEUE_LOCK = threading.Lock()
 SUBMIT_QUEUE_COND = threading.Condition(SUBMIT_QUEUE_LOCK)
 SUBMIT_WORKER_STARTED = False
+TASKS_SYNC_WORKER_STARTED = False
 REQUEST_RATE_STATE = {}
 RATE_LOCK = threading.Lock()
 RATE_LIMIT_BACKEND = (os.getenv("RATE_LIMIT_BACKEND", "memory") or "memory").strip().lower()
@@ -136,6 +137,9 @@ MAX_TASK_TITLE_LEN = int(os.getenv("MAX_TASK_TITLE_LEN", "200"))
 MAX_TAGS_COUNT = int(os.getenv("MAX_TAGS_COUNT", "16"))
 MAX_TAG_LEN = int(os.getenv("MAX_TAG_LEN", "32"))
 MAX_STATEMENT_LEN = int(os.getenv("MAX_STATEMENT_LEN", str(2 * 1024 * 1024)))
+MAX_SUBMIT_QUEUE_SIZE = int(os.getenv("MAX_SUBMIT_QUEUE_SIZE", "300"))
+SUBMIT_GLOBAL_RATE_LIMIT = int(os.getenv("SUBMIT_GLOBAL_RATE_LIMIT", "120"))
+SUBMIT_GLOBAL_RATE_WINDOW = int(os.getenv("SUBMIT_GLOBAL_RATE_WINDOW", "60"))
 
 
 def _api_error(error, status=400, code=None):
@@ -307,6 +311,10 @@ def _rate_limit(route_key, user_login, limit, per_seconds):
         if redis_allowed is not None:
             return redis_allowed
     return _rate_limit_memory(route_key, user_login, limit, per_seconds)
+
+
+def _rate_limit_global(route_key, limit, per_seconds):
+    return _rate_limit(route_key, "__global__", limit, per_seconds)
 
 
 def _git_env():
@@ -718,6 +726,27 @@ def _ensure_submit_worker():
         t = threading.Thread(target=_submit_worker, daemon=True, name="submit-worker")
         t.start()
         SUBMIT_WORKER_STARTED = True
+
+
+def _tasks_sync_worker():
+    # Keep tasks repo fresh outside the /submit hot path.
+    while True:
+        try:
+            sync_tasks_repo(force=False)
+        except Exception as e:
+            print("Tasks sync worker error:", e)
+        sleep_for = max(15, TASKS_SYNC_TTL)
+        time.sleep(sleep_for)
+
+
+def _ensure_tasks_sync_worker():
+    global TASKS_SYNC_WORKER_STARTED
+    with SUBMIT_QUEUE_LOCK:
+        if TASKS_SYNC_WORKER_STARTED:
+            return
+        t = threading.Thread(target=_tasks_sync_worker, daemon=True, name="tasks-sync-worker")
+        t.start()
+        TASKS_SYNC_WORKER_STARTED = True
 
 
 def task_dir(task_id):
@@ -1608,6 +1637,9 @@ def submit():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    _ensure_tasks_sync_worker()
+    if not _rate_limit_global("submit_global", SUBMIT_GLOBAL_RATE_LIMIT, SUBMIT_GLOBAL_RATE_WINDOW):
+        return _api_error("service_busy", 429, "GLOBAL_RATE_LIMIT_EXCEEDED")
     if not _rate_limit("submit", login, limit=20, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     payload, payload_error = _validate_submit_payload(data)
@@ -1622,8 +1654,12 @@ def submit():
     print("User =", login)
     _ensure_submit_worker()
 
-    if not sync_tasks_repo():
-        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
+    # Do not run git sync in the hot path. Verify task exists in local mirror.
+    if not read_task_meta(task):
+        return _api_error("task_not_found", 404, "TASK_NOT_FOUND")
+    with SUBMIT_QUEUE_LOCK:
+        if len(SUBMIT_QUEUE) >= MAX_SUBMIT_QUEUE_SIZE:
+            return _api_error("queue_overloaded", 503, "QUEUE_OVERLOADED")
 
     submission_ref = None
     firebase_error = None
@@ -1653,6 +1689,13 @@ def submit():
 
     submission_id = submission_ref.key if submission_ref is not None else None
     with SUBMIT_QUEUE_COND:
+        if len(SUBMIT_QUEUE) >= MAX_SUBMIT_QUEUE_SIZE:
+            if submission_id and FIREBASE_READY:
+                try:
+                    db.reference(f"submissions/global/{submission_id}").update({"verdict": "ERROR"})
+                except Exception:
+                    pass
+            return _api_error("queue_overloaded", 503, "QUEUE_OVERLOADED")
         SUBMIT_QUEUE.append({
             "task": task,
             "code": code,
@@ -2441,4 +2484,5 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "7777"))
     print(f"Запуск на http://127.0.0.1:{port}")
     sync_tasks_repo(force=True)
+    _ensure_tasks_sync_worker()
     app.run(host="0.0.0.0", port=port)
