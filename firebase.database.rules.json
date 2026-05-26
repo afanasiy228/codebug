@@ -1,0 +1,62 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      "$login": {
+        ".read": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
+        ".write": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
+
+        "stats": {
+          ".read": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
+          ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+        }
+      }
+    },
+
+    "submissions": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+    },
+
+    "admins": {
+      ".read": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true",
+      ".write": false
+    },
+
+    "userAuthMap": {
+      ".read": false,
+      ".write": false
+    },
+
+    "emailToLogin": {
+      ".read": false,
+      ".write": false
+    },
+
+    "tasksHidden": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+    },
+
+    "site": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+    },
+
+    "contests": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+    },
+
+    "contest_regs": {
+      "$contestId": {
+        "$login": {
+          ".read": "auth != null && ($login === root.child('userAuthMap').child(auth.uid).val() || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
+          ".write": "auth != null && ($login === root.child('userAuthMap').child(auth.uid).val() || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)"
+        }
+      }
+    }
+  }
+}
