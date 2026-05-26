@@ -294,8 +294,50 @@
     <script src="auth.js"></script>
 
     <script>
-        function showDonateInfo(plan) {
-            alert(`Тариф ${plan} выбран. Для подключения напиши в поддержку и укажи логин аккаунта.`);
+        const PLAN_TO_TIER = {
+            "PRO": "pro",
+            "PRO+": "pro_plus",
+            "CREATOR / DEV": "creator_dev"
+        };
+
+        async function markSubscriptionPlan(planLabel) {
+            const login = typeof getUser === "function" ? getUser() : null;
+            if (!login) {
+                alert("Сначала войди в аккаунт.");
+                window.location.href = "auth.html?next=donate.html";
+                return false;
+            }
+            const tier = PLAN_TO_TIER[planLabel];
+            if (!tier) return false;
+
+            const payload = {
+                tier,
+                label: planLabel,
+                status: "pending_payment",
+                updatedAt: Date.now()
+            };
+
+            try {
+                await db.ref("users/" + login + "/subscription").set(payload);
+                await db.ref("subscriptions/requests").push().set({
+                    login,
+                    tier,
+                    label: planLabel,
+                    status: "pending_payment",
+                    createdAt: Date.now()
+                });
+                return true;
+            } catch (e) {
+                console.error("subscription mark failed", e);
+                alert("Не удалось сохранить выбор подписки. Попробуй ещё раз.");
+                return false;
+            }
+        }
+
+        async function showDonateInfo(plan) {
+            const ok = await markSubscriptionPlan(plan);
+            if (!ok) return;
+            alert(`Тариф ${plan} отмечен в профиле. Для активации отправь оплату и укажи логин в поддержку.`);
         }
 
         document.addEventListener("DOMContentLoaded", updateNavbar);
