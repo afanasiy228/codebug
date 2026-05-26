@@ -32,7 +32,7 @@ app = Flask(__name__)
 def _cors_origins():
     raw = os.getenv(
         "CORS_ALLOWED_ORIGINS",
-        "https://codebug.onrender.com,http://localhost:7777,http://127.0.0.1:7777"
+        "https://codebug.onrender.com,https://codebug.online,https://www.codebug.online,http://localhost:7777,http://127.0.0.1:7777"
     )
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
