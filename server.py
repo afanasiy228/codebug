@@ -118,6 +118,7 @@ def init_firebase():
 
 FIREBASE_READY = init_firebase()
 SUBMIT_QUEUE = deque()
+SUBMIT_QUEUE_PRO = deque()
 SUBMIT_QUEUE_LOCK = threading.Lock()
 SUBMIT_QUEUE_COND = threading.Condition(SUBMIT_QUEUE_LOCK)
 SUBMIT_WORKER_STARTED = False
@@ -140,6 +141,13 @@ MAX_STATEMENT_LEN = int(os.getenv("MAX_STATEMENT_LEN", str(2 * 1024 * 1024)))
 MAX_SUBMIT_QUEUE_SIZE = int(os.getenv("MAX_SUBMIT_QUEUE_SIZE", "300"))
 SUBMIT_GLOBAL_RATE_LIMIT = int(os.getenv("SUBMIT_GLOBAL_RATE_LIMIT", "120"))
 SUBMIT_GLOBAL_RATE_WINDOW = int(os.getenv("SUBMIT_GLOBAL_RATE_WINDOW", "60"))
+RUN_SINGLE_TIMEOUT_FREE = float(os.getenv("RUN_SINGLE_TIMEOUT_FREE", "5"))
+RUN_SINGLE_TIMEOUT_PRO = float(os.getenv("RUN_SINGLE_TIMEOUT_PRO", "10"))
+RUN_SINGLE_INPUT_LIMIT_FREE = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_FREE", str(512 * 1024)))
+RUN_SINGLE_INPUT_LIMIT_PRO = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_PRO", str(1024 * 1024)))
+RUN_SINGLE_CODE_LIMIT_FREE = int(os.getenv("RUN_SINGLE_CODE_LIMIT_FREE", str(512 * 1024)))
+RUN_SINGLE_CODE_LIMIT_PRO = int(os.getenv("RUN_SINGLE_CODE_LIMIT_PRO", str(1024 * 1024)))
+NICKNAME_CHANGE_COOLDOWN_SECONDS = int(os.getenv("NICKNAME_CHANGE_COOLDOWN_SECONDS", str(14 * 24 * 60 * 60)))
 
 
 def _api_error(error, status=400, code=None):
@@ -251,6 +259,34 @@ def _require_user_login():
     if not login:
         return None, _api_error("invalid_token", status=401, code="INVALID_TOKEN")
     return login, None
+
+
+def _get_user_subscription(login):
+    if not FIREBASE_READY or not login:
+        return {}
+    try:
+        raw = db.reference(f"users/{login}/subscription").get() or {}
+        if not isinstance(raw, dict):
+            return {}
+        tier = str(raw.get("tier") or "").strip().lower()
+        status = str(raw.get("status") or "").strip().lower()
+        visuals = raw.get("visuals") if isinstance(raw.get("visuals"), dict) else {}
+        return {
+            "tier": tier,
+            "status": status,
+            "updatedAt": raw.get("updatedAt"),
+            "activatedAt": raw.get("activatedAt"),
+            "nicknameChangedAt": raw.get("nicknameChangedAt"),
+            "visuals": visuals
+        }
+    except Exception as e:
+        print("subscription read failed:", e)
+        return {}
+
+
+def _is_pro_active(login):
+    sub = _get_user_subscription(login)
+    return sub.get("tier") == "pro" and sub.get("status") == "active"
 
 
 def _rate_limit_key(route_key, user_login):
@@ -420,7 +456,7 @@ def _validate_submit_payload(data):
     }, None
 
 
-def _validate_run_payload(data):
+def _validate_run_payload(data, *, is_pro=False):
     if not isinstance(data, dict):
         return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     code = data.get("code", "")
@@ -429,9 +465,11 @@ def _validate_run_payload(data):
         return None, _api_error("code_required", 400, "CODE_REQUIRED")
     if not isinstance(input_data, str):
         return None, _api_error("invalid_input", 400, "INVALID_INPUT")
-    if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
+    code_limit = RUN_SINGLE_CODE_LIMIT_PRO if is_pro else RUN_SINGLE_CODE_LIMIT_FREE
+    input_limit = RUN_SINGLE_INPUT_LIMIT_PRO if is_pro else RUN_SINGLE_INPUT_LIMIT_FREE
+    if len(code.encode("utf-8", errors="replace")) > code_limit:
         return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
-    if len(input_data.encode("utf-8", errors="replace")) > MAX_INPUT_SIZE_BYTES:
+    if len(input_data.encode("utf-8", errors="replace")) > input_limit:
         return None, _api_error("input_too_large", 400, "INPUT_TOO_LARGE")
     lang = _validate_language(data.get("language"))
     if lang is None:
@@ -709,9 +747,12 @@ def _run_submission_job(job):
 def _submit_worker():
     while True:
         with SUBMIT_QUEUE_COND:
-            while not SUBMIT_QUEUE:
+            while not SUBMIT_QUEUE and not SUBMIT_QUEUE_PRO:
                 SUBMIT_QUEUE_COND.wait()
-            job = SUBMIT_QUEUE.popleft()
+            if SUBMIT_QUEUE_PRO:
+                job = SUBMIT_QUEUE_PRO.popleft()
+            else:
+                job = SUBMIT_QUEUE.popleft()
         try:
             _run_submission_job(job)
         except Exception as e:
@@ -1401,7 +1442,7 @@ def _run_with_limits(cmd, input_data, timeout_sec, workdir=None, language="cpp")
     }
 
 
-def _run_cpp_single(code, input_data):
+def _run_cpp_single(code, input_data, timeout_sec):
     with _runtime_tempdir("run_cpp_") as tmp:
         src_path = os.path.join(tmp, "main.cpp")
         bin_path = os.path.join(tmp, "main")
@@ -1415,7 +1456,7 @@ def _run_cpp_single(code, input_data):
                 "output": ""
             }
 
-        run_info = _run_with_limits(["./main"], input_data, 5, workdir=tmp, language="cpp")
+        run_info = _run_with_limits(["./main"], input_data, timeout_sec, workdir=tmp, language="cpp")
         if run_info["timeout"]:
             return {
                 "status": "TL",
@@ -1449,7 +1490,7 @@ def _run_cpp_single(code, input_data):
         }
 
 
-def _run_python_single(code, input_data):
+def _run_python_single(code, input_data, timeout_sec):
     with _runtime_tempdir("run_python_") as tmp:
         src_path = os.path.join(tmp, "main.py")
         _write_text(src_path, code)
@@ -1462,7 +1503,7 @@ def _run_python_single(code, input_data):
                 "output": ""
             }
 
-        run_info = _run_with_limits(["python3", "main.py"], input_data, 5, workdir=tmp, language="python")
+        run_info = _run_with_limits(["python3", "main.py"], input_data, timeout_sec, workdir=tmp, language="python")
         if run_info["timeout"]:
             return {
                 "status": "TL",
@@ -1637,6 +1678,7 @@ def submit():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    is_pro = _is_pro_active(login)
     _ensure_tasks_sync_worker()
     if not _rate_limit_global("submit_global", SUBMIT_GLOBAL_RATE_LIMIT, SUBMIT_GLOBAL_RATE_WINDOW):
         return _api_error("service_busy", 429, "GLOBAL_RATE_LIMIT_EXCEEDED")
@@ -1658,7 +1700,7 @@ def submit():
     if not read_task_meta(task):
         return _api_error("task_not_found", 404, "TASK_NOT_FOUND")
     with SUBMIT_QUEUE_LOCK:
-        if len(SUBMIT_QUEUE) >= MAX_SUBMIT_QUEUE_SIZE:
+        if (len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)) >= MAX_SUBMIT_QUEUE_SIZE:
             return _api_error("queue_overloaded", 503, "QUEUE_OVERLOADED")
 
     submission_ref = None
@@ -1689,21 +1731,26 @@ def submit():
 
     submission_id = submission_ref.key if submission_ref is not None else None
     with SUBMIT_QUEUE_COND:
-        if len(SUBMIT_QUEUE) >= MAX_SUBMIT_QUEUE_SIZE:
+        if (len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)) >= MAX_SUBMIT_QUEUE_SIZE:
             if submission_id and FIREBASE_READY:
                 try:
                     db.reference(f"submissions/global/{submission_id}").update({"verdict": "ERROR"})
                 except Exception:
                     pass
             return _api_error("queue_overloaded", 503, "QUEUE_OVERLOADED")
-        SUBMIT_QUEUE.append({
+        job = {
             "task": task,
             "code": code,
             "submission_id": submission_id,
             "login": login,
             "contestId": contest_id or None,
-        })
-        queue_position = len(SUBMIT_QUEUE)
+        }
+        if is_pro:
+            SUBMIT_QUEUE_PRO.append(job)
+            queue_position = len(SUBMIT_QUEUE_PRO)
+        else:
+            SUBMIT_QUEUE.append(job)
+            queue_position = len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)
         SUBMIT_QUEUE_COND.notify()
 
     return jsonify({
@@ -1711,7 +1758,8 @@ def submit():
         "statusLabel": "QUEUE",
         "submissionId": submission_id,
         "queuePosition": queue_position,
-        "firebaseSaved": firebase_saved
+        "firebaseSaved": firebase_saved,
+        "priority": "pro" if is_pro else "free"
     })
 
 
@@ -2129,16 +2177,19 @@ def run_single():
     user_login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    pro_active = _is_pro_active(user_login)
     if not _rate_limit("run_single", user_login, limit=30, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
-    payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {})
+    payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {}, is_pro=pro_active)
     if payload_error:
         return payload_error
+    timeout_sec = RUN_SINGLE_TIMEOUT_PRO if pro_active else RUN_SINGLE_TIMEOUT_FREE
 
     if payload["language"] == "python":
-        result = _run_python_single(payload["code"], payload["input"])
+        result = _run_python_single(payload["code"], payload["input"], timeout_sec)
     else:
-        result = _run_cpp_single(payload["code"], payload["input"])
+        result = _run_cpp_single(payload["code"], payload["input"], timeout_sec)
+    result["tier"] = "pro" if pro_active else "free"
     return jsonify(result)
 
 
@@ -2393,6 +2444,108 @@ def _task_difficulty_for_xp(task_id, task_difficulties):
     if numeric_id in (25, 26):
         return "impossible"
     return task_difficulties.get(str(task_id), "")
+
+
+def _is_valid_login_name(login):
+    if not isinstance(login, str):
+        return False
+    value = login.strip()
+    return bool(re.fullmatch(r"[A-Za-z0-9_]{3,16}", value))
+
+
+@app.route("/profile/change-login", methods=["POST"])
+def profile_change_login():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("change_login", login, limit=5, per_seconds=3600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    if not _is_pro_active(login):
+        return _api_error("pro_required", 403, "PRO_REQUIRED")
+    data = request.get_json(silent=True) or {}
+    new_login = str(data.get("newLogin") or "").strip()
+    if not _is_valid_login_name(new_login):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    if new_login == login:
+        return _api_error("same_login", 400, "SAME_LOGIN")
+    sub = _get_user_subscription(login)
+    now_ms = int(time.time() * 1000)
+    changed_at = sub.get("nicknameChangedAt")
+    try:
+        changed_at = int(changed_at) if changed_at is not None else None
+    except Exception:
+        changed_at = None
+    if changed_at is not None:
+        cooldown_ms = NICKNAME_CHANGE_COOLDOWN_SECONDS * 1000
+        left = changed_at + cooldown_ms - now_ms
+        if left > 0:
+            return _api_error("nickname_cooldown", 429, f"COOLDOWN_{left}")
+
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    try:
+        current_uid = None
+        # find uid by reverse lookup userAuthMap/{uid}=login
+        user_auth_map = db.reference("userAuthMap").get() or {}
+        for uid, mapped in (user_auth_map or {}).items():
+            if str(mapped) == login:
+                current_uid = str(uid)
+                break
+        if not current_uid:
+            return _api_error("user_mapping_missing", 400, "USER_MAPPING_MISSING")
+        # enforce uniqueness
+        existing_user = db.reference(f"users/{new_login}").get()
+        if existing_user:
+            return _api_error("login_taken", 409, "LOGIN_TAKEN")
+        for _, mapped in (user_auth_map or {}).items():
+            if str(mapped) == new_login:
+                return _api_error("login_taken", 409, "LOGIN_TAKEN")
+
+        old_profile = db.reference(f"users/{login}").get() or {}
+        if not isinstance(old_profile, dict):
+            old_profile = {}
+        old_profile["login"] = new_login
+        if not isinstance(old_profile.get("subscription"), dict):
+            old_profile["subscription"] = {}
+        old_profile["subscription"]["nicknameChangedAt"] = now_ms
+        old_profile["subscription"]["updatedAt"] = now_ms
+
+        updates = {
+            f"users/{new_login}": old_profile,
+            f"users/{login}": None,
+            f"userAuthMap/{current_uid}": new_login
+        }
+        email = str(old_profile.get("email") or "").strip().lower()
+        if email:
+            updates[f"emailToLogin/{email.replace('.', ',')}"] = new_login
+
+        # Migrate incoming friend links in other user profiles.
+        users_raw = db.reference("users").get() or {}
+        if isinstance(users_raw, dict):
+            for other_login, other_profile in users_raw.items():
+                if not isinstance(other_profile, dict):
+                    continue
+                friends = other_profile.get("friends")
+                if not isinstance(friends, dict):
+                    continue
+                if login in friends:
+                    updates[f"users/{other_login}/friends/{new_login}"] = friends.get(login)
+                    updates[f"users/{other_login}/friends/{login}"] = None
+
+        # Migrate contest registration keys.
+        contest_regs = db.reference("contest_regs").get() or {}
+        if isinstance(contest_regs, dict):
+            for contest_id, regs in contest_regs.items():
+                if not isinstance(regs, dict):
+                    continue
+                if login in regs:
+                    updates[f"contest_regs/{contest_id}/{new_login}"] = regs.get(login)
+                    updates[f"contest_regs/{contest_id}/{login}"] = None
+
+        db.reference("/").update(updates)
+        return jsonify({"status": "ok", "oldLogin": login, "newLogin": new_login, "nextChangeAt": now_ms + NICKNAME_CHANGE_COOLDOWN_SECONDS * 1000})
+    except Exception as e:
+        return _server_error("change_login_failed", "CHANGE_LOGIN_FAILED", exc=e)
 
 
 @app.route("/admin/rebuild-user-stats", methods=["POST"])

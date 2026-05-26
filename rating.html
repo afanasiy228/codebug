@@ -312,6 +312,7 @@
                     avatar: u.avatar || null,
                     exp: st.exp || 0,
                     solved: st.solved || {}, // объект решённых
+                    subscription: u.subscription || null
                 });
             }
 
@@ -321,7 +322,9 @@
             arr.forEach((u, index) => {
                 const profileUrl = `profile.html?user=${encodeURIComponent(u.login)}`;
                 const safeLogin = escapeHtml(u.login);
-                const loginColor = getRankColor(Number(u.exp || 0), u.login);
+                const sub = u.subscription || {};
+                const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+                const loginColor = isPro ? "#60a5fa" : getRankColor(Number(u.exp || 0), u.login);
                 const avatarUrl = typeof u.avatar === "string" ? u.avatar.trim() : "";
                 const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") ? avatarUrl : "";
                 let avatarHTML = avatarSafe ?
@@ -335,6 +338,7 @@
                 if (index === 0) row.classList.add("top-1");
                 if (index === 1) row.classList.add("top-2");
                 if (index === 2) row.classList.add("top-3");
+                if (isPro) row.style.borderColor = "rgba(96,165,250,.65)";
                 row.style.cursor = "pointer";
                 row.addEventListener("click", () => {
                     window.location.href = profileUrl;
@@ -346,7 +350,7 @@
             <div class="user-block">
                 ${avatarHTML}
                 <div>
-                    <div class="user-name"><a href="${profileUrl}" style="color:${loginColor};">${safeLogin}</a></div>
+                    <div class="user-name"><a href="${profileUrl}" style="color:${loginColor};">${safeLogin}</a>${isPro ? ' <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:2px 6px;">PRO</span>' : ''}</div>
                     <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
             </div>

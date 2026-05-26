@@ -736,6 +736,15 @@
       </div>
 
       <div class="admin-box">
+        <h3>Подписки PRO</h3>
+        <p class="admin-note">Заявки из donate.html. Activate включает PRO, Reject переводит в disabled.</p>
+        <div class="admin-actions">
+          <button type="button" onclick="adminLoadSubscriptionRequests()">Обновить заявки</button>
+        </div>
+        <div id="subscriptionRequestsList" class="task-visibility-list"></div>
+      </div>
+
+      <div class="admin-box">
         <h3>Добавить решённые задачи</h3>
         <p class="admin-note">Введи логин и ID задач через пробел/запятую/новую строку. Обновятся solved, cnt и exp.</p>
         <input id="solvedUserLogin" class="admin-input" type="text" placeholder="Логин, например: foxserg">
@@ -796,6 +805,15 @@
       log.textContent = `[${time}] ${message}\n` + log.textContent;
     }
 
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
     async function adminRequestHeaders(json = true) {
       const headers = {};
       if (json) headers["Content-Type"] = "application/json";
@@ -851,6 +869,7 @@
         renderGroupEditor("create");
         renderGroupEditor("edit");
         await adminReloadTasks();
+        await adminLoadSubscriptionRequests();
         const editSelect = document.getElementById("editTaskSelect");
         if (editSelect) {
           editSelect.addEventListener("change", loadTaskForEdit);
@@ -1903,6 +1922,88 @@
       }
       await db.ref("admins/" + login).remove();
       setAdminLog(`Доступ снят: ${login}`);
+    }
+
+    async function setSubscriptionStatus(login, tier, status) {
+      const now = Date.now();
+      const update = {
+        tier: String(tier || "pro"),
+        status,
+        updatedAt: now
+      };
+      if (status === "active") {
+        update.activatedAt = now;
+        if (!update.visuals) update.visuals = {};
+        update.visuals = { seasonalEnabled: true };
+      }
+      await db.ref("users/" + login + "/subscription").update(update);
+      setAdminLog(`Подписка ${login}: ${status}`);
+    }
+
+    async function adminResolveSubscriptionRequest(key, action) {
+      const reqRef = db.ref("subscriptions/requests/" + key);
+      const snap = await reqRef.get();
+      if (!snap.exists()) return;
+      const req = snap.val() || {};
+      const login = String(req.login || "").trim();
+      const tier = String(req.tier || "pro").trim();
+      const payload = (req.payload && typeof req.payload === "object") ? req.payload : {};
+      if (!login) return;
+      if (action === "activate") {
+        await db.ref("users/" + login + "/subscription").set({
+          tier: String(payload.tier || tier || "pro").toLowerCase(),
+          status: "active",
+          activatedAt: Date.now(),
+          updatedAt: Date.now(),
+          nicknameChangedAt: payload.nicknameChangedAt || null,
+          visuals: payload.visuals && typeof payload.visuals === "object" ? payload.visuals : { seasonalEnabled: true }
+        });
+        await setSubscriptionStatus(login, tier, "active");
+        await reqRef.update({ status: "approved", resolvedAt: Date.now() });
+      } else {
+        await setSubscriptionStatus(login, tier, "disabled");
+        await reqRef.update({ status: "rejected", resolvedAt: Date.now() });
+      }
+      await adminLoadSubscriptionRequests();
+    }
+
+    async function adminLoadSubscriptionRequests() {
+      const root = document.getElementById("subscriptionRequestsList");
+      if (!root) return;
+      root.innerHTML = "";
+      const snap = await db.ref("subscriptions/requests").get();
+      if (!snap.exists()) {
+        const empty = document.createElement("div");
+        empty.className = "admin-note";
+        empty.textContent = "Заявок нет.";
+        root.appendChild(empty);
+        return;
+      }
+      const rows = Object.entries(snap.val() || {})
+        .map(([key, item]) => ({ key, ...(item || {}) }))
+        .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+        .slice(0, 100);
+      rows.forEach((row) => {
+        const line = document.createElement("div");
+        line.className = "task-row";
+        const status = String(row.status || "pending_payment");
+        const created = row.createdAt ? new Date(row.createdAt).toLocaleString() : "—";
+        line.innerHTML = `
+          <div class="task-meta">
+            <strong>${escapeHtml(String(row.login || "unknown"))}</strong>
+            <span style="margin-left:8px;">${escapeHtml(String(row.label || row.tier || "pro"))}</span>
+            <span style="margin-left:8px;color:#9aa4b8;">${escapeHtml(status)}</span>
+            <span style="margin-left:8px;color:#9aa4b8;">${escapeHtml(created)}</span>
+          </div>
+          <div class="task-toggle">
+            <button type="button" class="admin-secondary req-activate">Activate</button>
+            <button type="button" class="admin-secondary req-reject">Reject</button>
+          </div>
+        `;
+        line.querySelector(".req-activate")?.addEventListener("click", () => adminResolveSubscriptionRequest(row.key, "activate"));
+        line.querySelector(".req-reject")?.addEventListener("click", () => adminResolveSubscriptionRequest(row.key, "reject"));
+        root.appendChild(line);
+      });
     }
 
     function xpForDifficulty(difficulty) {

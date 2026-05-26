@@ -298,9 +298,15 @@
         .replace(/'/g, "&#039;");
     }
 
+    const contestUserSubCache = {};
+
     function profileLink(login) {
       const safeLogin = escapeHtml(login);
-      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${safeLogin}</a>`;
+      const sub = contestUserSubCache[String(login)] || {};
+      const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+      const badge = isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:1px 6px;">PRO</span>` : "";
+      const color = isPro ? "#60a5fa" : "inherit";
+      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}" style="color:${color}">${safeLogin}</a>${badge}`;
     }
 
     function renderAuthorLinks(authors) {
@@ -470,6 +476,13 @@
 
       const regs = Object.values(regsSnap.val());
       const regUsers = regs.map(r => r.login);
+      const usersSnap = await db.ref("users").get();
+      if (usersSnap.exists()) {
+        const usersData = usersSnap.val() || {};
+        for (const login of regUsers) {
+          contestUserSubCache[String(login)] = (usersData[login] && usersData[login].subscription) || {};
+        }
+      }
 
       const submissionsSnap = await db.ref("submissions/global").get();
       const subs = submissionsSnap.exists() ? Object.values(submissionsSnap.val()) : [];

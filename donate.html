@@ -314,16 +314,21 @@
                 tier,
                 label: planLabel,
                 status: "pending_payment",
+                activatedAt: null,
+                nicknameChangedAt: null,
+                visuals: {
+                    seasonalEnabled: true
+                },
                 updatedAt: Date.now()
             };
 
             try {
-                await db.ref("users/" + login + "/subscription").set(payload);
                 await db.ref("subscriptions/requests").push().set({
                     login,
                     tier,
                     label: planLabel,
                     status: "pending_payment",
+                    payload,
                     createdAt: Date.now()
                 });
                 return true;

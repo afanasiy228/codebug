@@ -291,6 +291,7 @@
 
         let submissions = []; // оригинал
         let rendered = []; // отфильтрованное
+        const userSubCache = {};
 
         function getSubmissionLogin(submission) {
             return submission.login || submission.user || "anonymous";
@@ -311,7 +312,11 @@
 
         function profileLink(login) {
             const safeLogin = escapeHtml(login);
-            return `<a href="profile.html?user=${encodeURIComponent(login)}" style="color:var(--accent);font-weight:700;text-decoration:none;">${safeLogin}</a>`;
+            const sub = userSubCache[String(login)] || {};
+            const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+            const color = isPro ? "#60a5fa" : "var(--accent)";
+            const badge = isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:2px 6px;">PRO</span>` : "";
+            return `<a href="profile.html?user=${encodeURIComponent(login)}" style="color:${color};font-weight:700;text-decoration:none;">${safeLogin}</a>${badge}`;
         }
 
         async function loadGlobalSubmissions() {
@@ -326,6 +331,13 @@
                 }
 
                 submissions = Object.values(snap.val()).filter(s => s && typeof s === "object");
+                const usersSnap = await firebase.database().ref("users").get();
+                if (usersSnap.exists()) {
+                    const usersData = usersSnap.val() || {};
+                    for (const [login, data] of Object.entries(usersData)) {
+                        userSubCache[String(login)] = (data && data.subscription) || {};
+                    }
+                }
 
                 // Сортировка по дате (сначала новые)
                 submissions.sort((a, b) => (Number(b.date) || 0) - (Number(a.date) || 0));

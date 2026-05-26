@@ -275,6 +275,46 @@ function updateNavbar() {
 
     bindMobileNav(nav);
     startKeepAlive();
+    applyProBrandingToNavbar(user).catch(() => {});
+}
+
+async function getUserSubscription(login) {
+    if (!login || !window.firebase) return null;
+    try {
+        const snap = await firebase.database().ref("users/" + login + "/subscription").get();
+        if (!snap.exists()) return null;
+        const val = snap.val() || {};
+        return {
+            tier: String(val.tier || "").toLowerCase(),
+            status: String(val.status || "").toLowerCase(),
+            visuals: (val.visuals && typeof val.visuals === "object") ? val.visuals : {}
+        };
+    } catch (_) {
+        return null;
+    }
+}
+
+function isProSubscription(sub) {
+    return !!sub && sub.tier === "pro" && sub.status === "active";
+}
+
+async function applyProBrandingToNavbar(login) {
+    if (!login) return;
+    const sub = await getUserSubscription(login);
+    const isPro = isProSubscription(sub);
+    if (!isPro) return;
+    const navProfile = document.querySelector("#nav-links .nav-profile");
+    if (navProfile) {
+        navProfile.style.color = "#60a5fa";
+        navProfile.style.fontWeight = "700";
+        if (!navProfile.textContent.includes("PRO")) {
+            navProfile.textContent = `${login} · PRO`;
+        }
+    }
+    const logos = document.querySelectorAll(".logo a");
+    logos.forEach((logo) => {
+        logo.innerHTML = `<img src="logo-pro.png" alt="CodeBug PRO" style="height:26px;vertical-align:middle;" onerror="this.outerHTML='CodeBug PRO'">`;
+    });
 }
 
 /* ============================
@@ -678,6 +718,30 @@ async function login() {
     window.location.href = next || "index.html";
 }
 
+async function forgotPassword() {
+    clearErrors();
+    const auth = getAuth();
+    if (!auth) return showError("login-error", "Firebase Auth не инициализирован");
+
+    const identity = document.getElementById("login-identity").value.trim();
+    if (!identity) return showError("login-error", "Укажи логин или email для восстановления");
+
+    const email = await resolveEmailByIdentity(identity);
+    if (!email) return showError("login-error", "Пользователь не найден");
+
+    try {
+        await auth.sendPasswordResetEmail(normalizeEmail(email));
+    } catch (err) {
+        const code = err?.code || "";
+        if (code === "auth/invalid-email") return showError("login-error", "Некорректный email");
+        if (code === "auth/user-not-found") return showError("login-error", "Пользователь не найден");
+        if (code === "auth/too-many-requests") return showError("login-error", "Слишком много попыток, попробуй позже");
+        return showError("login-error", "Не удалось отправить письмо: " + code);
+    }
+
+    showError("login-error", "Письмо для восстановления пароля отправлено");
+}
+
 async function registerUser(login, email, pass) {
     const auth = getAuth();
     if (!auth) return { ok: false, error: "Firebase Auth не инициализирован" };
@@ -940,6 +1004,7 @@ async function syncSessionFromAuth() {
 window.updateNavbar = updateNavbar;
 window.login = login;
 window.register = register;
+window.forgotPassword = forgotPassword;
 window.resendVerificationFromForm = resendVerificationFromForm;
 window.checkVerificationStatus = checkVerificationStatus;
 window.cancelPendingRegistration = cancelPendingRegistration;
@@ -950,6 +1015,8 @@ window.renderCaptchaWidget = renderCaptchaWidget;
 window.renderTurnstileWidget = renderCaptchaWidget;
 window.updateAvatar = function() {};
 window.logout = logout;
+window.getUserSubscription = getUserSubscription;
+window.isProSubscription = isProSubscription;
 
 window.getUser = getUser;
 window.getUid = getUid;

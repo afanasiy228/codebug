@@ -8,6 +8,11 @@
         ".read": true,
         ".write": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
 
+        "subscription": {
+          ".read": true,
+          ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+        },
+
         "stats": {
           ".read": true,
           ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
@@ -55,6 +60,15 @@
         "$login": {
           ".read": "auth != null && ($login === root.child('userAuthMap').child(auth.uid).val() || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
           ".write": "auth != null && ($login === root.child('userAuthMap').child(auth.uid).val() || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)"
+        }
+      }
+    },
+
+    "subscriptions": {
+      "requests": {
+        "$reqId": {
+          ".read": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true",
+          ".write": "auth != null"
         }
       }
     }

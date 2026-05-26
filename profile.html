@@ -104,6 +104,18 @@
             color: var(--ink);
             margin-bottom: 6px;
         }
+
+        .pro-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(96, 165, 250, 0.45);
+            color: #bfdbfe;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
         
         .rank-text {
             font-size: 18px;
@@ -151,6 +163,15 @@
             position: static;
             top: auto;
             z-index: 1;
+        }
+
+        .avatar-block.pro-frame {
+            border: 1px solid rgba(96, 165, 250, 0.75);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18), var(--shadow);
+        }
+
+        .avatar-block.seasonal {
+            background: linear-gradient(145deg, #fffaf2 0%, #eef5ff 100%);
         }
         
         .avatar-block img {
@@ -526,6 +547,7 @@
         <div class="info reveal" style="--delay: 0s;">
 
             <div class="username" id="username">Загрузка...</div>
+            <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
             <div class="rank-text" id="rank">Ранг загружается...</div>
 
             <div class="info-row">Профиль: <span id="userid">—</span></div>
@@ -539,6 +561,7 @@
                     <button type="button">Друзья</button>
                 </a>
                 <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
+                <button id="changeNickBtn" type="button" style="display:none;" onclick="changeNickname()">Сменить ник</button>
                 <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
             </div>
 
@@ -614,7 +637,7 @@
         <div class="avatar-block reveal" style="--delay: 0.1s;">
             <img id="avatar" src="">
             <input type="file" id="avatar-file" accept="image/*">
-            <button onclick="changeAvatar()">Загрузить аватар</button>
+            <button id="uploadAvatarBtn" onclick="changeAvatar()">Загрузить аватар</button>
             <div id="avatar-error"></div>
         </div>
 
@@ -638,6 +661,7 @@
         if (!currentUser) window.location.href = "auth.html";
         const viewedUser = new URL(location.href).searchParams.get("user") || currentUser;
         const user = currentUser;
+        let currentSubscription = null;
 
         /* ============================
            RANK SYSTEM
@@ -910,15 +934,21 @@
 
             const data = snap.val();
             const stats = data.stats || {};
+            const sub = data.subscription || null;
+            currentSubscription = sub;
+            const isPro = !!sub && String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
 
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
             usernameEl.innerText = data.login;
             const nickColor = getRankColor(Number(stats.exp || 0), data.login);
-            usernameEl.style.setProperty("color", nickColor, "important");
+            usernameEl.style.setProperty("color", isPro ? "#60a5fa" : nickColor, "important");
+            const proBadge = document.getElementById("proBadge");
+            if (proBadge) proBadge.style.display = isPro ? "inline-flex" : "none";
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
-                navProfileEl.style.setProperty("color", nickColor, "important");
+                navProfileEl.style.setProperty("color", isPro ? "#60a5fa" : nickColor, "important");
+                navProfileEl.textContent = isPro ? `${data.login} · PRO` : data.login;
             }
             document.getElementById("userid").innerText = data.id || "—";
             document.getElementById("created").innerText =
@@ -938,6 +968,12 @@
             rankEl.style.setProperty("color", nickColor, "important");
             rankEl.style.border = `1px solid ${nickColor}66`;
             rankEl.style.background = `${nickColor}1f`;
+            const avatarBlock = document.querySelector(".avatar-block");
+            if (avatarBlock) {
+                avatarBlock.classList.toggle("pro-frame", isPro);
+                const seasonalEnabled = !!(sub && sub.visuals && sub.visuals.seasonalEnabled);
+                avatarBlock.classList.toggle("seasonal", isPro && seasonalEnabled);
+            }
 
             // ---- AVATAR ----
             if (data.avatar) {
@@ -957,14 +993,62 @@
 
             if (viewedUser !== currentUser) {
                 document.getElementById("avatar-file").style.display = "none";
-                document.querySelector(".avatar-block button").style.display = "none";
+                const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
+                if (uploadAvatarBtn) uploadAvatarBtn.style.display = "none";
                 const friendsLinkBtn = document.getElementById("friendsLinkBtn");
                 const logoutBtn = document.getElementById("logoutBtn");
+                const changeNickBtn = document.getElementById("changeNickBtn");
                 if (friendsLinkBtn) friendsLinkBtn.style.display = "none";
                 if (logoutBtn) logoutBtn.style.display = "none";
+                if (changeNickBtn) changeNickBtn.style.display = "none";
                 setupViewedFriendButton();
+            } else {
+                const changeNickBtn = document.getElementById("changeNickBtn");
+                if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
             }
 
+        }
+
+        async function changeNickname() {
+            const sub = currentSubscription || {};
+            const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+            if (!isPro) {
+                alert("Смена ника доступна только с активной PRO подпиской.");
+                return;
+            }
+            const nextLogin = prompt("Новый логин (3-16, латиница/цифры/_):");
+            if (!nextLogin) return;
+            const headers = { "Content-Type": "application/json" };
+            try {
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                if (auth && auth.currentUser) {
+                    headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                }
+                const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+                const res = await fetch(`${base}/profile/change-login`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ newLogin: nextLogin })
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    if (String(payload.code || "").startsWith("COOLDOWN_")) {
+                        const ms = Number(String(payload.code).replace("COOLDOWN_", "")) || 0;
+                        const hrs = Math.ceil(ms / (1000 * 60 * 60));
+                        alert(`Смена ника будет доступна через ~${hrs} ч.`);
+                    } else {
+                        alert(`Ошибка: ${payload.error || "change-login failed"}`);
+                    }
+                    return;
+                }
+                if (typeof localStorage !== "undefined") {
+                    localStorage.setItem("user", payload.newLogin);
+                }
+                alert("Ник успешно изменён.");
+                window.location.href = `profile.html?user=${encodeURIComponent(payload.newLogin)}`;
+            } catch (e) {
+                alert("Сервер недоступен.");
+            }
         }
 
         async function setupViewedFriendButton() {
