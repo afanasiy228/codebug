@@ -202,6 +202,16 @@
             font-size: 14px;
             font-weight: 600;
         }
+
+        .helper-link {
+            margin-top: -2px;
+            margin-bottom: 8px;
+            text-align: right;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
         
         .avatar-preview {
             width: 80px;
@@ -323,6 +333,7 @@
 
             <input id="login-identity" type="text" placeholder="Логин или Email">
             <input id="login-pass" type="password" placeholder="Пароль">
+            <div class="helper-link" onclick="forgotPassword()">Забыли пароль?</div>
             <div id="login-error" class="error-msg"></div>
 
             <button onclick="login()">Войти</button>
@@ -345,6 +356,7 @@
             <div id="reg-error" class="error-msg"></div>
 
             <button id="reg-submit-btn" onclick="register()" disabled>Зарегистрироваться</button>
+            <div class="helper-link" style="text-align:center;margin-top:12px;" onclick="goLogin()">Забыли пароль?</div>
 
             <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
         </div>
@@ -361,15 +373,6 @@
             <button type="button" onclick="cancelPendingRegistration()" style="margin-top:8px;background:#8f3d3d;">Отменить регистрацию</button>
         </div>
 
-        </div>
-    </div>
-
-    <!-- MODAL -->
-    <div id="modal-bg">
-        <div id="modal">
-            <h3 style="color:var(--accent);margin-top:0;">Забыли пароль?</h3>
-            <p style="color:var(--muted);">Вспоминай 😎</p>
-            <button onclick="closeModal()">Ок</button>
         </div>
     </div>
 
@@ -419,20 +422,6 @@
             document.getElementById("screen-register").style.display = "block";
             document.getElementById("screen-verify").style.display = "none";
             if (window.renderCaptchaWidget) window.renderCaptchaWidget();
-        }
-
-        function forgotPassword() {
-            document.getElementById("modal-bg").style.display = "flex";
-            setTimeout(() => {
-                document.getElementById("modal").classList.add("show");
-            }, 10);
-        }
-
-        function closeModal() {
-            document.getElementById("modal").classList.remove("show");
-            setTimeout(() => {
-                document.getElementById("modal-bg").style.display = "none";
-            }, 200);
         }
 
         if (window.renderCaptchaWidget) window.renderCaptchaWidget();
