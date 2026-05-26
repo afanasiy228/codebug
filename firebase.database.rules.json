@@ -5,33 +5,33 @@
 
     "users": {
       "$login": {
-        ".read": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
+        ".read": true,
         ".write": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
 
         "stats": {
-          ".read": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
+          ".read": true,
           ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
         }
       }
     },
 
     "submissions": {
-      ".read": "auth != null",
+      ".read": true,
       ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
     },
 
     "admins": {
-      ".read": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true",
+      ".read": true,
       ".write": false
     },
 
     "userAuthMap": {
-      ".read": false,
+      ".read": true,
       ".write": false
     },
 
     "emailToLogin": {
-      ".read": false,
+      ".read": true,
       ".write": false
     },
 
