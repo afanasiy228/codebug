@@ -143,11 +143,20 @@ SUBMIT_GLOBAL_RATE_LIMIT = int(os.getenv("SUBMIT_GLOBAL_RATE_LIMIT", "120"))
 SUBMIT_GLOBAL_RATE_WINDOW = int(os.getenv("SUBMIT_GLOBAL_RATE_WINDOW", "60"))
 RUN_SINGLE_TIMEOUT_FREE = float(os.getenv("RUN_SINGLE_TIMEOUT_FREE", "5"))
 RUN_SINGLE_TIMEOUT_PRO = float(os.getenv("RUN_SINGLE_TIMEOUT_PRO", "10"))
+RUN_SINGLE_TIMEOUT_DEV = float(os.getenv("RUN_SINGLE_TIMEOUT_DEV", "15"))
 RUN_SINGLE_INPUT_LIMIT_FREE = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_FREE", str(512 * 1024)))
 RUN_SINGLE_INPUT_LIMIT_PRO = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_PRO", str(1024 * 1024)))
+RUN_SINGLE_INPUT_LIMIT_DEV = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_DEV", str(2 * 1024 * 1024)))
 RUN_SINGLE_CODE_LIMIT_FREE = int(os.getenv("RUN_SINGLE_CODE_LIMIT_FREE", str(512 * 1024)))
 RUN_SINGLE_CODE_LIMIT_PRO = int(os.getenv("RUN_SINGLE_CODE_LIMIT_PRO", str(1024 * 1024)))
+RUN_SINGLE_CODE_LIMIT_DEV = int(os.getenv("RUN_SINGLE_CODE_LIMIT_DEV", str(2 * 1024 * 1024)))
 NICKNAME_CHANGE_COOLDOWN_SECONDS = int(os.getenv("NICKNAME_CHANGE_COOLDOWN_SECONDS", str(14 * 24 * 60 * 60)))
+SUBMIT_RATE_FREE = int(os.getenv("SUBMIT_RATE_FREE", "20"))
+SUBMIT_RATE_PRO = int(os.getenv("SUBMIT_RATE_PRO", "35"))
+SUBMIT_RATE_DEV = int(os.getenv("SUBMIT_RATE_DEV", "50"))
+EDITOR_RATE_FREE = int(os.getenv("EDITOR_RATE_FREE", "40"))
+EDITOR_RATE_PRO = int(os.getenv("EDITOR_RATE_PRO", "55"))
+EDITOR_RATE_DEV = int(os.getenv("EDITOR_RATE_DEV", "70"))
 
 
 def _api_error(error, status=400, code=None):
@@ -229,6 +238,17 @@ def _is_admin_request():
         print("Admin auth failed:", e)
         return False
 
+
+def _require_task_manager():
+    if _is_admin_request():
+        return "admin", None
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return None, auth_error
+    if not _is_dev_active(login):
+        return None, _api_error("forbidden", 403, "FORBIDDEN")
+    return login, None
+
 def _resolve_login_from_token(token):
     global FIREBASE_READY
     if not FIREBASE_READY:
@@ -277,7 +297,8 @@ def _get_user_subscription(login):
             "updatedAt": raw.get("updatedAt"),
             "activatedAt": raw.get("activatedAt"),
             "nicknameChangedAt": raw.get("nicknameChangedAt"),
-            "visuals": visuals
+            "visuals": visuals,
+            "features": raw.get("features") if isinstance(raw.get("features"), dict) else {}
         }
     except Exception as e:
         print("subscription read failed:", e)
@@ -285,8 +306,78 @@ def _get_user_subscription(login):
 
 
 def _is_pro_active(login):
+    return _is_active_tier(login, "pro")
+
+
+def _is_active_tier(login, tier):
     sub = _get_user_subscription(login)
-    return sub.get("tier") == "pro" and sub.get("status") == "active"
+    if sub.get("status") != "active":
+        return False
+    user_tier = sub.get("tier")
+    rank = {"pro": 1, "pro_plus": 2, "creator_dev": 3}
+    return rank.get(user_tier, 0) >= rank.get(str(tier or "").strip().lower(), 10)
+
+
+def _is_pro_plus_active(login):
+    return _is_active_tier(login, "pro_plus")
+
+
+def _is_dev_active(login):
+    return _is_active_tier(login, "creator_dev")
+
+
+def _subscription_tier_label(login):
+    sub = _get_user_subscription(login)
+    tier = sub.get("tier", "")
+    if sub.get("status") != "active":
+        return "free"
+    if tier == "creator_dev":
+        return "dev"
+    if tier == "pro_plus":
+        return "pro_plus"
+    if tier == "pro":
+        return "pro"
+    return "free"
+
+
+def _submission_rate_limit_for_tier(tier):
+    if tier == "dev":
+        return SUBMIT_RATE_DEV
+    if tier in {"pro", "pro_plus"}:
+        return SUBMIT_RATE_PRO
+    return SUBMIT_RATE_FREE
+
+
+def _editor_rate_limit_for_tier(tier):
+    if tier == "dev":
+        return EDITOR_RATE_DEV
+    if tier in {"pro", "pro_plus"}:
+        return EDITOR_RATE_PRO
+    return EDITOR_RATE_FREE
+
+
+def _append_activity(login, kind, payload=None):
+    if not FIREBASE_READY:
+        return
+    login = str(login or "").strip()
+    if not login:
+        return
+    try:
+        item = {
+            "type": str(kind or "event"),
+            "ts": int(time.time() * 1000),
+        }
+        if isinstance(payload, dict):
+            item.update(payload)
+        feed_ref = db.reference(f"users/{login}/activityFeed")
+        feed_ref.push(item)
+        raw = feed_ref.get() or {}
+        if isinstance(raw, dict) and len(raw) > 100:
+            keys = sorted(raw.keys(), key=lambda k: int((raw.get(k) or {}).get("ts") or 0))
+            for key in keys[:-100]:
+                feed_ref.child(key).delete()
+    except Exception as e:
+        print("activity append failed:", e)
 
 
 def _rate_limit_key(route_key, user_login):
@@ -456,7 +547,7 @@ def _validate_submit_payload(data):
     }, None
 
 
-def _validate_run_payload(data, *, is_pro=False):
+def _validate_run_payload(data, *, tier="free"):
     if not isinstance(data, dict):
         return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     code = data.get("code", "")
@@ -465,8 +556,15 @@ def _validate_run_payload(data, *, is_pro=False):
         return None, _api_error("code_required", 400, "CODE_REQUIRED")
     if not isinstance(input_data, str):
         return None, _api_error("invalid_input", 400, "INVALID_INPUT")
-    code_limit = RUN_SINGLE_CODE_LIMIT_PRO if is_pro else RUN_SINGLE_CODE_LIMIT_FREE
-    input_limit = RUN_SINGLE_INPUT_LIMIT_PRO if is_pro else RUN_SINGLE_INPUT_LIMIT_FREE
+    if tier == "dev":
+        code_limit = RUN_SINGLE_CODE_LIMIT_DEV
+        input_limit = RUN_SINGLE_INPUT_LIMIT_DEV
+    elif tier in {"pro", "pro_plus"}:
+        code_limit = RUN_SINGLE_CODE_LIMIT_PRO
+        input_limit = RUN_SINGLE_INPUT_LIMIT_PRO
+    else:
+        code_limit = RUN_SINGLE_CODE_LIMIT_FREE
+        input_limit = RUN_SINGLE_INPUT_LIMIT_FREE
     if len(code.encode("utf-8", errors="replace")) > code_limit:
         return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
     if len(input_data.encode("utf-8", errors="replace")) > input_limit:
@@ -740,6 +838,12 @@ def _run_submission_job(job):
         "rawVerdict": result_obj.get("rawVerdict"),
         "score": result_obj.get("score"),
     })
+    _append_activity(login, "submission", {
+        "task": task,
+        "verdict": result_obj.get("status"),
+        "score": result_obj.get("score"),
+        "contestId": job.get("contestId"),
+    })
     if solved_like:
         _mark_task_solved_for_user(login, task)
 
@@ -936,13 +1040,18 @@ def read_task_meta(task_id):
     problem = read_problem_config(task_id)
     if not problem:
         return {}
+    visibility = str(problem.get("visibility") or "public").strip().lower()
+    if visibility not in {"public", "private"}:
+        visibility = "public"
     return {
         "id": problem.get("id"),
         "title": problem.get("title", ""),
         "difficulty": problem.get("difficulty", ""),
         "language": normalize_language(problem.get("language")),
         "type": problem.get("type", ""),
-        "tags": problem.get("tags") or []
+        "tags": problem.get("tags") or [],
+        "visibility": visibility,
+        "ownerLogin": str(problem.get("ownerLogin") or "").strip()
     }
 
 
@@ -968,6 +1077,8 @@ def public_problem_meta(problem):
         "language": normalize_language(problem.get("language")),
         "type": problem.get("type", ""),
         "tags": problem.get("tags") or [],
+        "visibility": str(problem.get("visibility") or "public").strip().lower(),
+        "ownerLogin": str(problem.get("ownerLogin") or "").strip(),
         "taskType": problem.get("taskType", "standard"),
         "grader": problem.get("grader") if problem.get("taskType") == "grader" else None,
         "interactor": problem.get("interactor") if problem.get("taskType") == "interactive" else None,
@@ -1048,7 +1159,7 @@ def safe_task_file(task_id, filename):
     return path
 
 
-def list_tasks():
+def list_tasks(*, viewer_login=None, viewer_is_admin=False):
     tasks = []
     if not os.path.isdir(TASKS_REPO_DIR):
         return tasks
@@ -1059,11 +1170,45 @@ def list_tasks():
             continue
         try:
             problem = read_problem_config(name)
+            visibility = str(problem.get("visibility") or "public").strip().lower()
+            if visibility == "private":
+                owner = str(problem.get("ownerLogin") or "").strip()
+                if not viewer_is_admin and (not viewer_login or owner != viewer_login):
+                    continue
             tasks.append(public_problem_meta(problem))
         except Exception as e:
             print(f"Task load failed for {name}:", e)
     tasks.sort(key=lambda x: int(x.get("id", 0)))
     return tasks
+
+
+def _viewer_from_auth_header():
+    viewer_login = None
+    viewer_is_admin = False
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header.removeprefix("Bearer ").strip()
+        if token:
+            viewer_login = _resolve_login_from_token(token)
+            if viewer_login and FIREBASE_READY:
+                try:
+                    viewer_is_admin = bool(db.reference(f"admins/{viewer_login}").get())
+                except Exception:
+                    viewer_is_admin = False
+    return viewer_login, viewer_is_admin
+
+
+def _task_access_allowed(task_id, viewer_login=None, viewer_is_admin=False):
+    problem = read_problem_config(task_id)
+    if not problem:
+        return False
+    visibility = str(problem.get("visibility") or "public").strip().lower()
+    if visibility != "private":
+        return True
+    if viewer_is_admin:
+        return True
+    owner = str(problem.get("ownerLogin") or "").strip()
+    return bool(owner and viewer_login == owner)
 
 
 def _ensure_git_identity():
@@ -1251,6 +1396,8 @@ def _build_problem_v2(task_id, meta, files, tests):
         "language": lang,
         "type": meta.get("type", ""),
         "tags": meta.get("tags") or [],
+        "visibility": str(meta.get("visibility") or "public").strip().lower(),
+        "ownerLogin": str(meta.get("ownerLogin") or "").strip(),
         "taskType": task_type,
         "scoringMode": "icpc" if scoring_mode == "icpc" else "ioi",
         "statement": {
@@ -1678,11 +1825,12 @@ def submit():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
-    is_pro = _is_pro_active(login)
+    tier = _subscription_tier_label(login)
+    has_priority = tier in {"pro", "pro_plus", "dev"}
     _ensure_tasks_sync_worker()
     if not _rate_limit_global("submit_global", SUBMIT_GLOBAL_RATE_LIMIT, SUBMIT_GLOBAL_RATE_WINDOW):
         return _api_error("service_busy", 429, "GLOBAL_RATE_LIMIT_EXCEEDED")
-    if not _rate_limit("submit", login, limit=20, per_seconds=60):
+    if not _rate_limit("submit", login, limit=_submission_rate_limit_for_tier(tier), per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     payload, payload_error = _validate_submit_payload(data)
     if payload_error:
@@ -1699,6 +1847,8 @@ def submit():
     # Do not run git sync in the hot path. Verify task exists in local mirror.
     if not read_task_meta(task):
         return _api_error("task_not_found", 404, "TASK_NOT_FOUND")
+    if not _task_access_allowed(task, viewer_login=login, viewer_is_admin=False):
+        return _api_error("forbidden", 403, "FORBIDDEN")
     with SUBMIT_QUEUE_LOCK:
         if (len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)) >= MAX_SUBMIT_QUEUE_SIZE:
             return _api_error("queue_overloaded", 503, "QUEUE_OVERLOADED")
@@ -1745,7 +1895,7 @@ def submit():
             "login": login,
             "contestId": contest_id or None,
         }
-        if is_pro:
+        if has_priority:
             SUBMIT_QUEUE_PRO.append(job)
             queue_position = len(SUBMIT_QUEUE_PRO)
         else:
@@ -1759,7 +1909,8 @@ def submit():
         "submissionId": submission_id,
         "queuePosition": queue_position,
         "firebaseSaved": firebase_saved,
-        "priority": "pro" if is_pro else "free"
+        "priority": "pro" if has_priority else "free",
+        "tier": tier
     })
 
 
@@ -1785,7 +1936,8 @@ def auth_verify_captcha():
 def tasks_list():
     if not sync_tasks_repo():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
-    return jsonify(list_tasks())
+    viewer_login, viewer_is_admin = _viewer_from_auth_header()
+    return jsonify(list_tasks(viewer_login=viewer_login, viewer_is_admin=viewer_is_admin))
 
 
 @app.route("/tasks/<int:task_id>/admin-bundle", methods=["GET"])
@@ -1841,6 +1993,9 @@ def tasks_admin_bundle(task_id):
 def tasks_file(task_id, filename):
     if not sync_tasks_repo():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
+    viewer_login, viewer_is_admin = _viewer_from_auth_header()
+    if not _task_access_allowed(task_id, viewer_login=viewer_login, viewer_is_admin=viewer_is_admin):
+        return _api_error("forbidden", 403, "FORBIDDEN")
     if filename == "problem.json":
         problem = read_problem_config(task_id)
         if not problem:
@@ -1859,9 +2014,10 @@ def tasks_file(task_id, filename):
 
 @app.route("/tasks/create", methods=["POST"])
 def tasks_create():
-    if not _is_admin_request():
-        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
-    if not _rate_limit("tasks_create", "admin", limit=20, per_seconds=60):
+    actor, actor_error = _require_task_manager()
+    if actor_error:
+        return actor_error
+    if not _rate_limit("tasks_create", actor, limit=20, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not sync_tasks_repo():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
@@ -1901,6 +2057,12 @@ def tasks_create():
             if not isinstance(tag, str) or not tag.strip() or len(tag) > MAX_TAG_LEN:
                 return _api_error("invalid_tags", 400, "INVALID_TAGS")
     meta.pop("author", None)
+    if actor != "admin":
+        meta["ownerLogin"] = actor
+        meta["visibility"] = str(meta.get("visibility") or "private").strip().lower()
+    else:
+        vis = str(meta.get("visibility") or "public").strip().lower()
+        meta["visibility"] = vis if vis in {"public", "private"} else "public"
     lang = normalize_language(meta.get("language"))
     if lang not in SUPPORTED_LANGUAGES:
         return _api_error("language_not_supported", 400, "LANGUAGE_NOT_SUPPORTED")
@@ -1927,9 +2089,10 @@ def _safe_extract_zip(archive, dest_dir):
 
 @app.route("/tasks/import-polygon", methods=["POST"])
 def tasks_import_polygon():
-    if not _is_admin_request():
-        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
-    if not _rate_limit("tasks_import_polygon", "admin", limit=15, per_seconds=60):
+    actor, actor_error = _require_task_manager()
+    if actor_error:
+        return actor_error
+    if not _rate_limit("tasks_import_polygon", actor, limit=15, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not sync_tasks_repo():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
@@ -1973,6 +2136,12 @@ def tasks_import_polygon():
             payload["meta"]["language"] = language
             payload["meta"]["taskType"] = task_type
             payload["meta"]["scoringMode"] = scoring_mode
+            if actor != "admin":
+                payload["meta"]["ownerLogin"] = actor
+                payload["meta"]["visibility"] = "private"
+            else:
+                vis = str(payload["meta"].get("visibility") or "public").strip().lower()
+                payload["meta"]["visibility"] = vis if vis in {"public", "private"} else "public"
             if difficulty_override:
                 payload["meta"]["difficulty"] = difficulty_override
             if type_override:
@@ -2054,9 +2223,10 @@ def tasks_delete():
 
 @app.route("/tasks/generate-tests", methods=["POST"])
 def tasks_generate_tests():
-    if not _is_admin_request():
-        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
-    if not _rate_limit("tasks_generate_tests", "admin", limit=10, per_seconds=60):
+    actor, actor_error = _require_task_manager()
+    if actor_error:
+        return actor_error
+    if not _rate_limit("tasks_generate_tests", actor, limit=10, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
@@ -2177,19 +2347,24 @@ def run_single():
     user_login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
-    pro_active = _is_pro_active(user_login)
-    if not _rate_limit("run_single", user_login, limit=30, per_seconds=60):
+    tier = _subscription_tier_label(user_login)
+    if not _rate_limit("run_single", user_login, limit=_editor_rate_limit_for_tier(tier), per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
-    payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {}, is_pro=pro_active)
+    payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {}, tier=tier)
     if payload_error:
         return payload_error
-    timeout_sec = RUN_SINGLE_TIMEOUT_PRO if pro_active else RUN_SINGLE_TIMEOUT_FREE
+    if tier == "dev":
+        timeout_sec = RUN_SINGLE_TIMEOUT_DEV
+    elif tier in {"pro", "pro_plus"}:
+        timeout_sec = RUN_SINGLE_TIMEOUT_PRO
+    else:
+        timeout_sec = RUN_SINGLE_TIMEOUT_FREE
 
     if payload["language"] == "python":
         result = _run_python_single(payload["code"], payload["input"], timeout_sec)
     else:
         result = _run_cpp_single(payload["code"], payload["input"], timeout_sec)
-    result["tier"] = "pro" if pro_active else "free"
+    result["tier"] = tier
     return jsonify(result)
 
 
@@ -2198,7 +2373,8 @@ def editor_diagnostics():
     user_login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
-    if not _rate_limit("editor_diag", user_login, limit=40, per_seconds=60):
+    tier = _subscription_tier_label(user_login)
+    if not _rate_limit("editor_diag", user_login, limit=_editor_rate_limit_for_tier(tier), per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
@@ -2228,7 +2404,8 @@ def editor_format():
     user_login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
-    if not _rate_limit("editor_format", user_login, limit=30, per_seconds=60):
+    tier = _subscription_tier_label(user_login)
+    if not _rate_limit("editor_format", user_login, limit=_editor_rate_limit_for_tier(tier), per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
@@ -2258,7 +2435,9 @@ def editor_ai_complete():
     user_login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
-    if not _rate_limit("editor_ai", user_login, limit=20, per_seconds=60):
+    tier = _subscription_tier_label(user_login)
+    limit = 20 if tier == "free" else (30 if tier in {"pro", "pro_plus"} else 40)
+    if not _rate_limit("editor_ai", user_login, limit=limit, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
@@ -2416,6 +2595,32 @@ def _xp_for_difficulty(difficulty):
     return values.get(difficulty, 5)
 
 
+def _rank_name_by_exp(exp):
+    try:
+        x = int(exp)
+    except Exception:
+        x = 0
+    if x < 20:
+        return "tutorial"
+    if x < 50:
+        return "easy"
+    if x < 100:
+        return "casual"
+    if x < 180:
+        return "normal"
+    if x < 300:
+        return "hard"
+    if x < 450:
+        return "insane"
+    if x < 650:
+        return "extreme"
+    if x < 900:
+        return "ultra"
+    if x < 1200:
+        return "impossible"
+    return "tourist"
+
+
 def _load_task_difficulties():
     difficulties = {}
     if not os.path.isdir(TASKS_REPO_DIR):
@@ -2543,6 +2748,7 @@ def profile_change_login():
                     updates[f"contest_regs/{contest_id}/{login}"] = None
 
         db.reference("/").update(updates)
+        _append_activity(new_login, "nickname_change", {"oldLogin": login, "newLogin": new_login})
         return jsonify({"status": "ok", "oldLogin": login, "newLogin": new_login, "nextChangeAt": now_ms + NICKNAME_CHANGE_COOLDOWN_SECONDS * 1000})
     except Exception as e:
         return _server_error("change_login_failed", "CHANGE_LOGIN_FAILED", exc=e)
@@ -2603,6 +2809,211 @@ def admin_rebuild_user_stats():
         "submissionsScanned": len(submissions_raw or {}),
         "tasksLoaded": len(task_difficulties)
     })
+
+
+def _difficulty_rank(value):
+    order = {
+        "tutorial": 0,
+        "easy": 1,
+        "casual": 2,
+        "normal": 3,
+        "hard": 4,
+        "insane": 5,
+        "extreme": 6,
+        "ultra": 7,
+        "impossible": 8,
+        "tourist": 9,
+    }
+    return order.get(str(value or "").strip().lower(), 3)
+
+
+@app.route("/profile/extended-stats/<login>", methods=["GET"])
+def profile_extended_stats(login):
+    requester, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _is_pro_plus_active(requester):
+        return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    try:
+        submissions = db.reference("submissions/global").get() or {}
+    except Exception as e:
+        return _server_error("stats_load_failed", "STATS_LOAD_FAILED", exc=e)
+    target = str(login or "").strip()
+    now_ms = int(time.time() * 1000)
+    day_ms = 24 * 60 * 60 * 1000
+    verdicts = {}
+    by_day_30 = {}
+    by_day_90 = {}
+    ac_times = []
+    for sub in (submissions or {}).values():
+        if not isinstance(sub, dict):
+            continue
+        if str(sub.get("login") or "").strip() != target:
+            continue
+        ts = int(sub.get("date") or 0)
+        verdict = str(sub.get("verdict") or sub.get("statusLabel") or "UNKNOWN").strip().upper()
+        verdicts[verdict] = verdicts.get(verdict, 0) + 1
+        d = ts // day_ms
+        if now_ms - ts <= 30 * day_ms:
+            by_day_30[str(d)] = by_day_30.get(str(d), 0) + 1
+        if now_ms - ts <= 90 * day_ms:
+            by_day_90[str(d)] = by_day_90.get(str(d), 0) + 1
+        if _is_solved_submission(sub):
+            try:
+                ac_times.append(float(sub.get("timeMs") or 0))
+            except Exception:
+                pass
+    avg_ac_time = round(sum(ac_times) / len(ac_times), 2) if ac_times else 0.0
+    feed = db.reference(f"users/{target}/activityFeed").get() or {}
+    feed_items = sorted(
+        [v for v in feed.values() if isinstance(v, dict)],
+        key=lambda x: int(x.get("ts") or 0),
+        reverse=True
+    )[:100]
+    return jsonify({
+        "ok": True,
+        "target": target,
+        "avgAcTimeMs": avg_ac_time,
+        "verdictDistribution": verdicts,
+        "dailySolved30": by_day_30,
+        "dailySolved90": by_day_90,
+        "activityFeed": feed_items,
+    })
+
+
+@app.route("/recommendations", methods=["GET"])
+def recommendations():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    if not _is_pro_plus_active(login):
+        return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
+    if not sync_tasks_repo():
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
+    solved = _normalize_solved_map((db.reference(f"users/{login}/stats/solved").get() if FIREBASE_READY else {}) or {})
+    all_tasks = list_tasks(viewer_login=login, viewer_is_admin=False)
+    user_stats = db.reference(f"users/{login}/stats").get() if FIREBASE_READY else {}
+    user_exp = int((user_stats or {}).get("exp") or 0)
+    target_rank = _difficulty_rank(_rank_name_by_exp(user_exp))
+    recent_ac_tags = {}
+    submissions = db.reference("submissions/global").get() if FIREBASE_READY else {}
+    ac_tasks = []
+    for sub in (submissions or {}).values():
+        if not isinstance(sub, dict):
+            continue
+        if str(sub.get("login") or "").strip() != login:
+            continue
+        if not _is_solved_submission(sub):
+            continue
+        ac_tasks.append(str(sub.get("task") or ""))
+    ac_tasks = ac_tasks[-40:]
+    for task_meta in all_tasks:
+        if str(task_meta.get("id")) in ac_tasks:
+            for tag in (task_meta.get("tags") or []):
+                key = str(tag or "").strip().lower()
+                if key:
+                    recent_ac_tags[key] = recent_ac_tags.get(key, 0) + 1
+    candidates = []
+    for task_meta in all_tasks:
+        task_id = str(task_meta.get("id") or "")
+        if not task_id or task_id in solved:
+            continue
+        tags = [str(t or "").strip().lower() for t in (task_meta.get("tags") or []) if str(t or "").strip()]
+        tag_score = sum(recent_ac_tags.get(t, 0) for t in tags)
+        diff_score = 5 - abs(_difficulty_rank(task_meta.get("difficulty")) - target_rank)
+        candidates.append((tag_score * 3 + diff_score, task_meta))
+    candidates.sort(key=lambda x: (x[0], -int(x[1].get("id") or 0)), reverse=True)
+    return jsonify({
+        "ok": True,
+        "items": [c[1] for c in candidates[:25]]
+    })
+
+
+@app.route("/contests/create", methods=["POST"])
+def contests_create():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _is_pro_plus_active(login):
+        return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title") or "").strip()
+    tasks = data.get("tasks") or []
+    if not title or not isinstance(tasks, list) or not tasks:
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    start = int(data.get("start") or 0)
+    end = int(data.get("end") or 0)
+    if end <= start:
+        return _api_error("invalid_time_range", 400, "INVALID_TIME_RANGE")
+    visibility = str(data.get("visibility") or "private").strip().lower()
+    if visibility not in {"private", "public"}:
+        visibility = "private"
+    if visibility == "public" and not _is_dev_active(login):
+        visibility = "private"
+    allowed = data.get("allowedUsers") or []
+    if not isinstance(allowed, list):
+        allowed = []
+    allowed = [str(x).strip() for x in allowed if str(x).strip()]
+    if login not in allowed:
+        allowed.append(login)
+    payload = {
+        "title": title,
+        "authors": [login],
+        "tasks": [int(x) for x in tasks if str(x).isdigit()],
+        "start": start,
+        "end": end,
+        "visibility": visibility,
+        "ownerLogin": login,
+        "allowedUsers": allowed,
+        "createdAt": int(time.time() * 1000),
+    }
+    ref = db.reference("contests").push()
+    ref.set(payload)
+    _append_activity(login, "contest_create", {"contestId": ref.key, "title": title, "visibility": visibility})
+    return jsonify({"ok": True, "id": ref.key})
+
+
+@app.route("/contest/register", methods=["POST"])
+def contest_register():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    data = request.get_json(silent=True) or {}
+    contest_id = str(data.get("contestId") or "").strip()
+    if not contest_id:
+        return _api_error("contest_id_required", 400, "CONTEST_ID_REQUIRED")
+    contest = db.reference(f"contests/{contest_id}").get() or {}
+    if not isinstance(contest, dict) or not contest:
+        return _api_error("contest_not_found", 404, "CONTEST_NOT_FOUND")
+    if str(contest.get("visibility") or "public").lower() == "private":
+        allowed = contest.get("allowedUsers") or []
+        if login not in [str(x).strip() for x in allowed]:
+            return _api_error("forbidden", 403, "FORBIDDEN")
+    db.reference(f"contest_regs/{contest_id}/{login}").set({
+        "registeredAt": int(time.time() * 1000)
+    })
+    _append_activity(login, "contest_register", {"contestId": contest_id})
+    return jsonify({"ok": True})
 
 
 @app.route("/public-config", methods=["GET"])

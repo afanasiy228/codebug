@@ -1929,7 +1929,10 @@
       const update = {
         tier: String(tier || "pro"),
         status,
-        updatedAt: now
+        updatedAt: now,
+        features: {
+          earlyAccess: String(tier || "pro").toLowerCase() !== "pro"
+        }
       };
       if (status === "active") {
         update.activatedAt = now;
@@ -1947,21 +1950,26 @@
       const req = snap.val() || {};
       const login = String(req.login || "").trim();
       const tier = String(req.tier || "pro").trim();
+      const tierSelect = document.getElementById(`req-tier-${key}`);
+      const selectedTier = String(tierSelect?.value || tier || "pro").trim();
       const payload = (req.payload && typeof req.payload === "object") ? req.payload : {};
       if (!login) return;
       if (action === "activate") {
         await db.ref("users/" + login + "/subscription").set({
-          tier: String(payload.tier || tier || "pro").toLowerCase(),
+          tier: String(selectedTier || payload.tier || tier || "pro").toLowerCase(),
           status: "active",
           activatedAt: Date.now(),
           updatedAt: Date.now(),
           nicknameChangedAt: payload.nicknameChangedAt || null,
-          visuals: payload.visuals && typeof payload.visuals === "object" ? payload.visuals : { seasonalEnabled: true }
+          visuals: payload.visuals && typeof payload.visuals === "object" ? payload.visuals : { seasonalEnabled: true },
+          features: {
+            earlyAccess: String(selectedTier).toLowerCase() !== "pro"
+          }
         });
-        await setSubscriptionStatus(login, tier, "active");
+        await setSubscriptionStatus(login, selectedTier, "active");
         await reqRef.update({ status: "approved", resolvedAt: Date.now() });
       } else {
-        await setSubscriptionStatus(login, tier, "disabled");
+        await setSubscriptionStatus(login, selectedTier, "disabled");
         await reqRef.update({ status: "rejected", resolvedAt: Date.now() });
       }
       await adminLoadSubscriptionRequests();
@@ -1996,6 +2004,11 @@
             <span style="margin-left:8px;color:#9aa4b8;">${escapeHtml(created)}</span>
           </div>
           <div class="task-toggle">
+            <select id="req-tier-${row.key}" class="admin-input" style="max-width:160px;">
+              <option value="pro" ${String(row.tier || "").toLowerCase() === "pro" ? "selected" : ""}>pro</option>
+              <option value="pro_plus" ${String(row.tier || "").toLowerCase() === "pro_plus" ? "selected" : ""}>pro_plus</option>
+              <option value="creator_dev" ${String(row.tier || "").toLowerCase() === "creator_dev" ? "selected" : ""}>creator_dev</option>
+            </select>
             <button type="button" class="admin-secondary req-activate">Activate</button>
             <button type="button" class="admin-secondary req-reject">Reject</button>
           </div>

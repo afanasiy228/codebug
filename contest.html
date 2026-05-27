@@ -303,8 +303,10 @@
     function profileLink(login) {
       const safeLogin = escapeHtml(login);
       const sub = contestUserSubCache[String(login)] || {};
-      const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
-      const badge = isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:1px 6px;">PRO</span>` : "";
+      const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
+      const isPro = level !== "free";
+      const badgeText = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
+      const badge = isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:1px 6px;">${badgeText}</span>` : "";
       const color = isPro ? "#60a5fa" : "inherit";
       return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}" style="color:${color}">${safeLogin}</a>${badge}`;
     }
@@ -345,10 +347,22 @@
         window.location.href = "auth.html";
         return;
       }
-      await db.ref(`contest_regs/${contestId}/${user}`).set({
-        login: user,
-        registeredAt: Date.now()
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      const auth = typeof getAuth === "function" ? getAuth() : null;
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      const res = await fetch(`${base}/contest/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ contestId })
       });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        alert(payload.error || "Не удалось зарегистрироваться");
+        return;
+      }
       isRegistered = true;
       updateRegisterButton();
       renderTasks(contestStatus);
@@ -374,6 +388,15 @@
       }
 
       contestData = snap.val();
+      const visibility = String(contestData.visibility || "public").toLowerCase();
+      const owner = String(contestData.ownerLogin || "").trim();
+      const allowed = Array.isArray(contestData.allowedUsers) ? contestData.allowedUsers.map(v => String(v || "").trim()) : [];
+      if (visibility === "private" && user !== owner && !allowed.includes(user)) {
+        document.getElementById("contestTitle").innerText = "Соревнование недоступно";
+        document.getElementById("contestHint").innerText = "Это приватное соревнование.";
+        document.getElementById("registerBtn").disabled = true;
+        return;
+      }
       contestStatus = getStatus(contestData.start, contestData.end);
       document.getElementById("contestStatus").innerText = statusLabel(contestStatus);
       document.getElementById("contestTitle").innerText = contestData.title || "Соревнование";

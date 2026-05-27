@@ -323,7 +323,8 @@
                 const profileUrl = `profile.html?user=${encodeURIComponent(u.login)}`;
                 const safeLogin = escapeHtml(u.login);
                 const sub = u.subscription || {};
-                const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+                const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
+                const isPro = level !== "free";
                 const loginColor = isPro ? "#60a5fa" : getRankColor(Number(u.exp || 0), u.login);
                 const avatarUrl = typeof u.avatar === "string" ? u.avatar.trim() : "";
                 const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") ? avatarUrl : "";
@@ -350,7 +351,7 @@
             <div class="user-block">
                 ${avatarHTML}
                 <div>
-                    <div class="user-name"><a href="${profileUrl}" style="color:${loginColor};">${safeLogin}</a>${isPro ? ' <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:2px 6px;">PRO</span>' : ''}</div>
+                    <div class="user-name"><a href="${profileUrl}" style="color:${loginColor};">${safeLogin}</a>${isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:2px 6px;">${level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO")}</span>` : ''}</div>
                     <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
             </div>

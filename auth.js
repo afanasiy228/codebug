@@ -287,6 +287,7 @@ async function getUserSubscription(login) {
         return {
             tier: String(val.tier || "").toLowerCase(),
             status: String(val.status || "").toLowerCase(),
+            features: (val.features && typeof val.features === "object") ? val.features : {},
             visuals: (val.visuals && typeof val.visuals === "object") ? val.visuals : {}
         };
     } catch (_) {
@@ -294,8 +295,22 @@ async function getUserSubscription(login) {
     }
 }
 
+function getSubscriptionLevel(sub) {
+    if (!sub || String(sub.status || "").toLowerCase() !== "active") return "free";
+    const tier = String(sub.tier || "").toLowerCase();
+    if (tier === "creator_dev") return "dev";
+    if (tier === "pro_plus") return "pro_plus";
+    if (tier === "pro") return "pro";
+    return "free";
+}
+
+function hasSubscriptionAtLeast(sub, minLevel) {
+    const rank = { free: 0, pro: 1, pro_plus: 2, dev: 3 };
+    return (rank[getSubscriptionLevel(sub)] || 0) >= (rank[minLevel] || 0);
+}
+
 function isProSubscription(sub) {
-    return !!sub && sub.tier === "pro" && sub.status === "active";
+    return hasSubscriptionAtLeast(sub, "pro");
 }
 
 async function applyProBrandingToNavbar(login) {
@@ -307,8 +322,10 @@ async function applyProBrandingToNavbar(login) {
     if (navProfile) {
         navProfile.style.color = "#60a5fa";
         navProfile.style.fontWeight = "700";
-        if (!navProfile.textContent.includes("PRO")) {
-            navProfile.textContent = `${login} · PRO`;
+        const level = getSubscriptionLevel(sub);
+        const badge = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
+        if (!navProfile.textContent.includes("PRO") && !navProfile.textContent.includes("DEV")) {
+            navProfile.textContent = `${login} · ${badge}`;
         }
     }
     const logos = document.querySelectorAll(".logo a");
@@ -1017,6 +1034,8 @@ window.updateAvatar = function() {};
 window.logout = logout;
 window.getUserSubscription = getUserSubscription;
 window.isProSubscription = isProSubscription;
+window.getSubscriptionLevel = getSubscriptionLevel;
+window.hasSubscriptionAtLeast = hasSubscriptionAtLeast;
 
 window.getUser = getUser;
 window.getUid = getUid;

@@ -191,6 +191,19 @@
   <main class="container">
     <h1 class="page-title">Соревнования</h1>
     <p class="page-subtitle">Идущие, предстоящие и прошедшие соревнования. Регистрация обязательна для участия.</p>
+    <section class="section" id="createContestSection" style="display:none;">
+      <h2>Создать приватное соревнование (PRO+)</h2>
+      <div style="display:grid;gap:10px;">
+        <input id="ccTitle" placeholder="Название" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
+        <input id="ccTasks" placeholder="ID задач через запятую (например: 1,2,3)" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
+        <input id="ccAllowed" placeholder="Логины участников через запятую" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
+        <label style="color:var(--muted);font-size:13px;">Старт (UTC ISO)</label>
+        <input id="ccStart" placeholder="2026-06-10T15:00:00Z" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
+        <label style="color:var(--muted);font-size:13px;">Финиш (UTC ISO)</label>
+        <input id="ccEnd" placeholder="2026-06-10T18:00:00Z" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
+        <button type="button" onclick="createPrivateContest()">Создать</button>
+      </div>
+    </section>
 
     <section class="section">
       <h2>Идут сейчас</h2>
@@ -220,6 +233,61 @@
     updateNavbar();
 
     const user = getUser();
+
+    async function initCreateContestSection() {
+      if (!user) return;
+      try {
+        const sub = await getUserSubscription(user);
+        const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
+        if (level === "pro_plus" || level === "dev") {
+          const sec = document.getElementById("createContestSection");
+          if (sec) sec.style.display = "block";
+        }
+      } catch (_) {}
+    }
+
+    async function createPrivateContest() {
+      if (!user) {
+        window.location.href = "auth.html";
+        return;
+      }
+      const title = String(document.getElementById("ccTitle")?.value || "").trim();
+      const tasks = String(document.getElementById("ccTasks")?.value || "").split(",").map(x => Number(x.trim())).filter(x => Number.isInteger(x));
+      const allowed = String(document.getElementById("ccAllowed")?.value || "").split(",").map(x => x.trim()).filter(Boolean);
+      const startRaw = String(document.getElementById("ccStart")?.value || "").trim();
+      const endRaw = String(document.getElementById("ccEnd")?.value || "").trim();
+      const start = Date.parse(startRaw);
+      const end = Date.parse(endRaw);
+      if (!title || !tasks.length || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        alert("Проверь поля формы.");
+        return;
+      }
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      const auth = typeof getAuth === "function" ? getAuth() : null;
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      const resp = await fetch(`${base}/contests/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          title,
+          tasks,
+          allowedUsers: allowed,
+          start,
+          end,
+          visibility: "private"
+        })
+      });
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        alert(payload.error || "Не удалось создать контест");
+        return;
+      }
+      alert("Контест создан.");
+      loadContests();
+    }
 
     function formatUtc(ts) {
       if (!ts) return "—";
@@ -270,10 +338,22 @@
         alert("Регистрация на завершённый контест закрыта.");
         return;
       }
-      await db.ref(`contest_regs/${contestId}/${user}`).set({
-        login: user,
-        registeredAt: Date.now()
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      const auth = typeof getAuth === "function" ? getAuth() : null;
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      const res = await fetch(`${base}/contest/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ contestId })
       });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        alert(payload.error || "Не удалось зарегистрироваться");
+        return;
+      }
       loadContests();
     }
 
@@ -346,6 +426,12 @@
       const finished = [];
 
       contests.forEach(contest => {
+        const visibility = String(contest.visibility || "public").toLowerCase();
+        const owner = String(contest.ownerLogin || "").trim();
+        const allowed = Array.isArray(contest.allowedUsers) ? contest.allowedUsers.map(v => String(v || "").trim()) : [];
+        if (visibility === "private" && (!user || (user !== owner && !allowed.includes(user)))) {
+          return;
+        }
         const status = statusFromTimes(contest.start, contest.end);
         const statusLabel = status === "ongoing" ? "Идет" : status === "upcoming" ? "Скоро" : "Завершен";
         const entry = { ...contest, status, statusLabel };
@@ -363,6 +449,7 @@
       await renderList(finished, "finishedList", "finishedEmpty");
     }
 
+    initCreateContestSection();
     loadContests();
   </script>
 </body>

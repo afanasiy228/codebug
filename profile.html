@@ -116,6 +116,16 @@
             font-weight: 700;
             margin-bottom: 12px;
         }
+        .pro-badge.pro-plus {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.48);
+            color: #7dd3fc;
+        }
+        .pro-badge.dev {
+            background: rgba(245, 158, 11, 0.22);
+            border-color: rgba(245, 158, 11, 0.48);
+            color: #fcd34d;
+        }
         
         .rank-text {
             font-size: 18px;
@@ -618,6 +628,15 @@
                     </div>
                     <div class="bars" id="tagBars"></div>
                 </article>
+
+                <article class="analytics-card" id="proPlusCard" style="display:none;">
+                    <h3 class="analytics-title">PRO+ аналитика</h3>
+                    <p class="analytics-sub" id="proPlusSummary">Загрузка расширенной статистики…</p>
+                    <div class="bars" id="proPlusVerdicts"></div>
+                    <div class="bars" id="proPlusActivity"></div>
+                    <h3 class="analytics-title" style="margin-top:14px;">Персональные подборки</h3>
+                    <div class="bars" id="proPlusRecs"></div>
+                </article>
             </section>
 
             <div id="emptyLast" class="empty-last" style="display:none;">Пока нет попыток…</div>
@@ -662,6 +681,7 @@
         const viewedUser = new URL(location.href).searchParams.get("user") || currentUser;
         const user = currentUser;
         let currentSubscription = null;
+        let currentSubscriptionLevel = "free";
 
         /* ============================
            RANK SYSTEM
@@ -936,7 +956,9 @@
             const stats = data.stats || {};
             const sub = data.subscription || null;
             currentSubscription = sub;
-            const isPro = !!sub && String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+            const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
+            currentSubscriptionLevel = level;
+            const isPro = level !== "free";
 
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
@@ -944,7 +966,19 @@
             const nickColor = getRankColor(Number(stats.exp || 0), data.login);
             usernameEl.style.setProperty("color", isPro ? "#60a5fa" : nickColor, "important");
             const proBadge = document.getElementById("proBadge");
-            if (proBadge) proBadge.style.display = isPro ? "inline-flex" : "none";
+            if (proBadge) {
+                proBadge.style.display = isPro ? "inline-flex" : "none";
+                proBadge.classList.remove("pro-plus", "dev");
+                if (level === "pro_plus") {
+                    proBadge.classList.add("pro-plus");
+                    proBadge.textContent = "PRO+";
+                } else if (level === "dev") {
+                    proBadge.classList.add("dev");
+                    proBadge.textContent = "DEV";
+                } else {
+                    proBadge.textContent = "PRO";
+                }
+            }
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
                 navProfileEl.style.setProperty("color", isPro ? "#60a5fa" : nickColor, "important");
@@ -1007,11 +1041,72 @@
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
             }
 
+            await loadProPlusAnalytics();
+
+        }
+
+        async function loadProPlusAnalytics() {
+            const card = document.getElementById("proPlusCard");
+            if (!card) return;
+            const canView = currentSubscriptionLevel === "pro_plus" || currentSubscriptionLevel === "dev";
+            if (!canView || viewedUser !== currentUser) {
+                card.style.display = "none";
+                return;
+            }
+            card.style.display = "block";
+            const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+            try {
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+                const res = await fetch(`${base}/profile/extended-stats/${encodeURIComponent(currentUser)}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+                if (!res.ok) throw new Error("stats fetch failed");
+                const payload = await res.json();
+                const avg = Number(payload.avgAcTimeMs || 0);
+                document.getElementById("proPlusSummary").textContent = `Среднее время до AC: ${avg.toFixed(2)} ms`;
+                const verdictEntries = Object.entries(payload.verdictDistribution || {}).map(([k, v]) => ({ label: k, value: Number(v || 0) }));
+                renderBars("proPlusVerdicts", verdictEntries.sort((a, b) => b.value - a.value).slice(0, 8));
+                const actEntries = (payload.activityFeed || []).slice(0, 8).map((x) => ({
+                    label: String(x.type || "event"),
+                    value: 1
+                }));
+                if (actEntries.length === 0) {
+                    document.getElementById("proPlusActivity").innerHTML = `<div class="analytics-sub">Пока нет событий в активности.</div>`;
+                } else {
+                    const grouped = {};
+                    actEntries.forEach((x) => { grouped[x.label] = (grouped[x.label] || 0) + 1; });
+                    renderBars("proPlusActivity", Object.entries(grouped).map(([label, value]) => ({ label, value })));
+                }
+
+                const recRes = await fetch(`${base}/recommendations`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+                if (recRes.ok) {
+                    const recPayload = await recRes.json().catch(() => ({}));
+                    const recs = Array.isArray(recPayload.items) ? recPayload.items.slice(0, 8) : [];
+                    const recRoot = document.getElementById("proPlusRecs");
+                    if (recRoot) {
+                        if (!recs.length) {
+                            recRoot.innerHTML = `<div class="analytics-sub">Подходящие задачи пока не найдены.</div>`;
+                        } else {
+                            recRoot.innerHTML = recs.map((t) => {
+                                const id = Number(t.id || 0);
+                                const title = String(t.title || `Задача #${id}`).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                                const diff = String(t.difficulty || "unknown").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                                return `<div class="bar-row"><div class="bar-label"><a href="problem.html?id=${id}" style="color:#7dd3fc;text-decoration:none;">#${id} ${title}</a> <span style="color:#94a3b8;">(${diff})</span></div><div class="bar-value">→</div></div>`;
+                            }).join("");
+                        }
+                    }
+                }
+            } catch (_) {
+                document.getElementById("proPlusSummary").textContent = "Не удалось загрузить расширенную статистику.";
+            }
         }
 
         async function changeNickname() {
             const sub = currentSubscription || {};
-            const isPro = String(sub.tier || "").toLowerCase() === "pro" && String(sub.status || "").toLowerCase() === "active";
+            const isPro = (typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false;
             if (!isPro) {
                 alert("Смена ника доступна только с активной PRO подпиской.");
                 return;
