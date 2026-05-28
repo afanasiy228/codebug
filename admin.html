@@ -742,6 +742,21 @@
           <button type="button" onclick="adminLoadSubscriptionRequests()">Обновить заявки</button>
         </div>
         <div id="subscriptionRequestsList" class="task-visibility-list"></div>
+        <hr style="border:none;border-top:1px solid rgba(148,163,184,.2);margin:14px 0;">
+        <p class="admin-note">Быстрое назначение подписки по логину.</p>
+        <input id="quickSubLogin" class="admin-input" type="text" placeholder="Логин пользователя">
+        <div class="admin-actions">
+          <select id="quickSubTier" class="admin-input" style="max-width:180px;">
+            <option value="pro">pro</option>
+            <option value="pro_plus">pro_plus</option>
+            <option value="creator_dev">creator_dev</option>
+          </select>
+          <select id="quickSubStatus" class="admin-input" style="max-width:180px;">
+            <option value="active">active</option>
+            <option value="disabled">disabled</option>
+          </select>
+          <button type="button" onclick="adminQuickSetSubscription()">Применить</button>
+        </div>
       </div>
 
       <div class="admin-box">
@@ -2017,6 +2032,48 @@
         line.querySelector(".req-reject")?.addEventListener("click", () => adminResolveSubscriptionRequest(row.key, "reject"));
         root.appendChild(line);
       });
+    }
+
+    async function adminQuickSetSubscription() {
+      const login = String(document.getElementById("quickSubLogin")?.value || "").trim();
+      const tier = String(document.getElementById("quickSubTier")?.value || "pro").trim().toLowerCase();
+      const status = String(document.getElementById("quickSubStatus")?.value || "active").trim().toLowerCase();
+      if (!login) {
+        setAdminLog("Укажи логин для назначения подписки.");
+        return;
+      }
+      if (!["pro", "pro_plus", "creator_dev"].includes(tier)) {
+        setAdminLog("Некорректный tier.");
+        return;
+      }
+      if (!["active", "disabled"].includes(status)) {
+        setAdminLog("Некорректный status.");
+        return;
+      }
+      try {
+        await setSubscriptionStatus(login, tier, status);
+        if (status === "active") {
+          await db.ref("users/" + login + "/subscription").update({
+            tier,
+            status,
+            activatedAt: Date.now(),
+            updatedAt: Date.now(),
+            visuals: { seasonalEnabled: true },
+            features: { earlyAccess: tier !== "pro" }
+          });
+        } else {
+          await db.ref("users/" + login + "/subscription").update({
+            tier,
+            status,
+            updatedAt: Date.now(),
+            features: { earlyAccess: false }
+          });
+        }
+        setAdminLog(`Быстрое назначение: ${login} -> ${tier}/${status}`);
+      } catch (err) {
+        console.error(err);
+        setAdminLog(`Ошибка назначения подписки: ${err?.message || err}`);
+      }
     }
 
     function xpForDifficulty(difficulty) {
