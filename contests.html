@@ -313,9 +313,22 @@
         .replace(/'/g, "&#039;");
     }
 
+    const contestListUserSubCache = {};
+    const contestListUserExpCache = {};
+
     function profileLink(login) {
       const safeLogin = escapeHtml(login);
-      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${safeLogin}</a>`;
+      const sub = contestListUserSubCache[String(login)] || {};
+      const exp = Number(contestListUserExpCache[String(login)] || 0);
+      const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
+      const isPro = level !== "free";
+      const color = isPro && typeof getSubscriptionNickColor === "function"
+        ? getSubscriptionNickColor(sub)
+        : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#27ae60");
+      const nickHtml = (typeof buildStyledNickHtml === "function")
+        ? buildStyledNickHtml(login, sub, color)
+        : safeLogin;
+      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>`;
     }
 
     function renderAuthorLinks(authors) {
@@ -409,6 +422,14 @@
 
     async function loadContests() {
       const snap = await db.ref("contests").get();
+      const usersSnap = await db.ref("users").get();
+      if (usersSnap.exists()) {
+        const usersData = usersSnap.val() || {};
+        for (const [login, data] of Object.entries(usersData)) {
+          contestListUserSubCache[String(login)] = (data && data.subscription) || {};
+          contestListUserExpCache[String(login)] = Number(data?.stats?.exp || 0);
+        }
+      }
       const contests = [];
       if (snap.exists()) {
         const data = snap.val();

@@ -164,7 +164,6 @@ PRO_NICK_COLORS = {
 PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"}
 DEV_NICK_THEMES = {"nutella", "rainbow", "fire_ice", "matrix"}
 PRO_FRAME_STYLES = {"classic", "ocean", "violet", "sunset", "neon", "carbon"}
-PRO_PLUS_FRAME_COLORS = {"#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b", "#ef4444"}
 
 
 def _api_error(error, status=400, code=None):
@@ -2830,38 +2829,6 @@ def profile_set_frame_style():
         return jsonify({"ok": True, "style": style})
     except Exception as e:
         return _server_error("set_frame_style_failed", "SET_FRAME_STYLE_FAILED", exc=e)
-
-
-@app.route("/profile/set-frame-color", methods=["POST"])
-def profile_set_frame_color():
-    login, auth_error = _require_user_login()
-    if auth_error:
-        return auth_error
-    if not _is_pro_plus_active(login):
-        return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
-    global FIREBASE_READY
-    if not FIREBASE_READY:
-        FIREBASE_READY = init_firebase()
-    if not FIREBASE_READY:
-        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
-    data = request.get_json(silent=True) or {}
-    color = str(data.get("color") or "").strip().lower()
-    if color not in PRO_PLUS_FRAME_COLORS:
-        return _api_error("invalid_frame_color", 400, "INVALID_FRAME_COLOR")
-    try:
-        ref = db.reference(f"users/{login}/subscription")
-        current = ref.get() or {}
-        if not isinstance(current, dict):
-            current = {}
-        visuals = current.get("visuals") if isinstance(current.get("visuals"), dict) else {}
-        visuals["frameColor"] = color
-        ref.update({
-            "visuals": visuals,
-            "updatedAt": int(time.time() * 1000)
-        })
-        return jsonify({"ok": True, "color": color})
-    except Exception as e:
-        return _server_error("set_frame_color_failed", "SET_FRAME_COLOR_FAILED", exc=e)
 
 
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
