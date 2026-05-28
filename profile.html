@@ -532,12 +532,43 @@
             flex-wrap: wrap;
             margin-top: 14px;
         }
-        .pro-controls {
-            margin-top: 12px;
-            padding: 12px;
-            border: 1px solid rgba(96, 165, 250, 0.28);
-            border-radius: 12px;
-            background: rgba(96, 165, 250, 0.08);
+        .pro-style-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.74);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1250;
+            padding: 16px;
+        }
+        .pro-style-modal.open { display: flex; }
+        .pro-style-card {
+            width: min(620px, 100%);
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, .28);
+            background: #0f172a;
+            padding: 18px;
+            box-shadow: 0 24px 64px rgba(2, 6, 23, .6);
+        }
+        .pro-style-title {
+            margin: 0 0 8px;
+            color: #e2e8f0;
+            font-size: 22px;
+        }
+        .pro-preview-list {
+            margin-top: 10px;
+            display: grid;
+            gap: 8px;
+        }
+        .pro-preview-item {
+            border: 1px solid rgba(148,163,184,.25);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: rgba(15, 23, 42, .7);
+            font-weight: 700;
+            font-size: 20px;
+            font-family: "Space Grotesk", sans-serif;
         }
         .swatches {
             display: flex;
@@ -669,13 +700,8 @@
                 </a>
                 <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
                 <button id="changeNickBtn" type="button" style="display:none;" onclick="changeNickname()">Сменить ник</button>
+                <button id="proStyleBtn" type="button" style="display:none;" onclick="openProStyleModal()">Сменить цвет/рамку</button>
                 <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
-            </div>
-            <div id="proControls" class="pro-controls" style="display:none;">
-                <div style="font-weight:600;color:#bfdbfe;">Цвет ника (PRO)</div>
-                <div class="swatches" id="nickColorSwatches"></div>
-                <div style="font-weight:600;color:#bfdbfe;margin-top:10px;">Стиль рамки профиля</div>
-                <div class="swatches" id="frameStyleSwatches"></div>
             </div>
 
             <div class="section-title">Статистика</div>
@@ -772,6 +798,20 @@
             <div class="nick-modal-actions">
                 <button type="button" style="background:#334155;" onclick="closeNickModal()">Отмена</button>
                 <button type="button" onclick="submitNickChange()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+    <div id="proStyleModal" class="pro-style-modal" aria-hidden="true">
+        <div class="pro-style-card">
+            <h3 class="pro-style-title">Кастомизация PRO</h3>
+            <p style="margin:0;color:#94a3b8;">Выбери цвет ника и стиль рамки. Ниже показан превью-вариант «afanasy».</p>
+            <div style="font-weight:600;color:#bfdbfe;margin-top:14px;">Цвет ника</div>
+            <div class="swatches" id="nickColorSwatches"></div>
+            <div style="font-weight:600;color:#bfdbfe;margin-top:12px;">Стиль рамки профиля</div>
+            <div class="swatches" id="frameStyleSwatches"></div>
+            <div class="pro-preview-list" id="proPreviewList"></div>
+            <div class="nick-modal-actions">
+                <button type="button" style="background:#334155;" onclick="closeProStyleModal()">Закрыть</button>
             </div>
         </div>
     </div>
@@ -1162,15 +1202,17 @@
                 const friendsLinkBtn = document.getElementById("friendsLinkBtn");
                 const logoutBtn = document.getElementById("logoutBtn");
                 const changeNickBtn = document.getElementById("changeNickBtn");
+                const proStyleBtn = document.getElementById("proStyleBtn");
                 if (friendsLinkBtn) friendsLinkBtn.style.display = "none";
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (changeNickBtn) changeNickBtn.style.display = "none";
-                const proControls = document.getElementById("proControls");
-                if (proControls) proControls.style.display = "none";
+                if (proStyleBtn) proStyleBtn.style.display = "none";
                 setupViewedFriendButton();
             } else {
                 const changeNickBtn = document.getElementById("changeNickBtn");
+                const proStyleBtn = document.getElementById("proStyleBtn");
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
+                if (proStyleBtn) proStyleBtn.style.display = isPro ? "inline-block" : "none";
                 renderProColorControls(isPro, proNickColor || "#60a5fa", frameStyle);
             }
 
@@ -1179,17 +1221,16 @@
         }
 
         function renderProColorControls(isPro, activeColor, activeFrameStyle) {
-            const root = document.getElementById("proControls");
             const swatches = document.getElementById("nickColorSwatches");
             const frameSwatches = document.getElementById("frameStyleSwatches");
-            if (!root || !swatches || !frameSwatches) return;
+            if (!swatches || !frameSwatches) return;
             if (!isPro) {
-                root.style.display = "none";
                 swatches.innerHTML = "";
                 frameSwatches.innerHTML = "";
+                const preview = document.getElementById("proPreviewList");
+                if (preview) preview.innerHTML = "";
                 return;
             }
-            root.style.display = "block";
             swatches.innerHTML = "";
             PRO_COLOR_PALETTE.forEach((color) => {
                 const btn = document.createElement("button");
@@ -1209,6 +1250,24 @@
                 btn.style.background = item.color;
                 btn.addEventListener("click", () => setFrameStyle(item.id));
                 frameSwatches.appendChild(btn);
+            });
+            renderProPreview(activeColor);
+        }
+
+        function renderProPreview(activeColor) {
+            const root = document.getElementById("proPreviewList");
+            if (!root) return;
+            root.innerHTML = "";
+            PRO_COLOR_PALETTE.forEach((color) => {
+                const row = document.createElement("div");
+                row.className = "pro-preview-item";
+                row.style.color = color;
+                row.textContent = "afanasy";
+                if (String(color).toLowerCase() === String(activeColor).toLowerCase()) {
+                    row.style.borderColor = "rgba(125,211,252,.7)";
+                    row.style.background = "rgba(30, 41, 59, .95)";
+                }
+                root.appendChild(row);
             });
         }
 
@@ -1234,6 +1293,7 @@
                 if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
                 currentSubscription.visuals.nickColor = color;
                 await loadProfile();
+                renderProPreview(color);
             } catch (_) {
                 alert("Сервер недоступен.");
             }
@@ -1347,6 +1407,20 @@
 
         function closeNickModal() {
             const modal = document.getElementById("nickModal");
+            if (!modal) return;
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+        }
+
+        function openProStyleModal() {
+            const modal = document.getElementById("proStyleModal");
+            if (!modal) return;
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+        }
+
+        function closeProStyleModal() {
+            const modal = document.getElementById("proStyleModal");
             if (!modal) return;
             modal.classList.remove("open");
             modal.setAttribute("aria-hidden", "true");
