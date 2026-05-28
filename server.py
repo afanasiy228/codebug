@@ -3150,21 +3150,6 @@ def _serve_site_page(filename):
     return send_file(path)
 
 
-@app.route("/terms", methods=["GET"])
-def terms_page():
-    return _serve_site_page("terms.html")
-
-
-@app.route("/privacy", methods=["GET"])
-def privacy_page():
-    return _serve_site_page("privacy.html")
-
-
-@app.route("/contacts", methods=["GET"])
-def contacts_page():
-    return _serve_site_page("contacts.html")
-
-
 @app.route("/ping", methods=["GET", "HEAD"])
 def ping():
     return jsonify({"status": "ok", "ts": int(time.time())})
