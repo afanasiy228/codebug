@@ -380,7 +380,7 @@ function buildStyledNickHtml(login, sub, fallbackColor) {
     if (theme === "nutella") {
         const first = safe.slice(0, 1);
         const rest = safe.slice(1);
-        return `<span><span style="color:#111827">${first}</span><span style="color:#dc2626">${rest}</span></span>`;
+        return `<span><span style="color:#ffffff">${first}</span><span style="color:#dc2626">${rest}</span></span>`;
     }
     if (theme === "rainbow") {
         const colors = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"];
