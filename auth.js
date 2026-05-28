@@ -85,6 +85,8 @@ header nav a:hover, .top-nav nav a:hover {
     justify-content: flex-end;
     gap: 24px;
     width: 100%;
+    position: relative;
+    z-index: 2002;
 }
 #nav-links .nav-links {
     display: flex;
@@ -123,6 +125,8 @@ header nav a:hover, .top-nav nav a:hover {
     color: #dce7f2;
     font-size: 20px;
     cursor: pointer;
+    position: relative;
+    z-index: 2003;
 }
 #nav-links .nav-drawer {
     display: none;
@@ -134,13 +138,16 @@ header nav a:hover, .top-nav nav a:hover {
     background: #0e141d;
     padding: 80px 20px 24px;
     box-shadow: -20px 0 40px rgba(0, 0, 0, 0.45);
-    z-index: 1001;
+    z-index: 2002;
     gap: 12px;
     flex-direction: column;
     transition: right 0.25s ease;
+    pointer-events: none;
 }
 #nav-links .nav-drawer a {
     margin: 0;
+    display: block;
+    padding: 10px 0;
     color: #dce7f2 !important;
     text-decoration: none;
 }
@@ -151,7 +158,7 @@ header nav a:hover, .top-nav nav a:hover {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease;
-    z-index: 1000;
+    z-index: 2001;
 }
 body.nav-open #nav-overlay {
     opacity: 1;
@@ -159,6 +166,7 @@ body.nav-open #nav-overlay {
 }
 body.nav-open #nav-links .nav-drawer {
     right: 0;
+    pointer-events: auto;
 }
 @media (max-width: 900px) {
     #nav-links .nav-links {
