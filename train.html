@@ -324,6 +324,22 @@
             box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
         }
 
+        .suggest-code {
+            font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            min-height: 180px !important;
+            line-height: 1.45;
+        }
+
+        .suggest-file {
+            width: 100%;
+            padding: 8px;
+            background: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: var(--ink);
+            font-size: 13px;
+        }
+
         .suggest-actions {
             display: flex;
             gap: 10px;
@@ -567,11 +583,16 @@
 
                 <section class="suggest-card reveal" style="--delay: 0.16s;">
                     <h2 class="suggest-title">Предложить свою задачу</h2>
-                    <p class="suggest-sub">Отправь идею задачи в очередь модерации. Мы посмотрим и добавим в тренировку.</p>
+                    <p class="suggest-sub">Заполни поля ниже. Пункты 1–4 обязательные, архив с задачей и тестами — опционально.</p>
                     <div class="suggest-grid">
-                        <input id="suggestTitle" type="text" maxlength="140" placeholder="Название задачи">
-                        <input id="suggestSource" type="text" maxlength="300" placeholder="Ссылка / источник (необязательно)">
-                        <textarea id="suggestDescription" class="full" maxlength="2000" placeholder="Кратко опиши условие, ограничения и где может быть ошибка"></textarea>
+                        <input id="suggestTitle" type="text" maxlength="140" placeholder="1) Название задачи">
+                        <div></div>
+                        <textarea id="suggestStatement" class="full" maxlength="6000" placeholder="2) Условие"></textarea>
+                        <textarea id="suggestBuggyCode" class="full suggest-code" maxlength="50000" placeholder="3) Код с ошибкой"></textarea>
+                        <textarea id="suggestBugExplanation" class="full" maxlength="4000" placeholder="4) Пояснение к ошибке"></textarea>
+                        <div class="full">
+                            <input id="suggestArchive" class="suggest-file" type="file" accept=".zip,.rar,.7z,.tar,.gz,.tgz,.txt,.md,.json,.cpp,.py">
+                        </div>
                     </div>
                     <div class="suggest-actions">
                         <button class="btn-small" type="button" onclick="submitTaskSuggestion()">Отправить предложение</button>
@@ -692,8 +713,11 @@
         async function submitTaskSuggestion() {
             const statusEl = document.getElementById("suggestStatus");
             const title = String(document.getElementById("suggestTitle")?.value || "").trim();
-            const source = String(document.getElementById("suggestSource")?.value || "").trim();
-            const description = String(document.getElementById("suggestDescription")?.value || "").trim();
+            const statement = String(document.getElementById("suggestStatement")?.value || "").trim();
+            const buggyCode = String(document.getElementById("suggestBuggyCode")?.value || "").trim();
+            const bugExplanation = String(document.getElementById("suggestBugExplanation")?.value || "").trim();
+            const archiveInput = document.getElementById("suggestArchive");
+            const archiveFile = archiveInput && archiveInput.files && archiveInput.files[0] ? archiveInput.files[0] : null;
             const login = typeof getUser === "function" ? getUser() : null;
             if (!login) {
                 if (statusEl) statusEl.textContent = "Нужно войти в аккаунт.";
@@ -703,23 +727,55 @@
                 if (statusEl) statusEl.textContent = "Название слишком короткое.";
                 return;
             }
-            if (description.length < 12) {
-                if (statusEl) statusEl.textContent = "Добавь чуть больше деталей.";
+            if (statement.length < 20) {
+                if (statusEl) statusEl.textContent = "Условие слишком короткое.";
+                return;
+            }
+            if (buggyCode.length < 20) {
+                if (statusEl) statusEl.textContent = "Добавь код с ошибкой.";
+                return;
+            }
+            if (bugExplanation.length < 10) {
+                if (statusEl) statusEl.textContent = "Пояснение к ошибке слишком короткое.";
                 return;
             }
             try {
                 if (statusEl) statusEl.textContent = "Отправляем...";
+                let archive = null;
+                if (archiveFile) {
+                    const maxBytes = 5 * 1024 * 1024;
+                    if (archiveFile.size > maxBytes) {
+                        if (statusEl) statusEl.textContent = "Архив слишком большой (макс. 5MB).";
+                        return;
+                    }
+                    const fileData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(String(reader.result || ""));
+                        reader.onerror = () => reject(new Error("archive_read_failed"));
+                        reader.readAsDataURL(archiveFile);
+                    });
+                    archive = {
+                        name: archiveFile.name,
+                        type: archiveFile.type || "application/octet-stream",
+                        size: archiveFile.size,
+                        data: fileData
+                    };
+                }
                 await db.ref("taskSuggestions").push().set({
                     title,
-                    source,
-                    description,
+                    statement,
+                    buggyCode,
+                    bugExplanation,
+                    archive,
                     author: login,
                     createdAt: Date.now(),
                     status: "pending"
                 });
                 document.getElementById("suggestTitle").value = "";
-                document.getElementById("suggestSource").value = "";
-                document.getElementById("suggestDescription").value = "";
+                document.getElementById("suggestStatement").value = "";
+                document.getElementById("suggestBuggyCode").value = "";
+                document.getElementById("suggestBugExplanation").value = "";
+                if (archiveInput) archiveInput.value = "";
                 if (statusEl) statusEl.textContent = "Отправлено. Спасибо!";
             } catch (err) {
                 console.error("[training] suggestion submit failed", err);
