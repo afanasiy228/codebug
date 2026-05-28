@@ -572,39 +572,51 @@
         }
         .choice-list {
             display: grid;
-            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
             margin-top: 8px;
         }
         .choice-btn {
             width: 100%;
             margin: 0;
             text-align: left;
-            padding: 10px 12px;
+            padding: 12px;
             border-radius: 10px;
-            border: 1px solid rgba(148,163,184,.28);
-            background: rgba(15, 23, 42, .8);
+            border: 1px solid rgba(71, 85, 105, .85);
+            background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(9,14,28,.98)) !important;
             color: #e2e8f0;
             cursor: pointer;
-            box-shadow: none;
+            box-shadow: inset 0 0 0 1px rgba(30,41,59,.8);
+            min-height: 72px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         .choice-btn:hover {
-            border-color: rgba(125,211,252,.6);
-            background: rgba(30, 41, 59, .95);
+            border-color: rgba(125,211,252,.75);
+            background: linear-gradient(180deg, rgba(30,41,59,.98), rgba(15,23,42,.98)) !important;
+            transform: translateY(-1px);
         }
         .choice-btn.active {
-            border-color: rgba(125,211,252,.9);
-            box-shadow: 0 0 0 1px rgba(125,211,252,.32);
+            border-color: rgba(56,189,248,.95);
+            box-shadow: 0 0 0 1px rgba(56,189,248,.45), 0 10px 24px rgba(2, 132, 199, .18);
         }
         .choice-btn .sample {
-            font-size: 20px;
+            font-size: 28px;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
-            line-height: 1.1;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .choice-btn .meta {
-            margin-top: 4px;
+            margin-top: 7px;
             font-size: 12px;
-            color: #94a3b8;
+            color: #e2e8f0;
+            font-weight: 600;
+            opacity: .9;
+            text-transform: uppercase;
         }
         .editable-nick {
             cursor: pointer;
@@ -676,11 +688,20 @@
                 width: 100%;
                 position: static;
             }
+            .choice-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media (max-width: 640px) {
             header {
                 padding: 0 20px;
+            }
+            .choice-list {
+                grid-template-columns: 1fr;
+            }
+            .choice-btn .sample {
+                font-size: 24px;
             }
         }
 
@@ -1349,7 +1370,7 @@
                 sample.innerHTML = buildThemeSampleHtml(theme);
                 const meta = document.createElement("span");
                 meta.className = "meta";
-                meta.textContent = getNickThemeLabel(theme);
+                meta.textContent = String(theme).startsWith("#") ? "SOLID" : getNickThemeLabel(theme);
                 btn.appendChild(sample);
                 btn.appendChild(meta);
                 btn.addEventListener("click", () => setNickColor(theme));
@@ -1384,10 +1405,10 @@
                     const sample = document.createElement("span");
                     sample.className = "sample";
                     sample.style.color = color;
-                    sample.textContent = "█ рамка";
+                    sample.textContent = "рамка";
                     const meta = document.createElement("span");
                     meta.className = "meta";
-                    meta.textContent = color;
+                    meta.textContent = "COLOR";
                     btn.appendChild(sample);
                     btn.appendChild(meta);
                     btn.addEventListener("click", () => setFrameColor(color));
