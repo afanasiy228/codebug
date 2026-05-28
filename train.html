@@ -580,25 +580,6 @@
                 <div class="random-row reveal" style="--delay: 0.14s;">
                     <button class="btn-random" onclick="openRandom()">🎲 Случайная задача</button>
                 </div>
-
-                <section class="suggest-card reveal" style="--delay: 0.16s;">
-                    <h2 class="suggest-title">Предложить свою задачу</h2>
-                    <p class="suggest-sub">Заполни поля ниже. Пункты 1–4 обязательные, архив с задачей и тестами — опционально.</p>
-                    <div class="suggest-grid">
-                        <input id="suggestTitle" type="text" maxlength="140" placeholder="1) Название задачи">
-                        <div></div>
-                        <textarea id="suggestStatement" class="full" maxlength="6000" placeholder="2) Условие"></textarea>
-                        <textarea id="suggestBuggyCode" class="full suggest-code" maxlength="50000" placeholder="3) Код с ошибкой"></textarea>
-                        <textarea id="suggestBugExplanation" class="full" maxlength="4000" placeholder="4) Пояснение к ошибке"></textarea>
-                        <div class="full">
-                            <input id="suggestArchive" class="suggest-file" type="file" accept=".zip,.rar,.7z,.tar,.gz,.tgz,.txt,.md,.json,.cpp,.py">
-                        </div>
-                    </div>
-                    <div class="suggest-actions">
-                        <button class="btn-small" type="button" onclick="submitTaskSuggestion()">Отправить предложение</button>
-                        <div id="suggestStatus" class="suggest-status"></div>
-                    </div>
-                </section>
             </div>
 
             <table class="reveal" style="--delay: 0.18s;">
@@ -615,6 +596,25 @@
             </table>
 
             <div id="empty" class="empty" style="display:none;">Задачи не найдены…</div>
+
+            <section class="suggest-card reveal" style="--delay: 0.22s; margin-top: 24px;">
+                <h2 class="suggest-title">Предложить свою задачу</h2>
+                <p class="suggest-sub">Заполни поля ниже. Пункты 1–4 обязательные, архив с задачей и тестами — опционально.</p>
+                <div class="suggest-grid">
+                    <input id="suggestTitle" type="text" maxlength="140" placeholder="1) Название задачи">
+                    <div></div>
+                    <textarea id="suggestStatement" class="full" maxlength="6000" placeholder="2) Условие"></textarea>
+                    <textarea id="suggestBuggyCode" class="full suggest-code" maxlength="50000" placeholder="3) Код с ошибкой"></textarea>
+                    <textarea id="suggestBugExplanation" class="full" maxlength="4000" placeholder="4) Пояснение к ошибке"></textarea>
+                    <div class="full">
+                        <input id="suggestArchive" class="suggest-file" type="file" accept=".zip,.rar,.7z,.tar,.gz,.tgz,.txt,.md,.json,.cpp,.py">
+                    </div>
+                </div>
+                <div class="suggest-actions">
+                    <button class="btn-small" type="button" onclick="submitTaskSuggestion()">Отправить предложение</button>
+                    <div id="suggestStatus" class="suggest-status"></div>
+                </div>
+            </section>
         </main>
 
     </main>
