@@ -300,17 +300,19 @@
     }
 
     const contestUserSubCache = {};
+    const contestUserExpCache = {};
 
     function profileLink(login) {
       const safeLogin = escapeHtml(login);
       const sub = contestUserSubCache[String(login)] || {};
+      const exp = Number(contestUserExpCache[String(login)] || 0);
       const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
       const isPro = level !== "free";
       const badgeText = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
       const badge = isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:1px 6px;">${badgeText}</span>` : "";
       const color = isPro && typeof getSubscriptionNickColor === "function"
         ? getSubscriptionNickColor(sub)
-        : (isPro ? "#60a5fa" : "inherit");
+        : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#27ae60");
       const nickHtml = (typeof buildStyledNickHtml === "function")
         ? buildStyledNickHtml(login, sub, color)
         : safeLogin;
@@ -510,6 +512,7 @@
         const usersData = usersSnap.val() || {};
         for (const login of regUsers) {
           contestUserSubCache[String(login)] = (usersData[login] && usersData[login].subscription) || {};
+          contestUserExpCache[String(login)] = Number(usersData[login]?.stats?.exp || 0);
         }
       }
 

@@ -292,6 +292,7 @@
         let submissions = []; // оригинал
         let rendered = []; // отфильтрованное
         const userSubCache = {};
+        const userExpCache = {};
 
         function getSubmissionLogin(submission) {
             return submission.login || submission.user || "anonymous";
@@ -313,11 +314,12 @@
         function profileLink(login) {
             const safeLogin = escapeHtml(login);
             const sub = userSubCache[String(login)] || {};
+            const exp = Number(userExpCache[String(login)] || 0);
             const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
             const isPro = level !== "free";
             const color = isPro && typeof getSubscriptionNickColor === "function"
                 ? getSubscriptionNickColor(sub)
-                : (isPro ? "#60a5fa" : "var(--accent)");
+                : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#27ae60");
             const nickHtml = (typeof buildStyledNickHtml === "function")
                 ? buildStyledNickHtml(login, sub, color)
                 : safeLogin;
@@ -342,6 +344,7 @@
                     const usersData = usersSnap.val() || {};
                     for (const [login, data] of Object.entries(usersData)) {
                         userSubCache[String(login)] = (data && data.subscription) || {};
+                        userExpCache[String(login)] = Number(data?.stats?.exp || 0);
                     }
                 }
 

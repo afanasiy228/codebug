@@ -914,12 +914,11 @@
         }
 
         function getRankColor(exp, login) {
+            if (typeof getRankNickColorByExp === "function") return getRankNickColorByExp(exp);
             const maxExp = 2000;
             const t = Math.max(0, Math.min(1, Number(exp || 0) / maxExp));
-            const hue = 145;
-            const sat = 58;
             const light = Math.round(72 - t * 36);
-            return `hsl(${hue} ${sat}% ${light}%)`;
+            return `hsl(145 58% ${light}%)`;
         }
 
         function getNickThemeSampleStyle(theme) {

@@ -304,6 +304,15 @@ function getSubscriptionLevel(sub) {
     return "free";
 }
 
+function getRankNickColorByExp(exp) {
+    const maxExp = 2000;
+    const t = Math.max(0, Math.min(1, Number(exp || 0) / maxExp));
+    const hue = 145;
+    const sat = 58;
+    const light = Math.round(72 - t * 36);
+    return `hsl(${hue} ${sat}% ${light}%)`;
+}
+
 function hasSubscriptionAtLeast(sub, minLevel) {
     const rank = { free: 0, pro: 1, pro_plus: 2, dev: 3 };
     return (rank[getSubscriptionLevel(sub)] || 0) >= (rank[minLevel] || 0);
@@ -402,19 +411,28 @@ function isProSubscription(sub) {
 async function applyProBrandingToNavbar(login) {
     if (!login) return;
     const sub = await getUserSubscription(login);
-    const isPro = isProSubscription(sub);
-    if (!isPro) return;
-    const nickColor = getSubscriptionNickColor(sub);
+    let exp = 0;
+    try {
+        const userSnap = await firebase.database().ref("users/" + login + "/stats/exp").get();
+        if (userSnap.exists()) exp = Number(userSnap.val() || 0);
+    } catch (_) {}
+    const level = getSubscriptionLevel(sub);
+    const isPro = level !== "free";
+    const nickColor = isPro ? getSubscriptionNickColor(sub) : getRankNickColorByExp(exp);
     const navProfile = document.querySelector("#nav-links .nav-profile");
     if (navProfile) {
         navProfile.style.color = nickColor;
         navProfile.style.fontWeight = "700";
-        const level = getSubscriptionLevel(sub);
-        const badge = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
-        if (!navProfile.textContent.includes("PRO") && !navProfile.textContent.includes("DEV")) {
-            navProfile.textContent = `${login} · ${badge}`;
+        if (isPro) {
+            const badge = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
+            if (!navProfile.textContent.includes("PRO") && !navProfile.textContent.includes("DEV")) {
+                navProfile.textContent = `${login} · ${badge}`;
+            }
+        } else {
+            navProfile.textContent = login;
         }
     }
+    if (!isPro) return;
     const logos = document.querySelectorAll(".logo a");
     logos.forEach((logo) => {
         logo.innerHTML = `<img src="logo-pro.png" alt="CodeBug PRO" style="height:26px;vertical-align:middle;" onerror="this.outerHTML='CodeBug PRO'">`;

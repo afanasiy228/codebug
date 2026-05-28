@@ -269,19 +269,6 @@
             return "Легенда CodeBug";
         }
 
-        function getRankColor(exp, login) {
-            if (exp < 10) return "#9aa4b8";
-            if (exp < 50) return "#7cc8ff";
-            if (exp < 100) return "#58d68d";
-            if (exp < 200) return "#2ecc71";
-            if (exp < 300) return "#27ae60";
-            if (exp < 500) return "#f1c40f";
-            if (exp < 800) return "#f39c12";
-            if (exp < 1200) return "#e67e22";
-            if (exp < 2000) return "#e74c3c";
-            return "#c0392b";
-        }
-
         function escapeHtml(value) {
             return String(value ?? "")
                 .replace(/&/g, "&amp;")
@@ -326,7 +313,7 @@
                 const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
                 const isPro = level !== "free";
                 const proColor = (isPro && typeof getSubscriptionNickColor === "function") ? getSubscriptionNickColor(sub) : "#60a5fa";
-                const loginColor = isPro ? proColor : getRankColor(Number(u.exp || 0), u.login);
+                const loginColor = isPro ? proColor : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(Number(u.exp || 0)) : "#27ae60");
                 const styledNick = (typeof buildStyledNickHtml === "function")
                     ? buildStyledNickHtml(u.login, sub, loginColor)
                     : safeLogin;
