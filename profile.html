@@ -186,6 +186,30 @@
             border: 1px solid rgba(96, 165, 250, 0.75);
             box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18), var(--shadow);
         }
+        .avatar-block.frame-classic {
+            border-color: rgba(96, 165, 250, 0.85);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22), var(--shadow);
+        }
+        .avatar-block.frame-ocean {
+            border-color: rgba(34, 211, 238, 0.95);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.22), 0 0 34px rgba(34, 211, 238, 0.2), var(--shadow);
+        }
+        .avatar-block.frame-violet {
+            border-color: rgba(167, 139, 250, 0.95);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.22), 0 0 34px rgba(167, 139, 250, 0.2), var(--shadow);
+        }
+        .avatar-block.frame-sunset {
+            border-color: rgba(251, 146, 60, 0.9);
+            box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.2), 0 0 34px rgba(244, 114, 182, 0.2), var(--shadow);
+        }
+        .avatar-block.frame-neon {
+            border-color: rgba(52, 211, 153, 1);
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.28), 0 0 46px rgba(52, 211, 153, 0.26), var(--shadow);
+        }
+        .avatar-block.frame-carbon {
+            border-color: rgba(203, 213, 225, 0.8);
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2), inset 0 0 0 1px rgba(255,255,255,0.1), var(--shadow);
+        }
 
         .avatar-block.seasonal {
             background: linear-gradient(145deg, #fffaf2 0%, #eef5ff 100%);
@@ -650,6 +674,8 @@
             <div id="proControls" class="pro-controls" style="display:none;">
                 <div style="font-weight:600;color:#bfdbfe;">Цвет ника (PRO)</div>
                 <div class="swatches" id="nickColorSwatches"></div>
+                <div style="font-weight:600;color:#bfdbfe;margin-top:10px;">Стиль рамки профиля</div>
+                <div class="swatches" id="frameStyleSwatches"></div>
             </div>
 
             <div class="section-title">Статистика</div>
@@ -772,6 +798,14 @@
         let currentSubscription = null;
         let currentSubscriptionLevel = "free";
         const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b"];
+        const FRAME_STYLES = [
+            { id: "classic", color: "#60a5fa" },
+            { id: "ocean", color: "#22d3ee" },
+            { id: "violet", color: "#a78bfa" },
+            { id: "sunset", color: "#fb923c" },
+            { id: "neon", color: "#34d399" },
+            { id: "carbon", color: "#94a3b8" }
+        ];
 
         /* ============================
            RANK SYSTEM
@@ -1052,6 +1086,7 @@
             const proNickColor = isPro && typeof getSubscriptionNickColor === "function"
                 ? getSubscriptionNickColor(sub)
                 : null;
+            const frameStyle = String(sub?.visuals?.frameStyle || "classic").toLowerCase();
 
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
@@ -1100,6 +1135,8 @@
                 avatarBlock.classList.toggle("pro-frame", isPro);
                 const seasonalEnabled = !!(sub && sub.visuals && sub.visuals.seasonalEnabled);
                 avatarBlock.classList.toggle("seasonal", isPro && seasonalEnabled);
+                avatarBlock.classList.remove("frame-classic", "frame-ocean", "frame-violet", "frame-sunset", "frame-neon", "frame-carbon");
+                if (isPro) avatarBlock.classList.add(`frame-${frameStyle}`);
             }
 
             // ---- AVATAR ----
@@ -1134,20 +1171,22 @@
             } else {
                 const changeNickBtn = document.getElementById("changeNickBtn");
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
-                renderProColorControls(isPro, proNickColor || "#60a5fa");
+                renderProColorControls(isPro, proNickColor || "#60a5fa", frameStyle);
             }
 
             await loadProPlusAnalytics();
 
         }
 
-        function renderProColorControls(isPro, activeColor) {
+        function renderProColorControls(isPro, activeColor, activeFrameStyle) {
             const root = document.getElementById("proControls");
             const swatches = document.getElementById("nickColorSwatches");
-            if (!root || !swatches) return;
+            const frameSwatches = document.getElementById("frameStyleSwatches");
+            if (!root || !swatches || !frameSwatches) return;
             if (!isPro) {
                 root.style.display = "none";
                 swatches.innerHTML = "";
+                frameSwatches.innerHTML = "";
                 return;
             }
             root.style.display = "block";
@@ -1160,6 +1199,16 @@
                 btn.style.background = color;
                 btn.addEventListener("click", () => setNickColor(color));
                 swatches.appendChild(btn);
+            });
+            frameSwatches.innerHTML = "";
+            FRAME_STYLES.forEach((item) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "swatch-btn" + (item.id === activeFrameStyle ? " active" : "");
+                btn.title = item.id;
+                btn.style.background = item.color;
+                btn.addEventListener("click", () => setFrameStyle(item.id));
+                frameSwatches.appendChild(btn);
             });
         }
 
@@ -1184,6 +1233,33 @@
                 }
                 if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
                 currentSubscription.visuals.nickColor = color;
+                await loadProfile();
+            } catch (_) {
+                alert("Сервер недоступен.");
+            }
+        }
+
+        async function setFrameStyle(style) {
+            const sub = currentSubscription || {};
+            const can = (typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false;
+            if (!can) return;
+            const headers = { "Content-Type": "application/json" };
+            try {
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+                const res = await fetch(`${base}/profile/set-frame-style`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ style })
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(`Ошибка: ${payload.error || "set-frame-style failed"}`);
+                    return;
+                }
+                if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
+                currentSubscription.visuals.frameStyle = style;
                 await loadProfile();
             } catch (_) {
                 alert("Сервер недоступен.");

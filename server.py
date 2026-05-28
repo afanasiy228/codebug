@@ -166,6 +166,7 @@ PRO_NICK_COLORS = {
     "#f472b6",  # pink
     "#f59e0b",  # amber
 }
+PRO_FRAME_STYLES = {"classic", "ocean", "violet", "sunset", "neon", "carbon"}
 
 
 def _api_error(error, status=400, code=None):
@@ -2793,6 +2794,38 @@ def profile_set_nick_color():
         return jsonify({"ok": True, "color": color})
     except Exception as e:
         return _server_error("set_nick_color_failed", "SET_NICK_COLOR_FAILED", exc=e)
+
+
+@app.route("/profile/set-frame-style", methods=["POST"])
+def profile_set_frame_style():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _is_pro_active(login):
+        return _api_error("pro_required", 403, "PRO_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    data = request.get_json(silent=True) or {}
+    style = str(data.get("style") or "").strip().lower()
+    if style not in PRO_FRAME_STYLES:
+        return _api_error("invalid_frame_style", 400, "INVALID_FRAME_STYLE")
+    try:
+        ref = db.reference(f"users/{login}/subscription")
+        current = ref.get() or {}
+        if not isinstance(current, dict):
+            current = {}
+        visuals = current.get("visuals") if isinstance(current.get("visuals"), dict) else {}
+        visuals["frameStyle"] = style
+        ref.update({
+            "visuals": visuals,
+            "updatedAt": int(time.time() * 1000)
+        })
+        return jsonify({"ok": True, "style": style})
+    except Exception as e:
+        return _server_error("set_frame_style_failed", "SET_FRAME_STYLE_FAILED", exc=e)
 
 
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
