@@ -311,7 +311,10 @@
       const color = isPro && typeof getSubscriptionNickColor === "function"
         ? getSubscriptionNickColor(sub)
         : (isPro ? "#60a5fa" : "inherit");
-      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}" style="color:${color}">${safeLogin}</a>${badge}`;
+      const nickHtml = (typeof buildStyledNickHtml === "function")
+        ? buildStyledNickHtml(login, sub, color)
+        : safeLogin;
+      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>${badge}`;
     }
 
     function renderAuthorLinks(authors) {

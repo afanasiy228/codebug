@@ -309,11 +309,90 @@ function hasSubscriptionAtLeast(sub, minLevel) {
     return (rank[getSubscriptionLevel(sub)] || 0) >= (rank[minLevel] || 0);
 }
 
-function getSubscriptionNickColor(sub) {
-    const palette = new Set(["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b"]);
+const PRO_NICK_SOLID_COLORS = [
+    "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
+    "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"
+];
+const PRO_PLUS_NICK_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
+const DEV_NICK_THEMES = ["nutella", "rainbow", "fire_ice", "matrix"];
+
+function getAllowedNickThemesForLevel(level) {
+    const base = [...PRO_NICK_SOLID_COLORS];
+    if (level === "pro_plus" || level === "dev") base.push(...PRO_PLUS_NICK_THEMES);
+    if (level === "dev") base.push(...DEV_NICK_THEMES);
+    return base;
+}
+
+function getSubscriptionNickTheme(sub) {
+    const level = getSubscriptionLevel(sub);
+    const allowed = new Set(getAllowedNickThemesForLevel(level).map((x) => String(x).toLowerCase()));
     const raw = String(sub?.visuals?.nickColor || "").trim().toLowerCase();
-    if (palette.has(raw)) return raw;
-    return "#60a5fa";
+    if (allowed.has(raw)) return raw;
+    return PRO_NICK_SOLID_COLORS[0];
+}
+
+function getSubscriptionNickColor(sub) {
+    const theme = getSubscriptionNickTheme(sub);
+    if (theme.startsWith("#")) return theme;
+    return PRO_NICK_SOLID_COLORS[0];
+}
+
+function escapeInlineHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function buildStyledNickHtml(login, sub, fallbackColor) {
+    const safe = escapeInlineHtml(login);
+    const level = getSubscriptionLevel(sub);
+    if (level === "free") {
+        return `<span style="color:${fallbackColor || "#27ae60"}">${safe}</span>`;
+    }
+    const theme = getSubscriptionNickTheme(sub);
+    if (theme.startsWith("#")) {
+        return `<span style="color:${theme}">${safe}</span>`;
+    }
+    if (theme === "grad_ocean") {
+        return `<span style="background:linear-gradient(90deg,#38bdf8,#22d3ee,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "grad_sunset") {
+        return `<span style="background:linear-gradient(90deg,#fb7185,#f59e0b,#facc15);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "grad_candy") {
+        return `<span style="background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "grad_aurora") {
+        return `<span style="background:linear-gradient(90deg,#22c55e,#14b8a6,#3b82f6,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "nutella") {
+        const first = safe.slice(0, 1);
+        const rest = safe.slice(1);
+        return `<span><span style="color:#111827">${first}</span><span style="color:#dc2626">${rest}</span></span>`;
+    }
+    if (theme === "rainbow") {
+        const colors = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"];
+        let html = "";
+        for (let i = 0; i < safe.length; i += 1) {
+            html += `<span style="color:${colors[i % colors.length]}">${safe[i]}</span>`;
+        }
+        return `<span>${html}</span>`;
+    }
+    if (theme === "fire_ice") {
+        return `<span style="background:linear-gradient(90deg,#ef4444 0%,#f97316 45%,#38bdf8 55%,#2563eb 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "matrix") {
+        const colors = ["#22c55e", "#16a34a", "#4ade80"];
+        let html = "";
+        for (let i = 0; i < safe.length; i += 1) {
+            html += `<span style="color:${colors[i % colors.length]}">${safe[i]}</span>`;
+        }
+        return `<span>${html}</span>`;
+    }
+    return `<span style="color:${PRO_NICK_SOLID_COLORS[0]}">${safe}</span>`;
 }
 
 function isProSubscription(sub) {
