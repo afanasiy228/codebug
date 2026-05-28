@@ -570,23 +570,48 @@
             font-size: 20px;
             font-family: "Space Grotesk", sans-serif;
         }
-        .swatches {
-            display: flex;
-            flex-wrap: wrap;
+        .choice-list {
+            display: grid;
             gap: 8px;
             margin-top: 8px;
         }
-        .swatch-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,.22);
+        .choice-btn {
+            width: 100%;
+            margin: 0;
+            text-align: left;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148,163,184,.28);
+            background: rgba(15, 23, 42, .8);
+            color: #e2e8f0;
             cursor: pointer;
-            outline: none;
+            box-shadow: none;
         }
-        .swatch-btn.active {
-            border-color: #fff;
-            box-shadow: 0 0 0 2px rgba(255,255,255,.18);
+        .choice-btn:hover {
+            border-color: rgba(125,211,252,.6);
+            background: rgba(30, 41, 59, .95);
+        }
+        .choice-btn.active {
+            border-color: rgba(125,211,252,.9);
+            box-shadow: 0 0 0 1px rgba(125,211,252,.32);
+        }
+        .choice-btn .sample {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
+            line-height: 1.1;
+        }
+        .choice-btn .meta {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .editable-nick {
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(125,211,252,.45);
+        }
+        .editable-nick:hover {
+            border-bottom-color: rgba(125,211,252,.85);
         }
         .nick-modal {
             position: fixed;
@@ -683,7 +708,7 @@
         <div class="info reveal" style="--delay: 0s;">
 
             <div class="name-line">
-                <div class="username" id="username">Загрузка...</div>
+                <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
                 <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
             </div>
             <div class="rank-text" id="rank">Ранг загружается...</div>
@@ -806,10 +831,9 @@
             <h3 class="pro-style-title">Кастомизация PRO</h3>
             <p style="margin:0;color:#94a3b8;">Выбери цвет ника и стиль рамки. Ниже показан превью-вариант «afanasy».</p>
             <div style="font-weight:600;color:#bfdbfe;margin-top:14px;">Цвет ника</div>
-            <div class="swatches" id="nickColorSwatches"></div>
+            <div class="choice-list" id="nickColorSwatches"></div>
             <div style="font-weight:600;color:#bfdbfe;margin-top:12px;">Стиль рамки профиля</div>
-            <div class="swatches" id="frameStyleSwatches"></div>
-            <div class="pro-preview-list" id="proPreviewList"></div>
+            <div class="choice-list" id="frameStyleSwatches"></div>
             <div class="nick-modal-actions">
                 <button type="button" style="background:#334155;" onclick="closeProStyleModal()">Закрыть</button>
             </div>
@@ -839,12 +863,12 @@
         let currentSubscriptionLevel = "free";
         const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b"];
         const FRAME_STYLES = [
-            { id: "classic", color: "#60a5fa" },
-            { id: "ocean", color: "#22d3ee" },
-            { id: "violet", color: "#a78bfa" },
-            { id: "sunset", color: "#fb923c" },
-            { id: "neon", color: "#34d399" },
-            { id: "carbon", color: "#94a3b8" }
+            { id: "classic", color: "#60a5fa", label: "Классика" },
+            { id: "ocean", color: "#22d3ee", label: "Океан" },
+            { id: "violet", color: "#a78bfa", label: "Фиолет" },
+            { id: "sunset", color: "#fb923c", label: "Закат" },
+            { id: "neon", color: "#34d399", label: "Неон" },
+            { id: "carbon", color: "#94a3b8", label: "Карбон" }
         ];
 
         /* ============================
@@ -1207,10 +1231,37 @@
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (changeNickBtn) changeNickBtn.style.display = "none";
                 if (proStyleBtn) proStyleBtn.style.display = "none";
+                const usernameEl = document.getElementById("username");
+                if (usernameEl) {
+                    usernameEl.onclick = null;
+                    usernameEl.style.cursor = "default";
+                    usernameEl.title = "";
+                }
+                const avatarBlockSelf = document.querySelector(".avatar-block");
+                if (avatarBlockSelf) {
+                    avatarBlockSelf.onclick = null;
+                    avatarBlockSelf.title = "";
+                }
                 setupViewedFriendButton();
             } else {
                 const changeNickBtn = document.getElementById("changeNickBtn");
                 const proStyleBtn = document.getElementById("proStyleBtn");
+                const usernameEl = document.getElementById("username");
+                if (usernameEl) {
+                    usernameEl.onclick = isPro ? openProStyleModal : null;
+                    usernameEl.style.cursor = isPro ? "pointer" : "default";
+                    usernameEl.title = isPro ? "Нажми, чтобы выбрать цвет ника" : "";
+                }
+                const avatarBlockSelf = document.querySelector(".avatar-block");
+                if (avatarBlockSelf) {
+                    avatarBlockSelf.onclick = (ev) => {
+                        if (!isPro) return;
+                        const target = ev?.target;
+                        if (target && (target.id === "avatar-file" || target.id === "uploadAvatarBtn")) return;
+                        openProStyleModal();
+                    };
+                    avatarBlockSelf.title = isPro ? "Нажми, чтобы выбрать стиль рамки" : "";
+                }
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
                 if (proStyleBtn) proStyleBtn.style.display = isPro ? "inline-block" : "none";
                 renderProColorControls(isPro, proNickColor || "#60a5fa", frameStyle);
@@ -1227,17 +1278,23 @@
             if (!isPro) {
                 swatches.innerHTML = "";
                 frameSwatches.innerHTML = "";
-                const preview = document.getElementById("proPreviewList");
-                if (preview) preview.innerHTML = "";
                 return;
             }
             swatches.innerHTML = "";
             PRO_COLOR_PALETTE.forEach((color) => {
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "swatch-btn" + (String(color).toLowerCase() === String(activeColor).toLowerCase() ? " active" : "");
-                btn.title = color;
-                btn.style.background = color;
+                btn.className = "choice-btn" + (String(color).toLowerCase() === String(activeColor).toLowerCase() ? " active" : "");
+                btn.title = `Выбрать цвет ${color}`;
+                const sample = document.createElement("span");
+                sample.className = "sample";
+                sample.style.color = color;
+                sample.textContent = "afanasy";
+                const meta = document.createElement("span");
+                meta.className = "meta";
+                meta.textContent = color;
+                btn.appendChild(sample);
+                btn.appendChild(meta);
                 btn.addEventListener("click", () => setNickColor(color));
                 swatches.appendChild(btn);
             });
@@ -1245,29 +1302,19 @@
             FRAME_STYLES.forEach((item) => {
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "swatch-btn" + (item.id === activeFrameStyle ? " active" : "");
-                btn.title = item.id;
-                btn.style.background = item.color;
+                btn.className = "choice-btn" + (item.id === activeFrameStyle ? " active" : "");
+                btn.title = `Выбрать рамку ${item.label}`;
+                const sample = document.createElement("span");
+                sample.className = "sample";
+                sample.style.color = item.color;
+                sample.textContent = "afanasy";
+                const meta = document.createElement("span");
+                meta.className = "meta";
+                meta.textContent = item.label;
+                btn.appendChild(sample);
+                btn.appendChild(meta);
                 btn.addEventListener("click", () => setFrameStyle(item.id));
                 frameSwatches.appendChild(btn);
-            });
-            renderProPreview(activeColor);
-        }
-
-        function renderProPreview(activeColor) {
-            const root = document.getElementById("proPreviewList");
-            if (!root) return;
-            root.innerHTML = "";
-            PRO_COLOR_PALETTE.forEach((color) => {
-                const row = document.createElement("div");
-                row.className = "pro-preview-item";
-                row.style.color = color;
-                row.textContent = "afanasy";
-                if (String(color).toLowerCase() === String(activeColor).toLowerCase()) {
-                    row.style.borderColor = "rgba(125,211,252,.7)";
-                    row.style.background = "rgba(30, 41, 59, .95)";
-                }
-                root.appendChild(row);
             });
         }
 
@@ -1293,7 +1340,6 @@
                 if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
                 currentSubscription.visuals.nickColor = color;
                 await loadProfile();
-                renderProPreview(color);
             } catch (_) {
                 alert("Сервер недоступен.");
             }
