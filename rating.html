@@ -325,7 +325,8 @@
                 const sub = u.subscription || {};
                 const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
                 const isPro = level !== "free";
-                const loginColor = isPro ? "#60a5fa" : getRankColor(Number(u.exp || 0), u.login);
+                const proColor = (isPro && typeof getSubscriptionNickColor === "function") ? getSubscriptionNickColor(sub) : "#60a5fa";
+                const loginColor = isPro ? proColor : getRankColor(Number(u.exp || 0), u.login);
                 const avatarUrl = typeof u.avatar === "string" ? u.avatar.trim() : "";
                 const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") ? avatarUrl : "";
                 let avatarHTML = avatarSafe ?

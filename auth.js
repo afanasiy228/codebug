@@ -309,6 +309,13 @@ function hasSubscriptionAtLeast(sub, minLevel) {
     return (rank[getSubscriptionLevel(sub)] || 0) >= (rank[minLevel] || 0);
 }
 
+function getSubscriptionNickColor(sub) {
+    const palette = new Set(["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b"]);
+    const raw = String(sub?.visuals?.nickColor || "").trim().toLowerCase();
+    if (palette.has(raw)) return raw;
+    return "#60a5fa";
+}
+
 function isProSubscription(sub) {
     return hasSubscriptionAtLeast(sub, "pro");
 }
@@ -318,9 +325,10 @@ async function applyProBrandingToNavbar(login) {
     const sub = await getUserSubscription(login);
     const isPro = isProSubscription(sub);
     if (!isPro) return;
+    const nickColor = getSubscriptionNickColor(sub);
     const navProfile = document.querySelector("#nav-links .nav-profile");
     if (navProfile) {
-        navProfile.style.color = "#60a5fa";
+        navProfile.style.color = nickColor;
         navProfile.style.fontWeight = "700";
         const level = getSubscriptionLevel(sub);
         const badge = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
@@ -1036,6 +1044,7 @@ window.getUserSubscription = getUserSubscription;
 window.isProSubscription = isProSubscription;
 window.getSubscriptionLevel = getSubscriptionLevel;
 window.hasSubscriptionAtLeast = hasSubscriptionAtLeast;
+window.getSubscriptionNickColor = getSubscriptionNickColor;
 
 window.getUser = getUser;
 window.getUid = getUid;

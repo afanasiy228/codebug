@@ -97,12 +97,19 @@
             min-width: 0;
         }
         
+        .name-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
         .username {
             font-size: 32px;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
             color: var(--ink);
-            margin-bottom: 6px;
+            margin-bottom: 0;
         }
 
         .pro-badge {
@@ -114,7 +121,7 @@
             color: #bfdbfe;
             font-size: 12px;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 0;
         }
         .pro-badge.pro-plus {
             background: rgba(56, 189, 248, 0.22);
@@ -501,6 +508,70 @@
             flex-wrap: wrap;
             margin-top: 14px;
         }
+        .pro-controls {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid rgba(96, 165, 250, 0.28);
+            border-radius: 12px;
+            background: rgba(96, 165, 250, 0.08);
+        }
+        .swatches {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .swatch-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,.22);
+            cursor: pointer;
+            outline: none;
+        }
+        .swatch-btn.active {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px rgba(255,255,255,.18);
+        }
+        .nick-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            padding: 16px;
+        }
+        .nick-modal.open { display: flex; }
+        .nick-modal-card {
+            width: min(560px, 100%);
+            border-radius: 14px;
+            border: 1px solid rgba(148,163,184,.28);
+            background: #0f172a;
+            padding: 18px;
+            box-shadow: 0 20px 60px rgba(2,6,23,.55);
+        }
+        .nick-modal-title {
+            margin: 0 0 10px;
+            font-size: 20px;
+            color: #e2e8f0;
+        }
+        .nick-modal-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148,163,184,.35);
+            background: #0b1220;
+            color: #fff;
+            font-size: 16px;
+        }
+        .nick-modal-actions {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
 
         .reveal {
             opacity: 0;
@@ -556,8 +627,10 @@
         <!-- LEFT COLUMN -->
         <div class="info reveal" style="--delay: 0s;">
 
-            <div class="username" id="username">Загрузка...</div>
-            <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
+            <div class="name-line">
+                <div class="username" id="username">Загрузка...</div>
+                <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
+            </div>
             <div class="rank-text" id="rank">Ранг загружается...</div>
 
             <div class="info-row">Профиль: <span id="userid">—</span></div>
@@ -573,6 +646,10 @@
                 <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
                 <button id="changeNickBtn" type="button" style="display:none;" onclick="changeNickname()">Сменить ник</button>
                 <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
+            </div>
+            <div id="proControls" class="pro-controls" style="display:none;">
+                <div style="font-weight:600;color:#bfdbfe;">Цвет ника (PRO)</div>
+                <div class="swatches" id="nickColorSwatches"></div>
             </div>
 
             <div class="section-title">Статистика</div>
@@ -661,6 +738,17 @@
         </div>
 
     </div>
+    <div id="nickModal" class="nick-modal" aria-hidden="true">
+        <div class="nick-modal-card">
+            <h3 class="nick-modal-title">Смена ника</h3>
+            <p style="margin:0 0 10px;color:#94a3b8;">Новый логин (3-16, латиница/цифры/_)</p>
+            <input id="nickModalInput" class="nick-modal-input" type="text" maxlength="16" placeholder="new_login">
+            <div class="nick-modal-actions">
+                <button type="button" style="background:#334155;" onclick="closeNickModal()">Отмена</button>
+                <button type="button" onclick="submitNickChange()">Сохранить</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -683,6 +771,7 @@
         const user = currentUser;
         let currentSubscription = null;
         let currentSubscriptionLevel = "free";
+        const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b"];
 
         /* ============================
            RANK SYSTEM
@@ -960,12 +1049,15 @@
             const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
             currentSubscriptionLevel = level;
             const isPro = level !== "free";
+            const proNickColor = isPro && typeof getSubscriptionNickColor === "function"
+                ? getSubscriptionNickColor(sub)
+                : null;
 
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
             usernameEl.innerText = data.login;
             const nickColor = getRankColor(Number(stats.exp || 0), data.login);
-            usernameEl.style.setProperty("color", isPro ? "#60a5fa" : nickColor, "important");
+            usernameEl.style.setProperty("color", proNickColor || nickColor, "important");
             const proBadge = document.getElementById("proBadge");
             if (proBadge) {
                 proBadge.style.display = isPro ? "inline-flex" : "none";
@@ -982,7 +1074,7 @@
             }
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
-                navProfileEl.style.setProperty("color", isPro ? "#60a5fa" : nickColor, "important");
+                navProfileEl.style.setProperty("color", proNickColor || nickColor, "important");
                 navProfileEl.textContent = isPro ? `${data.login} · PRO` : data.login;
             }
             document.getElementById("userid").innerText = data.id || "—";
@@ -1036,14 +1128,66 @@
                 if (friendsLinkBtn) friendsLinkBtn.style.display = "none";
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (changeNickBtn) changeNickBtn.style.display = "none";
+                const proControls = document.getElementById("proControls");
+                if (proControls) proControls.style.display = "none";
                 setupViewedFriendButton();
             } else {
                 const changeNickBtn = document.getElementById("changeNickBtn");
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
+                renderProColorControls(isPro, proNickColor || "#60a5fa");
             }
 
             await loadProPlusAnalytics();
 
+        }
+
+        function renderProColorControls(isPro, activeColor) {
+            const root = document.getElementById("proControls");
+            const swatches = document.getElementById("nickColorSwatches");
+            if (!root || !swatches) return;
+            if (!isPro) {
+                root.style.display = "none";
+                swatches.innerHTML = "";
+                return;
+            }
+            root.style.display = "block";
+            swatches.innerHTML = "";
+            PRO_COLOR_PALETTE.forEach((color) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "swatch-btn" + (String(color).toLowerCase() === String(activeColor).toLowerCase() ? " active" : "");
+                btn.title = color;
+                btn.style.background = color;
+                btn.addEventListener("click", () => setNickColor(color));
+                swatches.appendChild(btn);
+            });
+        }
+
+        async function setNickColor(color) {
+            const sub = currentSubscription || {};
+            const can = (typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false;
+            if (!can) return;
+            const headers = { "Content-Type": "application/json" };
+            try {
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+                const res = await fetch(`${base}/profile/set-nick-color`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ color })
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(`Ошибка: ${payload.error || "set-color failed"}`);
+                    return;
+                }
+                if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
+                currentSubscription.visuals.nickColor = color;
+                await loadProfile();
+            } catch (_) {
+                alert("Сервер недоступен.");
+            }
         }
 
         async function loadProPlusAnalytics() {
@@ -1112,7 +1256,29 @@
                 alert("Смена ника доступна только с активной PRO подпиской.");
                 return;
             }
-            const nextLogin = prompt("Новый логин (3-16, латиница/цифры/_):");
+            openNickModal();
+        }
+
+        function openNickModal() {
+            const modal = document.getElementById("nickModal");
+            const input = document.getElementById("nickModalInput");
+            if (!modal || !input) return;
+            input.value = "";
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+            setTimeout(() => input.focus(), 20);
+        }
+
+        function closeNickModal() {
+            const modal = document.getElementById("nickModal");
+            if (!modal) return;
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+        }
+
+        async function submitNickChange() {
+            const input = document.getElementById("nickModalInput");
+            const nextLogin = String(input?.value || "").trim();
             if (!nextLogin) return;
             const headers = { "Content-Type": "application/json" };
             try {
@@ -1140,6 +1306,7 @@
                 if (typeof localStorage !== "undefined") {
                     localStorage.setItem("user", payload.newLogin);
                 }
+                closeNickModal();
                 alert("Ник успешно изменён.");
                 window.location.href = `profile.html?user=${encodeURIComponent(payload.newLogin)}`;
             } catch (e) {

@@ -157,6 +157,15 @@ SUBMIT_RATE_DEV = int(os.getenv("SUBMIT_RATE_DEV", "50"))
 EDITOR_RATE_FREE = int(os.getenv("EDITOR_RATE_FREE", "40"))
 EDITOR_RATE_PRO = int(os.getenv("EDITOR_RATE_PRO", "55"))
 EDITOR_RATE_DEV = int(os.getenv("EDITOR_RATE_DEV", "70"))
+PRO_NICK_COLORS = {
+    "#60a5fa",  # blue
+    "#38bdf8",  # sky
+    "#a78bfa",  # violet
+    "#22d3ee",  # cyan
+    "#34d399",  # emerald
+    "#f472b6",  # pink
+    "#f59e0b",  # amber
+}
 
 
 def _api_error(error, status=400, code=None):
@@ -2752,6 +2761,38 @@ def profile_change_login():
         return jsonify({"status": "ok", "oldLogin": login, "newLogin": new_login, "nextChangeAt": now_ms + NICKNAME_CHANGE_COOLDOWN_SECONDS * 1000})
     except Exception as e:
         return _server_error("change_login_failed", "CHANGE_LOGIN_FAILED", exc=e)
+
+
+@app.route("/profile/set-nick-color", methods=["POST"])
+def profile_set_nick_color():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _is_pro_active(login):
+        return _api_error("pro_required", 403, "PRO_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    data = request.get_json(silent=True) or {}
+    color = str(data.get("color") or "").strip().lower()
+    if color not in PRO_NICK_COLORS:
+        return _api_error("invalid_color", 400, "INVALID_COLOR")
+    try:
+        ref = db.reference(f"users/{login}/subscription")
+        current = ref.get() or {}
+        if not isinstance(current, dict):
+            current = {}
+        visuals = current.get("visuals") if isinstance(current.get("visuals"), dict) else {}
+        visuals["nickColor"] = color
+        ref.update({
+            "visuals": visuals,
+            "updatedAt": int(time.time() * 1000)
+        })
+        return jsonify({"ok": True, "color": color})
+    except Exception as e:
+        return _server_error("set_nick_color_failed", "SET_NICK_COLOR_FAILED", exc=e)
 
 
 @app.route("/admin/rebuild-user-stats", methods=["POST"])
