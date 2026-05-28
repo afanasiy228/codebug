@@ -470,15 +470,10 @@ function ensureGlobalFooter() {
     const style = document.createElement("style");
     style.textContent = `
         #global-legal-footer {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 60;
-            padding: 8px 10px;
+            margin-top: 28px;
+            padding: 12px 10px 18px;
             border-top: 1px solid rgba(148, 163, 184, 0.22);
-            background: rgba(2, 6, 23, 0.92);
-            backdrop-filter: blur(6px);
+            background: rgba(2, 6, 23, 0.18);
         }
         .cb-legal-footer-inner {
             max-width: 1200px;
@@ -510,24 +505,14 @@ function ensureGlobalFooter() {
             background: rgba(15, 23, 42, 0.9);
         }
         @media (max-width: 700px) {
-            #global-legal-footer {
-                padding: 8px;
-            }
             .cb-legal-footer-inner {
-                justify-content: flex-start;
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                padding-bottom: 2px;
+                justify-content: center;
             }
         }
     `;
 
     document.head.appendChild(style);
     document.body.appendChild(footer);
-    const currentPaddingBottom = parseInt(window.getComputedStyle(document.body).paddingBottom || "0", 10) || 0;
-    if (currentPaddingBottom < 56) {
-        document.body.style.paddingBottom = "56px";
-    }
 }
 
 /* ============================
