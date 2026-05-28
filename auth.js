@@ -460,23 +460,25 @@ function ensureGlobalFooter() {
     footer.id = "global-legal-footer";
     footer.innerHTML = `
         <div class="cb-legal-footer-inner">
-            <a href="https://telegra.ph/Politika-konfidencialnosti-04-01-26" target="_blank" rel="noopener">Политика конфиденциальности</a>
-            <span>•</span>
-            <a href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19" target="_blank" rel="noopener">Пользовательское соглашение</a>
-            <span>•</span>
-            <span>Поддержка: <a href="https://t.me/afony_l" target="_blank" rel="noopener">@afony_l</a>, <a href="mailto:support@codebug.online">support@codebug.online</a></span>
+            <a class="cb-legal-btn" href="https://telegra.ph/Politika-konfidencialnosti-04-01-26" target="_blank" rel="noopener">Политика конфиденциальности</a>
+            <a class="cb-legal-btn" href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19" target="_blank" rel="noopener">Пользовательское соглашение</a>
+            <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
+            <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
         </div>
     `;
 
     const style = document.createElement("style");
     style.textContent = `
         #global-legal-footer {
-            margin-top: 28px;
-            padding: 16px 12px 20px;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 60;
+            padding: 8px 10px;
             border-top: 1px solid rgba(148, 163, 184, 0.22);
-            color: #94a3b8;
-            font-size: 12px;
-            line-height: 1.5;
+            background: rgba(2, 6, 23, 0.92);
+            backdrop-filter: blur(6px);
         }
         .cb-legal-footer-inner {
             max-width: 1200px;
@@ -488,18 +490,44 @@ function ensureGlobalFooter() {
             justify-content: center;
             text-align: center;
         }
-        #global-legal-footer a {
-            color: #94a3b8;
-            text-decoration: none;
-        }
-        #global-legal-footer a:hover {
+        #global-legal-footer .cb-legal-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 30px;
+            padding: 0 10px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 8px;
             color: #cbd5e1;
-            text-decoration: underline;
+            font-size: 12px;
+            line-height: 1;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        #global-legal-footer .cb-legal-btn:hover {
+            border-color: rgba(125, 211, 252, 0.75);
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.9);
+        }
+        @media (max-width: 700px) {
+            #global-legal-footer {
+                padding: 8px;
+            }
+            .cb-legal-footer-inner {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 2px;
+            }
         }
     `;
 
     document.head.appendChild(style);
     document.body.appendChild(footer);
+    const currentPaddingBottom = parseInt(window.getComputedStyle(document.body).paddingBottom || "0", 10) || 0;
+    if (currentPaddingBottom < 56) {
+        document.body.style.paddingBottom = "56px";
+    }
 }
 
 /* ============================
