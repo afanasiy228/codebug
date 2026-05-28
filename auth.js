@@ -452,6 +452,56 @@ function startKeepAlive() {
     window.__keepAliveTimer = setInterval(ping, interval);
 }
 
+function ensureGlobalFooter() {
+    if (typeof document === "undefined") return;
+    if (document.getElementById("global-legal-footer")) return;
+
+    const footer = document.createElement("footer");
+    footer.id = "global-legal-footer";
+    footer.innerHTML = `
+        <div class="cb-legal-footer-inner">
+            <a href="https://telegra.ph/Politika-konfidencialnosti-04-01-26" target="_blank" rel="noopener">Политика конфиденциальности</a>
+            <span>•</span>
+            <a href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19" target="_blank" rel="noopener">Пользовательское соглашение</a>
+            <span>•</span>
+            <span>Поддержка: <a href="https://t.me/afony_l" target="_blank" rel="noopener">@afony_l</a>, <a href="mailto:support@codebug.online">support@codebug.online</a></span>
+        </div>
+    `;
+
+    const style = document.createElement("style");
+    style.textContent = `
+        #global-legal-footer {
+            margin-top: 28px;
+            padding: 16px 12px 20px;
+            border-top: 1px solid rgba(148, 163, 184, 0.22);
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .cb-legal-footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            text-align: center;
+        }
+        #global-legal-footer a {
+            color: #94a3b8;
+            text-decoration: none;
+        }
+        #global-legal-footer a:hover {
+            color: #cbd5e1;
+            text-decoration: underline;
+        }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(footer);
+}
+
 /* ============================
    PRESENCE (ONLINE / LAST SEEN)
 ============================ */
@@ -1116,6 +1166,14 @@ async function syncSessionFromAuth() {
         }
     });
 })();
+
+if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", ensureGlobalFooter, { once: true });
+    } else {
+        ensureGlobalFooter();
+    }
+}
 
 
 /* ============================
