@@ -128,11 +128,6 @@
             border-color: rgba(56, 189, 248, 0.48);
             color: #7dd3fc;
         }
-        .pro-badge.dev {
-            background: rgba(245, 158, 11, 0.22);
-            border-color: rgba(245, 158, 11, 0.48);
-            color: #fcd34d;
-        }
         
         .rank-text {
             font-size: 18px;
@@ -882,7 +877,7 @@
         let currentSubscriptionLevel = "free";
         const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"];
         const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
-        const DEV_THEMES = ["nutella", "rainbow", "fire_ice", "matrix"];
+        const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix"];
         const FRAME_STYLES = [
             { id: "classic", color: "#60a5fa", label: "Классика" },
             { id: "ocean", color: "#22d3ee", label: "Океан" },
@@ -1216,13 +1211,10 @@
             const proBadge = document.getElementById("proBadge");
             if (proBadge) {
                 proBadge.style.display = isPro ? "inline-flex" : "none";
-                proBadge.classList.remove("pro-plus", "dev");
+                proBadge.classList.remove("pro-plus");
                 if (level === "pro_plus") {
                     proBadge.classList.add("pro-plus");
                     proBadge.textContent = "PRO+";
-                } else if (level === "dev") {
-                    proBadge.classList.add("dev");
-                    proBadge.textContent = "DEV";
                 } else {
                     proBadge.textContent = "PRO";
                 }
@@ -1230,7 +1222,7 @@
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
                 navProfileEl.style.setProperty("color", proNickColor || nickColor, "important");
-                const navTier = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
+                const navTier = level === "pro_plus" ? "PRO+" : "PRO";
                 navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
             }
             document.getElementById("userid").innerText = data.id || "—";
@@ -1337,8 +1329,7 @@
                 return;
             }
             const themes = [...PRO_COLOR_PALETTE];
-            if (level === "pro_plus" || level === "dev") themes.push(...PRO_PLUS_THEMES);
-            if (level === "dev") themes.push(...DEV_THEMES);
+            if (level === "pro_plus") themes.push(...PRO_PLUS_THEMES, ...PRO_PLUS_EXTRA_THEMES);
             swatches.innerHTML = "";
             themes.forEach((theme) => {
                 const btn = document.createElement("button");
@@ -1415,7 +1406,7 @@
         async function loadProPlusAnalytics() {
             const card = document.getElementById("proPlusCard");
             if (!card) return;
-            const canView = currentSubscriptionLevel === "pro_plus" || currentSubscriptionLevel === "dev";
+            const canView = currentSubscriptionLevel === "pro_plus";
             if (!canView || viewedUser !== currentUser) {
                 card.style.display = "none";
                 return;

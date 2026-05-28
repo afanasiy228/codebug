@@ -143,26 +143,20 @@ SUBMIT_GLOBAL_RATE_LIMIT = int(os.getenv("SUBMIT_GLOBAL_RATE_LIMIT", "120"))
 SUBMIT_GLOBAL_RATE_WINDOW = int(os.getenv("SUBMIT_GLOBAL_RATE_WINDOW", "60"))
 RUN_SINGLE_TIMEOUT_FREE = float(os.getenv("RUN_SINGLE_TIMEOUT_FREE", "5"))
 RUN_SINGLE_TIMEOUT_PRO = float(os.getenv("RUN_SINGLE_TIMEOUT_PRO", "10"))
-RUN_SINGLE_TIMEOUT_DEV = float(os.getenv("RUN_SINGLE_TIMEOUT_DEV", "15"))
 RUN_SINGLE_INPUT_LIMIT_FREE = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_FREE", str(512 * 1024)))
 RUN_SINGLE_INPUT_LIMIT_PRO = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_PRO", str(1024 * 1024)))
-RUN_SINGLE_INPUT_LIMIT_DEV = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_DEV", str(2 * 1024 * 1024)))
 RUN_SINGLE_CODE_LIMIT_FREE = int(os.getenv("RUN_SINGLE_CODE_LIMIT_FREE", str(512 * 1024)))
 RUN_SINGLE_CODE_LIMIT_PRO = int(os.getenv("RUN_SINGLE_CODE_LIMIT_PRO", str(1024 * 1024)))
-RUN_SINGLE_CODE_LIMIT_DEV = int(os.getenv("RUN_SINGLE_CODE_LIMIT_DEV", str(2 * 1024 * 1024)))
 NICKNAME_CHANGE_COOLDOWN_SECONDS = int(os.getenv("NICKNAME_CHANGE_COOLDOWN_SECONDS", str(14 * 24 * 60 * 60)))
 SUBMIT_RATE_FREE = int(os.getenv("SUBMIT_RATE_FREE", "20"))
 SUBMIT_RATE_PRO = int(os.getenv("SUBMIT_RATE_PRO", "35"))
-SUBMIT_RATE_DEV = int(os.getenv("SUBMIT_RATE_DEV", "50"))
 EDITOR_RATE_FREE = int(os.getenv("EDITOR_RATE_FREE", "40"))
 EDITOR_RATE_PRO = int(os.getenv("EDITOR_RATE_PRO", "55"))
-EDITOR_RATE_DEV = int(os.getenv("EDITOR_RATE_DEV", "70"))
 PRO_NICK_COLORS = {
     "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
     "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6",
 }
-PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"}
-DEV_NICK_THEMES = {"nutella", "rainbow", "fire_ice", "matrix"}
+PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix"}
 PRO_FRAME_STYLES = {"classic", "ocean", "violet", "sunset", "neon", "carbon"}
 
 
@@ -321,7 +315,7 @@ def _is_active_tier(login, tier):
     if sub.get("status") != "active":
         return False
     user_tier = sub.get("tier")
-    rank = {"pro": 1, "pro_plus": 2, "creator_dev": 3}
+    rank = {"pro": 1, "pro_plus": 2, "creator_dev": 2}
     return rank.get(user_tier, 0) >= rank.get(str(tier or "").strip().lower(), 10)
 
 
@@ -330,7 +324,7 @@ def _is_pro_plus_active(login):
 
 
 def _is_dev_active(login):
-    return _is_active_tier(login, "creator_dev")
+    return _is_active_tier(login, "pro_plus")
 
 
 def _subscription_tier_label(login):
@@ -339,7 +333,7 @@ def _subscription_tier_label(login):
     if sub.get("status") != "active":
         return "free"
     if tier == "creator_dev":
-        return "dev"
+        return "pro_plus"
     if tier == "pro_plus":
         return "pro_plus"
     if tier == "pro":
@@ -348,16 +342,12 @@ def _subscription_tier_label(login):
 
 
 def _submission_rate_limit_for_tier(tier):
-    if tier == "dev":
-        return SUBMIT_RATE_DEV
     if tier in {"pro", "pro_plus"}:
         return SUBMIT_RATE_PRO
     return SUBMIT_RATE_FREE
 
 
 def _editor_rate_limit_for_tier(tier):
-    if tier == "dev":
-        return EDITOR_RATE_DEV
     if tier in {"pro", "pro_plus"}:
         return EDITOR_RATE_PRO
     return EDITOR_RATE_FREE
@@ -563,10 +553,7 @@ def _validate_run_payload(data, *, tier="free"):
         return None, _api_error("code_required", 400, "CODE_REQUIRED")
     if not isinstance(input_data, str):
         return None, _api_error("invalid_input", 400, "INVALID_INPUT")
-    if tier == "dev":
-        code_limit = RUN_SINGLE_CODE_LIMIT_DEV
-        input_limit = RUN_SINGLE_INPUT_LIMIT_DEV
-    elif tier in {"pro", "pro_plus"}:
+    if tier in {"pro", "pro_plus"}:
         code_limit = RUN_SINGLE_CODE_LIMIT_PRO
         input_limit = RUN_SINGLE_INPUT_LIMIT_PRO
     else:
@@ -1833,7 +1820,7 @@ def submit():
     if auth_error:
         return auth_error
     tier = _subscription_tier_label(login)
-    has_priority = tier in {"pro", "pro_plus", "dev"}
+    has_priority = tier in {"pro", "pro_plus"}
     _ensure_tasks_sync_worker()
     if not _rate_limit_global("submit_global", SUBMIT_GLOBAL_RATE_LIMIT, SUBMIT_GLOBAL_RATE_WINDOW):
         return _api_error("service_busy", 429, "GLOBAL_RATE_LIMIT_EXCEEDED")
@@ -2360,9 +2347,7 @@ def run_single():
     payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {}, tier=tier)
     if payload_error:
         return payload_error
-    if tier == "dev":
-        timeout_sec = RUN_SINGLE_TIMEOUT_DEV
-    elif tier in {"pro", "pro_plus"}:
+    if tier in {"pro", "pro_plus"}:
         timeout_sec = RUN_SINGLE_TIMEOUT_PRO
     else:
         timeout_sec = RUN_SINGLE_TIMEOUT_FREE
@@ -2443,7 +2428,7 @@ def editor_ai_complete():
     if auth_error:
         return auth_error
     tier = _subscription_tier_label(user_login)
-    limit = 20 if tier == "free" else (30 if tier in {"pro", "pro_plus"} else 40)
+    limit = 20 if tier == "free" else 30
     if not _rate_limit("editor_ai", user_login, limit=limit, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
@@ -2777,10 +2762,8 @@ def profile_set_nick_color():
     color = str(data.get("color") or "").strip().lower()
     tier = _subscription_tier_label(login)
     allowed = set(PRO_NICK_COLORS)
-    if tier in {"pro_plus", "dev"}:
+    if tier in {"pro_plus"}:
         allowed.update(PRO_PLUS_NICK_THEMES)
-    if tier == "dev":
-        allowed.update(DEV_NICK_THEMES)
     if color not in allowed:
         return _api_error("invalid_color", 400, "INVALID_COLOR")
     try:

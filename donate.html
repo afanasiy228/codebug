@@ -106,7 +106,7 @@
 
         .tiers {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 16px;
         }
 
@@ -170,9 +170,6 @@
 
         .tier.proplus { border-color: rgba(56, 189, 248, 0.45); }
         .tier.proplus .tier-price { color: var(--proplus); }
-
-        .tier.creator { border-color: rgba(245, 158, 11, 0.5); }
-        .tier.creator .tier-price { color: var(--creator); }
 
         .cta {
             margin-top: 14px;
@@ -326,26 +323,6 @@
                 <button class="cta" onclick="showDonateInfo('PRO+')">Выбрать PRO+</button>
             </article>
 
-            <article class="tier creator">
-                <div class="tier-head">
-                    <h2 class="tier-name">CREATOR / DEV</h2>
-                    <p class="tier-price">399₽ / месяц</p>
-                    <p class="tier-note">Для пользователей, которые активно развивают контент и workflows.</p>
-                </div>
-                <p class="feature-title">Что входит</p>
-                <ul class="feature-list">
-                    <li>Всё из PRO+</li>
-                    <li>Создание собственных задач</li>
-                    <li>Расширенный tester/judge</li>
-                    <li>Генераторы и validator support</li>
-                    <li>Приватные задачи</li>
-                    <li>Sandbox для тестирования</li>
-                    <li>Расширенные лимиты</li>
-                    <li>Доступ к публичным соревнованиям в роли автора</li>
-                    <li>Усиленные лимиты для editor / run-single / submit</li>
-                </ul>
-                <button class="cta" onclick="showDonateInfo('CREATOR / DEV')">Выбрать CREATOR / DEV</button>
-            </article>
         </section>
 
         <p class="footer-note">Оплата и активация подписки пока подключаются вручную. После оплаты возможности включаются на аккаунте в течение дня.</p>
@@ -370,8 +347,7 @@
     <script>
         const PLAN_TO_TIER = {
             "PRO": "pro",
-            "PRO+": "pro_plus",
-            "CREATOR / DEV": "creator_dev"
+            "PRO+": "pro_plus"
         };
 
         async function markSubscriptionPlan(planLabel) {

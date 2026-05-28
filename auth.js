@@ -298,7 +298,7 @@ async function getUserSubscription(login) {
 function getSubscriptionLevel(sub) {
     if (!sub || String(sub.status || "").toLowerCase() !== "active") return "free";
     const tier = String(sub.tier || "").toLowerCase();
-    if (tier === "creator_dev") return "dev";
+    if (tier === "creator_dev") return "pro_plus";
     if (tier === "pro_plus") return "pro_plus";
     if (tier === "pro") return "pro";
     return "free";
@@ -314,7 +314,7 @@ function getRankNickColorByExp(exp) {
 }
 
 function hasSubscriptionAtLeast(sub, minLevel) {
-    const rank = { free: 0, pro: 1, pro_plus: 2, dev: 3 };
+    const rank = { free: 0, pro: 1, pro_plus: 2 };
     return (rank[getSubscriptionLevel(sub)] || 0) >= (rank[minLevel] || 0);
 }
 
@@ -322,13 +322,11 @@ const PRO_NICK_SOLID_COLORS = [
     "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
     "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"
 ];
-const PRO_PLUS_NICK_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
-const DEV_NICK_THEMES = ["nutella", "rainbow", "fire_ice", "matrix"];
+const PRO_PLUS_NICK_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix"];
 
 function getAllowedNickThemesForLevel(level) {
     const base = [...PRO_NICK_SOLID_COLORS];
-    if (level === "pro_plus" || level === "dev") base.push(...PRO_PLUS_NICK_THEMES);
-    if (level === "dev") base.push(...DEV_NICK_THEMES);
+    if (level === "pro_plus") base.push(...PRO_PLUS_NICK_THEMES);
     return base;
 }
 
@@ -424,8 +422,8 @@ async function applyProBrandingToNavbar(login) {
         navProfile.style.color = nickColor;
         navProfile.style.fontWeight = "700";
         if (isPro) {
-            const badge = level === "dev" ? "DEV" : (level === "pro_plus" ? "PRO+" : "PRO");
-            if (!navProfile.textContent.includes("PRO") && !navProfile.textContent.includes("DEV")) {
+            const badge = level === "pro_plus" ? "PRO+" : "PRO";
+            if (!navProfile.textContent.includes("PRO")) {
                 navProfile.textContent = `${login} · ${badge}`;
             }
         } else {

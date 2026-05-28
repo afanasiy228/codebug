@@ -240,7 +240,7 @@
       try {
         const sub = await getUserSubscription(user);
         const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
-        if (level === "pro_plus" || level === "dev") {
+        if (level === "pro_plus") {
           const sec = document.getElementById("createContestSection");
           if (sec) sec.style.display = "block";
         }

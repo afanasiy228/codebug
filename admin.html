@@ -749,7 +749,6 @@
           <select id="quickSubTier" class="admin-input" style="max-width:180px;">
             <option value="pro">pro</option>
             <option value="pro_plus">pro_plus</option>
-            <option value="creator_dev">creator_dev</option>
           </select>
           <select id="quickSubStatus" class="admin-input" style="max-width:180px;">
             <option value="active">active</option>
@@ -2022,7 +2021,6 @@
             <select id="req-tier-${row.key}" class="admin-input" style="max-width:160px;">
               <option value="pro" ${String(row.tier || "").toLowerCase() === "pro" ? "selected" : ""}>pro</option>
               <option value="pro_plus" ${String(row.tier || "").toLowerCase() === "pro_plus" ? "selected" : ""}>pro_plus</option>
-              <option value="creator_dev" ${String(row.tier || "").toLowerCase() === "creator_dev" ? "selected" : ""}>creator_dev</option>
             </select>
             <button type="button" class="admin-secondary req-activate">Activate</button>
             <button type="button" class="admin-secondary req-reject">Reject</button>
@@ -2042,7 +2040,7 @@
         setAdminLog("Укажи логин для назначения подписки.");
         return;
       }
-      if (!["pro", "pro_plus", "creator_dev"].includes(tier)) {
+      if (!["pro", "pro_plus"].includes(tier)) {
         setAdminLog("Некорректный tier.");
         return;
       }
