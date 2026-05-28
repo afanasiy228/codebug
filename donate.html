@@ -198,7 +198,7 @@
             line-height: 1.55;
         }
 
-        .legal-box {
+        .compliance-box {
             margin-top: 18px;
             border: 1px solid rgba(148, 163, 184, 0.24);
             border-radius: 8px;
@@ -206,13 +206,13 @@
             background: rgba(15, 23, 42, 0.7);
         }
 
-        .legal-box h3 {
+        .compliance-box h3 {
             margin: 0 0 8px;
             font-size: 15px;
             color: #e2e8f0;
         }
 
-        .legal-links {
+        .compliance-list {
             margin: 0;
             padding-left: 18px;
             color: #cbd5e1;
@@ -220,34 +220,46 @@
             line-height: 1.6;
         }
 
-        .legal-links a {
+        .doc-actions {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .doc-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(125, 211, 252, 0.45);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #7dd3fc;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(2, 6, 23, 0.55);
+        }
+
+        .doc-btn:hover {
+            border-color: rgba(125, 211, 252, 0.8);
+            color: #e0f2fe;
+        }
+
+        .support-line {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .support-line a {
             color: #7dd3fc;
             text-decoration: none;
         }
 
-        .legal-links a:hover {
+        .support-line a:hover {
             text-decoration: underline;
-        }
-
-        .delivery-box {
-            margin-top: 14px;
-            border: 1px solid rgba(148, 163, 184, 0.24);
-            border-radius: 8px;
-            padding: 14px 16px;
-            background: rgba(15, 23, 42, 0.7);
-        }
-
-        .delivery-box h3 {
-            margin: 0 0 8px;
-            font-size: 15px;
-            color: #e2e8f0;
-        }
-
-        .delivery-box p {
-            margin: 6px 0;
-            color: #cbd5e1;
-            font-size: 14px;
-            line-height: 1.6;
         }
 
         @media (max-width: 1024px) {
@@ -337,23 +349,19 @@
         </section>
 
         <p class="footer-note">Оплата и активация подписки пока подключаются вручную. После оплаты возможности включаются на аккаунте в течение дня.</p>
-        <section class="legal-box">
-            <h3>Документы и реквизиты</h3>
-            <ul class="legal-links">
-                <li><a href="/terms" target="_blank" rel="noopener">Пользовательское соглашение</a></li>
-                <li><a href="/privacy" target="_blank" rel="noopener">Политика конфиденциальности</a></li>
-                <li><a href="/contacts" target="_blank" rel="noopener">Контакты и реквизиты</a></li>
-            </ul>
-            <p style="margin:10px 0 0;color:#94a3b8;font-size:13px;">
-                Прямая ссылка для проверки:
-                <a href="https://codebug.online/contacts" target="_blank" rel="noopener">https://codebug.online/contacts</a>
-            </p>
-        </section>
-        <section class="delivery-box">
-            <h3>Способ получения услуги после оплаты</h3>
-            <p>Подписка CodeBug является цифровой услугой. Физическая доставка не требуется.</p>
-            <p>После подтверждения оплаты доступ к функциям выбранного тарифа активируется в аккаунте пользователя в течение 24 часов.</p>
-            <p>Если активация не произошла, напишите в Telegram <a href="https://t.me/afony_l" target="_blank" rel="noopener" style="color:#7dd3fc;text-decoration:none;">@afony_l</a> или на email <a href="mailto:support@codebug.online" style="color:#7dd3fc;text-decoration:none;">support@codebug.online</a>.</p>
+        <section class="compliance-box">
+            <h3>Для продолжения согласования с банком</h3>
+            <ol class="compliance-list">
+                <li>Политика конфиденциальности</li>
+                <li>Пользовательское соглашение</li>
+                <li>Контакты поддержки для обратной связи</li>
+            </ol>
+            <div class="doc-actions">
+                <a class="doc-btn" href="/privacy" target="_blank" rel="noopener">Политика конфиденциальности</a>
+                <a class="doc-btn" href="/terms" target="_blank" rel="noopener">Пользовательское соглашение</a>
+                <a class="doc-btn" href="/contacts" target="_blank" rel="noopener">Контакты поддержки</a>
+            </div>
+            <p class="support-line">Поддержка: <a href="https://t.me/afony_l" target="_blank" rel="noopener">@afony_l</a>, <a href="mailto:support@codebug.online">support@codebug.online</a>.</p>
         </section>
     </main>
 
