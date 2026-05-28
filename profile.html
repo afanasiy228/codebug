@@ -853,8 +853,6 @@
             <p style="margin:0;color:#94a3b8;">Выбери цвет ника и стиль рамки. Ниже показан превью-вариант «afanasy».</p>
             <div style="font-weight:600;color:#bfdbfe;margin-top:14px;">Цвет ника</div>
             <div class="choice-list" id="nickColorSwatches"></div>
-            <div style="font-weight:600;color:#bfdbfe;margin-top:12px;">Стиль рамки профиля</div>
-            <div class="choice-list" id="frameStyleSwatches"></div>
             <div id="frameColorBlock" style="display:none;">
                 <div style="font-weight:600;color:#bfdbfe;margin-top:12px;">Цвет рамки (PRO+)</div>
                 <div class="choice-list" id="frameColorSwatches"></div>
@@ -1345,13 +1343,11 @@
         function renderProColorControls(level, activeTheme, activeFrameStyle, activeFrameColor) {
             const isPro = level !== "free";
             const swatches = document.getElementById("nickColorSwatches");
-            const frameSwatches = document.getElementById("frameStyleSwatches");
             const frameColorSwatches = document.getElementById("frameColorSwatches");
             const frameColorBlock = document.getElementById("frameColorBlock");
-            if (!swatches || !frameSwatches || !frameColorSwatches || !frameColorBlock) return;
+            if (!swatches || !frameColorSwatches || !frameColorBlock) return;
             if (!isPro) {
                 swatches.innerHTML = "";
-                frameSwatches.innerHTML = "";
                 frameColorSwatches.innerHTML = "";
                 frameColorBlock.style.display = "none";
                 return;
@@ -1375,24 +1371,6 @@
                 btn.appendChild(meta);
                 btn.addEventListener("click", () => setNickColor(theme));
                 swatches.appendChild(btn);
-            });
-            frameSwatches.innerHTML = "";
-            FRAME_STYLES.forEach((item) => {
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "choice-btn" + (item.id === activeFrameStyle ? " active" : "");
-                btn.title = `Выбрать рамку ${item.label}`;
-                const sample = document.createElement("span");
-                sample.className = "sample";
-                sample.style.color = item.color;
-                sample.textContent = "afanasy";
-                const meta = document.createElement("span");
-                meta.className = "meta";
-                meta.textContent = item.label;
-                btn.appendChild(sample);
-                btn.appendChild(meta);
-                btn.addEventListener("click", () => setFrameStyle(item.id));
-                frameSwatches.appendChild(btn);
             });
             const canPickFrameColor = level === "pro_plus" || level === "dev";
             frameColorBlock.style.display = canPickFrameColor ? "block" : "none";
