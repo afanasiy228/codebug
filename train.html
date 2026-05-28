@@ -269,6 +269,72 @@
             display: flex;
             justify-content: flex-start;
         }
+
+        .suggest-card {
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            box-shadow: 0 14px 34px rgba(26, 22, 18, 0.1);
+            display: grid;
+            gap: 10px;
+        }
+
+        .suggest-title {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .suggest-sub {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .suggest-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .suggest-grid .full {
+            grid-column: 1 / -1;
+        }
+
+        .suggest-card textarea {
+            width: 100%;
+            min-height: 96px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .suggest-card textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+        }
+
+        .suggest-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .suggest-status {
+            color: var(--muted);
+            font-size: 13px;
+            min-height: 18px;
+        }
         
         .btn-random {
             background: #fff;
@@ -406,6 +472,9 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+            .suggest-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -494,6 +563,20 @@
                 <div class="random-row reveal" style="--delay: 0.14s;">
                     <button class="btn-random" onclick="openRandom()">🎲 Случайная задача</button>
                 </div>
+
+                <section class="suggest-card reveal" style="--delay: 0.16s;">
+                    <h2 class="suggest-title">Предложить свою задачу</h2>
+                    <p class="suggest-sub">Отправь идею задачи в очередь модерации. Мы посмотрим и добавим в тренировку.</p>
+                    <div class="suggest-grid">
+                        <input id="suggestTitle" type="text" maxlength="140" placeholder="Название задачи">
+                        <input id="suggestSource" type="text" maxlength="300" placeholder="Ссылка / источник (необязательно)">
+                        <textarea id="suggestDescription" class="full" maxlength="2000" placeholder="Кратко опиши условие, ограничения и где может быть ошибка"></textarea>
+                    </div>
+                    <div class="suggest-actions">
+                        <button class="btn-small" type="button" onclick="submitTaskSuggestion()">Отправить предложение</button>
+                        <div id="suggestStatus" class="suggest-status"></div>
+                    </div>
+                </section>
             </div>
 
             <table class="reveal" style="--delay: 0.18s;">
@@ -603,6 +686,44 @@
             }
 
             renderTable();
+        }
+
+        async function submitTaskSuggestion() {
+            const statusEl = document.getElementById("suggestStatus");
+            const title = String(document.getElementById("suggestTitle")?.value || "").trim();
+            const source = String(document.getElementById("suggestSource")?.value || "").trim();
+            const description = String(document.getElementById("suggestDescription")?.value || "").trim();
+            const login = typeof getUser === "function" ? getUser() : null;
+            if (!login) {
+                if (statusEl) statusEl.textContent = "Нужно войти в аккаунт.";
+                return;
+            }
+            if (title.length < 4) {
+                if (statusEl) statusEl.textContent = "Название слишком короткое.";
+                return;
+            }
+            if (description.length < 12) {
+                if (statusEl) statusEl.textContent = "Добавь чуть больше деталей.";
+                return;
+            }
+            try {
+                if (statusEl) statusEl.textContent = "Отправляем...";
+                await db.ref("taskSuggestions").push().set({
+                    title,
+                    source,
+                    description,
+                    author: login,
+                    createdAt: Date.now(),
+                    status: "pending"
+                });
+                document.getElementById("suggestTitle").value = "";
+                document.getElementById("suggestSource").value = "";
+                document.getElementById("suggestDescription").value = "";
+                if (statusEl) statusEl.textContent = "Отправлено. Спасибо!";
+            } catch (err) {
+                console.error("[training] suggestion submit failed", err);
+                if (statusEl) statusEl.textContent = "Не удалось отправить. Попробуй позже.";
+            }
         }
 
         // ============================
