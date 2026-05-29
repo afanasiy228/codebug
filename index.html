@@ -332,6 +332,140 @@
             color: var(--muted);
             font-size: 14px;
         }
+
+        .about-roadmap {
+            padding: 84px 18px 74px;
+            display: grid;
+            align-content: center;
+            background: linear-gradient(180deg, rgba(6, 10, 14, 0.98), rgba(8, 12, 17, 0.98));
+        }
+
+        .about-shell {
+            width: min(980px, 100%);
+            margin: 0 auto;
+            display: grid;
+            gap: 26px;
+        }
+
+        .about-head h2 {
+            margin: 0;
+            font-size: clamp(30px, 4.5vw, 48px);
+            line-height: 1.08;
+            color: #d8e1ea;
+        }
+
+        .about-head p {
+            margin: 12px 0 0;
+            color: #8d9aa7;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 760px;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .about-item {
+            border: 1px solid #1f2a33;
+            border-radius: 12px;
+            padding: 16px;
+            background: rgba(11, 17, 24, 0.84);
+        }
+
+        .about-item h3 {
+            margin: 0;
+            color: #d5dde6;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .about-item p {
+            margin: 10px 0 0;
+            color: #92a0ad;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .roadmap {
+            border: 1px solid #223243;
+            border-radius: 14px;
+            background: rgba(9, 14, 22, 0.9);
+            padding: 18px 16px 18px 18px;
+        }
+
+        .roadmap h3 {
+            margin: 0 0 12px;
+            color: #d8e3ee;
+            font-size: 22px;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            margin: 0;
+            padding: 0 0 0 42px;
+            position: relative;
+            display: grid;
+            gap: 14px;
+        }
+
+        .roadmap-list::before {
+            content: "";
+            position: absolute;
+            left: 14px;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: repeating-linear-gradient(to bottom, #3a5a76 0 6px, transparent 6px 12px);
+            opacity: 0.9;
+        }
+
+        .roadmap-step {
+            position: relative;
+            border: 1px solid #203447;
+            border-radius: 12px;
+            background: rgba(10, 17, 26, 0.9);
+            padding: 12px 12px 12px 14px;
+        }
+
+        .roadmap-marker {
+            position: absolute;
+            left: -36px;
+            top: 12px;
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid #2a3a49;
+            background: #101b27;
+            color: #8ba0b5;
+        }
+
+        .roadmap-step.done .roadmap-marker {
+            border-color: rgba(73, 146, 109, 0.62);
+            background: rgba(26, 58, 42, 0.85);
+            color: #9fd4b7;
+        }
+
+        .roadmap-step.todo .roadmap-marker {
+            border-color: rgba(154, 95, 95, 0.62);
+            background: rgba(58, 28, 28, 0.85);
+            color: #e7a6a6;
+        }
+
+        .roadmap-title {
+            margin: 0;
+            color: #d4dee8;
+            font-size: 15px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
         
         @media (max-width: 760px) {
             .top-nav {
@@ -358,6 +492,15 @@
             }
             .subtitle {
                 font-size: 21px;
+            }
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+            .roadmap-list {
+                padding-left: 38px;
+            }
+            .roadmap-marker {
+                left: -32px;
             }
         }
     </style>
@@ -390,6 +533,60 @@
             </div>
             <div id="homeNewsList" class="news-list"></div>
             <div id="homeNewsEmpty" class="news-empty" style="display:none;">Пока нет новостей.</div>
+        </div>
+    </section>
+
+    <section class="screen about-roadmap" id="aboutCodeBug">
+        <div class="about-shell">
+            <div class="about-head">
+                <h2>О платформе CodeBug</h2>
+                <p>CodeBug — онлайн-платформа для тренировки навыков отладки кода. Пользователь решает задачи, ищет ошибки в готовых программах и исправляет баги в формате, максимально близком к реальным соревнованиям и собеседованиям.</p>
+            </div>
+
+            <div class="about-grid">
+                <article class="about-item">
+                    <h3>Что такое CodeBug</h3>
+                    <p>Специализированный дебаг-тренажёр с задачами на поиск и исправление ошибок, автоматической проверкой и рейтингом.</p>
+                </article>
+                <article class="about-item">
+                    <h3>Целевая аудитория</h3>
+                    <p>Олимпиадники, школьники, студенты, участники контестов и разработчики, которым важно быстро находить и устранять баги.</p>
+                </article>
+                <article class="about-item">
+                    <h3>Зачем создан</h3>
+                    <p>Большинство платформ тренируют написание кода с нуля. CodeBug закрывает отдельный навык: системный дебаг и анализ чужих решений.</p>
+                </article>
+            </div>
+
+            <section class="roadmap" aria-label="Дорожная карта проекта">
+                <h3>Дорожная карта</h3>
+                <ol class="roadmap-list">
+                    <li class="roadmap-step done">
+                        <span class="roadmap-marker">✓</span>
+                        <p class="roadmap-title">Создание платформы, системы задач и движка проверки решений.</p>
+                    </li>
+                    <li class="roadmap-step todo">
+                        <span class="roadmap-marker">✕</span>
+                        <p class="roadmap-title">Тестирование и полировка платформы.</p>
+                    </li>
+                    <li class="roadmap-step todo">
+                        <span class="roadmap-marker">✕</span>
+                        <p class="roadmap-title">Подключение домена, настройка SEO и платёжной системы.</p>
+                    </li>
+                    <li class="roadmap-step todo">
+                        <span class="roadmap-marker">✕</span>
+                        <p class="roadmap-title">Запуск рейтинга, соревнований и игровых механик.</p>
+                    </li>
+                    <li class="roadmap-step todo">
+                        <span class="roadmap-marker">✕</span>
+                        <p class="roadmap-title">Наполнение базы задач и датасета типовых ошибок.</p>
+                    </li>
+                    <li class="roadmap-step todo">
+                        <span class="roadmap-marker">✕</span>
+                        <p class="roadmap-title">Привлечение пользователей через партнёрские каналы и запуск премиум-функций.</p>
+                    </li>
+                </ol>
+            </section>
         </div>
     </section>
 
