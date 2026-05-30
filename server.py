@@ -158,6 +158,9 @@ PRO_NICK_COLORS = {
 }
 PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix"}
 PRO_FRAME_STYLES = {"classic", "ocean", "violet", "sunset", "neon", "carbon"}
+PROFILE_COVER_PRESETS = {f"cover_{i}" for i in range(1, 11)}
+DEFAULT_PROFILE_COVER_ID = "cover_1"
+MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))
 
 
 def _api_error(error, status=400, code=None):
@@ -2812,6 +2815,69 @@ def profile_set_frame_style():
         return jsonify({"ok": True, "style": style})
     except Exception as e:
         return _server_error("set_frame_style_failed", "SET_FRAME_STYLE_FAILED", exc=e)
+
+
+@app.route("/profile/set-cover", methods=["POST"])
+def profile_set_cover():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _rate_limit("profile_set_cover", login, limit=30, per_seconds=3600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+
+    data = request.get_json(silent=True) or {}
+    cover_id = str(data.get("coverId") or "").strip().lower()
+    custom_image = data.get("customImage")
+    clear_custom = bool(data.get("clearCustom"))
+
+    if not cover_id and custom_image is None and not clear_custom:
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    if cover_id and cover_id not in PROFILE_COVER_PRESETS:
+        return _api_error("invalid_cover_id", 400, "INVALID_COVER_ID")
+
+    has_custom_payload = custom_image is not None
+    normalized_custom = None
+    if has_custom_payload:
+        if not isinstance(custom_image, str):
+            return _api_error("invalid_custom_cover", 400, "INVALID_CUSTOM_COVER")
+        normalized_custom = custom_image.strip()
+        if normalized_custom:
+            if not _is_pro_active(login):
+                return _api_error("pro_required", 403, "PRO_REQUIRED")
+            if not normalized_custom.startswith("data:image/"):
+                return _api_error("invalid_custom_cover", 400, "INVALID_CUSTOM_COVER")
+            if len(normalized_custom.encode("utf-8", errors="replace")) > MAX_PROFILE_COVER_IMAGE_BYTES:
+                return _api_error("custom_cover_too_large", 400, "CUSTOM_COVER_TOO_LARGE")
+        else:
+            clear_custom = True
+
+    try:
+        ref = db.reference(f"users/{login}/profileStyle")
+        current = ref.get() or {}
+        if not isinstance(current, dict):
+            current = {}
+
+        next_style = dict(current)
+        next_style["coverId"] = cover_id or str(next_style.get("coverId") or DEFAULT_PROFILE_COVER_ID)
+        if clear_custom:
+            next_style.pop("customCover", None)
+        if normalized_custom:
+            next_style["customCover"] = normalized_custom
+        next_style["updatedAt"] = int(time.time() * 1000)
+
+        ref.set(next_style)
+        return jsonify({
+            "ok": True,
+            "coverId": next_style.get("coverId"),
+            "hasCustomCover": bool(next_style.get("customCover"))
+        })
+    except Exception as e:
+        return _server_error("set_cover_failed", "SET_COVER_FAILED", exc=e)
 
 
 @app.route("/admin/rebuild-user-stats", methods=["POST"])

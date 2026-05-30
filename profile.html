@@ -97,6 +97,76 @@
             box-shadow: var(--shadow);
             min-width: 0;
         }
+
+        .profile-cover-panel {
+            position: relative;
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 18px;
+            background: #0f172a;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28);
+        }
+
+        .profile-cover {
+            height: 180px;
+            background-image: linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%);
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            transition: background-image .25s ease;
+        }
+
+        .profile-cover-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.14), rgba(15, 23, 42, 0.8));
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px;
+        }
+
+        .profile-cover-meta {
+            display: grid;
+            gap: 6px;
+        }
+
+        .cover-pill {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 999px;
+            padding: 5px 10px;
+        }
+
+        .cover-note {
+            font-size: 13px;
+            color: #d5deeb;
+            text-shadow: 0 1px 10px rgba(2, 6, 23, 0.45);
+        }
+
+        .cover-change-btn {
+            margin: 0;
+            background: rgba(2, 6, 23, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.65);
+            box-shadow: none;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        .cover-change-btn:hover {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: rgba(191, 219, 254, 0.85);
+        }
         
         .name-line {
             display: flex;
@@ -661,6 +731,103 @@
             justify-content: flex-end;
         }
 
+        .cover-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.74);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1260;
+            padding: 16px;
+        }
+
+        .cover-modal.open { display: flex; }
+
+        .cover-modal-card {
+            width: min(960px, 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: #0f172a;
+            padding: 18px;
+            box-shadow: 0 24px 64px rgba(2, 6, 23, 0.6);
+        }
+
+        .cover-modal-title {
+            margin: 0 0 8px;
+            color: #e2e8f0;
+            font-size: 24px;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .cover-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            max-height: 380px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .cover-option {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, .7);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color .16s linear, transform .16s ease;
+        }
+
+        .cover-option:hover {
+            border-color: rgba(125, 211, 252, 0.85);
+            transform: translateY(-1px);
+        }
+
+        .cover-option.active {
+            border-color: rgba(34, 197, 94, 0.95);
+            box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45);
+        }
+
+        .cover-thumb {
+            height: 92px;
+            background-position: center;
+            background-size: cover;
+        }
+
+        .cover-option-meta {
+            padding: 8px 10px;
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .cover-upload-zone {
+            margin-top: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.55);
+            padding: 12px;
+        }
+
+        .cover-upload-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        #coverCustomFile {
+            display: none;
+        }
+
+        #coverError {
+            min-height: 18px;
+            margin-top: 8px;
+            color: #fca5a5;
+            font-size: 13px;
+        }
+
         .reveal {
             opacity: 0;
             transform: translateY(18px);
@@ -686,6 +853,9 @@
             }
             .choice-list {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .cover-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -723,6 +893,16 @@
 
         <!-- LEFT COLUMN -->
         <div class="info reveal" style="--delay: 0s;">
+            <section class="profile-cover-panel" id="profileCoverPanel">
+                <div class="profile-cover" id="profileCover"></div>
+                <div class="profile-cover-overlay">
+                    <div class="profile-cover-meta">
+                        <span class="cover-pill">Шапка профиля</span>
+                        <span class="cover-note" id="coverNote">Базовая шапка</span>
+                    </div>
+                    <button id="changeCoverBtn" type="button" class="cover-change-btn" style="display:none;" onclick="openCoverModal()">Изменить шапку</button>
+                </div>
+            </section>
 
             <div class="name-line">
                 <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
@@ -743,6 +923,7 @@
                 <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
                 <button id="changeNickBtn" type="button" style="display:none;" onclick="changeNickname()">Сменить ник</button>
                 <button id="proStyleBtn" type="button" style="display:none;" onclick="openProStyleModal()">Сменить цвет/рамку</button>
+                <button id="coverStyleBtn" type="button" style="display:none;" onclick="openCoverModal()">Сменить шапку</button>
                 <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
             </div>
 
@@ -854,6 +1035,25 @@
             </div>
         </div>
     </div>
+    <div id="coverModal" class="cover-modal" aria-hidden="true">
+        <div class="cover-modal-card">
+            <h3 class="cover-modal-title">Обложка профиля</h3>
+            <p style="margin:0;color:#94a3b8;">Выберите одну из 10 базовых шапок. С активной PRO можно загрузить свою фотографию.</p>
+            <div id="coverPresetGrid" class="cover-grid"></div>
+            <div class="cover-upload-zone">
+                <div style="color:#cbd5e1;font-size:13px;">Кастомная шапка (только PRO)</div>
+                <input type="file" id="coverCustomFile" accept="image/*">
+                <div class="cover-upload-actions">
+                    <button type="button" id="coverUploadBtn" onclick="pickCoverCustomFile()">Загрузить свою</button>
+                    <button type="button" id="coverClearBtn" style="background:#334155;" onclick="clearCustomCover()">Убрать свою</button>
+                </div>
+                <div id="coverError"></div>
+            </div>
+            <div class="nick-modal-actions">
+                <button type="button" style="background:#334155;" onclick="closeCoverModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -879,6 +1079,19 @@
         const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"];
         const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
         const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix"];
+        const COVER_PRESETS = [
+            { id: "cover_1", name: "Mint Bloom", bg: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)" },
+            { id: "cover_2", name: "Purple Dream", bg: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)" },
+            { id: "cover_3", name: "Deep Sea", bg: "linear-gradient(120deg,#1e3c72 0%,#2a5298 100%)" },
+            { id: "cover_4", name: "Sunset Dust", bg: "linear-gradient(120deg,#f6d365 0%,#fda085 100%)" },
+            { id: "cover_5", name: "Night Tech", bg: "linear-gradient(120deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" },
+            { id: "cover_6", name: "Rose Sky", bg: "linear-gradient(120deg,#ff9a9e 0%,#fad0c4 100%)" },
+            { id: "cover_7", name: "Aqua Wave", bg: "linear-gradient(120deg,#43cea2 0%,#185a9d 100%)" },
+            { id: "cover_8", name: "Cosmo", bg: "linear-gradient(120deg,#667eea 0%,#764ba2 100%)" },
+            { id: "cover_9", name: "Aurora", bg: "linear-gradient(120deg,#00c6ff 0%,#0072ff 30%,#6a11cb 70%,#2575fc 100%)" },
+            { id: "cover_10", name: "Forest Glass", bg: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)" }
+        ];
+        const DEFAULT_COVER_ID = "cover_1";
         const FRAME_STYLES = [
             { id: "classic", color: "#60a5fa", label: "Классика" },
             { id: "ocean", color: "#22d3ee", label: "Океан" },
@@ -887,6 +1100,7 @@
             { id: "neon", color: "#34d399", label: "Неон" },
             { id: "carbon", color: "#94a3b8", label: "Карбон" }
         ];
+        let currentProfileStyle = {};
 
         /* ============================
            RANK SYSTEM
@@ -947,6 +1161,29 @@
             }
             if (theme === "fire_ice") return `<span style="background:linear-gradient(90deg,#ef4444 0%,#f97316 45%,#38bdf8 55%,#2563eb 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">afanasy</span>`;
             return `<span style="${getNickThemeSampleStyle(theme)}">afanasy</span>`;
+        }
+
+        function coverPresetById(id) {
+            const key = String(id || "").toLowerCase();
+            return COVER_PRESETS.find((item) => item.id === key) || COVER_PRESETS[0];
+        }
+
+        function applyProfileCover(styleData, subLevel) {
+            const coverEl = document.getElementById("profileCover");
+            const noteEl = document.getElementById("coverNote");
+            if (!coverEl || !noteEl) return;
+            const style = (styleData && typeof styleData === "object") ? styleData : {};
+            const preset = coverPresetById(style.coverId || DEFAULT_COVER_ID);
+            const custom = String(style.customCover || "").trim();
+            const canUseCustom = (subLevel !== "free");
+
+            if (custom && custom.startsWith("data:image/") && canUseCustom) {
+                coverEl.style.backgroundImage = `url("${custom}")`;
+                noteEl.textContent = "Кастомная шапка";
+            } else {
+                coverEl.style.backgroundImage = preset.bg;
+                noteEl.textContent = `Базовая шапка · ${preset.name}`;
+            }
         }
 
         function isSolvedSubmission(sub) {
@@ -1192,13 +1429,16 @@
             const data = snap.val();
             const stats = data.stats || {};
             const sub = data.subscription || null;
+            const profileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
             currentSubscription = sub;
             const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
             currentSubscriptionLevel = level;
+            currentProfileStyle = profileStyle;
             const isPro = level !== "free";
             const proNickColor = isPro && typeof getSubscriptionNickColor === "function" ? getSubscriptionNickColor(sub) : null;
             const nickTheme = isPro && typeof getSubscriptionNickTheme === "function" ? getSubscriptionNickTheme(sub) : null;
             const frameStyle = String(sub?.visuals?.frameStyle || "classic").toLowerCase();
+            applyProfileCover(profileStyle, level);
 
             // ---- BASIC INFO ----
             const usernameEl = document.getElementById("username");
@@ -1277,10 +1517,14 @@
                 const logoutBtn = document.getElementById("logoutBtn");
                 const changeNickBtn = document.getElementById("changeNickBtn");
                 const proStyleBtn = document.getElementById("proStyleBtn");
+                const coverStyleBtn = document.getElementById("coverStyleBtn");
+                const changeCoverBtn = document.getElementById("changeCoverBtn");
                 if (friendsLinkBtn) friendsLinkBtn.style.display = "none";
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (changeNickBtn) changeNickBtn.style.display = "none";
                 if (proStyleBtn) proStyleBtn.style.display = "none";
+                if (coverStyleBtn) coverStyleBtn.style.display = "none";
+                if (changeCoverBtn) changeCoverBtn.style.display = "none";
                 const usernameEl = document.getElementById("username");
                 if (usernameEl) {
                     usernameEl.onclick = null;
@@ -1292,10 +1536,14 @@
                     avatarBlockSelf.onclick = null;
                     avatarBlockSelf.title = "";
                 }
+                const coverPanel = document.getElementById("profileCoverPanel");
+                if (coverPanel) coverPanel.title = "";
                 setupViewedFriendButton();
             } else {
                 const changeNickBtn = document.getElementById("changeNickBtn");
                 const proStyleBtn = document.getElementById("proStyleBtn");
+                const coverStyleBtn = document.getElementById("coverStyleBtn");
+                const changeCoverBtn = document.getElementById("changeCoverBtn");
                 const usernameEl = document.getElementById("username");
                 if (usernameEl) {
                     usernameEl.onclick = isPro ? openProStyleModal : null;
@@ -1314,6 +1562,9 @@
                 }
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
                 if (proStyleBtn) proStyleBtn.style.display = isPro ? "inline-block" : "none";
+                if (coverStyleBtn) coverStyleBtn.style.display = "inline-block";
+                if (changeCoverBtn) changeCoverBtn.style.display = "inline-block";
+                renderCoverControls(level, profileStyle);
                 renderProColorControls(level, nickTheme || proNickColor || "#60a5fa", frameStyle);
             }
 
@@ -1348,6 +1599,158 @@
                 btn.addEventListener("click", () => setNickColor(theme));
                 swatches.appendChild(btn);
             });
+        }
+
+        function renderCoverControls(level, styleData) {
+            const grid = document.getElementById("coverPresetGrid");
+            const uploadBtn = document.getElementById("coverUploadBtn");
+            const clearBtn = document.getElementById("coverClearBtn");
+            const errorEl = document.getElementById("coverError");
+            const fileInput = document.getElementById("coverCustomFile");
+            if (!grid) return;
+
+            const style = (styleData && typeof styleData === "object") ? styleData : {};
+            const activeId = String(style.coverId || DEFAULT_COVER_ID).toLowerCase();
+            const hasCustom = !!String(style.customCover || "").trim();
+            const isPro = level !== "free";
+
+            grid.innerHTML = "";
+            COVER_PRESETS.forEach((preset) => {
+                const card = document.createElement("button");
+                card.type = "button";
+                card.className = "cover-option" + (preset.id === activeId ? " active" : "");
+                card.innerHTML = `
+                    <div class="cover-thumb" style="background-image:${preset.bg};"></div>
+                    <div class="cover-option-meta">${preset.name}</div>
+                `;
+                card.addEventListener("click", () => setProfileCoverPreset(preset.id));
+                grid.appendChild(card);
+            });
+
+            if (uploadBtn) uploadBtn.disabled = !isPro;
+            if (clearBtn) clearBtn.disabled = !isPro || !hasCustom;
+            if (errorEl) errorEl.textContent = isPro ? "" : "Кастомная шапка доступна с активной PRO подпиской.";
+            if (fileInput) fileInput.value = "";
+        }
+
+        function openCoverModal() {
+            const modal = document.getElementById("coverModal");
+            if (!modal) return;
+            renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+        }
+
+        function closeCoverModal() {
+            const modal = document.getElementById("coverModal");
+            if (!modal) return;
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+            const errorEl = document.getElementById("coverError");
+            if (errorEl) errorEl.textContent = "";
+        }
+
+        async function setProfileCoverPreset(coverId) {
+            const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+            const headers = { "Content-Type": "application/json" };
+            try {
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                const res = await fetch(`${base}/profile/set-cover`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ coverId, clearCustom: true })
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const errorEl = document.getElementById("coverError");
+                    if (errorEl) errorEl.textContent = payload.error || "Не удалось сохранить шапку.";
+                    return;
+                }
+                currentProfileStyle.coverId = payload.coverId || coverId;
+                delete currentProfileStyle.customCover;
+                applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
+                renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
+            } catch (_) {
+                const errorEl = document.getElementById("coverError");
+                if (errorEl) errorEl.textContent = "Сервер недоступен.";
+            }
+        }
+
+        function pickCoverCustomFile() {
+            if (currentSubscriptionLevel === "free") {
+                const errorEl = document.getElementById("coverError");
+                if (errorEl) errorEl.textContent = "Кастомная шапка доступна только для PRO.";
+                return;
+            }
+            const input = document.getElementById("coverCustomFile");
+            if (input) input.click();
+        }
+
+        async function uploadCustomCover(file) {
+            if (!file) return;
+            const errorEl = document.getElementById("coverError");
+            if (file.size > 2 * 1024 * 1024) {
+                if (errorEl) errorEl.textContent = "Файл слишком большой. Максимум 2MB.";
+                return;
+            }
+            try {
+                const base64 = await new Promise((resolve, reject) => {
+                    const r = new FileReader();
+                    r.onload = () => resolve(r.result);
+                    r.onerror = reject;
+                    r.readAsDataURL(file);
+                });
+                const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+                const headers = { "Content-Type": "application/json" };
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                const res = await fetch(`${base}/profile/set-cover`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ customImage: String(base64 || "") })
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    if (errorEl) errorEl.textContent = payload.error || "Не удалось загрузить шапку.";
+                    return;
+                }
+                currentProfileStyle.customCover = String(base64 || "");
+                if (payload.coverId) currentProfileStyle.coverId = payload.coverId;
+                applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
+                renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
+                if (errorEl) errorEl.textContent = "Кастомная шапка обновлена.";
+            } catch (_) {
+                if (errorEl) errorEl.textContent = "Ошибка загрузки.";
+            }
+        }
+
+        async function clearCustomCover() {
+            if (currentSubscriptionLevel === "free") return;
+            const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+            const headers = { "Content-Type": "application/json" };
+            try {
+                const auth = typeof getAuth === "function" ? getAuth() : null;
+                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                const res = await fetch(`${base}/profile/set-cover`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ clearCustom: true })
+                });
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const errorEl = document.getElementById("coverError");
+                    if (errorEl) errorEl.textContent = payload.error || "Не удалось убрать кастомную шапку.";
+                    return;
+                }
+                delete currentProfileStyle.customCover;
+                currentProfileStyle.coverId = payload.coverId || currentProfileStyle.coverId || DEFAULT_COVER_ID;
+                applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
+                renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
+            } catch (_) {
+                const errorEl = document.getElementById("coverError");
+                if (errorEl) errorEl.textContent = "Сервер недоступен.";
+            }
         }
 
         async function setNickColor(color) {
@@ -1592,6 +1995,38 @@
         loadLastActivity();
         loadAnalytics();
         startPresence();
+
+        const coverCustomFileInput = document.getElementById("coverCustomFile");
+        if (coverCustomFileInput) {
+            coverCustomFileInput.addEventListener("change", (ev) => {
+                const file = ev?.target?.files?.[0];
+                if (file) uploadCustomCover(file);
+            });
+        }
+        const coverModal = document.getElementById("coverModal");
+        if (coverModal) {
+            coverModal.addEventListener("click", (ev) => {
+                if (ev.target === coverModal) closeCoverModal();
+            });
+        }
+        const proStyleModal = document.getElementById("proStyleModal");
+        if (proStyleModal) {
+            proStyleModal.addEventListener("click", (ev) => {
+                if (ev.target === proStyleModal) closeProStyleModal();
+            });
+        }
+        const nickModal = document.getElementById("nickModal");
+        if (nickModal) {
+            nickModal.addEventListener("click", (ev) => {
+                if (ev.target === nickModal) closeNickModal();
+            });
+        }
+        document.addEventListener("keydown", (ev) => {
+            if (ev.key !== "Escape") return;
+            closeCoverModal();
+            closeProStyleModal();
+            closeNickModal();
+        });
 
         async function searchFriend() {
             const input = document.getElementById("friendSearch");
