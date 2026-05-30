@@ -81,17 +81,19 @@
         
         .container {
             max-width: 1240px;
-            margin: 26px auto 40px;
+            margin: 18px auto 34px;
             padding: 0 20px;
             display: block;
         }
         
         .info {
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            padding: 0 0 22px;
+            background:
+                linear-gradient(180deg, rgba(56, 74, 82, 0.38) 0px, rgba(37, 50, 56, 0.72) 54px, rgba(28, 37, 41, 0.94) 138px, var(--card) 214px);
+            border: 1px solid rgba(154, 178, 196, 0.2);
+            border-top-color: rgba(154, 178, 196, 0.08);
+            padding: 0 0 14px;
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow);
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
             min-width: 0;
             overflow: hidden;
         }
@@ -113,6 +115,18 @@
             background-size: cover;
             background-repeat: no-repeat;
             transition: background-image .25s ease;
+            position: relative;
+        }
+
+        .profile-cover::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 176px;
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(15, 22, 27, 0.04) 0%, rgba(20, 29, 35, 0.42) 36%, rgba(27, 37, 43, 0.8) 70%, rgba(28, 37, 41, 0.98) 100%);
         }
 
         .profile-cover-overlay {
@@ -153,17 +167,20 @@
         }
 
         .profile-header-row {
-            margin-top: -44px;
-            padding: 0 24px 10px;
+            margin-top: -112px;
+            padding: 0 24px 0;
             display: grid;
-            grid-template-columns: 220px minmax(0, 1fr);
-            gap: 20px;
+            grid-template-columns: 270px minmax(0, 1fr);
+            gap: 2px;
             align-items: end;
+            position: relative;
+            z-index: 2;
         }
 
         .profile-head-content {
             min-width: 0;
-            padding-bottom: 8px;
+            padding-bottom: 2px;
+            transform: translate(-10px, -24px);
         }
 
         .name-line {
@@ -171,7 +188,7 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 8px;
+            margin-bottom: 1px;
         }
         .username {
             font-size: clamp(38px, 4.2vw, 58px);
@@ -179,7 +196,7 @@
             font-family: "Space Grotesk", sans-serif;
             color: #f2f6fb;
             margin-bottom: 0;
-            line-height: 1.02;
+            line-height: 0.98;
             letter-spacing: .01em;
         }
 
@@ -202,7 +219,7 @@
         }
         
         .rank-text {
-            font-size: 16px;
+            font-size: 15px;
             color: #d5e5f1;
             margin-bottom: 0;
             display: block;
@@ -213,22 +230,22 @@
         }
 
         .osu-overview {
-            margin: 8px 22px 16px;
+            margin: -2px 22px 10px;
             border: 0;
             border-radius: 0;
             background: transparent;
-            padding: 8px 0 4px;
+            padding: 4px 0 2px;
             color: #d4e0ec;
         }
 
         .osu-topline {
             display: flex;
             align-items: flex-end;
-            gap: 28px;
+            gap: 20px;
             flex-wrap: wrap;
-            margin-bottom: 6px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(141, 160, 176, 0.24);
+            margin-bottom: 2px;
+            padding-bottom: 2px;
+            border-bottom: 0;
         }
 
         .osu-primary-metric {
@@ -247,7 +264,7 @@
             line-height: 1;
             font-family: "Space Grotesk", sans-serif;
             font-weight: 700;
-            color: #e8f2fa;
+            color: #dce7f0;
             letter-spacing: .01em;
         }
 
@@ -256,6 +273,19 @@
             font-style: normal;
             font-size: 0.74em;
             margin-left: 2px;
+        }
+
+        .osu-primary-metric:first-child .osu-primary-label {
+            color: #dbe9f6;
+            font-size: 13px;
+            letter-spacing: .02em;
+        }
+
+        .osu-primary-metric:first-child .osu-primary-value {
+            font-size: clamp(72px, 9.1vw, 122px);
+            color: #f8fdff;
+            text-shadow: 0 0 28px rgba(140, 218, 255, 0.36);
+            line-height: 0.84;
         }
 
         .osu-inline-metric {
@@ -272,7 +302,7 @@
         }
 
         .osu-inline-value {
-            font-size: 30px;
+            font-size: 26px;
             line-height: 1;
             font-family: "Space Grotesk", sans-serif;
             font-weight: 700;
@@ -288,26 +318,27 @@
 
         .osu-graph canvas {
             width: 100%;
-            height: 86px;
+            height: 82px;
             display: block;
         }
 
         .osu-legend {
-            margin-top: 4px;
+            margin-top: 2px;
             display: flex;
             justify-content: space-between;
             gap: 10px;
-            color: #aec0cf;
-            font-size: 12px;
+            color: #9fb2c1;
+            font-size: 11px;
+            opacity: 0.9;
         }
 
         .osu-meta {
-            margin-top: 6px;
+            margin-top: 2px;
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 12px;
-            border-top: 1px solid rgba(141, 160, 176, 0.2);
-            padding-top: 8px;
+            gap: 8px;
+            border-top: 0;
+            padding-top: 2px;
         }
 
         .osu-meta-item {
@@ -318,22 +349,24 @@
         }
 
         .osu-meta-label {
-            font-size: 11px;
-            color: #adc0ce;
-            margin-bottom: 4px;
+            font-size: 10px;
+            color: #9fb2c1;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
         }
 
         .osu-meta-value {
-            font-size: 26px;
+            font-size: 24px;
             font-family: "Space Grotesk", sans-serif;
             color: #edf6fc;
             font-weight: 700;
         }
         
         .info-row {
-            margin: 8px 22px;
-            font-size: 14px;
-            color: #b6c5d1;
+            margin: 2px 22px 6px;
+            font-size: 13px;
+            color: #a8b8c5;
         }
         
         .info-row span {
@@ -344,13 +377,13 @@
         .section-title {
             font-size: 20px;
             font-weight: 600;
-            margin: 20px 22px 10px;
+            margin: 14px 22px 8px;
             color: #e4edf5;
             font-family: "Space Grotesk", sans-serif;
         }
         
         .avatar-block {
-            width: 220px;
+            width: 270px;
             background: transparent;
             border: none;
             padding: 0;
@@ -367,13 +400,14 @@
 
         .avatar-media {
             position: relative;
-            width: 208px;
-            height: 208px;
+            width: 256px;
+            height: 256px;
+            transform: translateY(6px);
         }
         
         .avatar-block img {
-            width: 208px;
-            height: 208px;
+            width: 256px;
+            height: 256px;
             border-radius: 16px;
             object-fit: cover;
             border: 0;
@@ -490,17 +524,17 @@
         }
 
         .analytics-section {
-            margin: 18px 22px 0;
+            margin: 8px 22px 0;
             display: grid;
-            gap: 16px;
+            gap: 10px;
         }
 
         .analytics-card {
             background: transparent;
             border: 0;
-            border-top: 1px solid rgba(136, 156, 171, 0.24);
+            border-top: 0;
             border-radius: 0;
-            padding: 14px 0 4px;
+            padding: 4px 0 2px;
             min-width: 0;
             overflow: hidden;
         }
@@ -514,9 +548,9 @@
         }
 
         .analytics-sub {
-            margin: 0 0 10px;
-            color: #aebfcd;
-            font-size: 13px;
+            margin: 0 0 6px;
+            color: #a1b2c0;
+            font-size: 12px;
         }
 
         .heatmap-wrap {
@@ -529,10 +563,10 @@
         .heatmap-months {
             display: grid;
             grid-auto-flow: column;
-            grid-auto-columns: 12px;
-            gap: 4px;
+            grid-auto-columns: 11px;
+            gap: 3px;
             margin-left: 30px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             min-width: max-content;
         }
 
@@ -552,9 +586,9 @@
         .heatmap-weekdays {
             width: 26px;
             display: grid;
-            grid-template-rows: repeat(7, 12px);
-            gap: 4px;
-            color: #90a9cc;
+            grid-template-rows: repeat(7, 11px);
+            gap: 3px;
+            color: #7f95b2;
             font-size: 10px;
             align-items: center;
             text-align: right;
@@ -564,43 +598,43 @@
         .heatmap-grid {
             display: grid;
             grid-auto-flow: column;
-            grid-auto-columns: 12px;
-            grid-template-rows: repeat(7, 12px);
-            gap: 4px;
+            grid-auto-columns: 11px;
+            grid-template-rows: repeat(7, 11px);
+            gap: 3px;
         }
 
         .heatmap-cell {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-            background: rgba(90, 120, 160, 0.2);
-            border: 1px solid rgba(90, 120, 160, 0.25);
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+            background: rgba(95, 120, 150, 0.22);
+            border: 0;
         }
 
-        .hm-l1 { background: rgba(34, 197, 94, 0.35); }
-        .hm-l2 { background: rgba(34, 197, 94, 0.55); }
-        .hm-l3 { background: rgba(34, 197, 94, 0.75); }
-        .hm-l4 { background: rgba(34, 197, 94, 0.95); }
+        .hm-l1 { background: rgba(34, 197, 94, 0.44); }
+        .hm-l2 { background: rgba(34, 197, 94, 0.62); }
+        .hm-l3 { background: rgba(34, 197, 94, 0.82); }
+        .hm-l4 { background: rgba(34, 197, 94, 1); }
         .hm-empty {
             background: transparent;
             border-color: transparent;
         }
 
         .heatmap-legend {
-            margin-top: 10px;
+            margin-top: 6px;
             display: flex;
             justify-content: flex-end;
             align-items: center;
             gap: 6px;
-            color: #aebfcd;
-            font-size: 12px;
+            color: #99adbc;
+            font-size: 11px;
         }
 
         .legend-cell {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-            border: 1px solid rgba(120, 130, 150, 0.15);
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            border: 0;
         }
 
         .bars {
@@ -942,24 +976,30 @@
                 height: 190px;
             }
             .profile-header-row {
-                margin-top: -28px;
-                grid-template-columns: 140px minmax(0, 1fr);
-                gap: 14px;
-                padding: 0 14px 10px;
+                margin-top: -66px;
+                grid-template-columns: 180px minmax(0, 1fr);
+                gap: 6px;
+                padding: 0 14px 0;
             }
             .avatar-block {
-                width: 140px;
+                width: 180px;
             }
             .avatar-media {
-                width: 132px;
-                height: 132px;
+                width: 170px;
+                height: 170px;
             }
             .avatar-block img {
-                width: 132px;
-                height: 132px;
+                width: 170px;
+                height: 170px;
             }
             .username {
                 font-size: clamp(30px, 5vw, 40px);
+            }
+            .profile-head-content {
+                transform: translate(-6px, -14px);
+            }
+            .osu-primary-metric:first-child .osu-primary-value {
+                font-size: clamp(54px, 9vw, 82px);
             }
             .choice-list {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -977,24 +1017,26 @@
                 height: 156px;
             }
             .profile-header-row {
-                margin-top: -22px;
+                margin-top: -64px;
                 grid-template-columns: 1fr;
                 justify-items: start;
+                gap: 6px;
             }
             .avatar-block {
-                width: 112px;
+                width: 146px;
                 margin-left: 2px;
             }
             .avatar-media {
-                width: 108px;
-                height: 108px;
+                width: 138px;
+                height: 138px;
             }
             .avatar-block img {
-                width: 108px;
-                height: 108px;
+                width: 138px;
+                height: 138px;
             }
             .profile-head-content {
                 width: 100%;
+                transform: translate(-2px, -10px);
             }
             .osu-topline {
                 gap: 12px;
@@ -1006,6 +1048,9 @@
             }
             .osu-primary-value {
                 font-size: 34px;
+            }
+            .osu-primary-metric:first-child .osu-primary-value {
+                font-size: 58px;
             }
             .osu-inline-metric {
                 margin-left: 0;
