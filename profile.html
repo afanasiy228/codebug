@@ -273,28 +273,28 @@
             color: #d4e0ec;
         }
 
-        .osu-ranks {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 12px;
+        .osu-topline {
+            display: flex;
+            align-items: flex-end;
+            gap: 28px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(141, 160, 176, 0.24);
         }
 
-        .osu-rank-card {
-            border: 1px solid rgba(139, 157, 171, 0.3);
-            border-radius: 14px;
-            padding: 11px;
-            background: rgba(17, 26, 32, 0.58);
+        .osu-primary-metric {
+            min-width: 220px;
         }
 
-        .osu-rank-label {
+        .osu-primary-label {
             font-size: 12px;
             color: #b3c4d2;
             margin-bottom: 7px;
             font-weight: 600;
         }
 
-        .osu-rank-value {
+        .osu-primary-value {
             font-size: clamp(42px, 5vw, 66px);
             line-height: 1;
             font-family: "Space Grotesk", sans-serif;
@@ -303,18 +303,39 @@
             letter-spacing: .01em;
         }
 
-        .osu-rank-value em {
+        .osu-primary-value em {
             color: #ffc2d8;
             font-style: normal;
             font-size: 0.74em;
             margin-left: 2px;
         }
 
+        .osu-inline-metric {
+            margin-left: auto;
+            min-width: 180px;
+            align-self: flex-end;
+        }
+
+        .osu-inline-label {
+            font-size: 12px;
+            color: #b3c4d2;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .osu-inline-value {
+            font-size: 30px;
+            line-height: 1;
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 700;
+            color: #ecf6fd;
+        }
+
         .osu-graph {
-            border: 1px solid rgba(137, 157, 172, 0.3);
-            border-radius: 14px;
-            background: rgba(13, 21, 27, 0.5);
-            padding: 8px;
+            padding: 4px 0 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
         }
 
         .osu-graph canvas {
@@ -333,17 +354,19 @@
         }
 
         .osu-meta {
-            margin-top: 14px;
+            margin-top: 10px;
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 9px;
+            gap: 12px;
+            border-top: 1px solid rgba(141, 160, 176, 0.2);
+            padding-top: 10px;
         }
 
         .osu-meta-item {
-            border: 1px solid rgba(141, 160, 176, 0.3);
-            border-radius: 12px;
-            padding: 8px;
-            background: rgba(15, 24, 31, 0.5);
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            background: transparent;
         }
 
         .osu-meta-label {
@@ -353,7 +376,7 @@
         }
 
         .osu-meta-value {
-            font-size: 28px;
+            font-size: 26px;
             font-family: "Space Grotesk", sans-serif;
             color: #edf6fc;
             font-weight: 700;
@@ -427,25 +450,6 @@
             background: #334651;
         }
         
-        .stats-box {
-            background: rgba(19, 29, 36, 0.85);
-            border: 1px solid rgba(141, 160, 175, 0.28);
-            padding: 18px;
-            border-radius: var(--radius-md);
-            margin: 12px 22px 0;
-        }
-        
-        .stat-item {
-            font-size: 17px;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(141, 160, 175, 0.2);
-            color: #d2deea;
-        }
-        
-        .stat-item span {
-            color: #f0f8ff;
-            font-weight: 700;
-        }
         /* LAST SOLVED */
         
         .last-box {
@@ -1018,11 +1022,21 @@
             .identity-subline {
                 font-size: 19px;
             }
-            .osu-ranks {
-                grid-template-columns: 1fr;
+            .osu-topline {
+                gap: 12px;
+                align-items: flex-start;
             }
-            .osu-rank-value {
+            .osu-primary-metric {
+                min-width: 0;
+                flex: 1 1 calc(50% - 8px);
+            }
+            .osu-primary-value {
                 font-size: 34px;
+            }
+            .osu-inline-metric {
+                margin-left: 0;
+                min-width: 0;
+                width: 100%;
             }
             .osu-meta {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1090,18 +1104,18 @@
             </section>
 
             <section class="osu-overview">
-                <div class="osu-ranks">
-                    <div class="osu-rank-card">
-                        <div class="osu-rank-label">Global Rank</div>
-                        <div class="osu-rank-value" id="globalRankValue">#—</div>
+                <div class="osu-topline">
+                    <div class="osu-primary-metric">
+                        <div class="osu-primary-label">Global Rank</div>
+                        <div class="osu-primary-value" id="globalRankValue">#—</div>
                     </div>
-                    <div class="osu-rank-card">
-                        <div class="osu-rank-label">Рейтинг</div>
-                        <div class="osu-rank-value" id="summaryRatingValue">0</div>
+                    <div class="osu-primary-metric">
+                        <div class="osu-primary-label">Рейтинг</div>
+                        <div class="osu-primary-value" id="summaryRatingValue">0</div>
                     </div>
-                    <div class="osu-rank-card">
-                        <div class="osu-rank-label">Решено задач</div>
-                        <div class="osu-rank-value" id="summarySolvedValue">0</div>
+                    <div class="osu-inline-metric">
+                        <div class="osu-inline-label">Решено задач</div>
+                        <div class="osu-inline-value" id="summarySolvedValue">0</div>
                     </div>
                 </div>
                 <div class="osu-graph">
@@ -1152,14 +1166,6 @@
             <div class="info-row">Решено задач: <span id="solved">0</span></div>
             <div class="info-row">Рейтинг: <span id="rating">0</span></div>
             <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
-
-            <div class="section-title">Статистика</div>
-
-            <div class="stats-box">
-                <div class="stat-item">Решено: <span id="solved2">0</span></div>
-                <div class="stat-item">Опыт: <span id="exp2">0</span></div>
-                <div class="stat-item">Рейтинг: <span id="rating2">0</span></div>
-            </div>
 
             <section class="analytics-section">
                 <article class="analytics-card">
@@ -1762,6 +1768,10 @@
 
             const data = snap.val();
             const stats = data.stats || {};
+            const setNodeText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = value;
+            };
             const sub = data.subscription || null;
             const profileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
             currentSubscription = sub;
@@ -1799,9 +1809,8 @@
                 const navTier = level === "pro_plus" ? "PRO+" : "PRO";
                 navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
             }
-            document.getElementById("userid").innerText = data.id || "—";
-            document.getElementById("created").innerText =
-                data.created ? new Date(data.created).toLocaleDateString() : "—";
+            setNodeText("userid", data.id || "—");
+            setNodeText("created", data.created ? new Date(data.created).toLocaleDateString() : "—");
             const userSubline = document.getElementById("userSubline");
             if (userSubline) userSubline.textContent = `@${data.login || viewedUser}`;
             const countryTag = document.getElementById("countryTag");
@@ -1814,12 +1823,12 @@
             }
 
             // ---- STATS ----
-            document.getElementById("solved").innerText = stats.cnt || 0;
-            document.getElementById("solved2").innerText = stats.cnt || 0;
-            document.getElementById("exp").innerText = stats.exp || 0;
-            document.getElementById("exp2").innerText = stats.exp || 0;
-            document.getElementById("rating").innerText = stats.rating || 0;
-            document.getElementById("rating2").innerText = stats.rating || 0;
+            setNodeText("solved", stats.cnt || 0);
+            setNodeText("solved2", stats.cnt || 0);
+            setNodeText("exp", stats.exp || 0);
+            setNodeText("exp2", stats.exp || 0);
+            setNodeText("rating", stats.rating || 0);
+            setNodeText("rating2", stats.rating || 0);
             const osuSolved = document.getElementById("osuSolvedCount");
             const osuExp = document.getElementById("osuExpValue");
             const osuRating = document.getElementById("osuRatingValue");
