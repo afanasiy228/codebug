@@ -231,82 +231,72 @@
 
         .osu-overview {
             margin: -2px 22px 10px;
-            border: 0;
-            border-radius: 0;
+            border-top: 1px solid rgba(141, 160, 176, 0.22);
             background: transparent;
-            padding: 4px 0 2px;
+            padding: 8px 0 2px;
             color: #d4e0ec;
-        }
-
-        .osu-topline {
-            display: flex;
-            align-items: flex-end;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 250px;
             gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 2px;
-            padding-bottom: 2px;
-            border-bottom: 0;
+            align-items: start;
         }
 
-        .osu-primary-metric {
-            min-width: 220px;
+        .osu-main {
+            min-width: 0;
         }
 
-        .osu-primary-label {
-            font-size: 12px;
-            color: #b3c4d2;
-            margin-bottom: 7px;
-            font-weight: 600;
+        .osu-graph-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            color: #9fb2c1;
+            margin-bottom: 4px;
+            opacity: 0.94;
+            text-transform: uppercase;
+            letter-spacing: .06em;
         }
 
-        .osu-primary-value {
-            font-size: clamp(42px, 5vw, 66px);
+        .osu-side-stats {
+            min-width: 0;
+            display: grid;
+            gap: 8px;
+            padding-top: 2px;
+        }
+
+        .osu-stat-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .osu-stat-label {
+            font-size: 11px;
+            color: #9fb2c1;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .osu-stat-value {
+            font-size: 24px;
             line-height: 1;
             font-family: "Space Grotesk", sans-serif;
             font-weight: 700;
-            color: #dce7f0;
-            letter-spacing: .01em;
+            color: #edf6fc;
+            text-align: right;
         }
 
-        .osu-primary-value em {
-            color: #ffc2d8;
-            font-style: normal;
-            font-size: 0.74em;
-            margin-left: 2px;
-        }
-
-        .osu-primary-metric:first-child .osu-primary-label {
-            color: #dbe9f6;
-            font-size: 13px;
-            letter-spacing: .02em;
-        }
-
-        .osu-primary-metric:first-child .osu-primary-value {
-            font-size: clamp(72px, 9.1vw, 122px);
+        .osu-stat-row.global .osu-stat-value {
+            font-size: clamp(34px, 3.3vw, 46px);
             color: #f8fdff;
-            text-shadow: 0 0 28px rgba(140, 218, 255, 0.36);
-            line-height: 0.84;
+            text-shadow: 0 0 16px rgba(140, 218, 255, 0.26);
         }
 
-        .osu-inline-metric {
-            margin-left: auto;
-            min-width: 180px;
-            align-self: flex-end;
-        }
-
-        .osu-inline-label {
-            font-size: 12px;
-            color: #b3c4d2;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        .osu-inline-value {
-            font-size: 26px;
-            line-height: 1;
-            font-family: "Space Grotesk", sans-serif;
-            font-weight: 700;
-            color: #ecf6fd;
+        .osu-stat-row.activity .osu-stat-value {
+            font-size: 18px;
+            color: #d8e8f4;
         }
 
         .osu-graph {
@@ -324,21 +314,11 @@
 
         .osu-legend {
             margin-top: 2px;
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            color: #9fb2c1;
-            font-size: 11px;
-            opacity: 0.9;
+            display: none;
         }
 
         .osu-meta {
-            margin-top: 2px;
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 8px;
-            border-top: 0;
-            padding-top: 2px;
+            display: none;
         }
 
         .osu-meta-item {
@@ -1039,23 +1019,20 @@
                 transform: translate(-2px, -10px);
             }
             .osu-topline {
-                gap: 12px;
-                align-items: flex-start;
+                display: none;
             }
-            .osu-primary-metric {
-                min-width: 0;
-                flex: 1 1 calc(50% - 8px);
+            .osu-overview {
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
-            .osu-primary-value {
-                font-size: 34px;
+            .osu-side-stats {
+                gap: 6px;
             }
-            .osu-primary-metric:first-child .osu-primary-value {
-                font-size: 58px;
+            .osu-stat-value {
+                font-size: 20px;
             }
-            .osu-inline-metric {
-                margin-left: 0;
-                min-width: 0;
-                width: 100%;
+            .osu-stat-row.global .osu-stat-value {
+                font-size: 32px;
             }
             .osu-meta {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1115,52 +1092,42 @@
             </section>
 
             <section class="osu-overview">
-                <div class="osu-topline">
-                    <div class="osu-primary-metric">
-                        <div class="osu-primary-label">Global Rank</div>
-                        <div class="osu-primary-value" id="globalRankValue">#—</div>
-                    </div>
-                    <div class="osu-primary-metric">
-                        <div class="osu-primary-label">Рейтинг</div>
-                        <div class="osu-primary-value" id="summaryRatingValue">0</div>
-                    </div>
-                    <div class="osu-inline-metric">
-                        <div class="osu-inline-label">Решено задач</div>
-                        <div class="osu-inline-value" id="summarySolvedValue">0</div>
-                    </div>
-                </div>
-                <div class="osu-graph">
-                    <canvas id="solvedTrendChart" width="900" height="160"></canvas>
-                    <div class="osu-legend">
+                <div class="osu-main">
+                    <div class="osu-graph-head">
                         <span>Тренд решённых задач (90 дней)</span>
                         <span id="solvedTrendTotal">Всего: 0</span>
                     </div>
+                    <div class="osu-graph">
+                        <canvas id="solvedTrendChart" width="900" height="160"></canvas>
+                    </div>
                 </div>
-                <div class="osu-meta">
-                    <div class="osu-meta-item">
-                        <div class="osu-meta-label">Solved</div>
-                        <div class="osu-meta-value" id="osuSolvedCount">0</div>
+                <div class="osu-side-stats">
+                    <div class="osu-stat-row global">
+                        <div class="osu-stat-label">Global Rank</div>
+                        <div class="osu-stat-value" id="globalRankValue">#—</div>
                     </div>
-                    <div class="osu-meta-item">
-                        <div class="osu-meta-label">Rating</div>
-                        <div class="osu-meta-value" id="osuRatingValue">0</div>
+                    <div class="osu-stat-row">
+                        <div class="osu-stat-label">Solved</div>
+                        <div class="osu-stat-value" id="osuSolvedCount">0</div>
                     </div>
-                    <div class="osu-meta-item">
-                        <div class="osu-meta-label">Exp</div>
-                        <div class="osu-meta-value" id="osuExpValue">0</div>
+                    <div class="osu-stat-row">
+                        <div class="osu-stat-label">AC%</div>
+                        <div class="osu-stat-value" id="osuAcRateValue">0%</div>
                     </div>
-                    <div class="osu-meta-item">
-                        <div class="osu-meta-label">Attempts</div>
-                        <div class="osu-meta-value" id="osuAttemptsValue">0</div>
+                    <div class="osu-stat-row">
+                        <div class="osu-stat-label">Exp</div>
+                        <div class="osu-stat-value" id="osuExpValue">0</div>
                     </div>
-                    <div class="osu-meta-item">
-                        <div class="osu-meta-label">AC%</div>
-                        <div class="osu-meta-value" id="osuAcRateValue">0%</div>
+                    <div class="osu-stat-row">
+                        <div class="osu-stat-label">Attempts</div>
+                        <div class="osu-stat-value" id="osuAttemptsValue">0</div>
+                    </div>
+                    <div class="osu-stat-row activity">
+                        <div class="osu-stat-label">Последняя активность</div>
+                        <div class="osu-stat-value" id="lastActive">—</div>
                     </div>
                 </div>
             </section>
-
-            <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
 
             <section class="analytics-section">
                 <article class="analytics-card">
