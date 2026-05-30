@@ -857,16 +857,24 @@
             console.log("%c[sendToJudge()] → fetch()", "color:#aaf");
 
             const authHeader = {};
+            let token = null;
             try {
-                if (window.firebase?.auth) {
-                    const user = window.firebase.auth().currentUser;
-                    if (user) {
-                        const token = await user.getIdToken();
-                        if (token) authHeader.Authorization = `Bearer ${token}`;
-                    }
+                if (typeof window.getFreshAuthToken === "function") {
+                    token = await window.getFreshAuthToken({ timeoutMs: 6000, forceRefresh: true });
                 }
+                if (!token && window.firebase?.auth) {
+                    const user = window.firebase.auth().currentUser;
+                    if (user) token = await user.getIdToken(true);
+                }
+                if (!token) token = localStorage.getItem("idToken") || "";
+                token = String(token || "").trim();
+                if (!token) {
+                    throw new Error("Нужен повторный вход");
+                }
+                authHeader.Authorization = `Bearer ${token}`;
             } catch (e) {
                 console.warn("Failed to get auth token for submit", e);
+                throw new Error("Нужен повторный вход");
             }
 
             const payload = {
@@ -908,6 +916,7 @@
 
             if (res.status === 401) {
                 console.error("❌ 401 Unauthorized on /submit");
+                localStorage.removeItem("idToken");
                 throw new Error("Нужен повторный вход");
             }
 

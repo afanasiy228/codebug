@@ -36,6 +36,7 @@ function getUser() {
 function clearSession() {
     localStorage.removeItem("user");
     localStorage.removeItem("uid");
+    localStorage.removeItem("idToken");
 }
 
 async function logout() {
@@ -48,6 +49,41 @@ async function logout() {
     localStorage.setItem("forceSignout", "1");
     clearSession();
     window.location.href = "auth.html";
+}
+
+async function waitForAuthUser(timeoutMs = 5000) {
+    const auth = getAuth();
+    if (!auth) return null;
+    if (auth.currentUser) return auth.currentUser;
+    return new Promise((resolve) => {
+        let done = false;
+        let unsubscribe = null;
+        const finish = (user) => {
+            if (done) return;
+            done = true;
+            if (typeof unsubscribe === "function") unsubscribe();
+            resolve(user || null);
+        };
+        const timer = setTimeout(() => finish(auth.currentUser || null), timeoutMs);
+        unsubscribe = auth.onAuthStateChanged((user) => {
+            clearTimeout(timer);
+            finish(user || null);
+        });
+    });
+}
+
+async function getFreshAuthToken(opts = {}) {
+    const { timeoutMs = 5000, forceRefresh = false } = opts || {};
+    const user = await waitForAuthUser(timeoutMs);
+    if (!user) return null;
+    try {
+        const token = await user.getIdToken(!!forceRefresh);
+        if (token) localStorage.setItem("idToken", token);
+        return token || null;
+    } catch (e) {
+        console.warn("getFreshAuthToken failed", e);
+        return null;
+    }
 }
 
 /* ============================
@@ -1159,6 +1195,12 @@ async function syncSessionFromAuth() {
         clearSession();
         return;
     }
+    try {
+        const token = await userAuth.getIdToken();
+        if (token) localStorage.setItem("idToken", token);
+    } catch (e) {
+        console.warn("syncSessionFromAuth token fetch failed", e);
+    }
 
     if (isAuthPage()) {
         const next = new URLSearchParams(window.location.search).get("next");
@@ -1217,6 +1259,8 @@ window.renderCaptchaWidget = renderCaptchaWidget;
 window.renderTurnstileWidget = renderCaptchaWidget;
 window.updateAvatar = function() {};
 window.logout = logout;
+window.waitForAuthUser = waitForAuthUser;
+window.getFreshAuthToken = getFreshAuthToken;
 window.getUserSubscription = getUserSubscription;
 window.isProSubscription = isProSubscription;
 window.getSubscriptionLevel = getSubscriptionLevel;
