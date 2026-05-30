@@ -212,6 +212,101 @@
             background: rgba(15, 118, 110, 0.12);
             font-weight: 600;
         }
+
+        .osu-overview {
+            margin-bottom: 20px;
+            border: 1px solid rgba(56, 73, 87, 0.9);
+            border-radius: 16px;
+            background: linear-gradient(135deg, #1b262a 0%, #172228 55%, #121a1f 100%);
+            padding: 16px;
+            color: #d4e0ec;
+        }
+
+        .osu-ranks {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .osu-rank-card {
+            border: 1px solid rgba(80, 102, 121, 0.7);
+            border-radius: 12px;
+            padding: 12px;
+            background: rgba(11, 18, 23, 0.55);
+        }
+
+        .osu-rank-label {
+            font-size: 12px;
+            color: #9eb2c4;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .osu-rank-value {
+            font-size: 42px;
+            line-height: 1;
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 700;
+            color: #f2f7fc;
+            letter-spacing: .01em;
+        }
+
+        .osu-rank-value em {
+            color: #f59fb6;
+            font-style: normal;
+            font-size: 0.74em;
+            margin-left: 2px;
+        }
+
+        .osu-graph {
+            border: 1px solid rgba(90, 112, 130, 0.65);
+            border-radius: 12px;
+            background: rgba(5, 11, 16, 0.42);
+            padding: 8px;
+        }
+
+        .osu-graph canvas {
+            width: 100%;
+            height: 86px;
+            display: block;
+        }
+
+        .osu-legend {
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            color: #9eb2c4;
+            font-size: 12px;
+        }
+
+        .osu-meta {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .osu-meta-item {
+            border: 1px solid rgba(80, 102, 121, 0.6);
+            border-radius: 10px;
+            padding: 8px;
+            background: rgba(10, 17, 23, 0.45);
+        }
+
+        .osu-meta-label {
+            font-size: 11px;
+            color: #98adbf;
+            margin-bottom: 4px;
+        }
+
+        .osu-meta-value {
+            font-size: 20px;
+            font-family: "Space Grotesk", sans-serif;
+            color: #ebf4fb;
+            font-weight: 700;
+        }
         
         .info-row {
             margin: 10px 0;
@@ -863,6 +958,15 @@
             header {
                 padding: 0 20px;
             }
+            .osu-ranks {
+                grid-template-columns: 1fr;
+            }
+            .osu-rank-value {
+                font-size: 34px;
+            }
+            .osu-meta {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
             .choice-list {
                 grid-template-columns: 1fr;
             }
@@ -909,6 +1013,52 @@
                 <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
             </div>
             <div class="rank-text" id="rank">Ранг загружается...</div>
+
+            <section class="osu-overview">
+                <div class="osu-ranks">
+                    <div class="osu-rank-card">
+                        <div class="osu-rank-label">Global Rank</div>
+                        <div class="osu-rank-value" id="globalRankValue">#—</div>
+                    </div>
+                    <div class="osu-rank-card">
+                        <div class="osu-rank-label">Country Rank, <span id="countryLabel">World</span></div>
+                        <div class="osu-rank-value" id="countryRankValue">#—</div>
+                    </div>
+                    <div class="osu-rank-card">
+                        <div class="osu-rank-label">Top Place</div>
+                        <div class="osu-rank-value" id="topPlaceValue">#—</div>
+                    </div>
+                </div>
+                <div class="osu-graph">
+                    <canvas id="solvedTrendChart" width="900" height="160"></canvas>
+                    <div class="osu-legend">
+                        <span>Тренд решённых задач (90 дней)</span>
+                        <span id="solvedTrendTotal">Всего: 0</span>
+                    </div>
+                </div>
+                <div class="osu-meta">
+                    <div class="osu-meta-item">
+                        <div class="osu-meta-label">Solved</div>
+                        <div class="osu-meta-value" id="osuSolvedCount">0</div>
+                    </div>
+                    <div class="osu-meta-item">
+                        <div class="osu-meta-label">Rating</div>
+                        <div class="osu-meta-value" id="osuRatingValue">0</div>
+                    </div>
+                    <div class="osu-meta-item">
+                        <div class="osu-meta-label">Exp</div>
+                        <div class="osu-meta-value" id="osuExpValue">0</div>
+                    </div>
+                    <div class="osu-meta-item">
+                        <div class="osu-meta-label">Attempts</div>
+                        <div class="osu-meta-value" id="osuAttemptsValue">0</div>
+                    </div>
+                    <div class="osu-meta-item">
+                        <div class="osu-meta-label">AC%</div>
+                        <div class="osu-meta-value" id="osuAcRateValue">0%</div>
+                    </div>
+                </div>
+            </section>
 
             <div class="info-row">Профиль: <span id="userid">—</span></div>
             <div class="info-row">Дата регистрации: <span id="created">—</span></div>
@@ -1316,6 +1466,134 @@
             });
         }
 
+        function formatRankValue(place) {
+            const n = Number(place);
+            if (!Number.isFinite(n) || n <= 0) return "#—";
+            const value = n.toLocaleString("en-US");
+            if (value.length > 3) {
+                const head = value.slice(0, Math.max(2, value.length - 3));
+                const tail = value.slice(-3);
+                return `#${head}<em>${tail}</em>`;
+            }
+            return `#${value}`;
+        }
+
+        async function loadRankPlaces(profileData) {
+            const globalEl = document.getElementById("globalRankValue");
+            const countryEl = document.getElementById("countryRankValue");
+            const topEl = document.getElementById("topPlaceValue");
+            const countryLabel = document.getElementById("countryLabel");
+            if (!globalEl || !countryEl || !topEl || !countryLabel) return;
+
+            globalEl.innerHTML = "#—";
+            countryEl.innerHTML = "#—";
+            topEl.innerHTML = "#—";
+            const myCountry = String(profileData?.country || "World").trim();
+            countryLabel.textContent = myCountry || "World";
+
+            try {
+                const usersSnap = await db.ref("users").get();
+                const users = usersSnap.exists() ? usersSnap.val() || {} : {};
+                const entries = Object.entries(users)
+                    .filter(([, u]) => u && typeof u === "object")
+                    .map(([login, u]) => {
+                        const stats = (u.stats && typeof u.stats === "object") ? u.stats : {};
+                        return {
+                            login,
+                            rating: Number(stats.rating || 0),
+                            exp: Number(stats.exp || 0),
+                            solved: Number(stats.cnt || 0),
+                            country: String(u.country || "World").trim() || "World"
+                        };
+                    });
+
+                entries.sort((a, b) => (
+                    b.rating - a.rating ||
+                    b.exp - a.exp ||
+                    b.solved - a.solved ||
+                    a.login.localeCompare(b.login)
+                ));
+
+                const gIndex = entries.findIndex((x) => x.login === viewedUser);
+                const globalPlace = gIndex >= 0 ? gIndex + 1 : null;
+                globalEl.innerHTML = formatRankValue(globalPlace);
+
+                const sameCountry = entries.filter((x) => x.country === myCountry);
+                const cIndex = sameCountry.findIndex((x) => x.login === viewedUser);
+                const countryPlace = cIndex >= 0 ? cIndex + 1 : globalPlace;
+                countryEl.innerHTML = formatRankValue(countryPlace);
+
+                topEl.innerHTML = formatRankValue(Math.min(globalPlace || 0, countryPlace || 0));
+            } catch (e) {
+                console.warn("rank places load failed", e);
+            }
+        }
+
+        function renderSolvedTrendChart(solvedByDay) {
+            const canvas = document.getElementById("solvedTrendChart");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+
+            const dayMs = 24 * 60 * 60 * 1000;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const points = [];
+            let total = 0;
+            for (let i = 89; i >= 0; i--) {
+                const d = new Date(today.getTime() - i * dayMs);
+                const key = makeDateKey(d.getTime());
+                const v = Number(solvedByDay[key] || 0);
+                points.push(v);
+                total += v;
+            }
+
+            const totalEl = document.getElementById("solvedTrendTotal");
+            if (totalEl) totalEl.textContent = `Всего: ${total}`;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = "rgba(11, 22, 30, 0.68)";
+            ctx.fillRect(0, 0, width, height);
+
+            const maxV = Math.max(...points, 1);
+            const minV = Math.min(...points, 0);
+            const padX = 8;
+            const padY = 16;
+            const plotW = width - padX * 2;
+            const plotH = height - padY * 2;
+            const scaleY = (v) => {
+                if (maxV === minV) return padY + plotH / 2;
+                const t = (v - minV) / (maxV - minV);
+                return padY + plotH - t * plotH;
+            };
+
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(253, 224, 71, 0.92)";
+            ctx.lineWidth = 3;
+            points.forEach((v, i) => {
+                const x = padX + (i / (points.length - 1)) * plotW;
+                const y = scaleY(v);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // glow
+            ctx.shadowColor = "rgba(253, 224, 71, 0.45)";
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            points.forEach((v, i) => {
+                const x = padX + (i / (points.length - 1)) * plotW;
+                const y = scaleY(v);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
         async function loadAnalytics() {
             const dbRef = window.db || null;
             if (!dbRef) return;
@@ -1344,6 +1622,17 @@
                 solvedByDay[key] = (solvedByDay[key] || 0) + 1;
             }
             renderHeatmap(solvedByDay);
+            renderSolvedTrendChart(solvedByDay);
+
+            const attemptsCount = mySubmissions.length;
+            const solvedCount = solvedSubs.length;
+            const acRate = attemptsCount > 0 ? Math.round((solvedCount / attemptsCount) * 100) : 0;
+            const solvedEl = document.getElementById("osuSolvedCount");
+            const attemptsEl = document.getElementById("osuAttemptsValue");
+            const acRateEl = document.getElementById("osuAcRateValue");
+            if (solvedEl) solvedEl.textContent = String(solvedCount);
+            if (attemptsEl) attemptsEl.textContent = String(attemptsCount);
+            if (acRateEl) acRateEl.textContent = `${acRate}%`;
 
             let taskList = [];
             try {
@@ -1477,6 +1766,12 @@
             document.getElementById("exp2").innerText = stats.exp || 0;
             document.getElementById("rating").innerText = stats.rating || 0;
             document.getElementById("rating2").innerText = stats.rating || 0;
+            const osuSolved = document.getElementById("osuSolvedCount");
+            const osuExp = document.getElementById("osuExpValue");
+            const osuRating = document.getElementById("osuRatingValue");
+            if (osuSolved) osuSolved.textContent = String(stats.cnt || 0);
+            if (osuExp) osuExp.textContent = String(stats.exp || 0);
+            if (osuRating) osuRating.textContent = String(stats.rating || 0);
 
             // ---- RANK ----
             const rankEl = document.getElementById("rank");
@@ -1569,6 +1864,7 @@
             }
 
             await loadProPlusAnalytics();
+            await loadRankPlaces(data);
 
         }
 
