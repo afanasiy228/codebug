@@ -119,50 +119,32 @@
             position: absolute;
             left: 0;
             right: 0;
-            bottom: 0;
-            top: auto;
-            height: 72px;
-            background: linear-gradient(180deg, rgba(13, 20, 25, 0.06), rgba(13, 20, 25, 0.76));
+            top: 0;
+            bottom: auto;
+            height: 56px;
+            background: linear-gradient(180deg, rgba(13, 20, 25, 0.48), rgba(13, 20, 25, 0.06));
             display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
+            align-items: flex-start;
+            justify-content: flex-end;
             gap: 10px;
-            padding: 12px;
-        }
-
-        .profile-cover-meta {
-            display: grid;
-            gap: 6px;
-        }
-
-        .cover-pill {
-            display: inline-flex;
-            align-items: center;
-            width: fit-content;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .03em;
-            color: #e5eef7;
-            background: rgba(14, 22, 29, 0.7);
-            border: 1px solid rgba(152, 175, 191, 0.42);
-            border-radius: 999px;
-            padding: 5px 10px;
-        }
-
-        .cover-note {
-            font-size: 13px;
-            color: #d7e4ef;
-            text-shadow: 0 1px 10px rgba(2, 6, 23, 0.45);
+            padding: 10px;
         }
 
         .cover-change-btn {
-            margin: 0;
-            background: rgba(13, 21, 28, 0.76);
+            margin: 0 !important;
+            margin-top: 0 !important;
+            width: 34px;
+            height: 34px;
+            padding: 0 !important;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 21, 28, 0.82);
             border: 1px solid rgba(152, 175, 191, 0.62);
             box-shadow: none;
-            font-size: 13px;
-            padding: 8px 12px;
+            font-size: 17px;
+            line-height: 1;
         }
 
         .cover-change-btn:hover {
@@ -184,43 +166,12 @@
             padding-bottom: 8px;
         }
 
-        .identity-subline {
-            color: #cad8e4;
-            font-size: 34px;
-            line-height: 1;
-            font-family: "Space Grotesk", sans-serif;
-            font-weight: 500;
-            margin: 0 0 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .identity-tags {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-
-        .identity-tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(139, 161, 177, 0.38);
-            color: #d4e1ec;
-            background: rgba(19, 28, 34, 0.78);
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
         .name-line {
             display: flex;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .username {
             font-size: clamp(38px, 4.2vw, 58px);
@@ -251,16 +202,13 @@
         }
         
         .rank-text {
-            font-size: 14px;
+            font-size: 16px;
             color: #d5e5f1;
             margin-bottom: 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 11px;
-            border-radius: 999px;
-            background: rgba(18, 29, 36, 0.84);
-            border: 1px solid rgba(134, 156, 173, 0.34);
+            display: block;
+            padding: 0;
+            border: 0;
+            background: transparent;
             font-weight: 600;
         }
 
@@ -416,15 +364,40 @@
         .avatar-block.seasonal {
             background: transparent;
         }
+
+        .avatar-media {
+            position: relative;
+            width: 208px;
+            height: 208px;
+        }
         
         .avatar-block img {
             width: 208px;
             height: 208px;
-            border-radius: 50%;
+            border-radius: 16px;
             object-fit: cover;
-            border: 4px solid rgba(203, 217, 228, 0.88);
+            border: 0;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
             background: #243038;
+        }
+
+        .avatar-edit-btn {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 32px;
+            height: 32px;
+            margin: 0 !important;
+            margin-top: 0 !important;
+            padding: 0 !important;
+            border-radius: 999px;
+            background: rgba(14, 22, 30, 0.86);
+            border: 1px solid rgba(152, 175, 191, 0.66);
+            color: #e4eef7;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         
         #avatar-error {
@@ -432,6 +405,10 @@
             height: 16px;
             margin-top: 6px;
             font-size: 12px;
+        }
+
+        #avatar-file {
+            display: none;
         }
         
         button {
@@ -519,10 +496,11 @@
         }
 
         .analytics-card {
-            background: rgba(20, 30, 36, 0.88);
-            border: 1px solid rgba(136, 156, 171, 0.28);
-            border-radius: var(--radius-md);
-            padding: 16px;
+            background: transparent;
+            border: 0;
+            border-top: 1px solid rgba(136, 156, 171, 0.24);
+            border-radius: 0;
+            padding: 14px 0 4px;
             min-width: 0;
             overflow: hidden;
         }
@@ -710,12 +688,7 @@
             line-height: 1.5;
         }
 
-        .profile-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 12px 22px 0;
-        }
+        .profile-actions { display: none; }
         .pro-style-modal {
             position: fixed;
             inset: 0;
@@ -977,12 +950,13 @@
             .avatar-block {
                 width: 140px;
             }
-            .avatar-block img {
+            .avatar-media {
                 width: 132px;
                 height: 132px;
             }
-            .identity-subline {
-                font-size: 24px;
+            .avatar-block img {
+                width: 132px;
+                height: 132px;
             }
             .username {
                 font-size: clamp(30px, 5vw, 40px);
@@ -1011,16 +985,16 @@
                 width: 112px;
                 margin-left: 2px;
             }
+            .avatar-media {
+                width: 108px;
+                height: 108px;
+            }
             .avatar-block img {
                 width: 108px;
                 height: 108px;
-                border-width: 3px;
             }
             .profile-head-content {
                 width: 100%;
-            }
-            .identity-subline {
-                font-size: 19px;
             }
             .osu-topline {
                 gap: 12px;
@@ -1073,18 +1047,16 @@
             <section class="profile-cover-panel" id="profileCoverPanel">
                 <div class="profile-cover" id="profileCover"></div>
                 <div class="profile-cover-overlay">
-                    <div class="profile-cover-meta">
-                        <span class="cover-pill">Шапка профиля</span>
-                        <span class="cover-note" id="coverNote">Базовая шапка</span>
-                    </div>
-                    <button id="changeCoverBtn" type="button" class="cover-change-btn" style="display:none;" onclick="openCoverModal()">Изменить шапку</button>
+                    <button id="changeCoverBtn" type="button" class="cover-change-btn" style="display:none;" onclick="openCoverModal()" aria-label="Изменить шапку">✎</button>
                 </div>
             </section>
             <section class="profile-header-row">
                 <div class="avatar-block reveal" style="--delay: 0.1s;">
-                    <img id="avatar" src="">
+                    <div class="avatar-media">
+                        <img id="avatar" src="">
+                        <button id="avatarEditBtn" type="button" class="avatar-edit-btn" style="display:none;" aria-label="Изменить аватар">✎</button>
+                    </div>
                     <input type="file" id="avatar-file" accept="image/*">
-                    <button id="uploadAvatarBtn" onclick="changeAvatar()">Загрузить аватар</button>
                     <div id="avatar-error"></div>
                 </div>
 
@@ -1092,12 +1064,6 @@
                     <div class="name-line">
                         <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
                         <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
-                    </div>
-                    <div class="identity-subline" id="userSubline">@loading</div>
-                    <div class="identity-tags">
-                        <span class="identity-tag" id="countryTag">World</span>
-                        <span class="identity-tag" id="idTag">ID —</span>
-                        <span class="identity-tag" id="createdTag">Joined —</span>
                     </div>
                     <div class="rank-text" id="rank">Ранг загружается...</div>
                 </div>
@@ -1149,22 +1115,6 @@
                 </div>
             </section>
 
-            <div class="profile-actions">
-                <a id="friendsLinkBtn" href="friends.html" style="text-decoration:none;">
-                    <button type="button">Друзья</button>
-                </a>
-                <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
-                <button id="changeNickBtn" type="button" style="display:none;" onclick="changeNickname()">Сменить ник</button>
-                <button id="proStyleBtn" type="button" style="display:none;" onclick="openProStyleModal()">Сменить цвет ника</button>
-                <button id="coverStyleBtn" type="button" style="display:none;" onclick="openCoverModal()">Сменить шапку</button>
-                <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
-            </div>
-
-            <div class="info-row">Профиль: <span id="userid">—</span></div>
-            <div class="info-row">Дата регистрации: <span id="created">—</span></div>
-            <div class="info-row">Опыт: <span id="exp">0</span></div>
-            <div class="info-row">Решено задач: <span id="solved">0</span></div>
-            <div class="info-row">Рейтинг: <span id="rating">0</span></div>
             <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
 
             <section class="analytics-section">
@@ -1255,6 +1205,7 @@
             <div style="font-weight:600;color:#bfdbfe;margin-top:14px;">Цвет ника</div>
             <div class="choice-list" id="nickColorSwatches"></div>
             <div class="nick-modal-actions">
+                <button id="proStyleNickBtn" type="button" style="background:#1f2937;" onclick="openNickModal()">Сменить ник</button>
                 <button type="button" style="background:#334155;" onclick="closeProStyleModal()">Закрыть</button>
             </div>
         </div>
@@ -1386,8 +1337,7 @@
 
         function applyProfileCover(styleData, subLevel) {
             const coverEl = document.getElementById("profileCover");
-            const noteEl = document.getElementById("coverNote");
-            if (!coverEl || !noteEl) return;
+            if (!coverEl) return;
             const style = (styleData && typeof styleData === "object") ? styleData : {};
             const preset = coverPresetById(style.coverId || DEFAULT_COVER_ID);
             const custom = String(style.customCover || "").trim();
@@ -1395,10 +1345,8 @@
 
             if (custom && custom.startsWith("data:image/") && canUseCustom) {
                 coverEl.style.backgroundImage = `url("${custom}")`;
-                noteEl.textContent = "Кастомная шапка";
             } else {
                 coverEl.style.backgroundImage = preset.bg;
-                noteEl.textContent = `Базовая шапка · ${preset.name}`;
             }
         }
 
@@ -1768,10 +1716,6 @@
 
             const data = snap.val();
             const stats = data.stats || {};
-            const setNodeText = (id, value) => {
-                const el = document.getElementById(id);
-                if (el) el.innerText = value;
-            };
             const sub = data.subscription || null;
             const profileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
             currentSubscription = sub;
@@ -1809,26 +1753,7 @@
                 const navTier = level === "pro_plus" ? "PRO+" : "PRO";
                 navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
             }
-            setNodeText("userid", data.id || "—");
-            setNodeText("created", data.created ? new Date(data.created).toLocaleDateString() : "—");
-            const userSubline = document.getElementById("userSubline");
-            if (userSubline) userSubline.textContent = `@${data.login || viewedUser}`;
-            const countryTag = document.getElementById("countryTag");
-            if (countryTag) countryTag.textContent = String(data.country || "CodeBug");
-            const idTag = document.getElementById("idTag");
-            if (idTag) idTag.textContent = `ID ${data.id || "—"}`;
-            const createdTag = document.getElementById("createdTag");
-            if (createdTag) {
-                createdTag.textContent = `Joined ${data.created ? new Date(data.created).toLocaleDateString() : "—"}`;
-            }
-
             // ---- STATS ----
-            setNodeText("solved", stats.cnt || 0);
-            setNodeText("solved2", stats.cnt || 0);
-            setNodeText("exp", stats.exp || 0);
-            setNodeText("exp2", stats.exp || 0);
-            setNodeText("rating", stats.rating || 0);
-            setNodeText("rating2", stats.rating || 0);
             const osuSolved = document.getElementById("osuSolvedCount");
             const osuExp = document.getElementById("osuExpValue");
             const osuRating = document.getElementById("osuRatingValue");
@@ -1844,8 +1769,6 @@
             const rankEl = document.getElementById("rank");
             rankEl.innerText = getRank(stats.exp || 0);
             rankEl.style.setProperty("color", nickColor, "important");
-            rankEl.style.border = `1px solid ${nickColor}66`;
-            rankEl.style.background = `${nickColor}1f`;
             const avatarBlock = document.querySelector(".avatar-block");
             if (avatarBlock) {
                 const seasonalEnabled = !!(sub && sub.visuals && sub.visuals.seasonalEnabled);
@@ -1869,50 +1792,34 @@
             }
 
             if (viewedUser !== currentUser) {
-                document.getElementById("avatar-file").style.display = "none";
-                const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
-                if (uploadAvatarBtn) uploadAvatarBtn.style.display = "none";
-                const friendsLinkBtn = document.getElementById("friendsLinkBtn");
-                const logoutBtn = document.getElementById("logoutBtn");
-                const changeNickBtn = document.getElementById("changeNickBtn");
-                const proStyleBtn = document.getElementById("proStyleBtn");
-                const coverStyleBtn = document.getElementById("coverStyleBtn");
                 const changeCoverBtn = document.getElementById("changeCoverBtn");
-                if (friendsLinkBtn) friendsLinkBtn.style.display = "none";
-                if (logoutBtn) logoutBtn.style.display = "none";
-                if (changeNickBtn) changeNickBtn.style.display = "none";
-                if (proStyleBtn) proStyleBtn.style.display = "none";
-                if (coverStyleBtn) coverStyleBtn.style.display = "none";
+                const avatarEditBtn = document.getElementById("avatarEditBtn");
+                const proStyleNickBtn = document.getElementById("proStyleNickBtn");
                 if (changeCoverBtn) changeCoverBtn.style.display = "none";
+                if (avatarEditBtn) avatarEditBtn.style.display = "none";
+                if (proStyleNickBtn) proStyleNickBtn.style.display = "none";
                 const usernameEl = document.getElementById("username");
                 if (usernameEl) {
                     usernameEl.onclick = null;
                     usernameEl.style.cursor = "default";
                     usernameEl.title = "";
                 }
-                const avatarBlockSelf = document.querySelector(".avatar-block");
-                if (avatarBlockSelf) {
-                    avatarBlockSelf.onclick = null;
-                    avatarBlockSelf.title = "";
-                }
                 const coverPanel = document.getElementById("profileCoverPanel");
                 if (coverPanel) coverPanel.title = "";
                 setupViewedFriendButton();
             } else {
-                const changeNickBtn = document.getElementById("changeNickBtn");
-                const proStyleBtn = document.getElementById("proStyleBtn");
-                const coverStyleBtn = document.getElementById("coverStyleBtn");
                 const changeCoverBtn = document.getElementById("changeCoverBtn");
+                const avatarEditBtn = document.getElementById("avatarEditBtn");
+                const proStyleNickBtn = document.getElementById("proStyleNickBtn");
                 const usernameEl = document.getElementById("username");
                 if (usernameEl) {
                     usernameEl.onclick = isPro ? openProStyleModal : null;
                     usernameEl.style.cursor = isPro ? "pointer" : "default";
-                    usernameEl.title = isPro ? "Нажми, чтобы выбрать цвет ника" : "";
+                    usernameEl.title = isPro ? "Нажми, чтобы сменить ник или цвет" : "";
                 }
-                if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
-                if (proStyleBtn) proStyleBtn.style.display = isPro ? "inline-block" : "none";
-                if (coverStyleBtn) coverStyleBtn.style.display = "inline-block";
                 if (changeCoverBtn) changeCoverBtn.style.display = "inline-block";
+                if (avatarEditBtn) avatarEditBtn.style.display = "inline-flex";
+                if (proStyleNickBtn) proStyleNickBtn.style.display = isPro ? "inline-flex" : "none";
                 renderCoverControls(level, profileStyle);
                 renderProColorControls(level, nickTheme || proNickColor || "#60a5fa");
             }
@@ -2218,6 +2125,9 @@
 
         function openProStyleModal() {
             const modal = document.getElementById("proStyleModal");
+            const sub = currentSubscription || {};
+            const isPro = (typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false;
+            if (!isPro) return;
             if (!modal) return;
             modal.classList.add("open");
             modal.setAttribute("aria-hidden", "false");
@@ -2344,6 +2254,20 @@
                 if (ev.target === nickModal) closeNickModal();
             });
         }
+        const avatarEditBtn = document.getElementById("avatarEditBtn");
+        if (avatarEditBtn) {
+            avatarEditBtn.addEventListener("click", () => {
+                if (viewedUser !== currentUser) return;
+                const picker = document.getElementById("avatar-file");
+                if (picker) picker.click();
+            });
+        }
+        const avatarFileInput = document.getElementById("avatar-file");
+        if (avatarFileInput) {
+            avatarFileInput.addEventListener("change", () => {
+                changeAvatar();
+            });
+        }
         document.addEventListener("keydown", (ev) => {
             if (ev.key !== "Escape") return;
             closeCoverModal();
@@ -2454,10 +2378,7 @@
         async function changeAvatar() {
             if (viewedUser !== currentUser) return;
             const file = document.getElementById("avatar-file").files[0];
-            if (!file) {
-                document.getElementById("avatar-error").innerText = "Выберите файл";
-                return;
-            }
+            if (!file) return;
 
             try {
                 const base64 = await uploadAvatarBase64(currentUser, file);

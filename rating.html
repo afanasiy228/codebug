@@ -76,18 +76,15 @@
         /* --- РЕЙТИНГ --- */
         
         .rating-container {
-            max-width: 850px;
+            max-width: 980px;
             margin: 40px auto;
             padding: 0 20px;
         }
         
         .rating-head {
-            background: linear-gradient(135deg, rgba(15, 118, 110, 0.18), rgba(243, 181, 98, 0.2));
-            border-radius: 22px;
-            border: 1px solid rgba(226, 214, 196, 0.8);
-            padding: 26px;
-            margin-bottom: 24px;
-            box-shadow: var(--shadow);
+            padding: 4px 2px 14px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(189, 176, 157, 0.45);
         }
 
         .rating-badge {
@@ -114,42 +111,82 @@
             color: var(--muted);
             margin: 0;
         }
-        
+
+        .rating-grid-head {
+            display: grid;
+            grid-template-columns: 68px minmax(0, 1fr) 120px 120px;
+            align-items: end;
+            gap: 8px;
+            padding: 0 12px 8px;
+            color: #5a6b77;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .rating-list {
+            display: grid;
+            gap: 6px;
+        }
+
         .rating-row {
-            display: flex;
+            position: relative;
+            display: grid;
+            grid-template-columns: 68px minmax(0, 1fr) 120px 120px;
             align-items: center;
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            margin-bottom: 12px;
-            padding: 14px;
-            border-radius: 16px;
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            gap: 8px;
+            min-height: 78px;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(114, 136, 152, 0.34);
+            border-radius: 12px;
+            background: rgba(19, 29, 36, 0.78);
+            overflow: hidden;
+            transition: background-color .16s ease, transform .16s ease;
         }
 
-        .rating-row.top-1 {
-            border-color: rgba(243, 181, 98, 0.8);
-            background: linear-gradient(120deg, rgba(243, 181, 98, 0.18), rgba(255, 250, 242, 0.9));
+        .rating-row::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: var(--row-banner, none);
+            background-size: cover;
+            background-position: center;
+            opacity: var(--row-banner-opacity, 0);
+            z-index: 0;
+            transition: opacity .16s ease;
         }
 
-        .rating-row.top-2 {
-            border-color: rgba(15, 118, 110, 0.4);
+        .rating-row::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(14, 24, 31, 0.84), rgba(18, 29, 36, 0.8));
+            z-index: 1;
         }
 
-        .rating-row.top-3 {
-            border-color: rgba(226, 214, 196, 0.9);
+        .rating-row:hover {
+            background: rgba(23, 35, 43, 0.88);
+            transform: translateY(-1px);
+        }
+
+        .rating-row:hover::before {
+            opacity: var(--row-banner-hover-opacity, 0);
+        }
+
+        .place,
+        .user-block,
+        .user-exp,
+        .user-solved {
+            position: relative;
+            z-index: 2;
         }
         
         .place {
-            width: 42px;
-            height: 42px;
-            font-size: 16px;
+            font-size: 19px;
             font-weight: 700;
-            color: var(--accent);
-            text-align: center;
-            background: rgba(15, 118, 110, 0.12);
-            border-radius: 12px;
-            display: grid;
-            place-items: center;
+            color: #8cdccc;
+            text-align: left;
+            padding-left: 6px;
         }
         
         .user-block {
@@ -157,53 +194,65 @@
             align-items: center;
             flex: 1;
             gap: 12px;
+            min-width: 0;
         }
         
         .ava {
-            width: 46px;
-            height: 46px;
-            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
             object-fit: cover;
-            border: 1px solid rgba(15, 118, 110, 0.4);
+            border: 0;
+            background: rgba(15, 118, 110, 0.15);
         }
         
         .ava.default {
-            background: rgba(15, 118, 110, 0.12);
-            color: var(--ink);
+            background: rgba(15, 118, 110, 0.2);
+            color: #e6f0f8;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: 700;
             font-size: 20px;
         }
+
+        .user-text {
+            min-width: 0;
+        }
         
         .user-name {
             font-size: 18px;
             font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .user-name a {
-            color: var(--ink);
+            color: #e6f1fa;
             text-decoration: none;
         }
 
         .user-name a:hover {
-            color: var(--accent);
+            color: #9fe8d9;
         }
 
         
         .user-rank {
             font-size: 14px;
-            color: var(--muted);
+            color: #9db2c1;
             margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .user-exp,
         .user-solved {
-            width: 120px;
             text-align: right;
-            font-size: 16px;
-            color: var(--muted);
+            font-size: 15px;
+            color: #c2d2df;
+            font-weight: 600;
         }
 
         @media (max-width: 640px) {
@@ -211,18 +260,31 @@
                 padding: 0 20px;
             }
 
-            .rating-row {
-                flex-wrap: wrap;
-                gap: 12px;
+            .rating-grid-head {
+                display: none;
             }
 
-            .user-exp,
+            .rating-row {
+                grid-template-columns: 42px minmax(0, 1fr);
+                gap: 8px 10px;
+                min-height: 92px;
+            }
+
+            .user-exp {
+                grid-column: 2;
+                justify-self: start;
+                text-align: left;
+                font-size: 13px;
+            }
+
             .user-solved {
-                width: auto;
+                grid-column: 2;
+                justify-self: end;
+                text-align: right;
+                font-size: 13px;
             }
         }
     </style>
-    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -238,7 +300,13 @@
             <h1>Рейтинг пользователей</h1>
             <p class="rating-sub">Чем больше исправленных багов, тем выше ты поднимаешься в таблице.</p>
         </div>
-        <div id="rating-list"></div>
+        <div class="rating-grid-head">
+            <div>#</div>
+            <div>Пользователь</div>
+            <div style="text-align:right;">EXP</div>
+            <div style="text-align:right;">Решено</div>
+        </div>
+        <div id="rating-list" class="rating-list"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -279,6 +347,29 @@
                 .replace(/'/g, "&#039;");
         }
 
+        const RATING_COVER_PRESETS = {
+            cover_1: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)",
+            cover_2: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)",
+            cover_3: "linear-gradient(120deg,#1e3c72 0%,#2a5298 100%)",
+            cover_4: "linear-gradient(120deg,#f6d365 0%,#fda085 100%)",
+            cover_5: "linear-gradient(120deg,#0f2027 0%,#203a43 50%,#2c5364 100%)",
+            cover_6: "linear-gradient(120deg,#ff9a9e 0%,#fad0c4 100%)",
+            cover_7: "linear-gradient(120deg,#43cea2 0%,#185a9d 100%)",
+            cover_8: "linear-gradient(120deg,#667eea 0%,#764ba2 100%)",
+            cover_9: "linear-gradient(120deg,#00c6ff 0%,#0072ff 30%,#6a11cb 70%,#2575fc 100%)",
+            cover_10: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)"
+        };
+
+        function getRowBanner(style, level) {
+            const profileStyle = (style && typeof style === "object") ? style : {};
+            const custom = String(profileStyle.customCover || "").trim();
+            const canUseCustom = level !== "free";
+            if (canUseCustom && /^data:image\//i.test(custom)) return `url("${custom}")`;
+            const coverIdRaw = String(profileStyle.coverId || "").trim().toLowerCase();
+            if (!coverIdRaw) return "";
+            return RATING_COVER_PRESETS[coverIdRaw] || "";
+        }
+
         /* ======================
               ЗАГРУЗКА РЕЙТИНГА
         ====================== */
@@ -299,8 +390,10 @@
                     login,
                     avatar: u.avatar || null,
                     exp: st.exp || 0,
+                    solvedCount: Number(st.cnt || 0),
                     solved: st.solved || {}, // объект решённых
-                    subscription: u.subscription || null
+                    subscription: u.subscription || null,
+                    profileStyle: u.profileStyle || null
                 });
             }
 
@@ -319,19 +412,21 @@
                     ? buildStyledNickHtml(u.login, sub, loginColor)
                     : safeLogin;
                 const avatarUrl = typeof u.avatar === "string" ? u.avatar.trim() : "";
-                const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") ? avatarUrl : "";
+                const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") || /^data:image\//i.test(avatarUrl) ? avatarUrl : "";
                 let avatarHTML = avatarSafe ?
-                    `<a href="${profileUrl}"><img class="ava" src="${escapeHtml(avatarSafe)}" alt="avatar"></a>` :
+                    `<a href="${profileUrl}"><img class="ava" src="${escapeHtml(avatarSafe)}" alt="avatar" loading="lazy"></a>` :
                     `<a href="${profileUrl}" style="text-decoration:none;"><div class="ava default">${safeLogin[0].toUpperCase()}</div></a>`;
 
-                let solvedCnt = Object.keys(u.solved).length;
+                let solvedCnt = Number.isFinite(u.solvedCount) ? u.solvedCount : 0;
+                if (!solvedCnt) solvedCnt = Object.keys(u.solved || {}).length;
+                const rowBanner = getRowBanner(u.profileStyle, level);
+                const hasBanner = !!rowBanner;
 
                 let row = document.createElement("div");
                 row.className = "rating-row";
-                if (index === 0) row.classList.add("top-1");
-                if (index === 1) row.classList.add("top-2");
-                if (index === 2) row.classList.add("top-3");
-                if (isPro) row.style.borderColor = "rgba(96,165,250,.65)";
+                row.style.setProperty("--row-banner", hasBanner ? rowBanner : "none");
+                row.style.setProperty("--row-banner-opacity", hasBanner ? "0.16" : "0");
+                row.style.setProperty("--row-banner-hover-opacity", hasBanner ? "0.22" : "0");
                 row.style.cursor = "pointer";
                 row.addEventListener("click", () => {
                     window.location.href = profileUrl;
@@ -342,7 +437,7 @@
 
             <div class="user-block">
                 ${avatarHTML}
-                <div>
+                <div class="user-text">
                     <div class="user-name"><a href="${profileUrl}" style="text-decoration:none;">${styledNick}</a>${isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:2px 6px;">${level === "pro_plus" ? "PRO+" : "PRO"}</span>` : ''}</div>
                     <div class="user-rank">${getRank(u.exp)}</div>
                 </div>
