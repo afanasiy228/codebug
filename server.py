@@ -819,17 +819,24 @@ def _run_submission_job(job):
         })
 
     if submission_id and FIREBASE_READY:
-        try:
-            db.reference(f"submissions/global/{submission_id}").update({
-                "verdict": result_obj["status"],
-                "statusLabel": result_obj["statusLabel"],
-                "timeMs": result_obj["timeMs"],
-                "memoryMb": result_obj["memoryMb"],
-                "score": result_obj["score"],
-                "passedGroups": result_obj["passedGroups"],
-            })
-        except Exception as e:
-            print("Queue final firebase update failed:", e)
+        updated = False
+        for attempt in range(3):
+            try:
+                db.reference(f"submissions/global/{submission_id}").update({
+                    "verdict": result_obj["status"],
+                    "statusLabel": result_obj["statusLabel"],
+                    "timeMs": result_obj["timeMs"],
+                    "memoryMb": result_obj["memoryMb"],
+                    "score": result_obj["score"],
+                    "passedGroups": result_obj["passedGroups"],
+                })
+                updated = True
+                break
+            except Exception as e:
+                print(f"Queue final firebase update failed (attempt {attempt + 1}/3):", e)
+                time.sleep(0.2)
+        if not updated:
+            print(f"Queue final firebase update permanently failed for submission={submission_id}")
 
     solved_like = _is_solved_submission({
         "verdict": result_obj.get("status"),
@@ -1859,24 +1866,24 @@ def submit():
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("submit_storage_unavailable", 503, "SUBMIT_STORAGE_UNAVAILABLE")
 
-    if FIREBASE_READY:
-        record = {
-            "login": str(login),
-            "task": int(task),
-            "verdict": "QUEUE",
-            "date": int(time.time() * 1000),
-            "contestId": contest_id or None
-        }
-        try:
-            submission_ref = db.reference("submissions/global").push()
-            submission_ref.set(record)
-            firebase_saved = True
-        except Exception as e:
-            firebase_error = f"firebase_write_error: {e}"
-            print(firebase_error)
-    else:
-        firebase_error = "firebase_not_ready"
+    record = {
+        "login": str(login),
+        "task": int(task),
+        "verdict": "QUEUE",
+        "date": int(time.time() * 1000),
+        "contestId": contest_id or None
+    }
+    try:
+        submission_ref = db.reference("submissions/global").push()
+        submission_ref.set(record)
+        firebase_saved = True
+    except Exception as e:
+        firebase_error = f"firebase_write_error: {e}"
+        print(firebase_error)
+        return _api_error("submit_storage_write_failed", 503, "SUBMIT_STORAGE_WRITE_FAILED")
 
     submission_id = submission_ref.key if submission_ref is not None else None
     with SUBMIT_QUEUE_COND:
