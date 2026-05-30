@@ -189,7 +189,9 @@ def run_in_sandbox(
     pids_limit=64,
 ):
     if _docker_available():
-        wrapped_command = _with_time(command)
+        # Do not wrap with `time` inside docker containers: many minimal images
+        # don't have GNU time installed, which causes execution failure.
+        wrapped_command = list(command)
         docker_cmd = [
             "docker",
             "run",

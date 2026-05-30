@@ -792,7 +792,10 @@ def _run_submission_job(job):
         })
     else:
         parsed = _parse_judge_log(log_text)
-        final = parsed["final"]
+        final = str(parsed.get("final") or "").strip().upper()
+        if not final:
+            # Ensure we never leave a submission without terminal verdict.
+            final = "SE"
         public_status = final
         problem_cfg = read_problem_config(task)
         scoring_mode = str((problem_cfg or {}).get("scoringMode") or "ioi").strip().lower()
