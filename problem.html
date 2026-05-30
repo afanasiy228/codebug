@@ -815,14 +815,16 @@
                 return;
             }
             let pendingRow = null;
+            let queueTimer = null;
             try {
                 pendingRow = addPendingSubmissionRow();
-                const queueTimer = setTimeout(() => {
+                queueTimer = setTimeout(() => {
                     updateSubmissionRow(pendingRow, "Тестируется", "#c9c9c9");
                 }, 800);
                 const verdict = await sendToJudge(taskId, code);
                 console.log("⬅ Вердикт от сервера:", verdict);
                 clearTimeout(queueTimer);
+                queueTimer = null;
                 updateSubmissionRow(pendingRow, verdict.statusLabel || verdict.status || "ERROR");
                 updateSubmissionRowDetails(pendingRow, verdict);
                 if (verdict.firebaseSaved === false) {
@@ -837,8 +839,13 @@
                 console.log("💾 Firebase сохранено OK");
 
             } catch (e) {
+                if (queueTimer) {
+                    clearTimeout(queueTimer);
+                    queueTimer = null;
+                }
                 console.error("🔥 Ошибка submitCode:", e);
-                updateSubmissionRow(pendingRow, "ERROR");
+                const isAuthError = /401|auth_required|invalid_token|повторный вход/i.test(String(e?.message || ""));
+                updateSubmissionRow(pendingRow, isAuthError ? "Нужен вход" : "ERROR");
             }
         }
 
@@ -899,6 +906,11 @@
                 throw new Error("Невалидный JSON");
             }
 
+            if (res.status === 401) {
+                console.error("❌ 401 Unauthorized on /submit");
+                throw new Error("Нужен повторный вход");
+            }
+
             if (!res.ok && !data.status) {
                 console.error("❌ HTTP ошибка:", res.status);
                 throw new Error("HTTP " + res.status);
@@ -948,6 +960,7 @@
                 verdict === "QUEUE" ? "#c9c9c9" :
                 verdict === "TESTING" ? "#c9c9c9" :
                 verdict === "ERROR" ? "#ffb37c" :
+                verdict === "Нужен вход" ? "#ffb37c" :
                 "#ffd451"
             );
             const cell = row.children[1];
