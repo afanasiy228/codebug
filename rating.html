@@ -10,22 +10,22 @@
 
     <style>
         :root {
-            --bg: #f7f1e7;
-            --bg-strong: #f0e6d8;
-            --ink: #1a1612;
-            --muted: #5f5b54;
-            --accent: #0f766e;
-            --accent-strong: #0b5f59;
-            --warm: #f3b562;
-            --card: #fffaf2;
-            --stroke: #e2d6c4;
-            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --bg: #11181b;
+            --bg-strong: #0f1619;
+            --ink: #e5eef6;
+            --muted: #9eb0bf;
+            --accent: #84e0d0;
+            --accent-strong: #67c7b7;
+            --warm: #f0d463;
+            --card: #1c2529;
+            --stroke: rgba(154, 178, 196, 0.26);
+            --shadow: 0 20px 52px rgba(0, 0, 0, 0.35);
         }
         
         body {
             background:
-                radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
-                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                radial-gradient(1100px 460px at 18% -12%, rgba(86, 136, 112, 0.18), transparent 62%),
+                radial-gradient(900px 440px at 90% 0%, rgba(64, 108, 118, 0.18), transparent 60%),
                 linear-gradient(180deg, var(--bg), var(--bg-strong));
             color: var(--ink);
             margin: 0;
@@ -42,8 +42,8 @@
         
         header {
             height: 72px;
-            background: rgba(255, 250, 242, 0.8);
-            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            background: rgba(20, 30, 34, 0.88);
+            border-bottom: 1px solid rgba(128, 151, 166, 0.28);
             padding: 0 4vw;
             display: flex;
             align-items: center;
@@ -52,12 +52,12 @@
             top: 0;
             z-index: 10;
             backdrop-filter: blur(12px);
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
         }
         
         .logo {
             font-weight: 700;
-            color: var(--ink);
+            color: #edf4fb;
             font-size: 20px;
             letter-spacing: 0.4px;
             font-family: "Space Grotesk", sans-serif;
@@ -65,13 +65,13 @@
         
         nav a {
             margin-left: 20px;
-            color: var(--muted);
+            color: #a8b9c7;
             text-decoration: none;
             font-weight: 600;
         }
         
         nav a:hover {
-            color: var(--accent);
+            color: #d9e6f2;
         }
         /* --- РЕЙТИНГ --- */
         
@@ -84,7 +84,7 @@
         .rating-head {
             padding: 4px 2px 14px;
             margin-bottom: 10px;
-            border-bottom: 1px solid rgba(189, 176, 157, 0.45);
+            border-bottom: 1px solid rgba(128, 151, 166, 0.26);
         }
 
         .rating-badge {
@@ -95,20 +95,20 @@
             border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
-            color: var(--accent);
-            background: rgba(15, 118, 110, 0.12);
+            color: #b8efe5;
+            background: rgba(110, 231, 183, 0.12);
             margin-bottom: 12px;
         }
 
         .rating-container h1 {
-            color: var(--ink);
+            color: #e7f0f7;
             margin: 0 0 8px;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
         }
 
         .rating-sub {
-            color: var(--muted);
+            color: #9eb0bf;
             margin: 0;
         }
 
@@ -118,7 +118,7 @@
             align-items: end;
             gap: 8px;
             padding: 0 12px 8px;
-            color: #5a6b77;
+            color: #91a7b8;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.04em;
@@ -126,7 +126,9 @@
 
         .rating-list {
             display: grid;
-            gap: 6px;
+            gap: 2px;
+            border-top: 1px solid rgba(120, 144, 160, 0.2);
+            border-bottom: 1px solid rgba(120, 144, 160, 0.2);
         }
 
         .rating-row {
@@ -135,13 +137,13 @@
             grid-template-columns: 68px minmax(0, 1fr) 120px 120px;
             align-items: center;
             gap: 8px;
-            min-height: 78px;
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(114, 136, 152, 0.34);
-            border-radius: 12px;
-            background: rgba(19, 29, 36, 0.78);
+            min-height: 74px;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(114, 136, 152, 0.28);
+            border-radius: 8px;
+            background: rgba(19, 29, 36, 0.6);
             overflow: hidden;
-            transition: background-color .16s ease, transform .16s ease;
+            transition: background-color .14s ease, transform .14s ease, filter .14s ease;
         }
 
         .rating-row::before {
@@ -160,13 +162,14 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(14, 24, 31, 0.84), rgba(18, 29, 36, 0.8));
+            background: linear-gradient(90deg, rgba(12, 20, 26, 0.76), rgba(15, 24, 32, 0.62));
             z-index: 1;
         }
 
         .rating-row:hover {
-            background: rgba(23, 35, 43, 0.88);
-            transform: translateY(-1px);
+            background: rgba(26, 40, 49, 0.72);
+            transform: translateX(2px);
+            filter: brightness(1.06);
         }
 
         .rating-row:hover::before {
@@ -182,11 +185,11 @@
         }
         
         .place {
-            font-size: 19px;
+            font-size: 22px;
             font-weight: 700;
             color: #8cdccc;
             text-align: left;
-            padding-left: 6px;
+            padding-left: 2px;
         }
         
         .user-block {
@@ -198,9 +201,9 @@
         }
         
         .ava {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
             object-fit: cover;
             border: 0;
             background: rgba(15, 118, 110, 0.15);
@@ -240,8 +243,8 @@
         
         .user-rank {
             font-size: 14px;
-            color: #9db2c1;
-            margin-top: 2px;
+            color: #a9bfce;
+            margin-top: 1px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -251,7 +254,7 @@
         .user-solved {
             text-align: right;
             font-size: 15px;
-            color: #c2d2df;
+            color: #d2e0ec;
             font-weight: 600;
         }
 
@@ -425,8 +428,8 @@
                 let row = document.createElement("div");
                 row.className = "rating-row";
                 row.style.setProperty("--row-banner", hasBanner ? rowBanner : "none");
-                row.style.setProperty("--row-banner-opacity", hasBanner ? "0.16" : "0");
-                row.style.setProperty("--row-banner-hover-opacity", hasBanner ? "0.22" : "0");
+                row.style.setProperty("--row-banner-opacity", hasBanner ? "0.28" : "0");
+                row.style.setProperty("--row-banner-hover-opacity", hasBanner ? "0.35" : "0");
                 row.style.cursor = "pointer";
                 row.addEventListener("click", () => {
                     window.location.href = profileUrl;
