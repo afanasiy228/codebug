@@ -156,7 +156,7 @@ PRO_NICK_COLORS = {
     "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
     "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6",
 }
-PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix"}
+PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix", "blood_ink"}
 PROFILE_COVER_PRESETS = {f"cover_{i}" for i in range(1, 11)}
 DEFAULT_PROFILE_COVER_ID = "cover_1"
 MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))

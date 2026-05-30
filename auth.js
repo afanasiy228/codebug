@@ -330,7 +330,7 @@ const PRO_NICK_SOLID_COLORS = [
     "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
     "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"
 ];
-const PRO_PLUS_NICK_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix"];
+const PRO_PLUS_NICK_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix", "blood_ink"];
 
 function getAllowedNickThemesForLevel(level) {
     const base = [...PRO_NICK_SOLID_COLORS];
@@ -406,6 +406,9 @@ function buildStyledNickHtml(login, sub, fallbackColor) {
             html += `<span style="color:${colors[i % colors.length]}">${safe[i]}</span>`;
         }
         return `<span>${html}</span>`;
+    }
+    if (theme === "blood_ink") {
+        return `<span style="background:linear-gradient(180deg,#f87171 0%,#b91c1c 42%,#0b0b0b 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 0 rgba(0,0,0,.45),0 8px 16px rgba(127,29,29,.35);">${safe}</span>`;
     }
     return `<span style="color:${PRO_NICK_SOLID_COLORS[0]}">${safe}</span>`;
 }

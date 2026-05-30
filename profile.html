@@ -1201,7 +1201,7 @@
     <div id="proStyleModal" class="pro-style-modal" aria-hidden="true">
         <div class="pro-style-card">
             <h3 class="pro-style-title">Кастомизация ника</h3>
-            <p style="margin:0;color:#94a3b8;">Выбери цвет ника. Ниже показан превью-вариант «afanasy».</p>
+            <p style="margin:0;color:#94a3b8;">Выбери цвет ника. Ниже показан превью-вариант твоего логина.</p>
             <div style="font-weight:600;color:#bfdbfe;margin-top:14px;">Цвет ника</div>
             <div class="choice-list" id="nickColorSwatches"></div>
             <div class="nick-modal-actions">
@@ -1253,7 +1253,7 @@
         let currentSubscriptionLevel = "free";
         const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"];
         const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
-        const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix"];
+        const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix", "blood_ink"];
         const COVER_PRESETS = [
             { id: "cover_1", name: "Mint Bloom", bg: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)" },
             { id: "cover_2", name: "Purple Dream", bg: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)" },
@@ -1268,6 +1268,7 @@
         ];
         const DEFAULT_COVER_ID = "cover_1";
         let currentProfileStyle = {};
+        let currentProfileLogin = viewedUser;
 
         /* ============================
            RANK SYSTEM
@@ -1311,23 +1312,44 @@
                 nutella: "Nutella (CF)",
                 rainbow: "Радуга",
                 fire_ice: "Огонь/Лёд",
-                matrix: "Matrix"
+                matrix: "Matrix",
+                blood_ink: "Blood Ink"
             };
             return map[String(theme)] || String(theme);
         }
 
-        function buildThemeSampleHtml(theme) {
-            if (theme === "nutella") return `<span><span style="color:#ffffff">a</span><span style="color:#dc2626">fanasy</span></span>`;
+        function safeInlineText(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function buildThemeSampleHtml(theme, sampleLogin) {
+            const nick = String(sampleLogin || viewedUser || currentUser || "user").trim().slice(0, 16);
+            const safeNick = safeInlineText(nick || "user");
+            if (theme === "nutella") {
+                const first = safeNick.slice(0, 1) || "u";
+                const rest = safeNick.slice(1) || "";
+                return `<span><span style="color:#ffffff">${first}</span><span style="color:#dc2626">${rest}</span></span>`;
+            }
             if (theme === "rainbow") {
                 const colors = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"];
-                return "afanasy".split("").map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
+                return safeNick.split("").map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
             }
             if (theme === "matrix") {
                 const colors = ["#22c55e", "#16a34a", "#4ade80"];
-                return "afanasy".split("").map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
+                return safeNick.split("").map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
             }
-            if (theme === "fire_ice") return `<span style="background:linear-gradient(90deg,#ef4444 0%,#f97316 45%,#38bdf8 55%,#2563eb 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">afanasy</span>`;
-            return `<span style="${getNickThemeSampleStyle(theme)}">afanasy</span>`;
+            if (theme === "fire_ice") {
+                return `<span style="background:linear-gradient(90deg,#ef4444 0%,#f97316 45%,#38bdf8 55%,#2563eb 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">${safeNick}</span>`;
+            }
+            if (theme === "blood_ink") {
+                return `<span style="background:linear-gradient(180deg,#f87171 0%,#b91c1c 42%,#0b0b0b 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 0 rgba(0,0,0,.45),0 8px 16px rgba(127,29,29,.35);">${safeNick}</span>`;
+            }
+            return `<span style="${getNickThemeSampleStyle(theme)}">${safeNick}</span>`;
         }
 
         function coverPresetById(id) {
@@ -1709,6 +1731,7 @@
             const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
             currentSubscriptionLevel = level;
             currentProfileStyle = profileStyle;
+            currentProfileLogin = data.login || viewedUser || currentUser;
             const isPro = level !== "free";
             const proNickColor = isPro && typeof getSubscriptionNickColor === "function" ? getSubscriptionNickColor(sub) : null;
             const nickTheme = isPro && typeof getSubscriptionNickTheme === "function" ? getSubscriptionNickTheme(sub) : null;
@@ -1826,6 +1849,7 @@
             }
             const themes = [...PRO_COLOR_PALETTE];
             if (level === "pro_plus") themes.push(...PRO_PLUS_THEMES, ...PRO_PLUS_EXTRA_THEMES);
+            const sampleLogin = currentProfileLogin || viewedUser || currentUser || "user";
             swatches.innerHTML = "";
             themes.forEach((theme) => {
                 const btn = document.createElement("button");
@@ -1834,7 +1858,7 @@
                 btn.title = `Выбрать стиль ${theme}`;
                 const sample = document.createElement("span");
                 sample.className = "sample";
-                sample.innerHTML = buildThemeSampleHtml(theme);
+                sample.innerHTML = buildThemeSampleHtml(theme, sampleLogin);
                 const meta = document.createElement("span");
                 meta.className = "meta";
                 meta.textContent = String(theme).startsWith("#") ? "SOLID" : getNickThemeLabel(theme);
