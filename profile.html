@@ -215,6 +215,30 @@
             border-color: rgba(110, 231, 183, 0.5);
             color: #ccfbe8;
         }
+
+        .logout-icon-btn {
+            width: 32px;
+            height: 32px;
+            margin: 0;
+            padding: 0;
+            border-radius: 999px;
+            border: 1px solid rgba(136, 156, 171, 0.45);
+            background: rgba(12, 20, 28, 0.8);
+            color: #dbe8f3;
+            font-size: 15px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color .14s ease, background-color .14s ease, transform .14s ease;
+        }
+
+        .logout-icon-btn:hover {
+            background: rgba(20, 31, 40, 0.95);
+            border-color: rgba(248, 113, 113, 0.75);
+            transform: translateY(-1px);
+        }
         
         .rank-text {
             font-size: 15px;
@@ -1087,6 +1111,7 @@
                     <div class="name-line">
                         <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
                         <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
+                        <button id="logoutIconBtn" class="logout-icon-btn" type="button" title="Выйти из аккаунта" aria-label="Выйти из аккаунта" style="display:none;">⎋</button>
                     </div>
                     <div class="rank-text" id="rank">Ранг загружается...</div>
                 </div>
@@ -1892,9 +1917,11 @@
                 const changeCoverBtn = document.getElementById("changeCoverBtn");
                 const avatarEditBtn = document.getElementById("avatarEditBtn");
                 const proStyleNickBtn = document.getElementById("proStyleNickBtn");
+                const logoutIconBtn = document.getElementById("logoutIconBtn");
                 if (changeCoverBtn) changeCoverBtn.style.display = "none";
                 if (avatarEditBtn) avatarEditBtn.style.display = "none";
                 if (proStyleNickBtn) proStyleNickBtn.style.display = "none";
+                if (logoutIconBtn) logoutIconBtn.style.display = "none";
                 const usernameEl = document.getElementById("username");
                 if (usernameEl) {
                     usernameEl.onclick = null;
@@ -1908,6 +1935,7 @@
                 const changeCoverBtn = document.getElementById("changeCoverBtn");
                 const avatarEditBtn = document.getElementById("avatarEditBtn");
                 const proStyleNickBtn = document.getElementById("proStyleNickBtn");
+                const logoutIconBtn = document.getElementById("logoutIconBtn");
                 const usernameEl = document.getElementById("username");
                 if (usernameEl) {
                     usernameEl.onclick = isPro ? openProStyleModal : null;
@@ -1917,6 +1945,7 @@
                 if (changeCoverBtn) changeCoverBtn.style.display = "inline-block";
                 if (avatarEditBtn) avatarEditBtn.style.display = "inline-flex";
                 if (proStyleNickBtn) proStyleNickBtn.style.display = isPro ? "inline-flex" : "none";
+                if (logoutIconBtn) logoutIconBtn.style.display = "inline-flex";
                 renderCoverControls(level, profileStyle);
                 renderProColorControls(level, nickTheme || proNickColor || "#60a5fa");
             }
@@ -2350,6 +2379,14 @@
         if (nickModal) {
             nickModal.addEventListener("click", (ev) => {
                 if (ev.target === nickModal) closeNickModal();
+            });
+        }
+        const logoutIconBtn = document.getElementById("logoutIconBtn");
+        if (logoutIconBtn) {
+            logoutIconBtn.addEventListener("click", () => {
+                if (viewedUser !== currentUser) return;
+                if (typeof logout === "function") logout();
+                else location.href = "auth.html";
             });
         }
         const avatarEditBtn = document.getElementById("avatarEditBtn");
