@@ -214,10 +214,10 @@
 
         .osu-overview {
             margin: 8px 22px 16px;
-            border: 1px solid rgba(125, 145, 160, 0.32);
-            border-radius: 20px;
-            background: linear-gradient(140deg, #202b2f 0%, #1a252a 55%, #161f24 100%);
-            padding: 18px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            padding: 8px 0 4px;
             color: #d4e0ec;
         }
 
@@ -226,8 +226,8 @@
             align-items: flex-end;
             gap: 28px;
             flex-wrap: wrap;
-            margin-bottom: 8px;
-            padding-bottom: 10px;
+            margin-bottom: 6px;
+            padding-bottom: 8px;
             border-bottom: 1px solid rgba(141, 160, 176, 0.24);
         }
 
@@ -280,7 +280,7 @@
         }
 
         .osu-graph {
-            padding: 4px 0 0;
+            padding: 0;
             background: transparent;
             border: none;
             border-radius: 0;
@@ -293,7 +293,7 @@
         }
 
         .osu-legend {
-            margin-top: 8px;
+            margin-top: 4px;
             display: flex;
             justify-content: space-between;
             gap: 10px;
@@ -302,12 +302,12 @@
         }
 
         .osu-meta {
-            margin-top: 10px;
+            margin-top: 6px;
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 12px;
             border-top: 1px solid rgba(141, 160, 176, 0.2);
-            padding-top: 10px;
+            padding-top: 8px;
         }
 
         .osu-meta-item {
@@ -1553,8 +1553,6 @@
             const width = canvas.width;
             const height = canvas.height;
             ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = "rgba(11, 22, 30, 0.68)";
-            ctx.fillRect(0, 0, width, height);
 
             const maxV = Math.max(...points, 1);
             const minV = Math.min(...points, 0);
@@ -1579,18 +1577,7 @@
             });
             ctx.stroke();
 
-            // glow
-            ctx.shadowColor = "rgba(253, 224, 71, 0.45)";
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            points.forEach((v, i) => {
-                const x = padX + (i / (points.length - 1)) * plotW;
-                const y = scaleY(v);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            // keep chart clean on shared background (no boxed fill/glow)
         }
 
         async function loadAnalytics() {
