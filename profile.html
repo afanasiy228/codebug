@@ -10,16 +10,16 @@
 
     <style>
         :root {
-            --bg: #f7f1e7;
-            --bg-strong: #f0e6d8;
-            --ink: #1a1612;
-            --muted: #5f5b54;
-            --accent: #0f766e;
-            --accent-strong: #0b5f59;
-            --warm: #f3b562;
-            --card: #fffaf2;
-            --stroke: #e2d6c4;
-            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --bg: #11181b;
+            --bg-strong: #0f1619;
+            --ink: #e5eef6;
+            --muted: #a4b2be;
+            --accent: #84e0d0;
+            --accent-strong: #67c7b7;
+            --warm: #f0d463;
+            --card: #1c2529;
+            --stroke: rgba(154, 178, 196, 0.32);
+            --shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
             --radius-lg: 24px;
             --radius-md: 16px;
         }
@@ -29,13 +29,13 @@
             color: var(--ink);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(1200px 500px at 15% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
-                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                radial-gradient(1100px 420px at 20% -10%, rgba(86, 136, 112, 0.2), transparent 62%),
+                radial-gradient(900px 420px at 90% 0%, rgba(64, 108, 118, 0.2), transparent 60%),
                 linear-gradient(180deg, var(--bg), var(--bg-strong));
         }
 
         ::selection {
-            background: rgba(15, 118, 110, 0.2);
+            background: rgba(132, 224, 208, 0.2);
         }
         
         * {
@@ -45,8 +45,8 @@
         
         header {
             height: 72px;
-            background: rgba(255, 250, 242, 0.8);
-            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            background: rgba(20, 30, 34, 0.88);
+            border-bottom: 1px solid rgba(128, 151, 166, 0.28);
             padding: 0 4vw;
             display: flex;
             align-items: center;
@@ -55,7 +55,7 @@
             top: 0;
             z-index: 10;
             backdrop-filter: blur(12px);
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
         }
         
         .logo {
@@ -63,53 +63,51 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.4px;
-            color: var(--ink);
+            color: #edf4fb;
         }
         
         nav a {
             margin-left: 20px;
-            color: var(--muted);
+            color: #a8b9c7;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
         }
         
         nav a:hover {
-            color: var(--accent);
+            color: #d9e6f2;
         }
         /* PROFILE LAYOUT */
         
         .container {
-            max-width: 1100px;
-            margin: 40px auto;
+            max-width: 1240px;
+            margin: 26px auto 40px;
             padding: 0 20px;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
-            gap: 30px;
+            display: block;
         }
-        /* LEFT COLUMN (INFO) */
         
         .info {
             background: var(--card);
             border: 1px solid var(--stroke);
-            padding: 28px;
+            padding: 0 0 22px;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
             min-width: 0;
+            overflow: hidden;
         }
 
         .profile-cover-panel {
             position: relative;
-            border: 1px solid var(--stroke);
-            border-radius: 18px;
+            border: none;
+            border-radius: 0;
             overflow: hidden;
-            margin-bottom: 18px;
-            background: #0f172a;
-            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28);
+            margin-bottom: 0;
+            background: #172025;
+            box-shadow: none;
         }
 
         .profile-cover {
-            height: 180px;
+            height: 238px;
             background-image: linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%);
             background-position: center;
             background-size: cover;
@@ -119,8 +117,12 @@
 
         .profile-cover-overlay {
             position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.14), rgba(15, 23, 42, 0.8));
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: auto;
+            height: 72px;
+            background: linear-gradient(180deg, rgba(13, 20, 25, 0.06), rgba(13, 20, 25, 0.76));
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
@@ -141,31 +143,76 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .03em;
-            color: #e2e8f0;
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.45);
+            color: #e5eef7;
+            background: rgba(14, 22, 29, 0.7);
+            border: 1px solid rgba(152, 175, 191, 0.42);
             border-radius: 999px;
             padding: 5px 10px;
         }
 
         .cover-note {
             font-size: 13px;
-            color: #d5deeb;
+            color: #d7e4ef;
             text-shadow: 0 1px 10px rgba(2, 6, 23, 0.45);
         }
 
         .cover-change-btn {
             margin: 0;
-            background: rgba(2, 6, 23, 0.75);
-            border: 1px solid rgba(148, 163, 184, 0.65);
+            background: rgba(13, 21, 28, 0.76);
+            border: 1px solid rgba(152, 175, 191, 0.62);
             box-shadow: none;
             font-size: 13px;
             padding: 8px 12px;
         }
 
         .cover-change-btn:hover {
-            background: rgba(15, 23, 42, 0.95);
-            border-color: rgba(191, 219, 254, 0.85);
+            background: rgba(15, 24, 32, 0.95);
+            border-color: rgba(205, 221, 234, 0.85);
+        }
+
+        .profile-header-row {
+            margin-top: -44px;
+            padding: 0 24px 10px;
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            gap: 20px;
+            align-items: end;
+        }
+
+        .profile-head-content {
+            min-width: 0;
+            padding-bottom: 8px;
+        }
+
+        .identity-subline {
+            color: #cad8e4;
+            font-size: 34px;
+            line-height: 1;
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 500;
+            margin: 0 0 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .identity-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .identity-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(139, 161, 177, 0.38);
+            color: #d4e1ec;
+            background: rgba(19, 28, 34, 0.78);
+            font-size: 12px;
+            font-weight: 600;
         }
         
         .name-line {
@@ -173,96 +220,100 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .username {
-            font-size: 32px;
+            font-size: clamp(38px, 4.2vw, 58px);
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
-            color: var(--ink);
+            color: #f2f6fb;
             margin-bottom: 0;
+            line-height: 1.02;
+            letter-spacing: .01em;
         }
 
         .pro-badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 999px;
-            border: 1px solid rgba(96, 165, 250, 0.45);
-            color: #bfdbfe;
-            font-size: 12px;
+            border: 1px solid rgba(248, 113, 182, 0.55);
+            color: #ffd8ed;
+            background: rgba(236, 72, 153, 0.22);
+            font-size: 13px;
             font-weight: 700;
             margin-bottom: 0;
         }
         .pro-badge.pro-plus {
-            background: rgba(56, 189, 248, 0.22);
-            border-color: rgba(56, 189, 248, 0.48);
-            color: #7dd3fc;
+            background: rgba(110, 231, 183, 0.2);
+            border-color: rgba(110, 231, 183, 0.5);
+            color: #ccfbe8;
         }
         
         .rank-text {
-            font-size: 18px;
-            color: var(--accent);
-            margin-bottom: 20px;
+            font-size: 14px;
+            color: #d5e5f1;
+            margin-bottom: 0;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 12px;
+            padding: 6px 11px;
             border-radius: 999px;
-            background: rgba(15, 118, 110, 0.12);
+            background: rgba(18, 29, 36, 0.84);
+            border: 1px solid rgba(134, 156, 173, 0.34);
             font-weight: 600;
         }
 
         .osu-overview {
-            margin-bottom: 20px;
-            border: 1px solid rgba(56, 73, 87, 0.9);
-            border-radius: 16px;
-            background: linear-gradient(135deg, #1b262a 0%, #172228 55%, #121a1f 100%);
-            padding: 16px;
+            margin: 8px 22px 16px;
+            border: 1px solid rgba(125, 145, 160, 0.32);
+            border-radius: 20px;
+            background: linear-gradient(140deg, #202b2f 0%, #1a252a 55%, #161f24 100%);
+            padding: 18px;
             color: #d4e0ec;
         }
 
         .osu-ranks {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 14px;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
         .osu-rank-card {
-            border: 1px solid rgba(80, 102, 121, 0.7);
-            border-radius: 12px;
-            padding: 12px;
-            background: rgba(11, 18, 23, 0.55);
+            border: 1px solid rgba(139, 157, 171, 0.3);
+            border-radius: 14px;
+            padding: 11px;
+            background: rgba(17, 26, 32, 0.58);
         }
 
         .osu-rank-label {
             font-size: 12px;
-            color: #9eb2c4;
-            margin-bottom: 6px;
+            color: #b3c4d2;
+            margin-bottom: 7px;
             font-weight: 600;
         }
 
         .osu-rank-value {
-            font-size: 42px;
+            font-size: clamp(42px, 5vw, 66px);
             line-height: 1;
             font-family: "Space Grotesk", sans-serif;
             font-weight: 700;
-            color: #f2f7fc;
+            color: #e8f2fa;
             letter-spacing: .01em;
         }
 
         .osu-rank-value em {
-            color: #f59fb6;
+            color: #ffc2d8;
             font-style: normal;
             font-size: 0.74em;
             margin-left: 2px;
         }
 
         .osu-graph {
-            border: 1px solid rgba(90, 112, 130, 0.65);
-            border-radius: 12px;
-            background: rgba(5, 11, 16, 0.42);
+            border: 1px solid rgba(137, 157, 172, 0.3);
+            border-radius: 14px;
+            background: rgba(13, 21, 27, 0.5);
             padding: 8px;
         }
 
@@ -277,7 +328,7 @@
             display: flex;
             justify-content: space-between;
             gap: 10px;
-            color: #9eb2c4;
+            color: #aec0cf;
             font-size: 12px;
         }
 
@@ -285,146 +336,114 @@
             margin-top: 14px;
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 8px;
+            gap: 9px;
         }
 
         .osu-meta-item {
-            border: 1px solid rgba(80, 102, 121, 0.6);
-            border-radius: 10px;
+            border: 1px solid rgba(141, 160, 176, 0.3);
+            border-radius: 12px;
             padding: 8px;
-            background: rgba(10, 17, 23, 0.45);
+            background: rgba(15, 24, 31, 0.5);
         }
 
         .osu-meta-label {
             font-size: 11px;
-            color: #98adbf;
+            color: #adc0ce;
             margin-bottom: 4px;
         }
 
         .osu-meta-value {
-            font-size: 20px;
+            font-size: 28px;
             font-family: "Space Grotesk", sans-serif;
-            color: #ebf4fb;
+            color: #edf6fc;
             font-weight: 700;
         }
         
         .info-row {
-            margin: 10px 0;
-            font-size: 16px;
-            color: var(--muted);
+            margin: 8px 22px;
+            font-size: 14px;
+            color: #b6c5d1;
         }
         
         .info-row span {
-            color: var(--accent);
+            color: #ecf5fd;
             font-weight: 600;
         }
         
         .section-title {
             font-size: 20px;
             font-weight: 600;
-            margin: 25px 0 10px;
-            color: var(--ink);
+            margin: 20px 22px 10px;
+            color: #e4edf5;
             font-family: "Space Grotesk", sans-serif;
         }
-        /* RIGHT COLUMN (AVATAR) */
         
         .avatar-block {
-            width: 320px;
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            padding: 25px;
-            border-radius: var(--radius-lg);
+            width: 220px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            border-radius: 0;
             text-align: center;
-            box-shadow: var(--shadow);
-            align-self: start;
-            justify-self: end;
             position: static;
-            top: auto;
             z-index: 1;
-        }
-
-        .avatar-block.pro-frame {
-            border: 1px solid rgba(96, 165, 250, 0.75);
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18), var(--shadow);
-        }
-        .avatar-block.frame-classic {
-            border-color: rgba(96, 165, 250, 0.85);
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22), var(--shadow);
-        }
-        .avatar-block.frame-ocean {
-            border-color: rgba(34, 211, 238, 0.95);
-            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.22), 0 0 34px rgba(34, 211, 238, 0.2), var(--shadow);
-        }
-        .avatar-block.frame-violet {
-            border-color: rgba(167, 139, 250, 0.95);
-            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.22), 0 0 34px rgba(167, 139, 250, 0.2), var(--shadow);
-        }
-        .avatar-block.frame-sunset {
-            border-color: rgba(251, 146, 60, 0.9);
-            box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.2), 0 0 34px rgba(244, 114, 182, 0.2), var(--shadow);
-        }
-        .avatar-block.frame-neon {
-            border-color: rgba(52, 211, 153, 1);
-            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.28), 0 0 46px rgba(52, 211, 153, 0.26), var(--shadow);
-        }
-        .avatar-block.frame-carbon {
-            border-color: rgba(203, 213, 225, 0.8);
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2), inset 0 0 0 1px rgba(255,255,255,0.1), var(--shadow);
+            margin: 0;
         }
 
         .avatar-block.seasonal {
-            background: linear-gradient(145deg, #fffaf2 0%, #eef5ff 100%);
+            background: transparent;
         }
         
         .avatar-block img {
-            width: 260px;
-            height: 260px;
-            border-radius: var(--radius-md);
+            width: 208px;
+            height: 208px;
+            border-radius: 50%;
             object-fit: cover;
-            border: 2px solid rgba(15, 118, 110, 0.4);
-            background: #fff;
+            border: 4px solid rgba(203, 217, 228, 0.88);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+            background: #243038;
         }
         
         #avatar-error {
-            color: #c0392b;
+            color: #f5b4b4;
             height: 16px;
             margin-top: 6px;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         button {
             margin-top: 12px;
-            padding: 10px 18px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
+            padding: 9px 14px;
+            background: #2b3b44;
+            color: #e7eef5;
+            border: 1px solid rgba(153, 174, 189, 0.35);
+            border-radius: 999px;
             cursor: pointer;
             font-weight: 600;
-            box-shadow: 0 14px 32px rgba(15, 118, 110, 0.25);
+            box-shadow: none;
         }
         
         button:hover {
-            background: var(--accent-strong);
+            background: #334651;
         }
-        /* STATS BOX */
         
         .stats-box {
-            background: linear-gradient(120deg, rgba(15, 118, 110, 0.16), rgba(243, 181, 98, 0.2));
-            border: 1px solid rgba(226, 214, 196, 0.8);
+            background: rgba(19, 29, 36, 0.85);
+            border: 1px solid rgba(141, 160, 175, 0.28);
             padding: 18px;
             border-radius: var(--radius-md);
-            margin-top: 20px;
+            margin: 12px 22px 0;
         }
         
         .stat-item {
             font-size: 17px;
             padding: 6px 0;
-            border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+            border-bottom: 1px solid rgba(141, 160, 175, 0.2);
+            color: #d2deea;
         }
         
         .stat-item span {
-            color: var(--accent);
+            color: #f0f8ff;
             font-weight: 700;
         }
         /* LAST SOLVED */
@@ -490,14 +509,14 @@
         }
 
         .analytics-section {
-            margin-top: 24px;
+            margin: 18px 22px 0;
             display: grid;
             gap: 16px;
         }
 
         .analytics-card {
-            background: rgba(8, 20, 40, 0.9);
-            border: 1px solid rgba(60, 95, 140, 0.45);
+            background: rgba(20, 30, 36, 0.88);
+            border: 1px solid rgba(136, 156, 171, 0.28);
             border-radius: var(--radius-md);
             padding: 16px;
             min-width: 0;
@@ -509,12 +528,12 @@
             font-size: 18px;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
-            color: #e8f0ff;
+            color: #e6eff7;
         }
 
         .analytics-sub {
             margin: 0 0 10px;
-            color: #9bb3d3;
+            color: #aebfcd;
             font-size: 13px;
         }
 
@@ -591,7 +610,7 @@
             justify-content: flex-end;
             align-items: center;
             gap: 6px;
-            color: #90a9cc;
+            color: #aebfcd;
             font-size: 12px;
         }
 
@@ -615,7 +634,7 @@
         }
 
         .bar-label {
-            color: #d7e4f7;
+            color: #d5e2ed;
             font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
@@ -626,19 +645,19 @@
             width: 100%;
             height: 10px;
             border-radius: 999px;
-            background: rgba(80, 110, 145, 0.35);
+            background: rgba(110, 126, 140, 0.28);
             overflow: hidden;
         }
 
         .bar-fill {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(90deg, #22c55e, #38bdf8);
+            background: linear-gradient(90deg, #f3e17a, #dfcf67);
         }
 
         .bar-value {
             text-align: right;
-            color: #9bb3d3;
+            color: #b9c9d5;
             font-size: 12px;
             font-weight: 600;
         }
@@ -651,10 +670,10 @@
         }
 
         .analytics-controls select {
-            border: 1px solid rgba(72, 106, 150, 0.5);
+            border: 1px solid rgba(136, 156, 171, 0.4);
             border-radius: 10px;
-            background: rgba(8, 20, 40, 0.8);
-            color: #dce8f8;
+            background: rgba(15, 23, 30, 0.88);
+            color: #d9e6f2;
             padding: 6px 10px;
             font-size: 13px;
         }
@@ -683,7 +702,7 @@
 
         .admin-note {
             font-size: 13px;
-            color: var(--muted);
+            color: #afbfcb;
             line-height: 1.5;
         }
 
@@ -691,7 +710,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-top: 14px;
+            margin: 12px 22px 0;
         }
         .pro-style-modal {
             position: fixed;
@@ -939,12 +958,30 @@
 
         @media (max-width: 960px) {
             .container {
-                grid-template-columns: 1fr;
+                max-width: 100%;
             }
 
+            .profile-cover {
+                height: 190px;
+            }
+            .profile-header-row {
+                margin-top: -28px;
+                grid-template-columns: 140px minmax(0, 1fr);
+                gap: 14px;
+                padding: 0 14px 10px;
+            }
             .avatar-block {
-                width: 100%;
-                position: static;
+                width: 140px;
+            }
+            .avatar-block img {
+                width: 132px;
+                height: 132px;
+            }
+            .identity-subline {
+                font-size: 24px;
+            }
+            .username {
+                font-size: clamp(30px, 5vw, 40px);
             }
             .choice-list {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -957,6 +994,29 @@
         @media (max-width: 640px) {
             header {
                 padding: 0 20px;
+            }
+            .profile-cover {
+                height: 156px;
+            }
+            .profile-header-row {
+                margin-top: -22px;
+                grid-template-columns: 1fr;
+                justify-items: start;
+            }
+            .avatar-block {
+                width: 112px;
+                margin-left: 2px;
+            }
+            .avatar-block img {
+                width: 108px;
+                height: 108px;
+                border-width: 3px;
+            }
+            .profile-head-content {
+                width: 100%;
+            }
+            .identity-subline {
+                font-size: 19px;
             }
             .osu-ranks {
                 grid-template-columns: 1fr;
@@ -983,7 +1043,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -1007,12 +1066,28 @@
                     <button id="changeCoverBtn" type="button" class="cover-change-btn" style="display:none;" onclick="openCoverModal()">Изменить шапку</button>
                 </div>
             </section>
+            <section class="profile-header-row">
+                <div class="avatar-block reveal" style="--delay: 0.1s;">
+                    <img id="avatar" src="">
+                    <input type="file" id="avatar-file" accept="image/*">
+                    <button id="uploadAvatarBtn" onclick="changeAvatar()">Загрузить аватар</button>
+                    <div id="avatar-error"></div>
+                </div>
 
-            <div class="name-line">
-                <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
-                <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
-            </div>
-            <div class="rank-text" id="rank">Ранг загружается...</div>
+                <div class="profile-head-content">
+                    <div class="name-line">
+                        <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
+                        <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
+                    </div>
+                    <div class="identity-subline" id="userSubline">@loading</div>
+                    <div class="identity-tags">
+                        <span class="identity-tag" id="countryTag">World</span>
+                        <span class="identity-tag" id="idTag">ID —</span>
+                        <span class="identity-tag" id="createdTag">Joined —</span>
+                    </div>
+                    <div class="rank-text" id="rank">Ранг загружается...</div>
+                </div>
+            </section>
 
             <section class="osu-overview">
                 <div class="osu-ranks">
@@ -1021,12 +1096,12 @@
                         <div class="osu-rank-value" id="globalRankValue">#—</div>
                     </div>
                     <div class="osu-rank-card">
-                        <div class="osu-rank-label">Country Rank, <span id="countryLabel">World</span></div>
-                        <div class="osu-rank-value" id="countryRankValue">#—</div>
+                        <div class="osu-rank-label">Рейтинг</div>
+                        <div class="osu-rank-value" id="summaryRatingValue">0</div>
                     </div>
                     <div class="osu-rank-card">
-                        <div class="osu-rank-label">Top Place</div>
-                        <div class="osu-rank-value" id="topPlaceValue">#—</div>
+                        <div class="osu-rank-label">Решено задач</div>
+                        <div class="osu-rank-value" id="summarySolvedValue">0</div>
                     </div>
                 </div>
                 <div class="osu-graph">
@@ -1060,22 +1135,23 @@
                 </div>
             </section>
 
-            <div class="info-row">Профиль: <span id="userid">—</span></div>
-            <div class="info-row">Дата регистрации: <span id="created">—</span></div>
-            <div class="info-row">Опыт: <span id="exp">0</span></div>
-            <div class="info-row">Решено задач: <span id="solved">0</span></div>
-            <div class="info-row">Рейтинг: <span id="rating">0</span></div>
-            <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
             <div class="profile-actions">
                 <a id="friendsLinkBtn" href="friends.html" style="text-decoration:none;">
                     <button type="button">Друзья</button>
                 </a>
                 <button id="addViewedFriendBtn" type="button" style="display:none;">Добавить в друзья</button>
                 <button id="changeNickBtn" type="button" style="display:none;" onclick="changeNickname()">Сменить ник</button>
-                <button id="proStyleBtn" type="button" style="display:none;" onclick="openProStyleModal()">Сменить цвет/рамку</button>
+                <button id="proStyleBtn" type="button" style="display:none;" onclick="openProStyleModal()">Сменить цвет ника</button>
                 <button id="coverStyleBtn" type="button" style="display:none;" onclick="openCoverModal()">Сменить шапку</button>
                 <button id="logoutBtn" type="button" onclick="logout()">Выйти из аккаунта</button>
             </div>
+
+            <div class="info-row">Профиль: <span id="userid">—</span></div>
+            <div class="info-row">Дата регистрации: <span id="created">—</span></div>
+            <div class="info-row">Опыт: <span id="exp">0</span></div>
+            <div class="info-row">Решено задач: <span id="solved">0</span></div>
+            <div class="info-row">Рейтинг: <span id="rating">0</span></div>
+            <div class="info-row">Последняя активность: <span id="lastActive">—</span></div>
 
             <div class="section-title">Статистика</div>
 
@@ -1154,14 +1230,6 @@
             </section>
         </div>
 
-        <!-- RIGHT COLUMN (AVATAR) -->
-        <div class="avatar-block reveal" style="--delay: 0.1s;">
-            <img id="avatar" src="">
-            <input type="file" id="avatar-file" accept="image/*">
-            <button id="uploadAvatarBtn" onclick="changeAvatar()">Загрузить аватар</button>
-            <div id="avatar-error"></div>
-        </div>
-
     </div>
     <div id="nickModal" class="nick-modal" aria-hidden="true">
         <div class="nick-modal-card">
@@ -1176,8 +1244,8 @@
     </div>
     <div id="proStyleModal" class="pro-style-modal" aria-hidden="true">
         <div class="pro-style-card">
-            <h3 class="pro-style-title">Кастомизация PRO</h3>
-            <p style="margin:0;color:#94a3b8;">Выбери цвет ника и стиль рамки. Ниже показан превью-вариант «afanasy».</p>
+            <h3 class="pro-style-title">Кастомизация ника</h3>
+            <p style="margin:0;color:#94a3b8;">Выбери цвет ника. Ниже показан превью-вариант «afanasy».</p>
             <div style="font-weight:600;color:#bfdbfe;margin-top:14px;">Цвет ника</div>
             <div class="choice-list" id="nickColorSwatches"></div>
             <div class="nick-modal-actions">
@@ -1242,14 +1310,6 @@
             { id: "cover_10", name: "Forest Glass", bg: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)" }
         ];
         const DEFAULT_COVER_ID = "cover_1";
-        const FRAME_STYLES = [
-            { id: "classic", color: "#60a5fa", label: "Классика" },
-            { id: "ocean", color: "#22d3ee", label: "Океан" },
-            { id: "violet", color: "#a78bfa", label: "Фиолет" },
-            { id: "sunset", color: "#fb923c", label: "Закат" },
-            { id: "neon", color: "#34d399", label: "Неон" },
-            { id: "carbon", color: "#94a3b8", label: "Карбон" }
-        ];
         let currentProfileStyle = {};
 
         /* ============================
@@ -1480,16 +1540,9 @@
 
         async function loadRankPlaces(profileData) {
             const globalEl = document.getElementById("globalRankValue");
-            const countryEl = document.getElementById("countryRankValue");
-            const topEl = document.getElementById("topPlaceValue");
-            const countryLabel = document.getElementById("countryLabel");
-            if (!globalEl || !countryEl || !topEl || !countryLabel) return;
+            if (!globalEl) return;
 
             globalEl.innerHTML = "#—";
-            countryEl.innerHTML = "#—";
-            topEl.innerHTML = "#—";
-            const myCountry = String(profileData?.country || "World").trim();
-            countryLabel.textContent = myCountry || "World";
 
             try {
                 const usersSnap = await db.ref("users").get();
@@ -1502,8 +1555,7 @@
                             login,
                             rating: Number(stats.rating || 0),
                             exp: Number(stats.exp || 0),
-                            solved: Number(stats.cnt || 0),
-                            country: String(u.country || "World").trim() || "World"
+                            solved: Number(stats.cnt || 0)
                         };
                     });
 
@@ -1517,13 +1569,6 @@
                 const gIndex = entries.findIndex((x) => x.login === viewedUser);
                 const globalPlace = gIndex >= 0 ? gIndex + 1 : null;
                 globalEl.innerHTML = formatRankValue(globalPlace);
-
-                const sameCountry = entries.filter((x) => x.country === myCountry);
-                const cIndex = sameCountry.findIndex((x) => x.login === viewedUser);
-                const countryPlace = cIndex >= 0 ? cIndex + 1 : globalPlace;
-                countryEl.innerHTML = formatRankValue(countryPlace);
-
-                topEl.innerHTML = formatRankValue(Math.min(globalPlace || 0, countryPlace || 0));
             } catch (e) {
                 console.warn("rank places load failed", e);
             }
@@ -1726,7 +1771,6 @@
             const isPro = level !== "free";
             const proNickColor = isPro && typeof getSubscriptionNickColor === "function" ? getSubscriptionNickColor(sub) : null;
             const nickTheme = isPro && typeof getSubscriptionNickTheme === "function" ? getSubscriptionNickTheme(sub) : null;
-            const frameStyle = String(sub?.visuals?.frameStyle || "classic").toLowerCase();
             applyProfileCover(profileStyle, level);
 
             // ---- BASIC INFO ----
@@ -1758,6 +1802,16 @@
             document.getElementById("userid").innerText = data.id || "—";
             document.getElementById("created").innerText =
                 data.created ? new Date(data.created).toLocaleDateString() : "—";
+            const userSubline = document.getElementById("userSubline");
+            if (userSubline) userSubline.textContent = `@${data.login || viewedUser}`;
+            const countryTag = document.getElementById("countryTag");
+            if (countryTag) countryTag.textContent = String(data.country || "CodeBug");
+            const idTag = document.getElementById("idTag");
+            if (idTag) idTag.textContent = `ID ${data.id || "—"}`;
+            const createdTag = document.getElementById("createdTag");
+            if (createdTag) {
+                createdTag.textContent = `Joined ${data.created ? new Date(data.created).toLocaleDateString() : "—"}`;
+            }
 
             // ---- STATS ----
             document.getElementById("solved").innerText = stats.cnt || 0;
@@ -1769,9 +1823,13 @@
             const osuSolved = document.getElementById("osuSolvedCount");
             const osuExp = document.getElementById("osuExpValue");
             const osuRating = document.getElementById("osuRatingValue");
+            const summaryRating = document.getElementById("summaryRatingValue");
+            const summarySolved = document.getElementById("summarySolvedValue");
             if (osuSolved) osuSolved.textContent = String(stats.cnt || 0);
             if (osuExp) osuExp.textContent = String(stats.exp || 0);
             if (osuRating) osuRating.textContent = String(stats.rating || 0);
+            if (summaryRating) summaryRating.textContent = String(stats.rating || 0);
+            if (summarySolved) summarySolved.textContent = String(stats.cnt || 0);
 
             // ---- RANK ----
             const rankEl = document.getElementById("rank");
@@ -1781,11 +1839,8 @@
             rankEl.style.background = `${nickColor}1f`;
             const avatarBlock = document.querySelector(".avatar-block");
             if (avatarBlock) {
-                avatarBlock.classList.toggle("pro-frame", isPro);
                 const seasonalEnabled = !!(sub && sub.visuals && sub.visuals.seasonalEnabled);
                 avatarBlock.classList.toggle("seasonal", isPro && seasonalEnabled);
-                avatarBlock.classList.remove("frame-classic", "frame-ocean", "frame-violet", "frame-sunset", "frame-neon", "frame-carbon");
-                if (isPro) avatarBlock.classList.add(`frame-${frameStyle}`);
             }
 
             // ---- AVATAR ----
@@ -1845,22 +1900,12 @@
                     usernameEl.style.cursor = isPro ? "pointer" : "default";
                     usernameEl.title = isPro ? "Нажми, чтобы выбрать цвет ника" : "";
                 }
-                const avatarBlockSelf = document.querySelector(".avatar-block");
-                if (avatarBlockSelf) {
-                    avatarBlockSelf.onclick = (ev) => {
-                        if (!isPro) return;
-                        const target = ev?.target;
-                        if (target && (target.id === "avatar-file" || target.id === "uploadAvatarBtn")) return;
-                        openProStyleModal();
-                    };
-                    avatarBlockSelf.title = isPro ? "Нажми, чтобы выбрать стиль рамки" : "";
-                }
                 if (changeNickBtn) changeNickBtn.style.display = isPro ? "inline-block" : "none";
                 if (proStyleBtn) proStyleBtn.style.display = isPro ? "inline-block" : "none";
                 if (coverStyleBtn) coverStyleBtn.style.display = "inline-block";
                 if (changeCoverBtn) changeCoverBtn.style.display = "inline-block";
                 renderCoverControls(level, profileStyle);
-                renderProColorControls(level, nickTheme || proNickColor || "#60a5fa", frameStyle);
+                renderProColorControls(level, nickTheme || proNickColor || "#60a5fa");
             }
 
             await loadProPlusAnalytics();
@@ -1868,7 +1913,7 @@
 
         }
 
-        function renderProColorControls(level, activeTheme, activeFrameStyle) {
+        function renderProColorControls(level, activeTheme) {
             const isPro = level !== "free";
             const swatches = document.getElementById("nickColorSwatches");
             if (!swatches) return;
@@ -2070,33 +2115,6 @@
                 }
                 if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
                 currentSubscription.visuals.nickColor = color;
-                await loadProfile();
-            } catch (_) {
-                alert("Сервер недоступен.");
-            }
-        }
-
-        async function setFrameStyle(style) {
-            const sub = currentSubscription || {};
-            const can = (typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false;
-            if (!can) return;
-            const headers = { "Content-Type": "application/json" };
-            try {
-                const auth = typeof getAuth === "function" ? getAuth() : null;
-                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
-                const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
-                const res = await fetch(`${base}/profile/set-frame-style`, {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify({ style })
-                });
-                const payload = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    alert(`Ошибка: ${payload.error || "set-frame-style failed"}`);
-                    return;
-                }
-                if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
-                currentSubscription.visuals.frameStyle = style;
                 await loadProfile();
             } catch (_) {
                 alert("Сервер недоступен.");
