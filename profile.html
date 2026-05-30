@@ -1127,12 +1127,12 @@
                 <div class="osu-side-stats">
                     <div class="osu-stat-row global">
                         <div class="osu-stat-icon" style="color:#f0d463;">🏆</div>
-                        <div class="osu-stat-label">Global Rank</div>
+                        <div class="osu-stat-label">Место в мире</div>
                         <div class="osu-stat-value" id="globalRankValue">#—</div>
                     </div>
                     <div class="osu-stat-row">
                         <div class="osu-stat-icon" style="color:#f8d66a;">✓</div>
-                        <div class="osu-stat-label">Solved</div>
+                        <div class="osu-stat-label">Решено</div>
                         <div class="osu-stat-value" id="osuSolvedCount">0</div>
                     </div>
                     <div class="osu-stat-row">
@@ -1142,12 +1142,12 @@
                     </div>
                     <div class="osu-stat-row">
                         <div class="osu-stat-icon" style="color:#a855f7;">⬡</div>
-                        <div class="osu-stat-label">Exp</div>
+                        <div class="osu-stat-label">Опыт</div>
                         <div class="osu-stat-value" id="osuExpValue">0</div>
                     </div>
                     <div class="osu-stat-row">
                         <div class="osu-stat-icon" style="color:#38bdf8;">↻</div>
-                        <div class="osu-stat-label">Attempts</div>
+                        <div class="osu-stat-label">Попытки</div>
                         <div class="osu-stat-value" id="osuAttemptsValue">0</div>
                     </div>
                     <div class="osu-stat-row activity">
@@ -1273,16 +1273,16 @@
         const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
         const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix", "blood_ink"];
         const COVER_PRESETS = [
-            { id: "cover_1", name: "Mint Bloom", bg: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)" },
-            { id: "cover_2", name: "Purple Dream", bg: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)" },
-            { id: "cover_3", name: "Deep Sea", bg: "linear-gradient(120deg,#1e3c72 0%,#2a5298 100%)" },
-            { id: "cover_4", name: "Sunset Dust", bg: "linear-gradient(120deg,#f6d365 0%,#fda085 100%)" },
-            { id: "cover_5", name: "Night Tech", bg: "linear-gradient(120deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" },
-            { id: "cover_6", name: "Rose Sky", bg: "linear-gradient(120deg,#ff9a9e 0%,#fad0c4 100%)" },
-            { id: "cover_7", name: "Aqua Wave", bg: "linear-gradient(120deg,#43cea2 0%,#185a9d 100%)" },
-            { id: "cover_8", name: "Cosmo", bg: "linear-gradient(120deg,#667eea 0%,#764ba2 100%)" },
-            { id: "cover_9", name: "Aurora", bg: "linear-gradient(120deg,#00c6ff 0%,#0072ff 30%,#6a11cb 70%,#2575fc 100%)" },
-            { id: "cover_10", name: "Forest Glass", bg: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)" }
+            { id: "cover_1", name: "Мятный рассвет", bg: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)" },
+            { id: "cover_2", name: "Фиолетовый сон", bg: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)" },
+            { id: "cover_3", name: "Глубокое море", bg: "linear-gradient(120deg,#1e3c72 0%,#2a5298 100%)" },
+            { id: "cover_4", name: "Пыльный закат", bg: "linear-gradient(120deg,#f6d365 0%,#fda085 100%)" },
+            { id: "cover_5", name: "Ночной техно", bg: "linear-gradient(120deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" },
+            { id: "cover_6", name: "Розовое небо", bg: "linear-gradient(120deg,#ff9a9e 0%,#fad0c4 100%)" },
+            { id: "cover_7", name: "Аква-волна", bg: "linear-gradient(120deg,#43cea2 0%,#185a9d 100%)" },
+            { id: "cover_8", name: "Космос", bg: "linear-gradient(120deg,#667eea 0%,#764ba2 100%)" },
+            { id: "cover_9", name: "Северное сияние", bg: "linear-gradient(120deg,#00c6ff 0%,#0072ff 30%,#6a11cb 70%,#2575fc 100%)" },
+            { id: "cover_10", name: "Лесное стекло", bg: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)" }
         ];
         const DEFAULT_COVER_ID = "cover_1";
         let currentProfileStyle = {};
@@ -1300,7 +1300,7 @@
             if (exp < 500) return "Повелитель RE";
             if (exp < 800) return "Охотник за TL";
             if (exp < 1200) return "Оптимизатор ML";
-            if (exp < 2000) return "Code Wizard";
+            if (exp < 2000) return "Кодовый маг";
             return "Легенда CodeBug";
         }
 
@@ -1325,13 +1325,13 @@
             const map = {
                 grad_ocean: "Градиент Океан",
                 grad_sunset: "Градиент Закат",
-                grad_candy: "Градиент Candy",
-                grad_aurora: "Градиент Aurora",
+                grad_candy: "Градиент Кэнди",
+                grad_aurora: "Градиент Аврора",
                 nutella: "Nutella (CF)",
                 rainbow: "Радуга",
                 fire_ice: "Огонь/Лёд",
-                matrix: "Matrix",
-                blood_ink: "Blood Ink"
+                matrix: "Матрица",
+                blood_ink: "Кровавые чернила"
             };
             return map[String(theme)] || String(theme);
         }
@@ -1948,7 +1948,7 @@
                 sample.innerHTML = buildThemeSampleHtml(theme, sampleLogin);
                 const meta = document.createElement("span");
                 meta.className = "meta";
-                meta.textContent = String(theme).startsWith("#") ? "SOLID" : getNickThemeLabel(theme);
+                meta.textContent = String(theme).startsWith("#") ? "Цвет" : getNickThemeLabel(theme);
                 btn.appendChild(sample);
                 btn.appendChild(meta);
                 btn.addEventListener("click", () => setNickColor(theme));
