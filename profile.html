@@ -80,20 +80,18 @@
         /* PROFILE LAYOUT */
         
         .container {
-            max-width: 1240px;
-            margin: 18px auto 34px;
-            padding: 0 20px;
+            max-width: min(1520px, 100%);
+            margin: 12px auto 28px;
+            padding: 0 16px;
             display: block;
         }
         
         .info {
-            background:
-                linear-gradient(180deg, rgba(56, 74, 82, 0.38) 0px, rgba(37, 50, 56, 0.72) 54px, rgba(28, 37, 41, 0.94) 138px, var(--card) 214px);
-            border: 1px solid rgba(154, 178, 196, 0.2);
-            border-top-color: rgba(154, 178, 196, 0.08);
-            padding: 0 0 14px;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+            background: transparent;
+            border: 0;
+            padding: 0 0 10px;
+            border-radius: 0;
+            box-shadow: none;
             min-width: 0;
             overflow: hidden;
         }
@@ -104,12 +102,12 @@
             border-radius: 0;
             overflow: hidden;
             margin-bottom: 0;
-            background: #172025;
+            background: #162127;
             box-shadow: none;
         }
 
         .profile-cover {
-            height: 238px;
+            height: 310px;
             background-image: linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%);
             background-position: center;
             background-size: cover;
@@ -124,9 +122,9 @@
             left: 0;
             right: 0;
             bottom: -1px;
-            height: 176px;
+            height: 118px;
             pointer-events: none;
-            background: linear-gradient(180deg, rgba(15, 22, 27, 0.04) 0%, rgba(20, 29, 35, 0.42) 36%, rgba(27, 37, 43, 0.8) 70%, rgba(28, 37, 41, 0.98) 100%);
+            background: linear-gradient(180deg, rgba(15, 22, 27, 0) 0%, rgba(18, 27, 33, 0.28) 48%, rgba(20, 30, 36, 0.8) 100%);
         }
 
         .profile-cover-overlay {
@@ -167,11 +165,11 @@
         }
 
         .profile-header-row {
-            margin-top: -112px;
-            padding: 0 24px 0;
+            margin-top: -96px;
+            padding: 0 28px 2px;
             display: grid;
             grid-template-columns: 270px minmax(0, 1fr);
-            gap: 2px;
+            gap: 24px;
             align-items: end;
             position: relative;
             z-index: 2;
@@ -179,8 +177,8 @@
 
         .profile-head-content {
             min-width: 0;
-            padding-bottom: 2px;
-            transform: translate(-10px, -24px);
+            padding-bottom: 4px;
+            transform: translate(0, -16px);
         }
 
         .name-line {
@@ -230,14 +228,14 @@
         }
 
         .osu-overview {
-            margin: -2px 22px 10px;
-            border-top: 1px solid rgba(141, 160, 176, 0.22);
+            margin: 0 28px 10px;
+            border-top: 0;
             background: transparent;
-            padding: 8px 0 2px;
+            padding: 4px 0 2px;
             color: #d4e0ec;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 250px;
-            gap: 20px;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 26px;
             align-items: start;
         }
 
@@ -250,26 +248,40 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            font-size: 11px;
-            color: #9fb2c1;
-            margin-bottom: 4px;
-            opacity: 0.94;
+            font-size: 13px;
+            color: #bfd0dc;
+            margin-bottom: 8px;
+            opacity: 0.98;
             text-transform: uppercase;
             letter-spacing: .06em;
+            font-weight: 600;
         }
 
         .osu-side-stats {
             min-width: 0;
             display: grid;
-            gap: 8px;
+            gap: 0;
             padding-top: 2px;
+            border-left: 1px solid rgba(133, 155, 170, 0.28);
+            padding-left: 20px;
         }
 
         .osu-stat-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: auto minmax(0, 1fr) auto;
             align-items: baseline;
             gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(120, 145, 161, 0.22);
+        }
+        .osu-stat-row:last-child { border-bottom: 0; }
+
+        .osu-stat-icon {
+            font-size: 15px;
+            line-height: 1;
+            opacity: 0.95;
+            width: 18px;
+            text-align: center;
         }
 
         .osu-stat-label {
@@ -308,7 +320,7 @@
 
         .osu-graph canvas {
             width: 100%;
-            height: 82px;
+            height: 136px;
             display: block;
         }
 
@@ -341,17 +353,6 @@
             font-family: "Space Grotesk", sans-serif;
             color: #edf6fc;
             font-weight: 700;
-        }
-        
-        .info-row {
-            margin: 2px 22px 6px;
-            font-size: 13px;
-            color: #a8b8c5;
-        }
-        
-        .info-row span {
-            color: #ecf5fd;
-            font-weight: 600;
         }
         
         .section-title {
@@ -504,7 +505,7 @@
         }
 
         .analytics-section {
-            margin: 8px 22px 0;
+            margin: 2px 28px 0;
             display: grid;
             gap: 10px;
         }
@@ -514,7 +515,7 @@
             border: 0;
             border-top: 0;
             border-radius: 0;
-            padding: 4px 0 2px;
+            padding: 2px 0 2px;
             min-width: 0;
             overflow: hidden;
         }
@@ -950,13 +951,14 @@
         @media (max-width: 960px) {
             .container {
                 max-width: 100%;
+                padding: 0 10px;
             }
 
             .profile-cover {
-                height: 190px;
+                height: 220px;
             }
             .profile-header-row {
-                margin-top: -66px;
+                margin-top: -84px;
                 grid-template-columns: 180px minmax(0, 1fr);
                 gap: 6px;
                 padding: 0 14px 0;
@@ -976,10 +978,12 @@
                 font-size: clamp(30px, 5vw, 40px);
             }
             .profile-head-content {
-                transform: translate(-6px, -14px);
+                transform: translate(0, -10px);
             }
-            .osu-primary-metric:first-child .osu-primary-value {
-                font-size: clamp(54px, 9vw, 82px);
+            .osu-overview {
+                margin: 0 14px 8px;
+                grid-template-columns: minmax(0, 1fr) 250px;
+                gap: 14px;
             }
             .choice-list {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -994,10 +998,10 @@
                 padding: 0 20px;
             }
             .profile-cover {
-                height: 156px;
+                height: 178px;
             }
             .profile-header-row {
-                margin-top: -64px;
+                margin-top: -74px;
                 grid-template-columns: 1fr;
                 justify-items: start;
                 gap: 6px;
@@ -1018,24 +1022,21 @@
                 width: 100%;
                 transform: translate(-2px, -10px);
             }
-            .osu-topline {
-                display: none;
-            }
             .osu-overview {
                 grid-template-columns: 1fr;
                 gap: 10px;
+                margin: 0 12px 8px;
             }
             .osu-side-stats {
-                gap: 6px;
+                gap: 0;
+                border-left: 0;
+                padding-left: 0;
             }
             .osu-stat-value {
                 font-size: 20px;
             }
             .osu-stat-row.global .osu-stat-value {
                 font-size: 32px;
-            }
-            .osu-meta {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             .choice-list {
                 grid-template-columns: 1fr;
@@ -1100,29 +1101,57 @@
                     <div class="osu-graph">
                         <canvas id="solvedTrendChart" width="900" height="160"></canvas>
                     </div>
+                    <article class="analytics-card" style="margin-top:10px;">
+                        <h3 class="analytics-title">Активность</h3>
+                        <p class="analytics-sub">Решённые задачи по дням за последний год.</p>
+                        <div class="heatmap-wrap">
+                            <div class="heatmap-months" id="heatmapMonths"></div>
+                            <div class="heatmap-body">
+                                <div class="heatmap-weekdays">
+                                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                                </div>
+                                <div class="heatmap-grid" id="heatmapGrid"></div>
+                            </div>
+                        </div>
+                        <div class="heatmap-legend">
+                            <span>меньше</span>
+                            <span class="legend-cell"></span>
+                            <span class="legend-cell hm-l1"></span>
+                            <span class="legend-cell hm-l2"></span>
+                            <span class="legend-cell hm-l3"></span>
+                            <span class="legend-cell hm-l4"></span>
+                            <span>больше</span>
+                        </div>
+                    </article>
                 </div>
                 <div class="osu-side-stats">
                     <div class="osu-stat-row global">
+                        <div class="osu-stat-icon" style="color:#f0d463;">🏆</div>
                         <div class="osu-stat-label">Global Rank</div>
                         <div class="osu-stat-value" id="globalRankValue">#—</div>
                     </div>
                     <div class="osu-stat-row">
+                        <div class="osu-stat-icon" style="color:#f8d66a;">✓</div>
                         <div class="osu-stat-label">Solved</div>
                         <div class="osu-stat-value" id="osuSolvedCount">0</div>
                     </div>
                     <div class="osu-stat-row">
+                        <div class="osu-stat-icon" style="color:#ec4899;">◎</div>
                         <div class="osu-stat-label">AC%</div>
                         <div class="osu-stat-value" id="osuAcRateValue">0%</div>
                     </div>
                     <div class="osu-stat-row">
+                        <div class="osu-stat-icon" style="color:#a855f7;">⬡</div>
                         <div class="osu-stat-label">Exp</div>
                         <div class="osu-stat-value" id="osuExpValue">0</div>
                     </div>
                     <div class="osu-stat-row">
+                        <div class="osu-stat-icon" style="color:#38bdf8;">↻</div>
                         <div class="osu-stat-label">Attempts</div>
                         <div class="osu-stat-value" id="osuAttemptsValue">0</div>
                     </div>
                     <div class="osu-stat-row activity">
+                        <div class="osu-stat-icon" style="color:#22c55e;">⌁</div>
                         <div class="osu-stat-label">Последняя активность</div>
                         <div class="osu-stat-value" id="lastActive">—</div>
                     </div>
@@ -1130,29 +1159,6 @@
             </section>
 
             <section class="analytics-section">
-                <article class="analytics-card">
-                    <h3 class="analytics-title">Активность</h3>
-                    <p class="analytics-sub">Решённые задачи по дням за последний год.</p>
-                    <div class="heatmap-wrap">
-                        <div class="heatmap-months" id="heatmapMonths"></div>
-                        <div class="heatmap-body">
-                            <div class="heatmap-weekdays">
-                                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-                            </div>
-                            <div class="heatmap-grid" id="heatmapGrid"></div>
-                        </div>
-                    </div>
-                    <div class="heatmap-legend">
-                        <span>меньше</span>
-                        <span class="legend-cell"></span>
-                        <span class="legend-cell hm-l1"></span>
-                        <span class="legend-cell hm-l2"></span>
-                        <span class="legend-cell hm-l3"></span>
-                        <span class="legend-cell hm-l4"></span>
-                        <span>больше</span>
-                    </div>
-                </article>
-
                 <article class="analytics-card">
                     <h3 class="analytics-title">По сложности</h3>
                     <p class="analytics-sub">Сколько задач каждого уровня уже решено.</p>
@@ -1590,7 +1596,7 @@
 
             const maxV = Math.max(...points, 1);
             const minV = Math.min(...points, 0);
-            const padX = 8;
+            const padX = 10;
             const padY = 16;
             const plotW = width - padX * 2;
             const plotH = height - padY * 2;
@@ -1599,19 +1605,88 @@
                 const t = (v - minV) / (maxV - minV);
                 return padY + plotH - t * plotH;
             };
+            const coords = points.map((v, i) => ({
+                x: padX + (i / (points.length - 1)) * plotW,
+                y: scaleY(v),
+                v
+            }));
 
+            // subtle horizontal guide lines
+            ctx.save();
+            ctx.setLineDash([4, 6]);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.22)";
+            for (let i = 1; i <= 3; i += 1) {
+                const gy = padY + (plotH * i) / 4;
+                ctx.beginPath();
+                ctx.moveTo(padX, gy);
+                ctx.lineTo(width - padX, gy);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // smooth yellow line with quadratic segments
             ctx.beginPath();
-            ctx.strokeStyle = "rgba(253, 224, 71, 0.92)";
-            ctx.lineWidth = 3;
-            points.forEach((v, i) => {
-                const x = padX + (i / (points.length - 1)) * plotW;
-                const y = scaleY(v);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
+            ctx.moveTo(coords[0].x, coords[0].y);
+            for (let i = 1; i < coords.length - 1; i += 1) {
+                const xc = (coords[i].x + coords[i + 1].x) / 2;
+                const yc = (coords[i].y + coords[i + 1].y) / 2;
+                ctx.quadraticCurveTo(coords[i].x, coords[i].y, xc, yc);
+            }
+            const last = coords[coords.length - 1];
+            ctx.quadraticCurveTo(coords[coords.length - 2].x, coords[coords.length - 2].y, last.x, last.y);
 
-            // keep chart clean on shared background (no boxed fill/glow)
+            // fill under curve
+            const linePath = new Path2D();
+            linePath.moveTo(coords[0].x, coords[0].y);
+            for (let i = 1; i < coords.length - 1; i += 1) {
+                const xc = (coords[i].x + coords[i + 1].x) / 2;
+                const yc = (coords[i].y + coords[i + 1].y) / 2;
+                linePath.quadraticCurveTo(coords[i].x, coords[i].y, xc, yc);
+            }
+            linePath.quadraticCurveTo(coords[coords.length - 2].x, coords[coords.length - 2].y, last.x, last.y);
+
+            const fillPath = new Path2D(linePath);
+            fillPath.lineTo(last.x, height - padY + 2);
+            fillPath.lineTo(coords[0].x, height - padY + 2);
+            fillPath.closePath();
+
+            const fillGrad = ctx.createLinearGradient(0, padY, 0, height - padY);
+            fillGrad.addColorStop(0, "rgba(253, 224, 71, 0.22)");
+            fillGrad.addColorStop(1, "rgba(253, 224, 71, 0.02)");
+            ctx.fillStyle = fillGrad;
+            ctx.fill(fillPath);
+
+            ctx.strokeStyle = "rgba(253, 224, 71, 0.96)";
+            ctx.lineWidth = 2.4;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.stroke(linePath);
+
+            // key points markers
+            const markerStep = 8;
+            for (let i = 0; i < coords.length; i += markerStep) {
+                const p = coords[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2.7, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(252, 211, 77, 0.95)";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4.4, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(252, 211, 77, 0.18)";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+            // final point stronger
+            ctx.beginPath();
+            ctx.arc(last.x, last.y, 4.3, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(252, 211, 77, 1)";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(last.x, last.y, 7.5, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(252, 211, 77, 0.3)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
 
         async function loadAnalytics() {
