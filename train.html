@@ -50,7 +50,7 @@
             z-index: 0;
             width: min(560px, 52vw);
             pointer-events: none;
-            opacity: 0.1;
+            opacity: 0.055;
             font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
             line-height: 1.5;
@@ -142,6 +142,15 @@
             letter-spacing: 0.02em;
         }
 
+        .level-title svg {
+            width: 15px;
+            height: 15px;
+            stroke: #87c7a7;
+            stroke-width: 1.9;
+            fill: none;
+            flex: 0 0 15px;
+        }
+
         .level-value {
             color: #d8e6f3;
             font-weight: 700;
@@ -167,10 +176,10 @@
             display: flex;
             align-items: stretch;
             flex-wrap: wrap;
-            gap: 12px 20px;
+            gap: 10px 18px;
             padding: 8px 0 18px;
             border-bottom: 1px solid var(--line-soft);
-            max-width: 900px;
+            max-width: 860px;
         }
 
         .metric {
@@ -188,16 +197,25 @@
         }
 
         .metric-icon {
-            color: #a8bdd2;
-            font-size: 14px;
             width: 18px;
             flex: 0 0 18px;
-            text-align: center;
-            opacity: 0.95;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.9;
+            margin-top: 1px;
+        }
+
+        .metric-icon svg {
+            width: 17px;
+            height: 17px;
+            stroke: #89a89d;
+            stroke-width: 1.9;
+            fill: none;
         }
 
         .metric-value {
-            font-size: 26px;
+            font-size: 25px;
             line-height: 1;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
@@ -208,7 +226,7 @@
 
         .metric-label {
             color: #9aaec2;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.03em;
             text-transform: uppercase;
             margin-top: 6px;
@@ -681,7 +699,13 @@ for (int i = 1; i &lt;= n; ++i) {
                 </div>
                 <div class="level-progress">
                     <div class="level-head">
-                        <div class="level-title">⟡ До следующего уровня</div>
+                        <div class="level-title">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 16l6-6 4 4 6-6"></path>
+                                <path d="M16 8h4v4"></path>
+                            </svg>
+                            До следующего уровня
+                        </div>
                         <div class="level-value" id="levelValue">0 / 20 EXP</div>
                     </div>
                     <div class="level-bar">
@@ -692,28 +716,50 @@ for (int i = 1; i &lt;= n; ++i) {
 
             <div class="stats-strip">
                 <div class="metric">
-                    <span class="metric-icon">🏁</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </span>
                     <div>
                         <div class="metric-value" id="metricSolved">0</div>
                         <div class="metric-label">решено задач</div>
                     </div>
                 </div>
                 <div class="metric">
-                    <span class="metric-icon">🎯</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <circle cx="12" cy="12" r="1.7"></circle>
+                        </svg>
+                    </span>
                     <div>
                         <div class="metric-value" id="metricAccuracy">0%</div>
                         <div class="metric-label">accuracy</div>
                     </div>
                 </div>
                 <div class="metric">
-                    <span class="metric-icon">⬢</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M7 4h10l5 8-5 8H7l-5-8z"></path>
+                        </svg>
+                    </span>
                     <div>
                         <div class="metric-value" id="metricExp">0</div>
                         <div class="metric-label">exp</div>
                     </div>
                 </div>
                 <div class="metric">
-                    <span class="metric-icon">↻</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"></path>
+                            <path d="M21 3v5h-5"></path>
+                            <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"></path>
+                            <path d="M8 16H3v5"></path>
+                        </svg>
+                    </span>
                     <div>
                         <div class="metric-value" id="metricAttempts">0</div>
                         <div class="metric-label">attempts</div>
