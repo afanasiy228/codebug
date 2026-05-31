@@ -2655,6 +2655,13 @@ def _task_difficulty_for_xp(task_id, task_difficulties):
     return task_difficulties.get(str(task_id), "")
 
 
+def _is_valid_firebase_path_part(value):
+    part = str(value or "").strip()
+    if not part:
+        return False
+    return not bool(re.search(r"[.#$/\[\]]", part))
+
+
 def _is_valid_login_name(login):
     if not isinstance(login, str):
         return False
@@ -2903,10 +2910,12 @@ def admin_rebuild_user_stats():
         users_map = users_raw if isinstance(users_raw, dict) else {}
         updates = {}
         updated = 0
+        skipped_users = 0
 
         for login, udata in users_map.items():
             login = str(login or "").strip()
-            if not login:
+            if not _is_valid_firebase_path_part(login):
+                skipped_users += 1
                 continue
             stats = {}
             if isinstance(udata, dict):
@@ -2923,8 +2932,22 @@ def admin_rebuild_user_stats():
             updates[f"users/{login}/stats"] = stats
             updated += 1
 
+        failed_updates = 0
         if updates:
-            db.reference("/").update(updates)
+            items = list(updates.items())
+            chunk_size = 120
+            for start in range(0, len(items), chunk_size):
+                chunk_items = items[start:start + chunk_size]
+                chunk_payload = dict(chunk_items)
+                try:
+                    db.reference("/").update(chunk_payload)
+                except Exception as chunk_err:
+                    # Fallback: isolate bad record(s) instead of failing the whole rebuild.
+                    for path, value in chunk_items:
+                        try:
+                            db.reference(path).set(value)
+                        except Exception:
+                            failed_updates += 1
 
         elapsed_ms = int((time.time() - started_at) * 1000)
         return jsonify({
@@ -2933,6 +2956,8 @@ def admin_rebuild_user_stats():
             "usersWithSolved": len(solved_by_user),
             "submissionsScanned": submissions_scanned,
             "tasksLoaded": len(task_difficulties),
+            "skippedUsers": skipped_users,
+            "failedUpdates": failed_updates,
             "elapsedMs": elapsed_ms
         })
     except Exception as e:
