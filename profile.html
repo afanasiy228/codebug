@@ -1316,6 +1316,58 @@
         const DEFAULT_COVER_ID = "cover_1";
         let currentProfileStyle = {};
         let currentProfileLogin = viewedUser;
+        let preferRestDbReads = false;
+
+        function isOfflineDbError(err) {
+            const msg = String(err?.message || err || "").toLowerCase();
+            return msg.includes("client is offline")
+                || msg.includes("network")
+                || msg.includes("connection")
+                || msg.includes("offline");
+        }
+
+        function getDatabaseBaseUrl() {
+            const direct = String(window.firebase?.apps?.[0]?.options?.databaseURL || "").trim();
+            if (direct) return direct.replace(/\/+$/, "");
+            const cfg = String(window.CODEBUG_PUBLIC_CONFIG?.firebase?.databaseURL || "").trim();
+            return cfg ? cfg.replace(/\/+$/, "") : "";
+        }
+
+        function toDbRestPath(path) {
+            return String(path || "")
+                .split("/")
+                .filter(Boolean)
+                .map((chunk) => encodeURIComponent(chunk))
+                .join("/");
+        }
+
+        async function dbRead(path, opts = {}) {
+            const retries = Number.isFinite(Number(opts.retries)) ? Number(opts.retries) : 1;
+            const delayMs = Number.isFinite(Number(opts.delayMs)) ? Number(opts.delayMs) : 260;
+            const forceRest = !!opts.forceRest || preferRestDbReads;
+
+            if (!forceRest && window.db && typeof window.db.ref === "function") {
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        const snap = await window.db.ref(path).get();
+                        return snap.exists() ? snap.val() : null;
+                    } catch (err) {
+                        if (!isOfflineDbError(err) || i === retries) {
+                            if (isOfflineDbError(err)) preferRestDbReads = true;
+                            break;
+                        }
+                        await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+                    }
+                }
+            }
+
+            const baseUrl = getDatabaseBaseUrl();
+            if (!baseUrl) throw new Error("database_url_missing");
+            const url = `${baseUrl}/${toDbRestPath(path)}.json?t=${Date.now()}`;
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) throw new Error(`db_rest_http_${res.status}`);
+            return await res.json();
+        }
 
         /* ============================
            RANK SYSTEM
@@ -1568,8 +1620,7 @@
             globalEl.innerHTML = "#—";
 
             try {
-                const usersSnap = await db.ref("users").get();
-                const users = usersSnap.exists() ? usersSnap.val() || {} : {};
+                const users = (await dbRead("users", { retries: 2 })) || {};
                 const entries = Object.entries(users)
                     .filter(([, u]) => u && typeof u === "object")
                     .map(([login, u]) => {
@@ -1719,15 +1770,10 @@
         }
 
         async function loadAnalytics() {
-            const dbRef = window.db || null;
-            if (!dbRef) return;
-
             let submissions = [];
             try {
-                const snap = await dbRef.ref("submissions/global").get();
-                if (snap.exists()) {
-                    submissions = Object.values(snap.val() || {});
-                }
+                const raw = await dbRead("submissions/global", { retries: 2 });
+                if (raw && typeof raw === "object") submissions = Object.values(raw);
             } catch (e) {
                 console.warn("analytics submissions load failed", e);
             }
@@ -1836,10 +1882,8 @@
            LOAD PROFILE DATA
         ============================ */
         async function loadProfile() {
-            const snap = await db.ref("users/" + viewedUser).get();
-            if (!snap.exists()) return;
-
-            const data = snap.val();
+            const data = await dbRead("users/" + viewedUser, { retries: 2 });
+            if (!data || typeof data !== "object") return;
             const stats = data.stats || {};
             const sub = data.subscription || null;
             const profileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
@@ -2333,13 +2377,11 @@
             const lastActiveEl = document.getElementById("lastActive");
             if (!lastActiveEl) return;
             try {
-                const snap = await db.ref("users/" + viewedUser + "/presence").get();
-                if (!snap.exists()) {
+                const presence = await dbRead("users/" + viewedUser + "/presence", { retries: 2 });
+                if (!presence || typeof presence !== "object") {
                     lastActiveEl.innerText = "—";
                     return;
                 }
-
-                const presence = snap.val();
                 if (presence.online) {
                     lastActiveEl.innerText = "В сети";
                     return;
