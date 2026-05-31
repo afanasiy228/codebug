@@ -1,296 +1,456 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeBug — Тренировка</title>
     <link rel="icon" type="image/png" href="/logo.png?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
     <style>
         :root {
-            --bg: #f7f1e7;
-            --bg-strong: #f0e6d8;
-            --ink: #1a1612;
-            --muted: #5f5b54;
-            --accent: #0f766e;
-            --accent-strong: #0b5f59;
-            --warm: #f3b562;
-            --card: #fffaf2;
-            --stroke: #e2d6c4;
-            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
-            --radius-lg: 22px;
-            --radius-md: 16px;
+            --bg-0: #050b11;
+            --bg-1: #08121a;
+            --bg-2: #0a1823;
+            --line: rgba(122, 145, 164, 0.24);
+            --line-soft: rgba(122, 145, 164, 0.16);
+            --text: #e5eef7;
+            --muted: #8ea0b1;
+            --green: #38d38e;
+            --green-soft: rgba(56, 211, 142, 0.16);
+            --blue: #6db6ff;
+            --violet: #b590ff;
+            --gold: #efcf67;
+            --danger: #ff6b7f;
         }
-        
+
+        * { box-sizing: border-box; }
+
         body {
             margin: 0;
-            color: var(--ink);
+            color: var(--text);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(1200px 500px at 10% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
-                radial-gradient(900px 500px at 90% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
-                linear-gradient(180deg, var(--bg), var(--bg-strong));
+                radial-gradient(1200px 680px at 9% -20%, rgba(40, 133, 115, 0.22), transparent 62%),
+                radial-gradient(1100px 560px at 90% 0%, rgba(72, 137, 190, 0.2), transparent 62%),
+                linear-gradient(180deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        ::selection {
-            background: rgba(15, 118, 110, 0.2);
-        }
-        
-        * {
-            box-sizing: border-box;
+        .training-shell {
+            width: min(1360px, 96vw);
+            margin: 34px auto 74px;
+            position: relative;
         }
 
-        .container {
-            width: min(1200px, 92vw);
-            margin: 0 auto;
+        .bg-code {
+            position: absolute;
+            right: 2%;
+            top: 86px;
+            z-index: 0;
+            width: min(560px, 52vw);
+            pointer-events: none;
+            opacity: 0.1;
+            font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #c8def1;
+            white-space: pre;
+            user-select: none;
+        }
+
+        .surface {
+            position: relative;
+            z-index: 1;
         }
 
         header {
             height: 72px;
-            background: rgba(255, 250, 242, 0.8);
-            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
-            padding: 0 4vw;
+            padding: 0 34px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(9, 15, 24, 0.8);
+            border-bottom: 1px solid rgba(84, 110, 132, 0.22);
+            backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
-            z-index: 10;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            z-index: 30;
         }
-        
+
         .logo {
             font-family: "Space Grotesk", sans-serif;
             font-size: 20px;
             font-weight: 700;
-            letter-spacing: 0.4px;
-            color: var(--ink);
+            letter-spacing: 0.3px;
+            color: #dbe6f2;
         }
-        
+
         nav a {
-            color: var(--muted);
-            margin-left: 25px;
+            margin-left: 24px;
+            color: #a3b4c5;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
         }
-        
-        nav a:hover {
-            color: var(--accent);
-        }
-        
-        .page {
-            margin: 40px auto 80px;
+
+        nav a:hover { color: #d9ebfb; }
+
+        .hero {
             display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 40px;
-        }
-        /* SIDEBAR */
-        
-        .filters {
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            padding: 22px;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 92px;
-            align-self: start;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 24px;
+            align-items: end;
+            padding: 10px 4px 12px;
         }
 
-        .filters::after {
-            content: "";
-            position: absolute;
-            inset: -30px -30px auto auto;
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(243, 181, 98, 0.35), transparent 70%);
-            pointer-events: none;
-        }
-        
-        .filters h2 {
-            margin: 0;
-            color: var(--ink);
-            font-size: 22px;
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: 38px;
             font-family: "Space Grotesk", sans-serif;
+            letter-spacing: 0.2px;
         }
-        
-        label {
-            display: block;
+
+        .hero p {
+            margin: 0;
             color: var(--muted);
-            margin-top: 18px;
-            margin-bottom: 6px;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 16px;
+            line-height: 1.5;
         }
 
-        .filter-tip {
-            display: none;
-        }
-        /* SELECT */
-        
-        .select {
-            position: relative;
-        }
-        
-        .select select {
+        .level-progress {
+            padding: 8px 2px;
+            justify-self: end;
             width: 100%;
-            padding: 10px;
-            padding-right: 40px;
-            background: #fff;
-            border: 1px solid var(--stroke);
-            border-radius: 12px;
-            color: var(--ink);
-            appearance: none;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .select::after {
-            content: "▾";
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent);
-            pointer-events: none;
-        }
-        
-        .select select:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
-        }
-        /* SEARCH */
-        
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            background: #fff;
-            border: 1px solid var(--stroke);
-            border-radius: 12px;
-            color: var(--ink);
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
-        }
-        /* MAIN */
-        
-        .page-head {
-            margin-bottom: 18px;
+            max-width: 320px;
         }
 
-        .page-badge {
+        .level-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .level-title {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 12px;
+            color: #b8c8d7;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+        }
+
+        .level-value {
+            color: #d8e6f3;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .level-bar {
+            height: 5px;
+            background: rgba(82, 100, 116, 0.34);
             border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--accent);
-            background: rgba(15, 118, 110, 0.12);
-            margin-bottom: 12px;
+            overflow: hidden;
         }
 
-        h1 {
-            color: var(--ink);
-            font-size: 32px;
-            margin: 0 0 10px;
-            font-family: "Space Grotesk", sans-serif;
+        .level-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #38d38e, #63dca7);
+            border-radius: 999px;
+            width: 0;
+            transition: width .28s ease;
         }
 
-        .subtitle {
-            color: var(--muted);
-            margin-bottom: 0;
-            line-height: 1.6;
-        }
-        
-        .top-row {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .daily-card {
-            background: linear-gradient(120deg, rgba(15, 118, 110, 0.16), rgba(243, 181, 98, 0.22));
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(226, 214, 196, 0.9);
-            padding: 18px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .daily-main {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        
-        .daily-caption {
-            font-size: 14px;
-            color: var(--accent);
-            font-weight: 700;
-        }
-        
-        .daily-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .btn-small {
-            background: var(--accent);
-            border-radius: 12px;
-            border: none;
-            padding: 8px 16px;
-            font-weight: 600;
-            cursor: pointer;
-            color: #fff;
-            font-size: 14px;
-            white-space: nowrap;
-            box-shadow: 0 12px 28px rgba(15, 118, 110, 0.25);
-        }
-        
-        .btn-small:hover {
-            background: var(--accent-strong);
-        }
-        
-        .random-row {
-            display: flex;
-            justify-content: flex-start;
-        }
-
-        .suggest-card {
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            box-shadow: 0 14px 34px rgba(26, 22, 18, 0.1);
+        .stats-strip {
             display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            padding: 8px 0 18px;
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .metric {
+            display: flex;
+            align-items: baseline;
             gap: 10px;
+            min-width: 0;
+        }
+
+        .metric-icon {
+            color: #5acfa2;
+            font-size: 14px;
+            width: 18px;
+            flex: 0 0 18px;
+            text-align: center;
+            opacity: 0.95;
+        }
+
+        .metric-value {
+            font-size: 26px;
+            line-height: 1;
+            font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
+            letter-spacing: 0.2px;
+            color: #e8f3ff;
+            white-space: nowrap;
+        }
+
+        .metric-label {
+            color: #9aaec2;
+            font-size: 12px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .filters-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 16px 0 10px;
+        }
+
+        .filter-main {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            min-width: 0;
+        }
+
+        .status-tabs {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            border-bottom: 1px solid rgba(126, 149, 168, 0.2);
+            padding-bottom: 2px;
+            margin-right: 8px;
+        }
+
+        .status-tab {
+            border: 0;
+            background: transparent;
+            color: #92a5b8;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .status-tab:hover { color: #c8d7e6; }
+
+        .status-tab.active {
+            color: var(--green);
+            border-bottom-color: var(--green);
+            background: rgba(56, 211, 142, 0.08);
+        }
+
+        .compact-select {
+            border: 1px solid rgba(120, 145, 168, 0.3);
+            background: rgba(9, 16, 25, 0.52);
+            color: #d7e7f7;
+            border-radius: 9px;
+            padding: 6px 10px;
+            min-width: 128px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .compact-select:focus {
+            border-color: rgba(68, 195, 146, 0.72);
+        }
+
+        .random-link {
+            border: 0;
+            background: transparent;
+            color: #84d2b6;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 6px 4px;
+            margin-left: 2px;
+        }
+
+        .random-link:hover { color: #a9efd3; }
+
+        .filter-search {
+            min-width: 220px;
+            width: clamp(220px, 24vw, 320px);
+        }
+
+        .filter-search input {
+            width: 100%;
+            border: 1px solid rgba(122, 145, 164, 0.32);
+            background: rgba(8, 16, 25, 0.55);
+            border-radius: 10px;
+            padding: 8px 11px;
+            color: #d9ebfb;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .filter-search input::placeholder { color: #7f92a6; }
+
+        .filter-search input:focus { border-color: rgba(68, 195, 146, 0.74); }
+
+        .task-list {
+            list-style: none;
+            margin: 0;
+            padding: 2px 0 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .task-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 16px;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--line-soft);
+            transition: background-color .12s ease;
+        }
+
+        .task-row:hover {
+            background: rgba(35, 53, 69, 0.2);
+        }
+
+        .task-left {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            min-width: 0;
+            padding-left: 3px;
+        }
+
+        .row-star {
+            margin-top: 4px;
+            border: 0;
+            background: transparent;
+            color: #6e8298;
+            cursor: pointer;
+            width: 22px;
+            font-size: 15px;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .row-star.active { color: #f3cf67; }
+        .row-star:hover { color: #f7de8f; }
+
+        .solve-mark {
+            margin-top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            flex: 0 0 8px;
+            background: #4f6478;
+        }
+
+        .solve-mark.solved { background: #53d79a; }
+
+        .task-copy {
+            min-width: 0;
+        }
+
+        .task-title {
+            color: #e4f2ff;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .task-row:hover .task-title { color: #ffffff; }
+
+        .task-desc {
+            margin-top: 4px;
+            color: #8da1b5;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .task-tags {
+            margin-top: 5px;
+            color: #718598;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .task-right {
+            display: grid;
+            grid-template-columns: 1fr 68px 78px;
+            align-items: center;
+            gap: 12px;
+            justify-items: end;
+            color: #c9d9e8;
+            font-size: 13px;
+        }
+
+        .difficulty-block {
+            justify-self: start;
+            min-width: 120px;
+        }
+
+        .difficulty-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #dce9f6;
+            line-height: 1.2;
+        }
+
+        .difficulty-dots {
+            margin-top: 2px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            line-height: 1;
+        }
+
+        .difficulty-dots .off { color: rgba(132, 148, 164, 0.35); }
+
+        .lang-label {
+            color: #98acc0;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.03em;
+        }
+
+        .exp-label {
+            color: #d5e6f8;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.02em;
+        }
+
+        .empty {
+            padding: 20px 4px;
+            color: #91a6bb;
+            font-size: 14px;
+        }
+
+        .suggest-wrap {
+            margin-top: 26px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
         }
 
         .suggest-title {
             font-family: "Space Grotesk", sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            margin: 0;
+            font-size: 24px;
+            margin: 0 0 8px;
         }
 
         .suggest-sub {
-            margin: 0;
-            color: var(--muted);
+            margin: 0 0 16px;
+            color: #93a8bd;
             font-size: 14px;
             line-height: 1.5;
         }
@@ -301,305 +461,247 @@
             gap: 10px;
         }
 
-        .suggest-grid .full {
-            grid-column: 1 / -1;
+        .suggest-grid .full { grid-column: 1 / -1; }
+
+        .suggest-grid input,
+        .suggest-grid textarea {
+            width: 100%;
+            border: 1px solid rgba(123, 145, 164, 0.34);
+            background: rgba(8, 16, 24, 0.58);
+            border-radius: 10px;
+            color: #dceaf7;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
         }
 
-        .suggest-card textarea {
-            width: 100%;
+        .suggest-grid textarea {
             min-height: 96px;
-            padding: 10px;
-            background: #fff;
-            border: 1px solid var(--stroke);
-            border-radius: 12px;
-            color: var(--ink);
-            font-family: inherit;
-            font-size: 14px;
             resize: vertical;
         }
 
-        .suggest-card textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+        .suggest-grid .suggest-code {
+            min-height: 180px;
+            font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            line-height: 1.45;
         }
 
-        .suggest-code {
-            font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            min-height: 180px !important;
-            line-height: 1.45;
+        .suggest-grid input:focus,
+        .suggest-grid textarea:focus {
+            border-color: rgba(82, 209, 163, 0.72);
         }
 
         .suggest-file {
             width: 100%;
-            padding: 8px;
-            background: #fff;
-            border: 1px solid var(--stroke);
-            border-radius: 12px;
-            color: var(--ink);
+            border: 1px solid rgba(123, 145, 164, 0.34);
+            background: rgba(8, 16, 24, 0.58);
+            border-radius: 10px;
+            color: #bdd4e9;
+            padding: 9px;
             font-size: 13px;
         }
 
         .suggest-actions {
+            margin-top: 10px;
             display: flex;
             gap: 10px;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        .suggest-status {
-            color: var(--muted);
+        .btn-send {
+            border: 0;
+            border-radius: 10px;
+            padding: 9px 16px;
             font-size: 13px;
-            min-height: 18px;
-        }
-        
-        .btn-random {
-            background: #fff;
-            border: 1px solid var(--stroke);
-            padding: 8px 16px;
-            border-radius: 12px;
-            color: var(--ink);
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-            box-shadow: 0 10px 24px rgba(26, 22, 18, 0.08);
-        }
-        
-        .btn-random:hover {
-            border-color: var(--accent);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-        
-        th {
-            background: rgba(226, 214, 196, 0.4);
-            padding: 14px;
-            text-align: left;
-            border-bottom: 1px solid var(--stroke);
-            font-size: 14px;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        
-        td {
-            padding: 14px;
-            border-bottom: 1px solid rgba(226, 214, 196, 0.7);
-            font-size: 14px;
-        }
-        
-        tr:hover {
-            background: rgba(15, 118, 110, 0.06);
-        }
-
-        tr.solved-row {
-            background: rgba(56, 189, 248, 0.08);
-        }
-
-        tr.solved-row:hover {
-            background: rgba(56, 189, 248, 0.14);
-        }
-        /* PILL TAGS */
-        
-        .pill {
-            padding: 3px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(226, 214, 196, 0.8);
-            font-size: 12px;
-            background: #fff;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        
-        .link {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .link:hover {
-            text-decoration: underline;
-        }
-
-        .solved-badge {
-            display: inline-flex;
-            align-items: center;
-            margin-left: 8px;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 11px;
             font-weight: 700;
-            color: #0b3a2b;
-            background: #9bf3b7;
-            border: 1px solid rgba(11, 58, 43, 0.18);
-            vertical-align: middle;
-        }
-        
-        .empty {
-            padding: 30px;
-            background: var(--card);
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius-md);
-            text-align: center;
-            margin-top: 20px;
-            color: var(--muted);
+            color: #041411;
+            background: linear-gradient(90deg, #49d79b, #75e4b8);
+            cursor: pointer;
         }
 
-        .reveal {
-            opacity: 0;
-            transform: translateY(18px);
-            animation: fadeUp 0.7s ease forwards;
-            animation-delay: var(--delay, 0s);
+        .btn-send:hover { filter: brightness(1.04); }
+
+        .suggest-status {
+            min-height: 18px;
+            color: #91a6bb;
+            font-size: 13px;
         }
 
-        @keyframes fadeUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 960px) {
-            .page {
+        @media (max-width: 1120px) {
+            .hero {
                 grid-template-columns: 1fr;
+                align-items: start;
+                gap: 12px;
             }
 
-            .filters {
-                position: static;
+            .level-progress {
+                justify-self: start;
+                max-width: 420px;
+            }
+
+            .stats-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .training-shell {
+                width: min(960px, 94vw);
+            }
+
+            .filters-line {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-search {
+                width: 100%;
+            }
+
+            .task-row {
+                grid-template-columns: 1fr;
+                gap: 9px;
+                padding: 12px 0;
+            }
+
+            .task-right {
+                justify-items: start;
+                grid-template-columns: 1fr 1fr 1fr;
+                width: 100%;
+                padding-left: 44px;
             }
         }
 
         @media (max-width: 640px) {
-            header {
-                padding: 0 20px;
-            }
-
-            .page {
-                margin-top: 24px;
-            }
-
-            .daily-card {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .suggest-grid {
+            header { padding: 0 18px; }
+            .hero h1 { font-size: 30px; }
+            .stats-strip { grid-template-columns: 1fr; }
+            .metric-value { font-size: 22px; }
+            .status-tabs { width: 100%; overflow-x: auto; }
+            .status-tab { flex: 0 0 auto; }
+            .task-right {
                 grid-template-columns: 1fr;
+                gap: 6px;
+                padding-left: 44px;
             }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .reveal {
-                animation: none;
-                opacity: 1;
-                transform: none;
-            }
+            .suggest-grid { grid-template-columns: 1fr; }
         }
     </style>
     <link rel="stylesheet" href="theme-dark.css">
 </head>
-
 <body>
-
     <header>
         <div class="logo">CodeBug</div>
         <nav id="nav-links"></nav>
     </header>
 
-    <main class="page container">
+    <main class="training-shell">
+        <pre class="bg-code">for (int i = 0; i &lt; n; ++i) {
+    if (a[i] &gt; a[i + 1]) {
+        swap(a[i], a[i + 1]);
+    }
+}
 
-        <!-- SIDEBAR -->
-        <div class="filters reveal" style="--delay: 0s;">
-            <h2>Фильтры</h2>
+while (l &lt;= r) {
+    int mid = (l + r) / 2;
+    if (check(mid)) r = mid - 1;
+    else l = mid + 1;
+}
 
-            <label>Сложность</label>
-            <div class="select">
-                <select id="difficulty">
-                <option value="">Любая</option>
-                <option value="tutorial">Учебная</option>
-                <option value="easy">Лёгкая</option>
-                <option value="casual">Casual</option>
-                <option value="normal">Нормальная</option>
-                <option value="hard">Сложная</option>
-                <option value="insane">Безумная</option>
-                <option value="extreme">Экстремальная</option>
-                <option value="ultra">Ультра</option>
-                <option value="impossible">Невозможная</option>
-                <option value="tourist">Турист</option>
-            </select>
-            </div>
+vector&lt;int&gt; pref(n + 1, 0);
+for (int i = 1; i &lt;= n; ++i) {
+    pref[i] = pref[i - 1] + arr[i];
+}</pre>
 
-            <label>Тип задачи</label>
-            <div class="select">
-                <select id="taskType">
-                <option value="">Любая</option>
-                <option value="standard">Стандартная</option>
-                <option value="grader">Grader</option>
-                <option value="interactive">Интерактивная</option>
-            </select>
-            </div>
-
-            <label>Язык</label>
-            <div class="select">
-                <select id="languageFilter">
-                <option value="">Любой</option>
-                <option value="cpp">C++</option>
-                <option value="python">Python</option>
-            </select>
-            </div>
-
-            <label>Поиск</label>
-            <input type="text" id="search">
-        </div>
-
-        <!-- MAIN -->
-        <main>
-            <div class="page-head reveal" style="--delay: 0.05s;">
-                <div class="page-badge">Тренировочный режим</div>
-                <h1>Тренировка</h1>
-                <div class="subtitle">Выбери задачу. Найди баг. Исправь код.</div>
-            </div>
-
-            <div class="top-row">
-                <!-- Задача дня -->
-                <div class="daily-card reveal" id="daily-card" style="--delay: 0.1s;">
-                    <div class="daily-main">
-                        <div class="daily-caption">🔥 Задача дня</div>
-                        <div class="daily-title" id="daily-title">Загружаю…</div>
+        <section class="surface">
+            <div class="hero">
+                <div>
+                    <h1>Тренировка</h1>
+                    <p>Выбирай задачу и тренируй внимательность к коду.</p>
+                </div>
+                <div class="level-progress">
+                    <div class="level-head">
+                        <div class="level-title">⟡ До следующего уровня</div>
+                        <div class="level-value" id="levelValue">0 / 20 EXP</div>
                     </div>
-                    <button class="btn-small" onclick="openDaily()">Открыть</button>
-                </div>
-
-                <!-- Рандомная задача -->
-                <div class="random-row reveal" style="--delay: 0.14s;">
-                    <button class="btn-random" onclick="openRandom()">🎲 Случайная задача</button>
+                    <div class="level-bar">
+                        <div id="levelFill" class="level-fill"></div>
+                    </div>
                 </div>
             </div>
 
-            <table class="reveal" style="--delay: 0.18s;">
-                <thead>
-                    <tr>
-                        <th>Название</th>
-                        <th>Сложность</th>
-                        <th>Язык</th>
-                        <th>Тип задачи</th>
-                        <th>Теги</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody"></tbody>
-            </table>
+            <div class="stats-strip">
+                <div class="metric">
+                    <span class="metric-icon">✓</span>
+                    <div>
+                        <div class="metric-value" id="metricSolved">0</div>
+                        <div class="metric-label">решено задач</div>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-icon">◎</span>
+                    <div>
+                        <div class="metric-value" id="metricAccuracy">0%</div>
+                        <div class="metric-label">accuracy</div>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-icon">⬢</span>
+                    <div>
+                        <div class="metric-value" id="metricExp">0</div>
+                        <div class="metric-label">exp</div>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-icon">↻</span>
+                    <div>
+                        <div class="metric-value" id="metricAttempts">0</div>
+                        <div class="metric-label">attempts</div>
+                    </div>
+                </div>
+            </div>
 
-            <div id="empty" class="empty" style="display:none;">Задачи не найдены…</div>
+            <div class="filters-line">
+                <div class="filter-main">
+                    <div class="status-tabs" id="statusTabs">
+                        <button type="button" class="status-tab active" data-status="all">Все</button>
+                        <button type="button" class="status-tab" data-status="unsolved">Не решённые</button>
+                        <button type="button" class="status-tab" data-status="solved">Решённые</button>
+                        <button type="button" class="status-tab" data-status="favorite">Избранные</button>
+                    </div>
+                    <select id="languageFilter" class="compact-select">
+                        <option value="">Все языки</option>
+                        <option value="cpp">C++</option>
+                        <option value="python">Python</option>
+                    </select>
+                    <select id="difficultyFilter" class="compact-select">
+                        <option value="">Все сложности</option>
+                        <option value="tutorial">Учебная</option>
+                        <option value="easy">Лёгкая</option>
+                        <option value="casual">Casual</option>
+                        <option value="normal">Нормальная</option>
+                        <option value="hard">Сложная</option>
+                        <option value="insane">Безумная</option>
+                        <option value="extreme">Экстремальная</option>
+                        <option value="ultra">Ультра</option>
+                        <option value="impossible">Невозможная</option>
+                        <option value="tourist">Турист</option>
+                    </select>
+                    <button type="button" class="random-link" id="randomBtn">Случайная</button>
+                </div>
+                <div class="filter-search">
+                    <input id="searchInput" type="text" placeholder="Поиск задачи…">
+                </div>
+            </div>
 
-            <section class="suggest-card reveal" style="--delay: 0.22s; margin-top: 24px;">
+            <ul id="taskList" class="task-list"></ul>
+            <div id="empty" class="empty" style="display:none;">Задачи не найдены.</div>
+
+            <section class="suggest-wrap">
                 <h2 class="suggest-title">Предложить свою задачу</h2>
-                <p class="suggest-sub">Заполни поля ниже. Пункты 1–4 обязательные, архив с задачей и тестами — опционально.</p>
+                <p class="suggest-sub">Пункты 1–4 обязательные, архив с задачей и тестами — опционально.</p>
                 <div class="suggest-grid">
                     <input id="suggestTitle" type="text" maxlength="140" placeholder="1) Название задачи">
                     <div></div>
@@ -611,45 +713,121 @@
                     </div>
                 </div>
                 <div class="suggest-actions">
-                    <button class="btn-small" type="button" onclick="submitTaskSuggestion()">Отправить предложение</button>
+                    <button class="btn-send" type="button" onclick="submitTaskSuggestion()">Отправить предложение</button>
                     <div id="suggestStatus" class="suggest-status"></div>
                 </div>
             </section>
-        </main>
-
+        </section>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase.js?v=20260521-3"></script>
     <script src="auth.js?v=20260528-3"></script>
-
     <script>
-        // ============================
-        // ЗАГРУЗКА ЗАДАЧ ИЗ API
-        // ============================
+        let problems = [];
+        let visibleProblems = [];
+        let hiddenMap = {};
+        let isAdmin = false;
+        let solvedMap = {};
+        let favorites = new Set();
+        let currentStatusFilter = "all";
+        let userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0 };
+
+        const XP_BY_DIFFICULTY = {
+            tutorial: 2,
+            easy: 4,
+            casual: 7,
+            normal: 12,
+            hard: 20,
+            insane: 30,
+            extreme: 45,
+            ultra: 60,
+            impossible: 80,
+            tourist: 110
+        };
+
+        const LEVEL_STEPS = [20, 50, 100, 180, 300, 450, 650, 900, 1200];
+
+        function normalizeTag(tag) {
+            const t = String(tag || "").trim();
+            const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+            const map = {
+                "prefix sums": "префиксные суммы",
+                "two pointers": "два указателя",
+                "binary search": "бинарный поиск",
+                "bruteforce": "перебор",
+                "brute force": "перебор",
+                "dynamic programming": "динамика",
+                "dp": "динамика",
+                "graphs": "графы",
+                "graph": "графы",
+                "strings": "строки",
+                "string": "строки",
+                "arrays": "массивы",
+                "array": "массивы",
+                "math": "математика",
+                "sorting": "сортировка",
+                "implementation": "реализация",
+                "greedy": "жадность",
+                "tree": "деревья",
+                "trees": "деревья"
+            };
+            return map[key] || t;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function getFavoriteKey() {
+            const user = getUser() || "guest";
+            return `trainingFavorites:${user}`;
+        }
+
+        function loadFavorites() {
+            try {
+                const raw = localStorage.getItem(getFavoriteKey()) || "[]";
+                const arr = JSON.parse(raw);
+                favorites = new Set(Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : []);
+            } catch (e) {
+                favorites = new Set();
+            }
+        }
+
+        function saveFavorites() {
+            localStorage.setItem(getFavoriteKey(), JSON.stringify([...favorites]));
+        }
+
+        function toggleFavorite(id) {
+            const n = Number(id);
+            if (favorites.has(n)) favorites.delete(n);
+            else favorites.add(n);
+            saveFavorites();
+            renderTaskList();
+        }
 
         async function loadProblems() {
-            console.log("[training] loadProblems() start");
             const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
             try {
                 const res = await fetch(`${base}/tasks/list`);
-                if (!res.ok) {
-                    console.log("[training] fetch list failed, status =", res.status);
-                    return [];
-                }
+                if (!res.ok) return [];
                 const list = await res.json();
-                console.log("[training] total problems loaded:", list.length);
                 return list.map(meta => ({
                     id: typeof meta.id === "number" ? meta.id : Number(meta.id),
                     title: meta.title || ("Задача " + meta.id),
                     difficulty: meta.difficulty || "",
-                    language: (meta.language || "cpp"),
+                    language: meta.language || "cpp",
                     taskType: meta.taskType || "standard",
-                    tags: meta.tags || []
+                    tags: Array.isArray(meta.tags) ? meta.tags : [],
+                    shortDescription: meta.shortDescription || meta.description || ""
                 }));
             } catch (e) {
-                console.log("[training] fetch/meta error", e);
                 return [];
             }
         }
@@ -657,57 +835,222 @@
         async function loadHiddenMap() {
             try {
                 const snap = await db.ref("tasksHidden").get();
-                return snap.exists() ? snap.val() : {};
-            } catch (err) {
-                console.warn("[training] hidden map load failed", err);
-                return {};
-            }
-        }
-
-        let problems = [];
-        let visibleProblems = [];
-        let hiddenMap = {};
-        let isAdmin = false;
-        let dailyProblem = null;
-        let solvedMap = {};
-
-        async function loadSolvedMap() {
-            const user = getUser();
-            if (!user) return {};
-            const dbRef = window.db || null;
-            if (!dbRef) return {};
-            try {
-                const snap = await dbRef.ref("users/" + user + "/stats/solved").get();
                 return snap.exists() ? (snap.val() || {}) : {};
             } catch (err) {
-                console.warn("[training] solved map load failed", err);
                 return {};
             }
         }
 
-        async function initTraining() {
-            console.log("[training] initTraining()");
+        function withTimeout(promise, ms = 2600) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))
+            ]);
+        }
 
-            problems = await loadProblems();
-            hiddenMap = await loadHiddenMap();
-            isAdmin = await checkAdminAccess();
-            solvedMap = await loadSolvedMap();
-            visibleProblems = problems.filter(p => !hiddenMap[p.id]);
+        function isTaskSolved(taskId) {
+            return !!solvedMap[String(taskId)] || !!solvedMap[taskId];
+        }
 
-            if (visibleProblems.length === 0) {
-                document.getElementById("daily-title").innerText = "Задачи не найдены";
-                document.getElementById("daily-card").style.opacity = "0.6";
-            } else {
-                // задача дня — детерминированно по дате
-                const today = new Date();
-                const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-                const idx = seed % visibleProblems.length;
-                dailyProblem = visibleProblems[idx];
+        function isSuccessfulSubmission(sub) {
+            if (!sub || typeof sub !== "object") return false;
+            const verdict = String(sub.verdict || "").trim().toUpperCase();
+            const status = String(sub.status || "").trim().toUpperCase();
+            const statusLabel = String(sub.statusLabel || "").trim().toUpperCase();
+            if (verdict === "OK" || verdict === "PS" || status === "OK" || status === "PS" || statusLabel === "OK" || statusLabel === "PS") {
+                return true;
+            }
+            const score = Number(sub.score);
+            return Number.isFinite(score) && score > 0;
+        }
 
-                document.getElementById("daily-title").innerText = dailyProblem.title;
+        async function loadUserMetrics() {
+            const login = getUser();
+            if (!login || !window.db) {
+                userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0 };
+                solvedMap = {};
+                return;
             }
 
-            renderTable();
+            try {
+                const statsSnap = await withTimeout(window.db.ref(`users/${login}/stats`).get(), 2600);
+                const stats = statsSnap && statsSnap.exists() ? (statsSnap.val() || {}) : {};
+                solvedMap = (stats && typeof stats.solved === "object" && stats.solved) ? stats.solved : {};
+                const solvedCnt = Number(stats.cnt || Object.keys(solvedMap).length || 0);
+                const exp = Number(stats.exp || 0);
+                userMetrics.solved = solvedCnt;
+                userMetrics.exp = exp;
+            } catch (e) {
+                solvedMap = {};
+                userMetrics.solved = 0;
+                userMetrics.exp = 0;
+            }
+
+            try {
+                const subsSnap = await withTimeout(window.db.ref("submissions/global").get(), 3200);
+                const subsRaw = subsSnap && subsSnap.exists() ? (subsSnap.val() || {}) : {};
+                const rows = Array.isArray(subsRaw) ? subsRaw : Object.values(subsRaw);
+                const mine = rows.filter((s) => String((s && s.login) || "").trim() === login);
+                const attempts = mine.length;
+                const success = mine.filter(isSuccessfulSubmission).length;
+                userMetrics.attempts = attempts;
+                userMetrics.accuracy = attempts > 0 ? Math.round((success / attempts) * 100) : 0;
+            } catch (e) {
+                userMetrics.attempts = 0;
+                userMetrics.accuracy = 0;
+            }
+        }
+
+        function nextLevelTarget(exp) {
+            const current = Number(exp || 0);
+            for (const step of LEVEL_STEPS) {
+                if (current < step) return step;
+            }
+            return LEVEL_STEPS[LEVEL_STEPS.length - 1];
+        }
+
+        function renderTopMetrics() {
+            const solved = Number(userMetrics.solved || 0);
+            const exp = Number(userMetrics.exp || 0);
+            const attempts = Number(userMetrics.attempts || 0);
+            const accuracy = Number(userMetrics.accuracy || 0);
+
+            document.getElementById("metricSolved").textContent = String(solved);
+            document.getElementById("metricAccuracy").textContent = `${accuracy}%`;
+            document.getElementById("metricExp").textContent = String(exp);
+            document.getElementById("metricAttempts").textContent = String(attempts);
+
+            const next = nextLevelTarget(exp);
+            const value = Math.max(0, Math.min(exp, next));
+            const pct = next > 0 ? Math.round((value / next) * 100) : 0;
+            document.getElementById("levelValue").textContent = `${value} / ${next} EXP`;
+            document.getElementById("levelFill").style.width = `${pct}%`;
+        }
+
+        function difficultyMeta(diffRaw) {
+            const diff = String(diffRaw || "").toLowerCase();
+            const map = {
+                tutorial: { label: "Учебная", level: 1, color: "#86b4d8" },
+                easy: { label: "Лёгкая", level: 2, color: "#73b5ff" },
+                casual: { label: "Casual", level: 2, color: "#69bfd2" },
+                normal: { label: "Нормальная", level: 3, color: "#57d68f" },
+                hard: { label: "Сложная", level: 4, color: "#b28cff" },
+                insane: { label: "Безумная", level: 4, color: "#ca87ff" },
+                extreme: { label: "Экстремальная", level: 5, color: "#efcf67" },
+                ultra: { label: "Ультра", level: 5, color: "#efcf67" },
+                impossible: { label: "Невозможная", level: 5, color: "#efcf67" },
+                tourist: { label: "Турист", level: 5, color: "#efcf67" }
+            };
+            return map[diff] || { label: diffRaw || "—", level: 3, color: "#57d68f" };
+        }
+
+        function taskDescription(problem) {
+            const explicit = String(problem.shortDescription || "").trim();
+            if (explicit) return explicit;
+            if (problem.taskType === "interactive") return "Интерактивная задача: проверь обработку диалога с интерактором.";
+            if (problem.taskType === "grader") return "Задача с grader: корректность функции и интерфейса важнее ввода/вывода.";
+            return "Открой задачу и исправь код с ошибкой.";
+        }
+
+        function taskTags(problem) {
+            const tags = Array.isArray(problem.tags) ? problem.tags.slice(0, 2).map(normalizeTag) : [];
+            return tags.length ? tags.join(" · ") : "без тегов";
+        }
+
+        function taskExp(problem) {
+            const d = String(problem.difficulty || "").toLowerCase();
+            return Number(XP_BY_DIFFICULTY[d] || 5);
+        }
+
+        function buildDifficultyDots(meta) {
+            const on = "●";
+            const off = "○";
+            let dots = "";
+            for (let i = 1; i <= 5; i++) {
+                if (i <= meta.level) dots += `<span style="color:${meta.color}">${on}</span> `;
+                else dots += `<span class="off">${off}</span> `;
+            }
+            return dots.trim();
+        }
+
+        function filteredProblems() {
+            const baseList = isAdmin ? problems : visibleProblems;
+            const difficulty = document.getElementById("difficultyFilter").value;
+            const language = document.getElementById("languageFilter").value;
+            const query = document.getElementById("searchInput").value.trim().toLowerCase();
+
+            return baseList.filter((p) => {
+                if (difficulty && p.difficulty !== difficulty) return false;
+                if (language && (p.language || "cpp") !== language) return false;
+                if (query && !String(p.title || "").toLowerCase().includes(query)) return false;
+                const solved = isTaskSolved(p.id);
+                const fav = favorites.has(Number(p.id));
+                if (currentStatusFilter === "solved" && !solved) return false;
+                if (currentStatusFilter === "unsolved" && solved) return false;
+                if (currentStatusFilter === "favorite" && !fav) return false;
+                return true;
+            });
+        }
+
+        function renderTaskList() {
+            const list = document.getElementById("taskList");
+            const empty = document.getElementById("empty");
+            const rows = filteredProblems();
+            list.innerHTML = "";
+            empty.style.display = rows.length ? "none" : "block";
+
+            rows.forEach((p) => {
+                const solved = isTaskSolved(p.id);
+                const fav = favorites.has(Number(p.id));
+                const diff = difficultyMeta(p.difficulty);
+                const safeTitle = escapeHtml(p.title);
+                const safeDesc = escapeHtml(taskDescription(p));
+                const safeTags = escapeHtml(taskTags(p));
+                const languageLabel = (p.language || "cpp").toLowerCase() === "python" ? "PY" : "C++";
+                const exp = taskExp(p);
+
+                const li = document.createElement("li");
+                li.className = "task-row";
+                li.innerHTML = `
+                    <div class="task-left">
+                        <button class="row-star ${fav ? "active" : ""}" data-id="${p.id}" title="Избранное">${fav ? "★" : "☆"}</button>
+                        <span class="solve-mark ${solved ? "solved" : ""}"></span>
+                        <div class="task-copy">
+                            <a class="task-title" href="problem.html?id=${p.id}">${safeTitle}</a>
+                            <div class="task-desc">${safeDesc}</div>
+                            <div class="task-tags">${safeTags}</div>
+                        </div>
+                    </div>
+                    <div class="task-right">
+                        <div class="difficulty-block">
+                            <div class="difficulty-name">${escapeHtml(diff.label)}</div>
+                            <div class="difficulty-dots">${buildDifficultyDots(diff)}</div>
+                        </div>
+                        <div class="lang-label">${languageLabel}</div>
+                        <div class="exp-label">${exp} EXP</div>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+
+            list.querySelectorAll(".row-star").forEach((btn) => {
+                btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const id = Number(btn.dataset.id);
+                    if (Number.isFinite(id)) toggleFavorite(id);
+                });
+            });
+        }
+
+        function openRandom() {
+            const rows = filteredProblems().filter((p) => !isTaskSolved(p.id));
+            if (!rows.length) {
+                alert("Нет доступных нерешённых задач по текущим фильтрам.");
+                return;
+            }
+            const idx = Math.floor(Math.random() * rows.length);
+            window.location.href = `problem.html?id=${rows[idx].id}`;
         }
 
         async function submitTaskSuggestion() {
@@ -778,209 +1121,43 @@
                 if (archiveInput) archiveInput.value = "";
                 if (statusEl) statusEl.textContent = "Отправлено. Спасибо!";
             } catch (err) {
-                console.error("[training] suggestion submit failed", err);
                 if (statusEl) statusEl.textContent = "Не удалось отправить. Попробуй позже.";
             }
         }
 
-        // ============================
-        // РЕНДЕР ТАБЛИЦЫ
-        // ============================
+        async function initTraining() {
+            if (typeof updateNavbar === "function") updateNavbar();
+            loadFavorites();
 
-        function diffPill(diff) {
-            const map = {
-                tutorial: "background:#9aa3ad; color:#111318;",
-                easy: "background:#8fe7a1; color:#0b2314;",
-                casual: "background:#45d1c2; color:#052b26;",
-                normal: "background:#4d7cff; color:#0b1329;",
-                hard: "background:#8b5cf6; color:#1a0c2f;",
-                insane: "background:#ffb66d; color:#2a1600;",
-                extreme: "background:#ff8a3d; color:#2a1200;",
-                ultra: "background:#ff8585; color:#2a0b0b;",
-                impossible: "background:#ff4d4d; color:#2a0606;",
-                tourist: "background:#b8141b; color:#2b0506;"
-            };
-            let text = diff;
-            if (diff === "tutorial") text = "Учебная";
-            else if (diff === "easy") text = "Лёгкая";
-            else if (diff === "casual") text = "Casual";
-            else if (diff === "normal") text = "Нормальная";
-            else if (diff === "hard") text = "Сложная";
-            else if (diff === "insane") text = "Безумная";
-            else if (diff === "extreme") text = "Экстремальная";
-            else if (diff === "ultra") text = "Ультра";
-            else if (diff === "impossible") text = "Невозможная";
-            else if (diff === "tourist") text = "Турист";
+            problems = await loadProblems();
+            hiddenMap = await loadHiddenMap();
+            isAdmin = (typeof checkAdminAccess === "function") ? await checkAdminAccess() : false;
+            visibleProblems = problems.filter((p) => !hiddenMap[p.id]);
 
-            return `<span class="pill" style="${map[diff] || ""}">${text || "-"}</span>`;
+            await loadUserMetrics();
+            renderTopMetrics();
+            renderTaskList();
         }
 
-        function taskTypePill(taskType) {
-            const t = (taskType || "standard").toLowerCase();
-            if (t === "interactive") {
-                return `<span class="pill" style="background:#4b2d71; color:#f0dcff;">Интерактивная</span>`;
-            }
-            if (t === "grader") {
-                return `<span class="pill" style="background:#2d4f71; color:#d8efff;">Grader</span>`;
-            }
-            return `<span class="pill" style="background:#284d39; color:#d9ffea;">Стандартная</span>`;
-        }
-
-        function languagePill(language) {
-            const lang = (language || "cpp").toLowerCase();
-            if (lang === "python") {
-                return `<span class="pill" style="background:#284d39; color:#c9ffd9;">Python</span>`;
-            }
-            return `<span class="pill" style="background:#3a2d5a; color:#e7dcff;">C++</span>`;
-        }
-
-        function normalizeTag(tag) {
-            const t = String(tag || "").trim();
-            const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
-            const map = {
-                "prefix sums": "префиксные суммы",
-                "two pointers": "два указателя",
-                "binary search": "бинарный поиск",
-                "bruteforce": "перебор",
-                "brute force": "перебор",
-                "dynamic programming": "динамика",
-                "dp": "динамика",
-                "graphs": "графы",
-                "graph": "графы",
-                "strings": "строки",
-                "string": "строки",
-                "arrays": "массивы",
-                "array": "массивы",
-                "math": "математика",
-                "sorting": "сортировка",
-                "implementation": "реализация",
-                "greedy": "жадность",
-                "tree": "деревья",
-                "trees": "деревья",
-                "dfs": "dfs",
-                "bfs": "bfs",
-                "dijkstra": "дейкстра",
-                "shortest path": "кратчайший путь",
-                "prefix sum": "префиксные суммы"
-            };
-            return map[key] || t;
-        }
-
-        function tagsPill(tags) {
-            if (!Array.isArray(tags) || !tags.length) return `<span class="pill">—</span>`;
-            return tags.map(tag => `<span class="pill">${normalizeTag(tag)}</span>`).join(" ");
-        }
-
-        function escapeHtml(value) {
-            return String(value ?? "")
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll("\"", "&quot;")
-                .replaceAll("'", "&#39;");
-        }
-
-        function isTaskSolved(taskId) {
-            return !!solvedMap[String(taskId)] || !!solvedMap[taskId];
-        }
-
-        function renderTable() {
-            console.log("[training] renderTable()");
-
-            const diff = document.getElementById("difficulty").value;
-            const taskType = document.getElementById("taskType").value;
-            const lang = document.getElementById("languageFilter").value;
-            const query = document.getElementById("search").value.toLowerCase();
-
-            const baseList = isAdmin ? problems : visibleProblems;
-            const filtered = baseList.filter(p =>
-                (!diff || p.difficulty === diff) &&
-                (!taskType || (p.taskType || "standard") === taskType) &&
-                (!lang || (p.language || "cpp") === lang) &&
-                (!query || p.title.toLowerCase().includes(query))
-            );
-
-            const tbody = document.getElementById("tbody");
-            const empty = document.getElementById("empty");
-
-            tbody.innerHTML = "";
-            empty.style.display = filtered.length ? "none" : "block";
-
-            filtered.forEach(p => {
-                const tr = document.createElement("tr");
-                const solved = isTaskSolved(p.id);
-                if (solved) tr.classList.add("solved-row");
-                const hiddenBadge = isAdmin && hiddenMap[p.id]
-                    ? `<span class="pill" style="background:#3b1d1d; color:#ffb3b3;">Скрыта</span>`
-                    : "";
-                const solvedBadge = solved
-                    ? `<span class="solved-badge">Сдано</span>`
-                    : "";
-                const safeTitle = escapeHtml(p.title);
-                tr.innerHTML = `
-                <td><a class="link" href="problem.html?id=${p.id}">${safeTitle}</a>${solvedBadge} ${hiddenBadge}</td>
-                <td>${diffPill(p.difficulty)}</td>
-                <td>${languagePill(p.language)}</td>
-                <td>${taskTypePill(p.taskType)}</td>
-                <td>${tagsPill(p.tags)}</td>
-            `;
-                tbody.appendChild(tr);
+        function bindFilters() {
+            document.getElementById("difficultyFilter").addEventListener("change", renderTaskList);
+            document.getElementById("languageFilter").addEventListener("change", renderTaskList);
+            document.getElementById("searchInput").addEventListener("input", renderTaskList);
+            document.getElementById("randomBtn").addEventListener("click", openRandom);
+            document.querySelectorAll(".status-tab").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".status-tab").forEach((x) => x.classList.remove("active"));
+                    btn.classList.add("active");
+                    currentStatusFilter = btn.dataset.status || "all";
+                    renderTaskList();
+                });
             });
         }
 
-        // ============================
-        // КНОПКИ: ЗАДАЧА ДНЯ И РАНДОМ
-        // ============================
-
-        function openDaily() {
-            console.log("[training] openDaily()");
-            if (!dailyProblem) {
-                alert("Задача дня пока недоступна");
-                return;
-            }
-            window.location.href = "problem.html?id=" + dailyProblem.id;
-        }
-
-        function openRandom() {
-            console.log("[training] openRandom()");
-            if (!visibleProblems.length) {
-                alert("Нет доступных задач");
-                return;
-            }
-            const unsolvedProblems = visibleProblems.filter(p => !isTaskSolved(p.id));
-            if (!unsolvedProblems.length) {
-                alert("Все доступные задачи уже решены");
-                return;
-            }
-            const idx = Math.floor(Math.random() * unsolvedProblems.length);
-            const p = unsolvedProblems[idx];
-            window.location.href = "problem.html?id=" + p.id;
-        }
-
-        // ============================
-        // СОБЫТИЯ
-        // ============================
-
         document.addEventListener("DOMContentLoaded", () => {
-            console.log("[training] DOMContentLoaded");
-            // navbar
-            if (typeof updateNavbar === "function") {
-                updateNavbar();
-            } else {
-                console.warn("[training] updateNavbar() не найден");
-            }
-
-            // фильтры
-            document.getElementById("difficulty").addEventListener("change", renderTable);
-            document.getElementById("taskType").addEventListener("change", renderTable);
-            document.getElementById("languageFilter").addEventListener("change", renderTable);
-            document.getElementById("search").addEventListener("input", renderTable);
-
-            // загрузка задач
+            bindFilters();
             initTraining();
         });
     </script>
-
 </body>
-
 </html>
