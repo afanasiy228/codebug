@@ -1917,8 +1917,21 @@
            LOAD PROFILE DATA
         ============================ */
         async function loadProfile() {
-            const data = await dbRead("users/" + viewedUser, { retries: 2 });
-            if (!data || typeof data !== "object") return;
+            const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+            const withTimeout = async (promise, timeoutMs, timeoutLabel) => {
+                let timer = null;
+                const timeout = new Promise((_, reject) => {
+                    timer = setTimeout(() => reject(new Error(timeoutLabel || "timeout")), timeoutMs);
+                });
+                try {
+                    return await Promise.race([promise, timeout]);
+                } finally {
+                    if (timer) clearTimeout(timer);
+                }
+            };
+
+            const applyProfileData = (data) => {
+                if (!data || typeof data !== "object") return;
             const stats = data.stats || {};
             const sub = data.subscription || null;
             const profileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
@@ -2032,9 +2045,47 @@
                 renderCoverControls(level, profileStyle);
                 renderProColorControls(level, nickTheme || proNickColor || "#60a5fa");
             }
+            };
 
-            await loadProPlusAnalytics();
-            await loadRankPlaces(data);
+            // 1) Start full profile in background immediately.
+            let liteData = null;
+            let fullApplied = false;
+            const loadFullProfile = async () => {
+                try {
+                    const full = await dbRead("users/" + viewedUser, { retries: 1, sdkTimeoutMs: 500, restTimeoutMs: 1500 });
+                    if (full && typeof full === "object") {
+                        fullApplied = true;
+                        applyProfileData(full);
+                        return full;
+                    }
+                } catch (e) {
+                    console.warn("full profile load failed", e);
+                }
+                return liteData && typeof liteData === "object" ? liteData : null;
+            };
+            const fullDataPromise = loadFullProfile();
+
+            // 2) Fast first paint via lightweight endpoint.
+            try {
+                const liteRes = await withTimeout(
+                    fetch(`${base}/users/${encodeURIComponent(viewedUser)}/profile-lite`, { cache: "no-store" }),
+                    700,
+                    "profile_lite_timeout"
+                );
+                if (liteRes && liteRes.ok) {
+                    liteData = await liteRes.json();
+                    if (!fullApplied) applyProfileData(liteData);
+                }
+            } catch (e) {
+                console.warn("profile-lite load failed", e);
+            }
+
+            // 3) Heavy blocks run async after initial render.
+            setTimeout(async () => {
+                const dataForRank = await fullDataPromise;
+                loadRankPlaces(dataForRank).catch((e) => console.warn("loadRankPlaces failed", e));
+                loadProPlusAnalytics().catch((e) => console.warn("loadProPlusAnalytics failed", e));
+            }, 0);
 
         }
 
