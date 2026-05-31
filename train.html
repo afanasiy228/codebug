@@ -44,22 +44,6 @@
             position: relative;
         }
 
-        .bg-code {
-            position: absolute;
-            right: 2%;
-            top: 86px;
-            z-index: 0;
-            width: min(560px, 52vw);
-            pointer-events: none;
-            opacity: 0.03;
-            font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #c8def1;
-            white-space: pre;
-            user-select: none;
-        }
-
         .surface {
             position: relative;
             z-index: 1;
@@ -841,23 +825,6 @@
     </header>
 
     <main class="training-shell">
-        <pre class="bg-code">for (int i = 0; i &lt; n; ++i) {
-    if (a[i] &gt; a[i + 1]) {
-        swap(a[i], a[i + 1]);
-    }
-}
-
-while (l &lt;= r) {
-    int mid = (l + r) / 2;
-    if (check(mid)) r = mid - 1;
-    else l = mid + 1;
-}
-
-vector&lt;int&gt; pref(n + 1, 0);
-for (int i = 1; i &lt;= n; ++i) {
-    pref[i] = pref[i - 1] + arr[i];
-}</pre>
-
         <section class="surface">
             <div class="hero">
                 <div class="hero-main">
