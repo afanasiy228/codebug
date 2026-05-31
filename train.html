@@ -40,7 +40,7 @@
 
         .training-shell {
             width: min(1240px, 92vw);
-            margin: 42px auto 74px;
+            margin: 34px auto 74px;
             position: relative;
         }
 
@@ -51,7 +51,7 @@
             z-index: 0;
             width: min(560px, 52vw);
             pointer-events: none;
-            opacity: 0.05;
+            opacity: 0.03;
             font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
             line-height: 1.5;
@@ -103,7 +103,7 @@
             grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
             gap: 42px;
             align-items: end;
-            padding: 12px 0 4px;
+            padding: 8px 0 2px;
         }
 
         .hero-main {
@@ -142,31 +142,31 @@
         .level-title {
             display: inline-flex;
             align-items: center;
-            gap: 14px;
+            gap: 15px;
             color: #aebfd0;
-            font-size: 15px;
+            font-size: 15.5px;
             letter-spacing: 0.02em;
             min-width: 0;
         }
 
         .level-title svg {
-            width: 38px;
-            height: 38px;
+            width: 42px;
+            height: 42px;
             stroke: #8cdf3f;
             stroke-width: 2.1;
             fill: none;
-            flex: 0 0 38px;
+            flex: 0 0 42px;
         }
 
         .level-value {
             color: #dce9f7;
             font-weight: 700;
-            font-size: 16px;
+            font-size: 17px;
             white-space: nowrap;
         }
 
         .level-bar {
-            height: 7px;
+            height: 8px;
             background: rgba(82, 100, 116, 0.34);
             border-radius: 999px;
             overflow: hidden;
@@ -186,20 +186,20 @@
             flex-wrap: nowrap;
             gap: 0;
             padding: 0;
-            margin: 42px 0 0;
+            margin: 28px 0 0;
             border: 0;
             background: transparent;
-            max-width: 980px;
+            max-width: 880px;
         }
 
         .metric {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 7px;
+            gap: 6px;
             min-width: 0;
-            padding: 0 30px;
-            border-right: 1px solid rgba(124, 145, 164, 0.18);
+            padding: 0 25px;
+            border-right: 1px solid rgba(124, 145, 164, 0.12);
             flex: 1 1 0;
         }
 
@@ -211,9 +211,9 @@
         }
 
         .metric-icon {
-            width: 18px;
-            height: 18px;
-            flex: 0 0 18px;
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -222,10 +222,10 @@
         }
 
         .metric-icon svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             stroke: #91a6ba;
-            stroke-width: 1.9;
+            stroke-width: 1.8;
             fill: none;
             stroke-linecap: round;
             stroke-linejoin: round;
@@ -237,7 +237,7 @@
         .metric-attempts .metric-icon svg { stroke: #58b8e9; }
 
         .metric-value {
-            font-size: 31px;
+            font-size: 26px;
             line-height: 1;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
@@ -247,12 +247,12 @@
         }
 
         .metric-label {
-            color: #879bad;
-            font-size: 10px;
+            color: #718596;
+            font-size: 8.5px;
             font-weight: 500;
-            letter-spacing: 0.035em;
+            letter-spacing: 0.045em;
             text-transform: uppercase;
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
         .filters-line {
@@ -261,8 +261,8 @@
             justify-content: space-between;
             gap: 22px;
             min-height: 0;
-            padding: 34px 0 20px;
-            margin-top: 4px;
+            padding: 24px 0 18px;
+            margin-top: 2px;
             border: 0;
             border-radius: 0;
             background: transparent;
@@ -428,35 +428,35 @@
         .task-left {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: 13px;
             min-width: 0;
             padding-left: 3px;
         }
 
         .solve-mark {
-            margin-top: 4px;
-            width: 14px;
-            height: 14px;
+            margin-top: 5px;
+            width: 13px;
+            height: 13px;
             border-radius: 50%;
-            flex: 0 0 14px;
-            border: 1.5px solid #6a7f95;
+            flex: 0 0 13px;
+            border: 1.25px solid #6f8295;
             position: relative;
             background: transparent;
         }
 
         .solve-mark.solved {
-            background: #5bc77e;
-            border-color: #5bc77e;
+            background: #47cf78;
+            border-color: #47cf78;
         }
         .solve-mark.solved::after {
             content: "";
             position: absolute;
-            left: 4px;
+            left: 3.5px;
             top: 2px;
-            width: 4px;
-            height: 7px;
-            border-right: 2px solid #08131e;
-            border-bottom: 2px solid #08131e;
+            width: 3.5px;
+            height: 6px;
+            border-right: 1.5px solid #06120c;
+            border-bottom: 1.5px solid #06120c;
             transform: rotate(35deg);
         }
 
@@ -465,10 +465,10 @@
         }
 
         .task-title {
-            color: #e4f2ff;
+            color: #f0f7ff;
             text-decoration: none;
-            font-size: 17px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 650;
             line-height: 1.25;
         }
 
@@ -476,8 +476,8 @@
 
         .task-desc {
             margin-top: 5px;
-            color: #8b9fb2;
-            font-size: 13px;
+            color: #8498aa;
+            font-size: 12.5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -485,8 +485,8 @@
 
         .task-tags {
             margin-top: 7px;
-            color: #74889b;
-            font-size: 12px;
+            color: #65798b;
+            font-size: 11.5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -497,20 +497,20 @@
             flex-direction: column;
             align-items: flex-end;
             justify-content: center;
-            gap: 5px;
+            gap: 7px;
             color: #7f93a7;
             font-size: 12px;
-            opacity: 0.82;
+            opacity: 0.9;
         }
 
         .difficulty-block {
-            min-width: 112px;
+            min-width: 124px;
             text-align: right;
         }
 
         .difficulty-name {
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 12.5px;
+            font-weight: 650;
             color: var(--diff-color, #93a6b8);
             line-height: 1.2;
             letter-spacing: 0.02em;
@@ -519,9 +519,9 @@
         .difficulty-dots {
             display: flex;
             justify-content: flex-end;
-            gap: 4px;
-            margin-top: 5px;
-            font-size: 11px;
+            gap: 5px;
+            margin-top: 6px;
+            font-size: 12px;
             letter-spacing: 0;
             line-height: 1;
         }
@@ -530,17 +530,32 @@
         .difficulty-dots .off { color: rgba(132, 148, 164, 0.22); }
 
         .lang-label {
-            color: #879bad;
+            color: #8195a7;
             text-transform: uppercase;
             font-size: 11px;
             letter-spacing: 0.03em;
         }
 
         .exp-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
             color: #d6bd63;
             font-weight: 600;
             font-size: 12px;
             letter-spacing: 0.02em;
+        }
+
+        .exp-icon {
+            width: 12px;
+            height: 12px;
+            flex: 0 0 12px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .empty {
@@ -730,8 +745,8 @@
                 width: 15px;
                 height: 15px;
             }
-            .metric-value { font-size: 26px; }
-            .metric-label { font-size: 10px; }
+            .metric-value { font-size: 22px; }
+            .metric-label { font-size: 8px; }
             .status-tabs { width: 100%; overflow-x: auto; }
             .status-tab { flex: 0 0 auto; }
             .task-right {
@@ -1117,18 +1132,18 @@ for (int i = 1; i &lt;= n; ++i) {
         function difficultyMeta(diffRaw) {
             const diff = String(diffRaw || "").toLowerCase();
             const map = {
-                tutorial: { label: "Учебная", level: 1, color: "#72b8ff" },
-                easy: { label: "Лёгкая", level: 2, color: "#72b8ff" },
-                casual: { label: "Лёгкая", level: 2, color: "#72b8ff" },
-                normal: { label: "Нормальная", level: 3, color: "#58d68c" },
-                hard: { label: "Сложная", level: 4, color: "#b58cff" },
-                insane: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
-                extreme: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
-                ultra: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
-                impossible: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
-                tourist: { label: "Очень сложная", level: 5, color: "#ff6f7b" }
+                tutorial: { label: "Учебная", level: 1, color: "#5db8ff" },
+                easy: { label: "Лёгкая", level: 2, color: "#5db8ff" },
+                casual: { label: "Лёгкая", level: 2, color: "#5db8ff" },
+                normal: { label: "Нормальная", level: 3, color: "#48d883" },
+                hard: { label: "Сложная", level: 4, color: "#ad7cff" },
+                insane: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
+                extreme: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
+                ultra: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
+                impossible: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
+                tourist: { label: "Очень сложная", level: 5, color: "#ff5f6f" }
             };
-            return map[diff] || { label: diffRaw || "—", level: 3, color: "#58d68c" };
+            return map[diff] || { label: diffRaw || "—", level: 3, color: "#48d883" };
         }
 
         function taskDescription(problem) {
@@ -1211,7 +1226,12 @@ for (int i = 1; i &lt;= n; ++i) {
                             <div class="difficulty-dots">${buildDifficultyDots(diff)}</div>
                         </div>
                         <div class="lang-label">${languageLabel}</div>
-                        <div class="exp-label">${exp} EXP</div>
+                        <div class="exp-label">
+                            <svg class="exp-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M13 2 5 14h6l-1 8 8-12h-6z"></path>
+                            </svg>
+                            ${exp} EXP
+                        </div>
                     </div>
                 `;
                 li.addEventListener("click", (e) => {
