@@ -442,22 +442,25 @@
             border: 1.25px solid #6f8295;
             position: relative;
             background: transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .solve-mark.solved {
             background: #47cf78;
             border-color: #47cf78;
         }
-        .solve-mark.solved::after {
-            content: "";
-            position: absolute;
-            left: 4px;
-            top: 2.4px;
-            width: 3.8px;
-            height: 6.4px;
-            border-right: 1.5px solid #ffffff;
-            border-bottom: 1.5px solid #ffffff;
-            transform: rotate(35deg);
+
+        .solve-icon {
+            width: 9px;
+            height: 9px;
+            color: #ffffff;
+            stroke: currentColor;
+            stroke-width: 2.4;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .task-copy {
@@ -1326,7 +1329,9 @@ for (int i = 1; i &lt;= n; ++i) {
                 li.dataset.href = `problem.html?id=${p.id}`;
                 li.innerHTML = `
                     <div class="task-left">
-                        <span class="solve-mark ${solved ? "solved" : ""}"></span>
+                        <span class="solve-mark ${solved ? "solved" : ""}">
+                            ${solved ? `<svg class="solve-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.2 6.7 11.3 12.8 4.7"></path></svg>` : ""}
+                        </span>
                         <div class="task-copy">
                             <a class="task-title" href="problem.html?id=${p.id}">${safeTitle}</a>
                             <div class="task-desc">${safeDesc}</div>
