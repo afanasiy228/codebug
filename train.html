@@ -413,9 +413,9 @@
         .task-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
-            gap: 32px;
+            gap: 28px;
             align-items: center;
-            padding: 16px 0;
+            padding: 12px 0;
             border-bottom: 1px solid var(--line-soft);
             transition: background-color .12s ease;
             cursor: pointer;
@@ -428,17 +428,17 @@
         .task-left {
             display: flex;
             align-items: flex-start;
-            gap: 13px;
+            gap: 12px;
             min-width: 0;
             padding-left: 3px;
         }
 
         .solve-mark {
-            margin-top: 4px;
-            width: 13px;
-            height: 13px;
+            margin-top: 5px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            flex: 0 0 13px;
+            flex: 0 0 14px;
             border: 1.25px solid #6f8295;
             position: relative;
             background: transparent;
@@ -451,10 +451,10 @@
         .solve-mark.solved::after {
             content: "";
             position: absolute;
-            left: 3.5px;
-            top: 2px;
-            width: 3.5px;
-            height: 6px;
+            left: 4px;
+            top: 2.4px;
+            width: 3.8px;
+            height: 6.4px;
             border-right: 1.5px solid #ffffff;
             border-bottom: 1.5px solid #ffffff;
             transform: rotate(35deg);
@@ -467,7 +467,7 @@
         .task-title {
             color: #f0f7ff;
             text-decoration: none;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 650;
             line-height: 1.25;
         }
@@ -475,7 +475,7 @@
         .task-row:hover .task-title { color: #ffffff; }
 
         .task-desc {
-            margin-top: 5px;
+            margin-top: 4px;
             color: #8498aa;
             font-size: 12.5px;
             white-space: nowrap;
@@ -484,7 +484,7 @@
         }
 
         .task-tags {
-            margin-top: 7px;
+            margin-top: 4px;
             color: #65798b;
             font-size: 11.5px;
             white-space: nowrap;
@@ -493,13 +493,12 @@
         }
 
         .task-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 7px;
-            margin-right: clamp(96px, 10vw, 150px);
-            width: 148px;
+            display: grid;
+            grid-template-columns: 132px 70px 92px;
+            align-items: center;
+            justify-content: end;
+            gap: 24px;
+            margin-right: clamp(16px, 4vw, 72px);
             color: #7f93a7;
             font-size: 12px;
             opacity: 0.9;
@@ -507,46 +506,53 @@
 
         .difficulty-block {
             min-width: 0;
-            text-align: right;
+            text-align: left;
         }
 
         .difficulty-name {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 650;
             color: var(--diff-color, #93a6b8);
             line-height: 1.2;
             letter-spacing: 0.02em;
         }
 
-        .difficulty-dots {
+        .difficulty-scale {
             display: flex;
-            justify-content: flex-end;
-            gap: 6px;
-            margin-top: 7px;
-            font-size: 13px;
-            letter-spacing: 0;
-            line-height: 1;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
         }
 
-        .difficulty-dots .on { color: var(--diff-color, #91a9bf); }
-        .difficulty-dots .off { color: rgba(132, 148, 164, 0.22); }
+        .difficulty-square {
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            background: rgba(132, 148, 164, 0.2);
+            flex: 0 0 9px;
+        }
+
+        .difficulty-square.on {
+            background: var(--diff-color, #91a9bf);
+        }
 
         .lang-label {
             color: #8195a7;
-            text-transform: uppercase;
-            font-size: 11.5px;
+            font-size: 12px;
             letter-spacing: 0.03em;
+            text-align: left;
         }
 
         .exp-label {
             display: inline-flex;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: flex-start;
             gap: 4px;
             color: #d6bd63;
             font-weight: 600;
             font-size: 12px;
             letter-spacing: 0.02em;
+            white-space: nowrap;
         }
 
         .exp-icon {
@@ -771,24 +777,21 @@
             .task-row {
                 grid-template-columns: 1fr;
                 gap: 9px;
-                padding: 12px 0;
+                padding: 11px 0;
             }
 
             .task-right {
-                justify-items: start;
-                align-items: flex-start;
+                grid-template-columns: 132px 70px 92px;
+                justify-content: start;
+                align-items: center;
                 width: 100%;
                 margin-right: 0;
                 padding-left: 30px;
-                gap: 5px;
+                gap: 18px;
             }
 
             .difficulty-block {
                 text-align: left;
-            }
-
-            .difficulty-dots {
-                justify-content: flex-start;
             }
         }
 
@@ -819,7 +822,8 @@
             .status-tabs { width: 100%; overflow-x: auto; }
             .status-tab { flex: 0 0 auto; }
             .task-right {
-                gap: 6px;
+                grid-template-columns: 1fr 64px 86px;
+                gap: 10px;
                 padding-left: 30px;
             }
             .suggest-grid { grid-template-columns: 1fr; }
@@ -1222,9 +1226,26 @@ for (int i = 1; i &lt;= n; ++i) {
                 extreme: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
                 ultra: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
                 impossible: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
-                tourist: { label: "Очень сложная", level: 5, color: "#ff5f6f" }
+                tourist: { label: "Экспертная", level: 5, color: "#f0a24a" },
+                expert: { label: "Экспертная", level: 5, color: "#f0a24a" }
             };
             return map[diff] || { label: diffRaw || "—", level: 3, color: "#48d883" };
+        }
+
+        function taskTypeLabel(typeRaw) {
+            const type = String(typeRaw || "standard").trim().toLowerCase().replace(/[_\s]+/g, "-");
+            const map = {
+                standard: "Стандартная",
+                classic: "Стандартная",
+                interactive: "Интерактивная",
+                grader: "С грейдером",
+                "with-grader": "С грейдером",
+                optimization: "Оптимизация",
+                output: "Output Only",
+                "output-only": "Output Only",
+                outputonly: "Output Only"
+            };
+            return map[type] || "Стандартная";
         }
 
         function taskDescription(problem) {
@@ -1237,7 +1258,8 @@ for (int i = 1; i &lt;= n; ++i) {
 
         function taskTags(problem) {
             const tags = Array.isArray(problem.tags) ? problem.tags.slice(0, 2).map(normalizeTag) : [];
-            return tags.length ? tags.join(" · ") : "без тегов";
+            const type = taskTypeLabel(problem.taskType);
+            return tags.length ? `${type} · ${tags.join(" · ")}` : type;
         }
 
         function taskExp(problem) {
@@ -1245,13 +1267,23 @@ for (int i = 1; i &lt;= n; ++i) {
             return Number(XP_BY_DIFFICULTY[d] || 5);
         }
 
-        function buildDifficultyDots(meta) {
-            const on = "●";
-            const off = "○";
+        function taskLanguageLabel(languageRaw) {
+            const language = String(languageRaw || "cpp").trim().toLowerCase();
+            const map = {
+                cpp: "C++",
+                "c++": "C++",
+                python: "Python",
+                py: "Python",
+                rust: "Rust",
+                java: "Java"
+            };
+            return map[language] || escapeHtml(languageRaw || "C++");
+        }
+
+        function buildDifficultyScale(meta) {
             let dots = "";
             for (let i = 1; i <= 5; i++) {
-                if (i <= meta.level) dots += `<span class="on">${on}</span>`;
-                else dots += `<span class="off">${off}</span>`;
+                dots += `<span class="difficulty-square ${i <= meta.level ? "on" : ""}"></span>`;
             }
             return dots.trim();
         }
@@ -1286,7 +1318,7 @@ for (int i = 1; i &lt;= n; ++i) {
                 const safeTitle = escapeHtml(p.title);
                 const safeDesc = escapeHtml(taskDescription(p));
                 const safeTags = escapeHtml(taskTags(p));
-                const languageLabel = (p.language || "cpp").toLowerCase() === "python" ? "PY" : "C++";
+                const languageLabel = taskLanguageLabel(p.language);
                 const exp = taskExp(p);
 
                 const li = document.createElement("li");
@@ -1304,7 +1336,7 @@ for (int i = 1; i &lt;= n; ++i) {
                     <div class="task-right">
                         <div class="difficulty-block" style="--diff-color: ${escapeHtml(diff.color)}">
                             <div class="difficulty-name">${escapeHtml(diff.label)}</div>
-                            <div class="difficulty-dots">${buildDifficultyDots(diff)}</div>
+                            <div class="difficulty-scale">${buildDifficultyScale(diff)}</div>
                         </div>
                         <div class="lang-label">${languageLabel}</div>
                         <div class="exp-label">
