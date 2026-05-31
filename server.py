@@ -2870,48 +2870,73 @@ def admin_rebuild_user_stats():
     if not FIREBASE_READY:
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
 
-    users_raw = db.reference("users").get() or {}
-    submissions_raw = db.reference("submissions/global").get() or {}
-    task_difficulties = _load_task_difficulties()
+    started_at = time.time()
+    try:
+        users_raw = db.reference("users").get() or {}
+        submissions_raw = db.reference("submissions/global").get() or {}
+        task_difficulties = _load_task_difficulties() or {}
 
-    solved_by_user = {}
-    for _, sub in (submissions_raw or {}).items():
-        if not isinstance(sub, dict):
-            continue
-        login = str(sub.get("login") or "").strip()
-        if not login:
-            continue
-        task = str(sub.get("task") or "").strip()
-        if not task or not task.isdigit():
-            continue
-        if not _is_solved_submission(sub):
-            continue
-        solved_by_user.setdefault(login, {})[task] = True
+        if isinstance(submissions_raw, dict):
+            submissions_iter = submissions_raw.values()
+            submissions_scanned = len(submissions_raw)
+        elif isinstance(submissions_raw, list):
+            submissions_iter = submissions_raw
+            submissions_scanned = len(submissions_raw)
+        else:
+            submissions_iter = []
+            submissions_scanned = 0
 
-    updated = 0
-    for login, udata in (users_raw or {}).items():
-        if not isinstance(udata, dict):
-            continue
-        stats = udata.get("stats") or {}
-        if not isinstance(stats, dict):
+        solved_by_user = {}
+        for sub in submissions_iter:
+            if not isinstance(sub, dict):
+                continue
+            login = str(sub.get("login") or "").strip()
+            if not login:
+                continue
+            task = str(sub.get("task") or "").strip()
+            if not task or not task.isdigit():
+                continue
+            if not _is_solved_submission(sub):
+                continue
+            solved_by_user.setdefault(login, {})[task] = True
+
+        users_map = users_raw if isinstance(users_raw, dict) else {}
+        updates = {}
+        updated = 0
+
+        for login, udata in users_map.items():
+            login = str(login or "").strip()
+            if not login:
+                continue
             stats = {}
-        solved_map = solved_by_user.get(login, {})
-        stats["solved"] = solved_map
-        stats["cnt"] = len(solved_map)
-        stats["exp"] = sum(
-            _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
-            for task_id in solved_map
-        )
-        db.reference(f"users/{login}/stats").update(stats)
-        updated += 1
+            if isinstance(udata, dict):
+                raw_stats = udata.get("stats")
+                if isinstance(raw_stats, dict):
+                    stats = dict(raw_stats)
+            solved_map = solved_by_user.get(login, {})
+            stats["solved"] = solved_map
+            stats["cnt"] = len(solved_map)
+            stats["exp"] = sum(
+                _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
+                for task_id in solved_map
+            )
+            updates[f"users/{login}/stats"] = stats
+            updated += 1
 
-    return jsonify({
-        "status": "ok",
-        "usersUpdated": updated,
-        "usersWithSolved": len(solved_by_user),
-        "submissionsScanned": len(submissions_raw or {}),
-        "tasksLoaded": len(task_difficulties)
-    })
+        if updates:
+            db.reference("/").update(updates)
+
+        elapsed_ms = int((time.time() - started_at) * 1000)
+        return jsonify({
+            "status": "ok",
+            "usersUpdated": updated,
+            "usersWithSolved": len(solved_by_user),
+            "submissionsScanned": submissions_scanned,
+            "tasksLoaded": len(task_difficulties),
+            "elapsedMs": elapsed_ms
+        })
+    except Exception as e:
+        return _server_error("rebuild_user_stats_failed", "REBUILD_USER_STATS_FAILED", exc=e)
 
 
 def _difficulty_rank(value):
