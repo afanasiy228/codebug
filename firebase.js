@@ -56,17 +56,20 @@
         return;
     }
 
-    // Иногда SDK залипает в long-polling после единичного websocket-сбоя.
-    // Сбрасываем этот флаг и принудительно используем websocket-транспорт.
+    // В некоторых сетях websocket до RTDB нестабилен/блокируется (частая причина "Client is offline").
+    // По умолчанию используем long-polling, чтобы профиль и сабмиты не зависали.
     try {
-        localStorage.removeItem("firebase:previous_websocket_failure");
-    } catch (_) {}
-    try {
-        if (window.firebase.database?.INTERNAL?.forceWebSockets) {
-            window.firebase.database.INTERNAL.forceWebSockets();
+        const internal = window.firebase.database?.INTERNAL;
+        const mode = String(runtimeConfig.firebaseTransport || "").trim().toLowerCase();
+        if (internal?.forceWebSockets && mode === "websocket") {
+            internal.forceWebSockets();
+            console.log("Firebase transport: websocket");
+        } else if (internal?.forceLongPolling) {
+            internal.forceLongPolling();
+            console.log("Firebase transport: long-polling");
         }
     } catch (err) {
-        console.warn("forceWebSockets failed:", err);
+        console.warn("firebase transport setup failed:", err);
     }
 
     if (!firebase.apps || !firebase.apps.length) {

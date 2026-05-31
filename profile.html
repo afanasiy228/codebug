@@ -2353,12 +2353,16 @@
             }
         }
 
+        function runSafe(taskName, fn) {
+            Promise.resolve()
+                .then(() => fn())
+                .catch((err) => console.warn(taskName + " failed", err));
+        }
 
-
-        loadProfile();
-        loadLastActivity();
-        loadAnalytics();
-        startPresence();
+        runSafe("loadProfile", loadProfile);
+        runSafe("loadLastActivity", loadLastActivity);
+        runSafe("loadAnalytics", loadAnalytics);
+        runSafe("startPresence", startPresence);
 
         const coverCustomFileInput = document.getElementById("coverCustomFile");
         if (coverCustomFileInput) {
