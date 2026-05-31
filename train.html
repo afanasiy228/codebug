@@ -164,11 +164,13 @@
         }
 
         .stats-strip {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 18px;
+            display: flex;
+            align-items: stretch;
+            flex-wrap: wrap;
+            gap: 12px 20px;
             padding: 8px 0 18px;
             border-bottom: 1px solid var(--line-soft);
+            max-width: 900px;
         }
 
         .metric {
@@ -176,10 +178,17 @@
             align-items: baseline;
             gap: 10px;
             min-width: 0;
+            padding-right: 14px;
+            border-right: 1px solid rgba(124, 145, 164, 0.2);
+        }
+
+        .metric:last-child {
+            border-right: 0;
+            padding-right: 0;
         }
 
         .metric-icon {
-            color: #5acfa2;
+            color: #a8bdd2;
             font-size: 14px;
             width: 18px;
             flex: 0 0 18px;
@@ -210,7 +219,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 14px;
-            padding: 16px 0 10px;
+            padding: 14px 0 8px;
         }
 
         .filter-main {
@@ -265,22 +274,32 @@
             border-color: rgba(68, 195, 146, 0.72);
         }
 
+        .filter-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
         .random-link {
             border: 0;
             background: transparent;
-            color: #84d2b6;
+            color: #a7b8c9;
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
-            padding: 6px 4px;
+            padding: 7px 4px 7px 2px;
             margin-left: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .random-link:hover { color: #a9efd3; }
+        .random-link:hover { color: #d5e6f7; }
 
         .filter-search {
-            min-width: 220px;
-            width: clamp(220px, 24vw, 320px);
+            min-width: 180px;
+            width: clamp(180px, 18vw, 250px);
         }
 
         .filter-search input {
@@ -296,21 +315,41 @@
 
         .filter-search input::placeholder { color: #7f92a6; }
 
-        .filter-search input:focus { border-color: rgba(68, 195, 146, 0.74); }
+        .filter-search input:focus { border-color: rgba(132, 158, 180, 0.74); }
+
+        .progress-inline {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 22px;
+            color: #9fb0c1;
+            font-size: 13px;
+            padding: 4px 2px 14px;
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .progress-inline b {
+            color: #e2edf8;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        .progress-inline .accent b {
+            color: #64dca7;
+        }
 
         .task-list {
             list-style: none;
             margin: 0;
             padding: 2px 0 0;
-            border-top: 1px solid var(--line);
         }
 
         .task-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 340px;
-            gap: 16px;
+            grid-template-columns: minmax(0, 1fr) 282px;
+            gap: 10px;
             align-items: center;
-            padding: 14px 0;
+            padding: 13px 0;
             border-bottom: 1px solid var(--line-soft);
             transition: background-color .12s ease;
         }
@@ -351,7 +390,7 @@
             background: #4f6478;
         }
 
-        .solve-mark.solved { background: #53d79a; }
+        .solve-mark.solved { background: #6daff2; }
 
         .task-copy {
             min-width: 0;
@@ -360,7 +399,7 @@
         .task-title {
             color: #e4f2ff;
             text-decoration: none;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             line-height: 1.25;
         }
@@ -387,9 +426,9 @@
 
         .task-right {
             display: grid;
-            grid-template-columns: 1fr 68px 78px;
+            grid-template-columns: 1fr 66px 78px;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             justify-items: end;
             color: #c9d9e8;
             font-size: 13px;
@@ -405,6 +444,9 @@
             font-weight: 600;
             color: #dce9f6;
             line-height: 1.2;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .difficulty-dots {
@@ -417,10 +459,13 @@
         .difficulty-dots .off { color: rgba(132, 148, 164, 0.35); }
 
         .lang-label {
-            color: #98acc0;
+            color: #a3b6c9;
             text-transform: uppercase;
             font-size: 11px;
             letter-spacing: 0.03em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .exp-label {
@@ -428,6 +473,9 @@
             font-weight: 700;
             font-size: 12px;
             letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .empty {
@@ -541,8 +589,8 @@
             }
 
             .stats-strip {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 14px;
+                max-width: 100%;
+                gap: 10px 16px;
             }
         }
 
@@ -554,6 +602,12 @@
             .filters-line {
                 flex-direction: column;
                 align-items: stretch;
+            }
+
+            .filter-actions {
+                width: 100%;
+                margin-left: 0;
+                justify-content: space-between;
             }
 
             .filter-search {
@@ -578,6 +632,10 @@
             header { padding: 0 18px; }
             .hero h1 { font-size: 30px; }
             .stats-strip { grid-template-columns: 1fr; }
+            .metric {
+                border-right: 0;
+                padding-right: 0;
+            }
             .metric-value { font-size: 22px; }
             .status-tabs { width: 100%; overflow-x: auto; }
             .status-tab { flex: 0 0 auto; }
@@ -634,14 +692,14 @@ for (int i = 1; i &lt;= n; ++i) {
 
             <div class="stats-strip">
                 <div class="metric">
-                    <span class="metric-icon">✓</span>
+                    <span class="metric-icon">🏁</span>
                     <div>
                         <div class="metric-value" id="metricSolved">0</div>
                         <div class="metric-label">решено задач</div>
                     </div>
                 </div>
                 <div class="metric">
-                    <span class="metric-icon">◎</span>
+                    <span class="metric-icon">🎯</span>
                     <div>
                         <div class="metric-value" id="metricAccuracy">0%</div>
                         <div class="metric-label">accuracy</div>
@@ -689,11 +747,19 @@ for (int i = 1; i &lt;= n; ++i) {
                         <option value="impossible">Невозможная</option>
                         <option value="tourist">Турист</option>
                     </select>
-                    <button type="button" class="random-link" id="randomBtn">Случайная</button>
                 </div>
-                <div class="filter-search">
-                    <input id="searchInput" type="text" placeholder="Поиск задачи…">
+                <div class="filter-actions">
+                    <button type="button" class="random-link" id="randomBtn"><span>⟳</span>Случайная</button>
+                    <div class="filter-search">
+                        <input id="searchInput" type="text" placeholder="Поиск задачи…">
+                    </div>
                 </div>
+            </div>
+
+            <div class="progress-inline">
+                <span>📅 Сегодня:<b id="microToday">0</b></span>
+                <span>🗓️ Неделя:<b id="microWeek">0</b></span>
+                <span class="accent">🚀 До уровня:<b id="microToLevel">0 EXP</b></span>
             </div>
 
             <ul id="taskList" class="task-list"></ul>
@@ -732,7 +798,7 @@ for (int i = 1; i &lt;= n; ++i) {
         let solvedMap = {};
         let favorites = new Set();
         let currentStatusFilter = "all";
-        let userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0 };
+        let userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0, todaySolved: 0, weekSolved: 0 };
 
         const XP_BY_DIFFICULTY = {
             tutorial: 2,
@@ -864,10 +930,24 @@ for (int i = 1; i &lt;= n; ++i) {
             return Number.isFinite(score) && score > 0;
         }
 
+        function toMillis(value) {
+            if (value == null) return null;
+            if (typeof value === "number" && Number.isFinite(value)) {
+                return value < 1e12 ? value * 1000 : value;
+            }
+            if (typeof value === "string") {
+                const numeric = Number(value);
+                if (Number.isFinite(numeric)) return numeric < 1e12 ? numeric * 1000 : numeric;
+                const parsed = Date.parse(value);
+                if (Number.isFinite(parsed)) return parsed;
+            }
+            return null;
+        }
+
         async function loadUserMetrics() {
             const login = getUser();
             if (!login || !window.db) {
-                userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0 };
+                userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0, todaySolved: 0, weekSolved: 0 };
                 solvedMap = {};
                 return;
             }
@@ -892,12 +972,28 @@ for (int i = 1; i &lt;= n; ++i) {
                 const rows = Array.isArray(subsRaw) ? subsRaw : Object.values(subsRaw);
                 const mine = rows.filter((s) => String((s && s.login) || "").trim() === login);
                 const attempts = mine.length;
-                const success = mine.filter(isSuccessfulSubmission).length;
+                const successRows = mine.filter(isSuccessfulSubmission);
+                const success = successRows.length;
+                const now = Date.now();
+                const dayAgo = now - 24 * 60 * 60 * 1000;
+                const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+                let todaySolved = 0;
+                let weekSolved = 0;
+                for (const row of successRows) {
+                    const ts = toMillis(row?.createdAt ?? row?.ts ?? row?.time);
+                    if (!ts) continue;
+                    if (ts >= weekAgo) weekSolved += 1;
+                    if (ts >= dayAgo) todaySolved += 1;
+                }
                 userMetrics.attempts = attempts;
                 userMetrics.accuracy = attempts > 0 ? Math.round((success / attempts) * 100) : 0;
+                userMetrics.todaySolved = todaySolved;
+                userMetrics.weekSolved = weekSolved;
             } catch (e) {
                 userMetrics.attempts = 0;
                 userMetrics.accuracy = 0;
+                userMetrics.todaySolved = 0;
+                userMetrics.weekSolved = 0;
             }
         }
 
@@ -914,6 +1010,8 @@ for (int i = 1; i &lt;= n; ++i) {
             const exp = Number(userMetrics.exp || 0);
             const attempts = Number(userMetrics.attempts || 0);
             const accuracy = Number(userMetrics.accuracy || 0);
+            const todaySolved = Number(userMetrics.todaySolved || 0);
+            const weekSolved = Number(userMetrics.weekSolved || 0);
 
             document.getElementById("metricSolved").textContent = String(solved);
             document.getElementById("metricAccuracy").textContent = `${accuracy}%`;
@@ -925,6 +1023,13 @@ for (int i = 1; i &lt;= n; ++i) {
             const pct = next > 0 ? Math.round((value / next) * 100) : 0;
             document.getElementById("levelValue").textContent = `${value} / ${next} EXP`;
             document.getElementById("levelFill").style.width = `${pct}%`;
+            const toLevel = Math.max(0, next - value);
+            const microToday = document.getElementById("microToday");
+            const microWeek = document.getElementById("microWeek");
+            const microToLevel = document.getElementById("microToLevel");
+            if (microToday) microToday.textContent = String(todaySolved);
+            if (microWeek) microWeek.textContent = String(weekSolved);
+            if (microToLevel) microToLevel.textContent = `${toLevel} EXP`;
         }
 
         function difficultyMeta(diffRaw) {
@@ -1023,11 +1128,11 @@ for (int i = 1; i &lt;= n; ++i) {
                     </div>
                     <div class="task-right">
                         <div class="difficulty-block">
-                            <div class="difficulty-name">${escapeHtml(diff.label)}</div>
+                            <div class="difficulty-name"><span>◈</span>${escapeHtml(diff.label)}</div>
                             <div class="difficulty-dots">${buildDifficultyDots(diff)}</div>
                         </div>
-                        <div class="lang-label">${languageLabel}</div>
-                        <div class="exp-label">${exp} EXP</div>
+                        <div class="lang-label"><span>⌨</span>${languageLabel}</div>
+                        <div class="exp-label"><span>⚡</span>${exp} EXP</div>
                     </div>
                 `;
                 list.appendChild(li);
