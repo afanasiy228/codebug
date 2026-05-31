@@ -527,20 +527,25 @@ def _validate_submit_payload(data):
         return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     task_raw = data.get("task")
     code = data.get("code")
+    user_raw = data.get("user")
     lang = _validate_language(data.get("language"))
     if not _is_nonempty_string(code):
         return None, _api_error("code_required", 400, "CODE_REQUIRED")
+    if not _is_nonempty_string(user_raw):
+        return None, _api_error("user_required", 400, "USER_REQUIRED")
     if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
         return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
     try:
         task_id = int(str(task_raw).strip())
     except (TypeError, ValueError):
         return None, _api_error("invalid_task", 400, "INVALID_TASK")
+    user_login = str(user_raw).strip()
     if lang is None:
         lang = "cpp"
     return {
         "task_id": task_id,
         "code": code,
+        "user_login": user_login,
         "language": lang,
         "contest_id": data.get("contestId")
     }, None
@@ -1828,9 +1833,16 @@ def submit():
     data = request.get_json(silent=True) or {}
     print("JSON RAW:", data)
 
-    login, auth_error = _require_user_login()
-    if auth_error:
-        return auth_error
+    payload, payload_error = _validate_submit_payload(data)
+    if payload_error:
+        return payload_error
+
+    task = str(payload["task_id"])
+    code = payload["code"]
+    login = payload["user_login"]
+    contest_id = payload["contest_id"]
+    # Temporary rollback: take login directly from payload (legacy behavior).
+    # Auth token is not required for /submit in this mode.
     tier = _subscription_tier_label(login)
     has_priority = tier in {"pro", "pro_plus"}
     _ensure_tasks_sync_worker()
@@ -1838,13 +1850,6 @@ def submit():
         return _api_error("service_busy", 429, "GLOBAL_RATE_LIMIT_EXCEEDED")
     if not _rate_limit("submit", login, limit=_submission_rate_limit_for_tier(tier), per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
-    payload, payload_error = _validate_submit_payload(data)
-    if payload_error:
-        return payload_error
-
-    task = str(payload["task_id"])
-    code = payload["code"]
-    contest_id = payload["contest_id"]
     print(f"Task = {task}")
     print("Code length:", len(code))
     print("User =", login)
