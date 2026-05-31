@@ -1655,7 +1655,7 @@
             globalEl.innerHTML = "#—";
 
             try {
-                const users = (await dbRead("users", { retries: 2 })) || {};
+                const users = (await dbRead("users", { retries: 1, sdkTimeoutMs: 350, restTimeoutMs: 5000, forceRest: true })) || {};
                 const entries = Object.entries(users)
                     .filter(([, u]) => u && typeof u === "object")
                     .map(([login, u]) => {
@@ -1930,6 +1930,23 @@
                 }
             };
 
+            // Optimistic first paint: show basic identity immediately, then hydrate from network.
+            const optimisticAvatarEl = document.getElementById("avatar");
+            const optimisticNameEl = document.getElementById("username");
+            if (optimisticNameEl && viewedUser) {
+                optimisticNameEl.textContent = viewedUser;
+            }
+            if (optimisticAvatarEl && !optimisticAvatarEl.getAttribute("src")) {
+                const first = String(viewedUser || "u").slice(0, 1).toUpperCase();
+                const svg = `
+                <svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'>
+                    <rect width='100%' height='100%' fill='#243038'/>
+                    <text x='50%' y='55%' font-size='120' fill='white'
+                          text-anchor='middle' dominant-baseline='middle'>${first}</text>
+                </svg>`;
+                optimisticAvatarEl.src = "data:image/svg+xml;base64," + btoa(svg);
+            }
+
             const applyProfileData = (data) => {
                 if (!data || typeof data !== "object") return;
             const stats = data.stats || {};
@@ -2052,7 +2069,7 @@
             let fullApplied = false;
             const loadFullProfile = async () => {
                 try {
-                    const full = await dbRead("users/" + viewedUser, { retries: 1, sdkTimeoutMs: 500, restTimeoutMs: 1500 });
+                    const full = await dbRead("users/" + viewedUser, { retries: 2, sdkTimeoutMs: 450, restTimeoutMs: 4200 });
                     if (full && typeof full === "object") {
                         fullApplied = true;
                         applyProfileData(full);
@@ -2075,6 +2092,8 @@
                 if (liteRes && liteRes.ok) {
                     liteData = await liteRes.json();
                     if (!fullApplied) applyProfileData(liteData);
+                } else if (liteRes && liteRes.status !== 404) {
+                    console.warn("profile-lite http status", liteRes.status);
                 }
             } catch (e) {
                 console.warn("profile-lite load failed", e);
