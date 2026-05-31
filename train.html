@@ -6,6 +6,7 @@
     <title>CodeBug — Тренировка</title>
     <link rel="icon" type="image/png" href="/logo.png?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme-dark.css">
     <style>
         :root {
             --bg-0: #050b11;
@@ -38,8 +39,8 @@
         }
 
         .training-shell {
-            width: min(1360px, 96vw);
-            margin: 34px auto 74px;
+            width: min(1240px, 92vw);
+            margin: 42px auto 74px;
             position: relative;
         }
 
@@ -50,7 +51,7 @@
             z-index: 0;
             width: min(560px, 52vw);
             pointer-events: none;
-            opacity: 0.055;
+            opacity: 0.05;
             font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
             line-height: 1.5;
@@ -76,6 +77,7 @@
             position: sticky;
             top: 0;
             z-index: 30;
+            box-shadow: none !important;
         }
 
         .logo {
@@ -98,10 +100,10 @@
 
         .hero {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
-            gap: 20px;
+            grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+            gap: 42px;
             align-items: end;
-            padding: 10px 4px 8px;
+            padding: 12px 0 4px;
         }
 
         .hero-main {
@@ -110,7 +112,7 @@
 
         .hero h1 {
             margin: 0 0 8px;
-            font-size: 38px;
+            font-size: 40px;
             font-family: "Space Grotesk", sans-serif;
             letter-spacing: 0.2px;
         }
@@ -123,42 +125,44 @@
         }
 
         .level-progress {
-            padding: 4px 2px;
+            padding: 0 0 2px;
             justify-self: end;
             width: 100%;
-            max-width: 320px;
+            max-width: 390px;
         }
 
         .level-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 8px;
+            gap: 18px;
+            margin-bottom: 10px;
         }
 
         .level-title {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             color: #aebfd0;
-            font-size: 13px;
+            font-size: 14px;
             letter-spacing: 0.02em;
+            min-width: 0;
         }
 
         .level-title svg {
-            width: 15px;
-            height: 15px;
-            stroke: #87c7a7;
-            stroke-width: 1.9;
+            width: 30px;
+            height: 30px;
+            stroke: #8cdf3f;
+            stroke-width: 2.1;
             fill: none;
-            flex: 0 0 15px;
+            flex: 0 0 30px;
         }
 
         .level-value {
             color: #dce9f7;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 15px;
+            white-space: nowrap;
         }
 
         .level-bar {
@@ -178,24 +182,25 @@
 
         .stats-strip {
             display: flex;
-            align-items: flex-start;
+            align-items: stretch;
             flex-wrap: nowrap;
-            gap: 12px 0;
+            gap: 0;
             padding: 0;
-            margin-top: 16px;
+            margin: 42px 0 0;
             border: 0;
             background: transparent;
-            max-width: 860px;
+            max-width: 980px;
         }
 
         .metric {
             display: flex;
+            flex-direction: column;
             align-items: flex-start;
-            gap: 8px;
+            gap: 9px;
             min-width: 0;
-            padding: 0 20px;
-            border-right: 1px solid rgba(124, 145, 164, 0.2);
-            flex: 0 0 auto;
+            padding: 0 36px;
+            border-right: 1px solid rgba(124, 145, 164, 0.22);
+            flex: 1 1 0;
         }
 
         .metric:first-child { padding-left: 0; }
@@ -206,20 +211,20 @@
         }
 
         .metric-icon {
-            width: 18px;
-            height: 18px;
-            flex: 0 0 18px;
+            width: 22px;
+            height: 22px;
+            flex: 0 0 22px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.88;
-            margin-top: 7px;
+            opacity: 0.8;
+            margin-top: 0;
         }
 
         .metric-icon svg {
-            width: 17px;
-            height: 17px;
-            stroke: #8fa6ba;
+            width: 21px;
+            height: 21px;
+            stroke: #91a6ba;
             stroke-width: 1.9;
             fill: none;
             stroke-linecap: round;
@@ -227,7 +232,7 @@
         }
 
         .metric-value {
-            font-size: 34px;
+            font-size: 38px;
             line-height: 1;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
@@ -237,8 +242,8 @@
         }
 
         .metric-label {
-            color: #9bb0c4;
-            font-size: 11px;
+            color: #879bad;
+            font-size: 12px;
             font-weight: 500;
             letter-spacing: 0.035em;
             text-transform: uppercase;
@@ -249,13 +254,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 18px;
-            min-height: 74px;
-            padding: 10px 16px;
-            margin-top: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 18px;
-            background: rgba(10, 18, 32, 0.45);
+            gap: 22px;
+            min-height: 0;
+            padding: 34px 0 20px;
+            margin-top: 4px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
         }
 
         .filter-main {
@@ -269,105 +274,122 @@
         .status-tabs {
             display: inline-flex;
             align-items: center;
-            gap: 2px;
+            gap: 18px;
             padding-bottom: 0;
             margin-right: 0;
         }
 
         .status-tab {
-            border: 0;
-            background: transparent;
-            color: #92a5b8;
-            font-size: 13px;
+            border: 0 !important;
+            border-bottom: 2px solid transparent !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #92a5b8 !important;
+            font-size: 14px;
             font-weight: 600;
-            padding: 6px 10px;
-            border-radius: 8px 8px 0 0;
-            border-bottom: 2px solid transparent;
+            padding: 0;
+            border-radius: 0;
             cursor: pointer;
         }
 
-        .status-tab:hover { color: #d1deec; }
+        .status-tab:hover { color: #d1deec !important; }
 
         .status-tab.active {
-            color: #0a1c12;
-            border-bottom-color: transparent;
-            background: #74b52c;
+            color: #9ef018 !important;
+            border-bottom-color: #9ef018 !important;
+            background: transparent !important;
         }
 
         .filter-sep {
             width: 1px;
             height: 24px;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(139, 158, 176, 0.24);
             flex: 0 0 1px;
         }
 
         .compact-select {
-            border: 0;
-            background: transparent;
-            color: #d7e7f7;
+            border: 0 !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+            color: #d7e7f7 !important;
             border-radius: 0;
-            padding: 6px 24px 6px 2px;
+            padding: 0 24px 0 2px;
             min-width: 142px;
-            font-size: 15px;
+            height: 24px;
+            font-size: 14px;
             font-weight: 500;
             outline: none;
             appearance: none;
             -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2389cb4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 2px center;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2389cb4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 2px center !important;
         }
 
-        .compact-select:focus { color: #f0f7ff; }
+        .compact-select:focus { color: #f0f7ff !important; }
 
         .filter-actions {
             display: inline-flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
             margin-left: auto;
+            flex: 1 1 auto;
+            min-width: 300px;
+        }
+
+        .filter-actions::before {
+            content: "";
+            height: 1px;
+            flex: 1 1 auto;
+            min-width: 42px;
+            background: rgba(122, 145, 164, 0.22);
         }
 
         .random-link {
-            border: 0;
-            background: transparent;
-            color: #9cb0c4;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #a9bdcf !important;
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            padding: 7px 4px 7px 2px;
-            margin-left: 2px;
+            padding: 0;
+            margin-left: 0;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
 
-        .random-link:hover { color: #e3edf8; }
+        .random-link:hover { color: #e3edf8 !important; }
 
         .filter-search {
-            min-width: 280px;
-            width: clamp(280px, 28vw, 340px);
+            min-width: 220px;
+            width: clamp(220px, 22vw, 300px);
             position: relative;
         }
 
         .filter-search input {
             width: 100%;
-            border: 1px solid rgba(122, 145, 164, 0.32);
-            background: rgba(8, 16, 25, 0.55);
-            border-radius: 10px;
-            height: 48px;
-            padding: 10px 44px 10px 14px;
+            border: 0 !important;
+            border-bottom: 1px solid rgba(122, 145, 164, 0.34) !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: 0;
+            height: 34px;
+            padding: 4px 30px 6px 0;
             color: #d9ebfb;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
         }
 
         .filter-search input::placeholder { color: rgba(255, 255, 255, 0.45); }
 
-        .filter-search input:focus { border-color: rgba(132, 158, 180, 0.74); }
+        .filter-search input:focus { border-bottom-color: rgba(158, 240, 24, 0.66) !important; }
 
         .filter-search-icon {
             position: absolute;
-            right: 14px;
+            right: 0;
             top: 50%;
             transform: translateY(-50%);
             width: 18px;
@@ -376,62 +398,42 @@
             pointer-events: none;
         }
 
-        .progress-inline {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px 22px;
-            color: #9fb0c1;
-            font-size: 13px;
-            padding: 4px 2px 14px;
-            border-bottom: 1px solid var(--line-soft);
-        }
-
-        .progress-inline b {
-            color: #e2edf8;
-            font-weight: 700;
-            margin-left: 4px;
-        }
-
-        .progress-inline .accent b {
-            color: #64dca7;
-        }
-
         .task-list {
             list-style: none;
             margin: 0;
-            padding: 4px 0 0;
+            padding: 0;
+            border-top: 1px solid var(--line-soft);
         }
 
         .task-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 220px;
-            gap: 18px;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 32px;
             align-items: center;
-            padding: 16px 0;
+            padding: 19px 0;
             border-bottom: 1px solid var(--line-soft);
             transition: background-color .12s ease;
             cursor: pointer;
         }
 
         .task-row:hover {
-            background: rgba(35, 53, 69, 0.16);
+            background: rgba(123, 145, 164, 0.045);
         }
 
         .task-left {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: 14px;
             min-width: 0;
             padding-left: 3px;
         }
 
         .solve-mark {
-            margin-top: 8px;
-            width: 15px;
-            height: 15px;
-            border-radius: 999px;
-            flex: 0 0 15px;
+            margin-top: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex: 0 0 14px;
             border: 1.5px solid #6a7f95;
             position: relative;
             background: transparent;
@@ -460,7 +462,7 @@
         .task-title {
             color: #e4f2ff;
             text-decoration: none;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
             line-height: 1.25;
         }
@@ -469,7 +471,7 @@
 
         .task-desc {
             margin-top: 5px;
-            color: #8da1b5;
+            color: #8b9fb2;
             font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
@@ -478,7 +480,7 @@
 
         .task-tags {
             margin-top: 7px;
-            color: #7f93a7;
+            color: #74889b;
             font-size: 12px;
             white-space: nowrap;
             overflow: hidden;
@@ -486,56 +488,60 @@
         }
 
         .task-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            display: grid;
+            grid-template-columns: auto auto auto;
+            align-items: center;
             justify-content: center;
-            gap: 7px;
-            color: #c9d9e8;
-            font-size: 13px;
+            gap: 16px;
+            color: #7f93a7;
+            font-size: 12px;
+            opacity: 0.74;
         }
 
         .difficulty-block {
-            min-width: 116px;
+            min-width: 84px;
             text-align: right;
         }
 
         .difficulty-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            color: #dce9f6;
+            color: #93a6b8;
             line-height: 1.2;
             letter-spacing: 0.02em;
         }
 
         .difficulty-dots {
-            margin-top: 4px;
+            margin-top: 5px;
             font-size: 10px;
             letter-spacing: 0.08em;
             line-height: 1;
         }
 
         .difficulty-dots .on { color: #91a9bf; }
-        .difficulty-dots .off { color: rgba(132, 148, 164, 0.3); }
+        .difficulty-dots .off { color: rgba(132, 148, 164, 0.22); }
 
         .lang-label {
-            color: #a3b6c9;
+            color: #879bad;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.03em;
         }
 
         .exp-label {
-            color: #d5e6f8;
-            font-weight: 700;
-            font-size: 12px;
+            color: #99aabc;
+            font-weight: 600;
+            font-size: 11px;
             letter-spacing: 0.02em;
         }
 
         .empty {
-            padding: 20px 4px;
+            padding: 18px 0;
             color: #91a6bb;
             font-size: 14px;
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
         }
 
         .suggest-wrap {
@@ -719,7 +725,6 @@
             .suggest-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <link rel="stylesheet" href="theme-dark.css">
 </head>
 <body>
     <header>
@@ -750,56 +755,6 @@ for (int i = 1; i &lt;= n; ++i) {
                 <div class="hero-main">
                     <h1>Тренировка</h1>
                     <p>Выбирай задачу и тренируй внимательность к коду.</p>
-                    <div class="stats-strip">
-                        <div class="metric metric-solved">
-                            <span class="metric-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="8.4"></circle>
-                                    <path d="M8.5 12.2l2.3 2.4 4.8-5"></path>
-                                </svg>
-                            </span>
-                            <div>
-                                <div class="metric-value" id="metricSolved">0</div>
-                                <div class="metric-label">решено задач</div>
-                            </div>
-                        </div>
-                        <div class="metric metric-accuracy">
-                            <span class="metric-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="8.4"></circle>
-                                    <circle cx="12" cy="12" r="4.1"></circle>
-                                    <circle cx="12" cy="12" r="1.8"></circle>
-                                </svg>
-                            </span>
-                            <div>
-                                <div class="metric-value" id="metricAccuracy">0%</div>
-                                <div class="metric-label">accuracy</div>
-                            </div>
-                        </div>
-                        <div class="metric metric-exp">
-                            <span class="metric-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M8 4.8h8l4 7.2-4 7.2H8L4 12z"></path>
-                                </svg>
-                            </span>
-                            <div>
-                                <div class="metric-value" id="metricExp">0</div>
-                                <div class="metric-label">exp</div>
-                            </div>
-                        </div>
-                        <div class="metric metric-attempts">
-                            <span class="metric-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M20 12a8 8 0 1 1-2.4-5.7"></path>
-                                    <path d="M20 5.5V11h-5.5"></path>
-                                </svg>
-                            </span>
-                            <div>
-                                <div class="metric-value" id="metricAttempts">0</div>
-                                <div class="metric-label">attempts</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="level-progress">
@@ -816,6 +771,49 @@ for (int i = 1; i &lt;= n; ++i) {
                     <div class="level-bar">
                         <div id="levelFill" class="level-fill"></div>
                     </div>
+                </div>
+            </div>
+
+            <div class="stats-strip">
+                <div class="metric metric-solved">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8.4"></circle>
+                            <path d="M8.5 12.2l2.3 2.4 4.8-5"></path>
+                        </svg>
+                    </span>
+                    <div class="metric-value" id="metricSolved">0</div>
+                    <div class="metric-label">решено задач</div>
+                </div>
+                <div class="metric metric-accuracy">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8.4"></circle>
+                            <circle cx="12" cy="12" r="4.1"></circle>
+                            <circle cx="12" cy="12" r="1.8"></circle>
+                        </svg>
+                    </span>
+                    <div class="metric-value" id="metricAccuracy">0%</div>
+                    <div class="metric-label">accuracy</div>
+                </div>
+                <div class="metric metric-exp">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8 4.8h8l4 7.2-4 7.2H8L4 12z"></path>
+                        </svg>
+                    </span>
+                    <div class="metric-value" id="metricExp">0</div>
+                    <div class="metric-label">exp</div>
+                </div>
+                <div class="metric metric-attempts">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 12a8 8 0 1 1-2.4-5.7"></path>
+                            <path d="M20 5.5V11h-5.5"></path>
+                        </svg>
+                    </span>
+                    <div class="metric-value" id="metricAttempts">0</div>
+                    <div class="metric-label">attempts</div>
                 </div>
             </div>
 
@@ -847,7 +845,7 @@ for (int i = 1; i &lt;= n; ++i) {
                     </select>
                 </div>
                 <div class="filter-actions">
-                    <button type="button" class="random-link" id="randomBtn"><span>⟳</span>Случайная</button>
+                    <button type="button" class="random-link" id="randomBtn"><span>⟳</span>Случайная задача</button>
                     <div class="filter-search">
                         <input id="searchInput" type="text" placeholder="Поиск задачи…">
                         <svg class="filter-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -856,12 +854,6 @@ for (int i = 1; i &lt;= n; ++i) {
                         </svg>
                     </div>
                 </div>
-            </div>
-
-            <div class="progress-inline">
-                <span>📅 Сегодня:<b id="microToday">0</b></span>
-                <span>🗓️ Неделя:<b id="microWeek">0</b></span>
-                <span class="accent">🚀 До уровня:<b id="microToLevel">0 EXP</b></span>
             </div>
 
             <ul id="taskList" class="task-list"></ul>
