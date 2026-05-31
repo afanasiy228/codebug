@@ -853,29 +853,27 @@
            SEND TO JUDGE
            ============================================================ */
 
-        async function sendToJudge(taskId, code) {
-            console.log("%c[sendToJudge()] → fetch()", "color:#aaf");
-
-            const authHeader = {};
-            let token = null;
+        async function acquireSubmitToken(forceRefresh = false) {
+            let token = "";
             try {
                 if (typeof window.getFreshAuthToken === "function") {
-                    token = await window.getFreshAuthToken({ timeoutMs: 6000, forceRefresh: true });
+                    token = await window.getFreshAuthToken({ timeoutMs: 8000, forceRefresh: !!forceRefresh });
                 }
                 if (!token && window.firebase?.auth) {
                     const user = window.firebase.auth().currentUser;
-                    if (user) token = await user.getIdToken(true);
+                    if (user) token = await user.getIdToken(!!forceRefresh);
                 }
-                if (!token) token = localStorage.getItem("idToken") || "";
-                token = String(token || "").trim();
-                if (!token) {
-                    throw new Error("Нужен повторный вход");
-                }
-                authHeader.Authorization = `Bearer ${token}`;
             } catch (e) {
-                console.warn("Failed to get auth token for submit", e);
-                throw new Error("Нужен повторный вход");
+                console.warn("acquireSubmitToken failed:", e);
             }
+            if (!token) token = localStorage.getItem("idToken") || "";
+            token = String(token || "").trim();
+            if (!token) throw new Error("Нужен повторный вход");
+            return token;
+        }
+
+        async function sendToJudge(taskId, code) {
+            console.log("%c[sendToJudge()] → fetch()", "color:#aaf");
 
             const payload = {
                 task: taskId,
@@ -889,18 +887,27 @@
 
             let res;
             try {
-                console.log("[sendToJudge] POST", SUBMIT_URL);
-                res = await fetch(SUBMIT_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...authHeader
-                    },
-                    mode: "cors",
-                    body: JSON.stringify(payload)
-                });
+                let token = await acquireSubmitToken(false);
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    console.log("[sendToJudge] POST", SUBMIT_URL, "attempt=", attempt + 1);
+                    res = await fetch(SUBMIT_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        mode: "cors",
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.status !== 401 || attempt === 1) break;
+                    console.warn("401 on submit, refreshing token and retrying once");
+                    token = await acquireSubmitToken(true);
+                }
             } catch (e) {
-                console.error("❌ Ошибка fetch:", e);
+                console.error("❌ Ошибка fetch/token:", e);
+                if (/повторный вход|auth|token/i.test(String(e?.message || ""))) {
+                    throw new Error("Нужен повторный вход");
+                }
                 throw new Error("Сервер не отвечает");
             }
 
