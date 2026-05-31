@@ -249,15 +249,20 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 14px;
-            padding: 14px 0 8px;
+            gap: 18px;
+            min-height: 74px;
+            padding: 10px 16px;
+            margin-top: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            background: rgba(10, 18, 32, 0.45);
         }
 
         .filter-main {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px 14px;
+            gap: 10px 18px;
             min-width: 0;
         }
 
@@ -265,9 +270,8 @@
             display: inline-flex;
             align-items: center;
             gap: 2px;
-            border-bottom: 1px solid rgba(126, 149, 168, 0.2);
-            padding-bottom: 2px;
-            margin-right: 8px;
+            padding-bottom: 0;
+            margin-right: 0;
         }
 
         .status-tab {
@@ -282,42 +286,53 @@
             cursor: pointer;
         }
 
-        .status-tab:hover { color: #c8d7e6; }
+        .status-tab:hover { color: #d1deec; }
 
         .status-tab.active {
-            color: var(--green);
-            border-bottom-color: var(--green);
-            background: rgba(56, 211, 142, 0.08);
+            color: #0a1c12;
+            border-bottom-color: transparent;
+            background: #74b52c;
+        }
+
+        .filter-sep {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.08);
+            flex: 0 0 1px;
         }
 
         .compact-select {
-            border: 1px solid rgba(120, 145, 168, 0.3);
-            background: rgba(9, 16, 25, 0.52);
+            border: 0;
+            background: transparent;
             color: #d7e7f7;
-            border-radius: 9px;
-            padding: 6px 10px;
-            min-width: 128px;
-            font-size: 13px;
+            border-radius: 0;
+            padding: 6px 24px 6px 2px;
+            min-width: 142px;
+            font-size: 15px;
+            font-weight: 500;
             outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2389cb4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 2px center;
         }
 
-        .compact-select:focus {
-            border-color: rgba(68, 195, 146, 0.72);
-        }
+        .compact-select:focus { color: #f0f7ff; }
 
         .filter-actions {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 14px;
             margin-left: auto;
         }
 
         .random-link {
             border: 0;
             background: transparent;
-            color: #a7b8c9;
+            color: #9cb0c4;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             padding: 7px 4px 7px 2px;
             margin-left: 2px;
@@ -326,11 +341,12 @@
             gap: 6px;
         }
 
-        .random-link:hover { color: #d5e6f7; }
+        .random-link:hover { color: #e3edf8; }
 
         .filter-search {
-            min-width: 180px;
-            width: clamp(180px, 18vw, 250px);
+            min-width: 280px;
+            width: clamp(280px, 28vw, 340px);
+            position: relative;
         }
 
         .filter-search input {
@@ -338,15 +354,27 @@
             border: 1px solid rgba(122, 145, 164, 0.32);
             background: rgba(8, 16, 25, 0.55);
             border-radius: 10px;
-            padding: 8px 11px;
+            height: 48px;
+            padding: 10px 44px 10px 14px;
             color: #d9ebfb;
-            font-size: 13px;
+            font-size: 15px;
             outline: none;
         }
 
-        .filter-search input::placeholder { color: #7f92a6; }
+        .filter-search input::placeholder { color: rgba(255, 255, 255, 0.45); }
 
         .filter-search input:focus { border-color: rgba(132, 158, 180, 0.74); }
+
+        .filter-search-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: rgba(202, 220, 238, 0.72);
+            pointer-events: none;
+        }
 
         .progress-inline {
             display: flex;
@@ -628,6 +656,8 @@
             .filters-line {
                 flex-direction: column;
                 align-items: stretch;
+                min-height: 0;
+                padding: 10px 12px;
             }
 
             .filter-actions {
@@ -638,6 +668,7 @@
 
             .filter-search {
                 width: 100%;
+                min-width: 0;
             }
 
             .task-row {
@@ -795,6 +826,7 @@ for (int i = 1; i &lt;= n; ++i) {
                         <button type="button" class="status-tab" data-status="unsolved">Не решённые</button>
                         <button type="button" class="status-tab" data-status="solved">Решённые</button>
                     </div>
+                    <span class="filter-sep" aria-hidden="true"></span>
                     <select id="languageFilter" class="compact-select">
                         <option value="">Все языки</option>
                         <option value="cpp">C++</option>
@@ -818,6 +850,10 @@ for (int i = 1; i &lt;= n; ++i) {
                     <button type="button" class="random-link" id="randomBtn"><span>⟳</span>Случайная</button>
                     <div class="filter-search">
                         <input id="searchInput" type="text" placeholder="Поиск задачи…">
+                        <svg class="filter-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <path d="M20 20l-3.5-3.5"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
