@@ -194,13 +194,20 @@
             color: var(--muted);
             margin: 0;
             padding: 0;
-            font-size: 18px;
             cursor: pointer;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 20px 20px;
+            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAR0lEQVR42mNgGAVDD9R0L/yPjsk2hFI1cIWkWk6SpFdC4390TJShuGwCGXDozn84xmYgVv2D30CqhyFNYpkm6ZAmOWUUkAQAmTqX/Ypms0QAAAAASUVORK5CYII=");
         }
 
         .password-toggle:hover {
             background: rgba(15, 118, 110, 0.08);
             color: var(--accent);
+        }
+
+        .password-toggle.is-visible {
+            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAU0lEQVR42mOo6V74H4QZqAVgBo4aSjtDkflkW0aMZqINx+YyYtQTJUmRobg0kW0oMeFFSA3xYUGEoSR5m5ChJEUMSemU6HRIkxyFK6eMFii0MxQAUCTkG0TlBYQAAAAASUVORK5CYII=");
         }
         
         button {
@@ -368,7 +375,7 @@
             <input id="login-identity" type="text" placeholder="Логин или Email">
             <div class="password-wrap">
                 <input id="login-pass" type="password" placeholder="Пароль">
-                <button type="button" class="password-toggle" onclick="togglePassword('login-pass', this)" aria-label="Показать пароль">👁</button>
+                <button type="button" class="password-toggle" onclick="togglePassword('login-pass', this)" aria-label="Показать пароль"></button>
             </div>
             <div class="helper-link" onclick="forgotPassword()">Забыли пароль?</div>
             <div id="login-error" class="error-msg"></div>
@@ -388,7 +395,7 @@
             <input id="reg-email" type="email" placeholder="Email">
             <div class="password-wrap">
                 <input id="reg-pass" type="password" placeholder="Пароль">
-                <button type="button" class="password-toggle" onclick="togglePassword('reg-pass', this)" aria-label="Показать пароль">👁</button>
+                <button type="button" class="password-toggle" onclick="togglePassword('reg-pass', this)" aria-label="Показать пароль"></button>
             </div>
 
             <div id="turnstile-box" class="turnstile-wrap"></div>
@@ -472,7 +479,7 @@
             input.type = nextType;
             if (buttonEl) {
                 const visible = nextType === "text";
-                buttonEl.textContent = visible ? "🙈" : "👁";
+                buttonEl.classList.toggle("is-visible", visible);
                 buttonEl.setAttribute("aria-label", visible ? "Скрыть пароль" : "Показать пароль");
             }
         }
