@@ -480,7 +480,7 @@ async function applyProBrandingToNavbar(login) {
     if (!isPro) return;
     const logos = document.querySelectorAll(".logo a");
     logos.forEach((logo) => {
-        logo.innerHTML = `<img src="logo-pro.png" alt="CodeBug PRO" style="height:26px;vertical-align:middle;" onerror="this.outerHTML='CodeBug PRO'">`;
+        logo.textContent = "CodeBug PRO";
     });
 }
 
