@@ -1343,30 +1343,65 @@
 
         async function dbRead(path, opts = {}) {
             const retries = Number.isFinite(Number(opts.retries)) ? Number(opts.retries) : 1;
-            const delayMs = Number.isFinite(Number(opts.delayMs)) ? Number(opts.delayMs) : 260;
+            const delayMs = Number.isFinite(Number(opts.delayMs)) ? Number(opts.delayMs) : 180;
             const forceRest = !!opts.forceRest || preferRestDbReads;
+            const sdkTimeoutMs = Number.isFinite(Number(opts.sdkTimeoutMs)) ? Number(opts.sdkTimeoutMs) : 700;
+            const restTimeoutMs = Number.isFinite(Number(opts.restTimeoutMs)) ? Number(opts.restTimeoutMs) : 1800;
 
-            if (!forceRest && window.db && typeof window.db.ref === "function") {
-                for (let i = 0; i <= retries; i++) {
-                    try {
-                        const snap = await window.db.ref(path).get();
-                        return snap.exists() ? snap.val() : null;
-                    } catch (err) {
-                        if (!isOfflineDbError(err) || i === retries) {
-                            if (isOfflineDbError(err)) preferRestDbReads = true;
-                            break;
-                        }
-                        await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+            const readViaRest = async () => {
+                const baseUrl = getDatabaseBaseUrl();
+                if (!baseUrl) throw new Error("database_url_missing");
+                const url = `${baseUrl}/${toDbRestPath(path)}.json?t=${Date.now()}`;
+                const controller = typeof AbortController === "function" ? new AbortController() : null;
+                const timer = setTimeout(() => {
+                    if (controller) controller.abort();
+                }, restTimeoutMs);
+                try {
+                    const res = await fetch(url, {
+                        cache: "no-store",
+                        signal: controller ? controller.signal : undefined
+                    });
+                    if (!res.ok) throw new Error(`db_rest_http_${res.status}`);
+                    return await res.json();
+                } finally {
+                    clearTimeout(timer);
+                }
+            };
+
+            const readViaSdkWithTimeout = async () => {
+                if (!window.db || typeof window.db.ref !== "function") throw new Error("sdk_unavailable");
+                const sdkPromise = window.db.ref(path).get().then((snap) => (snap.exists() ? snap.val() : null));
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("sdk_timeout")), sdkTimeoutMs);
+                });
+                return await Promise.race([sdkPromise, timeoutPromise]);
+            };
+
+            if (!forceRest) {
+                try {
+                    return await readViaSdkWithTimeout();
+                } catch (err) {
+                    const msg = String(err?.message || "");
+                    if (isOfflineDbError(err) || msg === "sdk_timeout") {
+                        preferRestDbReads = true;
+                    } else {
+                        throw err;
                     }
                 }
             }
 
-            const baseUrl = getDatabaseBaseUrl();
-            if (!baseUrl) throw new Error("database_url_missing");
-            const url = `${baseUrl}/${toDbRestPath(path)}.json?t=${Date.now()}`;
-            const res = await fetch(url, { cache: "no-store" });
-            if (!res.ok) throw new Error(`db_rest_http_${res.status}`);
-            return await res.json();
+            let lastErr = null;
+            for (let i = 0; i <= retries; i += 1) {
+                try {
+                    return await readViaRest();
+                } catch (err) {
+                    lastErr = err;
+                    if (i < retries) {
+                        await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+                    }
+                }
+            }
+            throw lastErr || new Error("db_read_failed");
         }
 
         /* ============================
