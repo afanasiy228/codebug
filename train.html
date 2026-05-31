@@ -135,38 +135,38 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 18px;
-            margin-bottom: 10px;
+            gap: 20px;
+            margin-bottom: 12px;
         }
 
         .level-title {
             display: inline-flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             color: #aebfd0;
-            font-size: 14px;
+            font-size: 15px;
             letter-spacing: 0.02em;
             min-width: 0;
         }
 
         .level-title svg {
-            width: 30px;
-            height: 30px;
+            width: 38px;
+            height: 38px;
             stroke: #8cdf3f;
             stroke-width: 2.1;
             fill: none;
-            flex: 0 0 30px;
+            flex: 0 0 38px;
         }
 
         .level-value {
             color: #dce9f7;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 16px;
             white-space: nowrap;
         }
 
         .level-bar {
-            height: 5px;
+            height: 7px;
             background: rgba(82, 100, 116, 0.34);
             border-radius: 999px;
             overflow: hidden;
@@ -196,10 +196,10 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 9px;
+            gap: 7px;
             min-width: 0;
-            padding: 0 36px;
-            border-right: 1px solid rgba(124, 145, 164, 0.22);
+            padding: 0 30px;
+            border-right: 1px solid rgba(124, 145, 164, 0.18);
             flex: 1 1 0;
         }
 
@@ -211,19 +211,19 @@
         }
 
         .metric-icon {
-            width: 22px;
-            height: 22px;
-            flex: 0 0 22px;
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.8;
+            opacity: 1;
             margin-top: 0;
         }
 
         .metric-icon svg {
-            width: 21px;
-            height: 21px;
+            width: 18px;
+            height: 18px;
             stroke: #91a6ba;
             stroke-width: 1.9;
             fill: none;
@@ -231,8 +231,13 @@
             stroke-linejoin: round;
         }
 
+        .metric-solved .metric-icon svg { stroke: #58d67f; }
+        .metric-accuracy .metric-icon svg { stroke: #e1c15a; }
+        .metric-exp .metric-icon svg { stroke: #9ee84d; }
+        .metric-attempts .metric-icon svg { stroke: #58b8e9; }
+
         .metric-value {
-            font-size: 38px;
+            font-size: 31px;
             line-height: 1;
             font-weight: 700;
             font-family: "Space Grotesk", sans-serif;
@@ -243,11 +248,11 @@
 
         .metric-label {
             color: #879bad;
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 500;
             letter-spacing: 0.035em;
             text-transform: uppercase;
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
         .filters-line {
@@ -423,13 +428,13 @@
         .task-left {
             display: flex;
             align-items: flex-start;
-            gap: 14px;
+            gap: 12px;
             min-width: 0;
             padding-left: 3px;
         }
 
         .solve-mark {
-            margin-top: 6px;
+            margin-top: 4px;
             width: 14px;
             height: 14px;
             border-radius: 50%;
@@ -488,37 +493,40 @@
         }
 
         .task-right {
-            display: grid;
-            grid-template-columns: auto auto auto;
-            align-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
             justify-content: center;
-            gap: 16px;
+            gap: 5px;
             color: #7f93a7;
             font-size: 12px;
-            opacity: 0.74;
+            opacity: 0.82;
         }
 
         .difficulty-block {
-            min-width: 84px;
+            min-width: 112px;
             text-align: right;
         }
 
         .difficulty-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
-            color: #93a6b8;
+            color: var(--diff-color, #93a6b8);
             line-height: 1.2;
             letter-spacing: 0.02em;
         }
 
         .difficulty-dots {
+            display: flex;
+            justify-content: flex-end;
+            gap: 4px;
             margin-top: 5px;
-            font-size: 10px;
-            letter-spacing: 0.08em;
+            font-size: 11px;
+            letter-spacing: 0;
             line-height: 1;
         }
 
-        .difficulty-dots .on { color: #91a9bf; }
+        .difficulty-dots .on { color: var(--diff-color, #91a9bf); }
         .difficulty-dots .off { color: rgba(132, 148, 164, 0.22); }
 
         .lang-label {
@@ -529,9 +537,9 @@
         }
 
         .exp-label {
-            color: #99aabc;
+            color: #d6bd63;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 0.02em;
         }
 
@@ -689,6 +697,14 @@
                 width: 100%;
                 padding-left: 30px;
                 gap: 5px;
+            }
+
+            .difficulty-block {
+                text-align: left;
+            }
+
+            .difficulty-dots {
+                justify-content: flex-start;
             }
         }
 
@@ -1101,18 +1117,18 @@ for (int i = 1; i &lt;= n; ++i) {
         function difficultyMeta(diffRaw) {
             const diff = String(diffRaw || "").toLowerCase();
             const map = {
-                tutorial: { label: "Учебная", level: 1, color: "#86b4d8" },
-                easy: { label: "Лёгкая", level: 2, color: "#73b5ff" },
-                casual: { label: "Casual", level: 2, color: "#69bfd2" },
-                normal: { label: "Нормальная", level: 3, color: "#57d68f" },
-                hard: { label: "Сложная", level: 4, color: "#b28cff" },
-                insane: { label: "Безумная", level: 4, color: "#ca87ff" },
-                extreme: { label: "Экстремальная", level: 5, color: "#efcf67" },
-                ultra: { label: "Ультра", level: 5, color: "#efcf67" },
-                impossible: { label: "Невозможная", level: 5, color: "#efcf67" },
-                tourist: { label: "Турист", level: 5, color: "#efcf67" }
+                tutorial: { label: "Учебная", level: 1, color: "#72b8ff" },
+                easy: { label: "Лёгкая", level: 2, color: "#72b8ff" },
+                casual: { label: "Лёгкая", level: 2, color: "#72b8ff" },
+                normal: { label: "Нормальная", level: 3, color: "#58d68c" },
+                hard: { label: "Сложная", level: 4, color: "#b58cff" },
+                insane: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
+                extreme: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
+                ultra: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
+                impossible: { label: "Очень сложная", level: 5, color: "#ff6f7b" },
+                tourist: { label: "Очень сложная", level: 5, color: "#ff6f7b" }
             };
-            return map[diff] || { label: diffRaw || "—", level: 3, color: "#57d68f" };
+            return map[diff] || { label: diffRaw || "—", level: 3, color: "#58d68c" };
         }
 
         function taskDescription(problem) {
@@ -1138,8 +1154,8 @@ for (int i = 1; i &lt;= n; ++i) {
             const off = "○";
             let dots = "";
             for (let i = 1; i <= 5; i++) {
-                if (i <= meta.level) dots += `<span class="on">${on}</span> `;
-                else dots += `<span class="off">${off}</span> `;
+                if (i <= meta.level) dots += `<span class="on">${on}</span>`;
+                else dots += `<span class="off">${off}</span>`;
             }
             return dots.trim();
         }
@@ -1190,7 +1206,7 @@ for (int i = 1; i &lt;= n; ++i) {
                         </div>
                     </div>
                     <div class="task-right">
-                        <div class="difficulty-block">
+                        <div class="difficulty-block" style="--diff-color: ${escapeHtml(diff.color)}">
                             <div class="difficulty-name">${escapeHtml(diff.label)}</div>
                             <div class="difficulty-dots">${buildDifficultyDots(diff)}</div>
                         </div>
