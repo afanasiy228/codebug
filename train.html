@@ -461,15 +461,6 @@
 
         .task-row:hover .task-title { color: #ffffff; }
 
-        .task-desc {
-            margin-top: 4px;
-            color: #8498aa;
-            font-size: 12.5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         .task-tags {
             margin-top: 4px;
             color: #65798b;
@@ -1218,14 +1209,6 @@
             return map[type] || "Стандартная";
         }
 
-        function taskDescription(problem) {
-            const explicit = String(problem.shortDescription || "").trim();
-            if (explicit) return explicit;
-            if (problem.taskType === "interactive") return "Интерактивная задача: проверь обработку диалога с интерактором.";
-            if (problem.taskType === "grader") return "Задача с grader: корректность функции и интерфейса важнее ввода/вывода.";
-            return "Открой задачу и исправь код с ошибкой.";
-        }
-
         function taskTags(problem) {
             const tags = Array.isArray(problem.tags) ? problem.tags.slice(0, 2).map(normalizeTag) : [];
             const type = taskTypeLabel(problem.taskType);
@@ -1286,7 +1269,6 @@
                 const solved = isTaskSolved(p.id);
                 const diff = difficultyMeta(p.difficulty);
                 const safeTitle = escapeHtml(p.title);
-                const safeDesc = escapeHtml(taskDescription(p));
                 const safeTags = escapeHtml(taskTags(p));
                 const languageLabel = taskLanguageLabel(p.language);
                 const exp = taskExp(p);
@@ -1301,7 +1283,6 @@
                         </span>
                         <div class="task-copy">
                             <a class="task-title" href="problem.html?id=${p.id}">${safeTitle}</a>
-                            <div class="task-desc">${safeDesc}</div>
                             <div class="task-tags">${safeTags}</div>
                         </div>
                     </div>
