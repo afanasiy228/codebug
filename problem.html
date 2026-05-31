@@ -844,8 +844,7 @@
                     queueTimer = null;
                 }
                 console.error("🔥 Ошибка submitCode:", e);
-                const isAuthError = /401|auth_required|invalid_token|повторный вход/i.test(String(e?.message || ""));
-                updateSubmissionRow(pendingRow, isAuthError ? "Нужен вход" : "ERROR");
+                updateSubmissionRow(pendingRow, "ERROR");
             }
         }
 
@@ -868,7 +867,6 @@
             }
             if (!token) token = localStorage.getItem("idToken") || "";
             token = String(token || "").trim();
-            if (!token) throw new Error("Нужен повторный вход");
             return token;
         }
 
@@ -890,24 +888,24 @@
                 let token = await acquireSubmitToken(false);
                 for (let attempt = 0; attempt < 2; attempt++) {
                     console.log("[sendToJudge] POST", SUBMIT_URL, "attempt=", attempt + 1);
+                    const headers = {
+                        "Content-Type": "application/json"
+                    };
+                    if (token) {
+                        headers["Authorization"] = `Bearer ${token}`;
+                    }
                     res = await fetch(SUBMIT_URL, {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
+                        headers,
                         mode: "cors",
                         body: JSON.stringify(payload)
                     });
-                    if (res.status !== 401 || attempt === 1) break;
+                    if (!token || res.status !== 401 || attempt === 1) break;
                     console.warn("401 on submit, refreshing token and retrying once");
                     token = await acquireSubmitToken(true);
                 }
             } catch (e) {
                 console.error("❌ Ошибка fetch/token:", e);
-                if (/повторный вход|auth|token/i.test(String(e?.message || ""))) {
-                    throw new Error("Нужен повторный вход");
-                }
                 throw new Error("Сервер не отвечает");
             }
 
@@ -919,12 +917,6 @@
             } catch (e) {
                 console.error("❌ Ошибка JSON:", e);
                 throw new Error("Невалидный JSON");
-            }
-
-            if (res.status === 401) {
-                console.error("❌ 401 Unauthorized on /submit");
-                localStorage.removeItem("idToken");
-                throw new Error("Нужен повторный вход");
             }
 
             if (!res.ok && !data.status) {
