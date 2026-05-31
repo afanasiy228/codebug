@@ -169,6 +169,39 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
         }
+
+        .password-wrap {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .password-wrap input {
+            margin-bottom: 0;
+            padding-right: 46px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            box-shadow: none;
+            color: var(--muted);
+            margin: 0;
+            padding: 0;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .password-toggle:hover {
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--accent);
+        }
         
         button {
             width: 100%;
@@ -333,7 +366,10 @@
             <h1>Вход</h1>
 
             <input id="login-identity" type="text" placeholder="Логин или Email">
-            <input id="login-pass" type="password" placeholder="Пароль">
+            <div class="password-wrap">
+                <input id="login-pass" type="password" placeholder="Пароль">
+                <button type="button" class="password-toggle" onclick="togglePassword('login-pass', this)" aria-label="Показать пароль">👁</button>
+            </div>
             <div class="helper-link" onclick="forgotPassword()">Забыли пароль?</div>
             <div id="login-error" class="error-msg"></div>
 
@@ -350,7 +386,10 @@
 
             <input id="reg-user" type="text" placeholder="Логин" oninput="updateAvatar()">
             <input id="reg-email" type="email" placeholder="Email">
-            <input id="reg-pass" type="password" placeholder="Пароль">
+            <div class="password-wrap">
+                <input id="reg-pass" type="password" placeholder="Пароль">
+                <button type="button" class="password-toggle" onclick="togglePassword('reg-pass', this)" aria-label="Показать пароль">👁</button>
+            </div>
 
             <div id="turnstile-box" class="turnstile-wrap"></div>
 
@@ -425,6 +464,18 @@
         }
 
         if (window.renderCaptchaWidget) window.renderCaptchaWidget();
+
+        function togglePassword(inputId, buttonEl) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const nextType = input.type === "password" ? "text" : "password";
+            input.type = nextType;
+            if (buttonEl) {
+                const visible = nextType === "text";
+                buttonEl.textContent = visible ? "🙈" : "👁";
+                buttonEl.setAttribute("aria-label", visible ? "Скрыть пароль" : "Показать пароль");
+            }
+        }
     </script>
 
 </body>
