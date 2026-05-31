@@ -802,14 +802,26 @@ def _run_submission_job(job):
             # Ensure we never leave a submission without terminal verdict.
             final = "SE"
         public_status = final
+        status_label = final
         problem_cfg = read_problem_config(task)
         scoring_mode = str((problem_cfg or {}).get("scoringMode") or "ioi").strip().lower()
         has_groups = bool((problem_cfg or {}).get("groups")) and scoring_mode != "icpc"
         terminal_errors = {"CE", "TL", "RE", "ML", "SE", "NO_TESTS"}
         if has_groups and final not in terminal_errors and parsed["score"] is not None:
-            public_status = str(parsed["score"])
-        status_label = public_status
-        if parsed["firstFail"] and final in {"WA", "TL", "ML", "RE"}:
+            try:
+                score_value = float(parsed["score"])
+            except Exception:
+                score_value = None
+            if score_value is not None and score_value >= 100:
+                public_status = "OK"
+                status_label = "OK"
+            elif score_value is not None and score_value > 0:
+                public_status = "PS"
+                status_label = "PS"
+            else:
+                public_status = "WA"
+                status_label = "WA"
+        if status_label != "PS" and parsed["firstFail"] and final in {"WA", "TL", "ML", "RE"}:
             status_label = parsed["firstFail"]
         result_obj.update({
             "status": public_status,
