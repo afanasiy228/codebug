@@ -372,56 +372,58 @@
         .task-list {
             list-style: none;
             margin: 0;
-            padding: 2px 0 0;
+            padding: 4px 0 0;
         }
 
         .task-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 282px;
-            gap: 10px;
+            grid-template-columns: minmax(0, 1fr) 220px;
+            gap: 18px;
             align-items: center;
-            padding: 13px 0;
+            padding: 16px 0;
             border-bottom: 1px solid var(--line-soft);
             transition: background-color .12s ease;
+            cursor: pointer;
         }
 
         .task-row:hover {
-            background: rgba(35, 53, 69, 0.2);
+            background: rgba(35, 53, 69, 0.16);
         }
 
         .task-left {
             display: flex;
             align-items: flex-start;
-            gap: 10px;
+            gap: 12px;
             min-width: 0;
             padding-left: 3px;
         }
 
-        .row-star {
-            margin-top: 4px;
-            border: 0;
-            background: transparent;
-            color: #6e8298;
-            cursor: pointer;
-            width: 22px;
-            font-size: 15px;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .row-star.active { color: #f3cf67; }
-        .row-star:hover { color: #f7de8f; }
-
         .solve-mark {
             margin-top: 8px;
-            width: 8px;
-            height: 8px;
+            width: 15px;
+            height: 15px;
             border-radius: 999px;
-            flex: 0 0 8px;
-            background: #4f6478;
+            flex: 0 0 15px;
+            border: 1.5px solid #6a7f95;
+            position: relative;
+            background: transparent;
         }
 
-        .solve-mark.solved { background: #6daff2; }
+        .solve-mark.solved {
+            background: #5bc77e;
+            border-color: #5bc77e;
+        }
+        .solve-mark.solved::after {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            width: 4px;
+            height: 7px;
+            border-right: 2px solid #08131e;
+            border-bottom: 2px solid #08131e;
+            transform: rotate(35deg);
+        }
 
         .task-copy {
             min-width: 0;
@@ -438,7 +440,7 @@
         .task-row:hover .task-title { color: #ffffff; }
 
         .task-desc {
-            margin-top: 4px;
+            margin-top: 5px;
             color: #8da1b5;
             font-size: 13px;
             white-space: nowrap;
@@ -447,8 +449,8 @@
         }
 
         .task-tags {
-            margin-top: 5px;
-            color: #718598;
+            margin-top: 7px;
+            color: #7f93a7;
             font-size: 12px;
             white-space: nowrap;
             overflow: hidden;
@@ -456,47 +458,43 @@
         }
 
         .task-right {
-            display: grid;
-            grid-template-columns: 1fr 66px 78px;
-            align-items: center;
-            gap: 8px;
-            justify-items: end;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 7px;
             color: #c9d9e8;
             font-size: 13px;
         }
 
         .difficulty-block {
-            justify-self: start;
-            min-width: 120px;
+            min-width: 116px;
+            text-align: right;
         }
 
         .difficulty-name {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             color: #dce9f6;
             line-height: 1.2;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            letter-spacing: 0.02em;
         }
 
         .difficulty-dots {
-            margin-top: 2px;
-            font-size: 11px;
+            margin-top: 4px;
+            font-size: 10px;
             letter-spacing: 0.08em;
             line-height: 1;
         }
 
-        .difficulty-dots .off { color: rgba(132, 148, 164, 0.35); }
+        .difficulty-dots .on { color: #91a9bf; }
+        .difficulty-dots .off { color: rgba(132, 148, 164, 0.3); }
 
         .lang-label {
             color: #a3b6c9;
             text-transform: uppercase;
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 0.03em;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
         }
 
         .exp-label {
@@ -504,9 +502,6 @@
             font-weight: 700;
             font-size: 12px;
             letter-spacing: 0.02em;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
         }
 
         .empty {
@@ -653,9 +648,10 @@
 
             .task-right {
                 justify-items: start;
-                grid-template-columns: 1fr 1fr 1fr;
+                align-items: flex-start;
                 width: 100%;
-                padding-left: 44px;
+                padding-left: 30px;
+                gap: 5px;
             }
         }
 
@@ -686,9 +682,8 @@
             .status-tabs { width: 100%; overflow-x: auto; }
             .status-tab { flex: 0 0 auto; }
             .task-right {
-                grid-template-columns: 1fr;
                 gap: 6px;
-                padding-left: 44px;
+                padding-left: 30px;
             }
             .suggest-grid { grid-template-columns: 1fr; }
         }
@@ -799,7 +794,6 @@ for (int i = 1; i &lt;= n; ++i) {
                         <button type="button" class="status-tab active" data-status="all">Все</button>
                         <button type="button" class="status-tab" data-status="unsolved">Не решённые</button>
                         <button type="button" class="status-tab" data-status="solved">Решённые</button>
-                        <button type="button" class="status-tab" data-status="favorite">Избранные</button>
                     </div>
                     <select id="languageFilter" class="compact-select">
                         <option value="">Все языки</option>
@@ -868,7 +862,6 @@ for (int i = 1; i &lt;= n; ++i) {
         let hiddenMap = {};
         let isAdmin = false;
         let solvedMap = {};
-        let favorites = new Set();
         let currentStatusFilter = "all";
         let userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0, todaySolved: 0, weekSolved: 0 };
 
@@ -921,33 +914,6 @@ for (int i = 1; i &lt;= n; ++i) {
                 .replaceAll(">", "&gt;")
                 .replaceAll("\"", "&quot;")
                 .replaceAll("'", "&#39;");
-        }
-
-        function getFavoriteKey() {
-            const user = getUser() || "guest";
-            return `trainingFavorites:${user}`;
-        }
-
-        function loadFavorites() {
-            try {
-                const raw = localStorage.getItem(getFavoriteKey()) || "[]";
-                const arr = JSON.parse(raw);
-                favorites = new Set(Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : []);
-            } catch (e) {
-                favorites = new Set();
-            }
-        }
-
-        function saveFavorites() {
-            localStorage.setItem(getFavoriteKey(), JSON.stringify([...favorites]));
-        }
-
-        function toggleFavorite(id) {
-            const n = Number(id);
-            if (favorites.has(n)) favorites.delete(n);
-            else favorites.add(n);
-            saveFavorites();
-            renderTaskList();
         }
 
         async function loadProblems() {
@@ -1144,7 +1110,7 @@ for (int i = 1; i &lt;= n; ++i) {
             const off = "○";
             let dots = "";
             for (let i = 1; i <= 5; i++) {
-                if (i <= meta.level) dots += `<span style="color:${meta.color}">${on}</span> `;
+                if (i <= meta.level) dots += `<span class="on">${on}</span> `;
                 else dots += `<span class="off">${off}</span> `;
             }
             return dots.trim();
@@ -1161,10 +1127,8 @@ for (int i = 1; i &lt;= n; ++i) {
                 if (language && (p.language || "cpp") !== language) return false;
                 if (query && !String(p.title || "").toLowerCase().includes(query)) return false;
                 const solved = isTaskSolved(p.id);
-                const fav = favorites.has(Number(p.id));
                 if (currentStatusFilter === "solved" && !solved) return false;
                 if (currentStatusFilter === "unsolved" && solved) return false;
-                if (currentStatusFilter === "favorite" && !fav) return false;
                 return true;
             });
         }
@@ -1178,7 +1142,6 @@ for (int i = 1; i &lt;= n; ++i) {
 
             rows.forEach((p) => {
                 const solved = isTaskSolved(p.id);
-                const fav = favorites.has(Number(p.id));
                 const diff = difficultyMeta(p.difficulty);
                 const safeTitle = escapeHtml(p.title);
                 const safeDesc = escapeHtml(taskDescription(p));
@@ -1188,9 +1151,9 @@ for (int i = 1; i &lt;= n; ++i) {
 
                 const li = document.createElement("li");
                 li.className = "task-row";
+                li.dataset.href = `problem.html?id=${p.id}`;
                 li.innerHTML = `
                     <div class="task-left">
-                        <button class="row-star ${fav ? "active" : ""}" data-id="${p.id}" title="Избранное">${fav ? "★" : "☆"}</button>
                         <span class="solve-mark ${solved ? "solved" : ""}"></span>
                         <div class="task-copy">
                             <a class="task-title" href="problem.html?id=${p.id}">${safeTitle}</a>
@@ -1200,23 +1163,18 @@ for (int i = 1; i &lt;= n; ++i) {
                     </div>
                     <div class="task-right">
                         <div class="difficulty-block">
-                            <div class="difficulty-name"><span>◈</span>${escapeHtml(diff.label)}</div>
+                            <div class="difficulty-name">${escapeHtml(diff.label)}</div>
                             <div class="difficulty-dots">${buildDifficultyDots(diff)}</div>
                         </div>
-                        <div class="lang-label"><span>⌨</span>${languageLabel}</div>
-                        <div class="exp-label"><span>⚡</span>${exp} EXP</div>
+                        <div class="lang-label">${languageLabel}</div>
+                        <div class="exp-label">${exp} EXP</div>
                     </div>
                 `;
-                list.appendChild(li);
-            });
-
-            list.querySelectorAll(".row-star").forEach((btn) => {
-                btn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const id = Number(btn.dataset.id);
-                    if (Number.isFinite(id)) toggleFavorite(id);
+                li.addEventListener("click", (e) => {
+                    if (e.target && (e.target.tagName === "A" || e.target.closest("a"))) return;
+                    window.location.href = li.dataset.href;
                 });
+                list.appendChild(li);
             });
         }
 
@@ -1304,7 +1262,6 @@ for (int i = 1; i &lt;= n; ++i) {
 
         async function initTraining() {
             if (typeof updateNavbar === "function") updateNavbar();
-            loadFavorites();
 
             problems = await loadProblems();
             hiddenMap = await loadHiddenMap();
