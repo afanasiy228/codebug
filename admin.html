@@ -770,6 +770,14 @@
       </div>
 
       <div class="admin-box">
+        <h3>Пересчитать статистику по посылкам</h3>
+        <p class="admin-note">Пересчитывает solved, cnt и exp для всех пользователей на основе submissions/global.</p>
+        <div class="admin-actions">
+          <button type="button" onclick="adminRebuildUserStats(this)">Пересчитать статистику</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
         <h3>Анонс на сайте</h3>
         <p class="admin-note">Сообщение будет храниться в Firebase: site/announcement.</p>
         <select id="adminAnnouncementFormat" class="admin-input">
@@ -2160,6 +2168,35 @@
       });
 
       setAdminLog(`Пользователь ${login}: добавлено задач ${freshTaskIds.length}, новый exp=${exp}, solved=${cnt}.`);
+    }
+
+    async function adminRebuildUserStats(buttonEl) {
+      const base = window.getTasksApiBase
+        ? window.getTasksApiBase()
+        : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      const btn = buttonEl || null;
+      if (btn && typeof btn.disabled !== "undefined") btn.disabled = true;
+      setAdminLog("Запущен пересчёт статистики по посылкам...");
+      try {
+        const res = await fetch(`${base}/admin/rebuild-user-stats`, {
+          method: "POST",
+          headers: await adminRequestHeaders(),
+          body: "{}"
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setAdminLog(`Ошибка пересчёта: ${data.code || data.error || res.status}`);
+          return;
+        }
+        setAdminLog(
+          `Готово: usersUpdated=${Number(data.usersUpdated || 0)}, usersWithSolved=${Number(data.usersWithSolved || 0)}, submissions=${Number(data.submissionsScanned || 0)}.`
+        );
+      } catch (err) {
+        console.error(err);
+        setAdminLog(`Ошибка соединения: ${err?.message || err}`);
+      } finally {
+        if (btn && typeof btn.disabled !== "undefined") btn.disabled = false;
+      }
     }
 
     async function adminSaveAnnouncement() {
