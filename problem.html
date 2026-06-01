@@ -10,16 +10,16 @@
 
     <style>
          :root {
-            --bg: #f7f1e7;
-            --bg-strong: #f0e6d8;
-            --ink: #1a1612;
-            --muted: #5f5b54;
-            --accent: #3B82F6;
-            --accent-strong: #60A5FA;
-            --warm: #f3b562;
-            --card: #fffaf2;
-            --stroke: #e2d6c4;
-            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --bg: #050505;
+            --bg-strong: #0B0B0B;
+            --ink: #FFFFFF;
+            --muted: #B0B0B0;
+            --accent: #F59E0B;
+            --accent-strong: #FBBF24;
+            --warm: #F59E0B;
+            --card: #121212;
+            --stroke: rgba(255, 255, 255, 0.08);
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
             --radius-lg: 22px;
             --radius-md: 14px;
         }
@@ -29,11 +29,12 @@
             color: var(--ink);
             font-family: "IBM Plex Sans", sans-serif;
             overflow: hidden;
-            background: radial-gradient(1200px 500px at 15% -10%, rgba(59, 130, 246, 0.18), transparent 60%), radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%), linear-gradient(180deg, var(--bg), var(--bg-strong));
+            background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%), linear-gradient(180deg, var(--bg), var(--bg-strong));
         }
         
          ::selection {
-            background: rgba(59, 130, 246, 0.2);
+            background: rgba(245, 158, 11, 0.2);
         }
         
         * {
@@ -44,8 +45,8 @@
         header {
             height: 72px;
             padding: 0 4vw;
-            background: rgba(255, 250, 242, 0.8);
-            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            background: rgba(5, 5, 5, 0.88);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -53,7 +54,7 @@
             top: 0;
             z-index: 10;
             backdrop-filter: blur(12px);
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            box-shadow: none;
         }
         
         .logo {
@@ -110,7 +111,7 @@
             max-width: 70%;
             padding: 20px;
             background: var(--card);
-            border-right: 1px solid rgba(226, 214, 196, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
             overflow-y: auto;
             flex-shrink: 0;
         }
@@ -125,7 +126,7 @@
         .splitter-v {
             width: 6px;
             cursor: col-resize;
-            background: rgba(226, 214, 196, 0.9);
+            background: rgba(255, 255, 255, 0.08);
             flex-shrink: 0;
         }
         
@@ -137,7 +138,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: rgba(255, 250, 242, 0.7);
+            background: rgba(18, 18, 18, 0.72);
             overflow: hidden;
         }
         
@@ -151,7 +152,7 @@
             position: relative;
             height: 100%;
             width: 100%;
-            background: #0b1119;
+            background: #0B0B0B;
             border: 1px solid var(--stroke);
             border-radius: var(--radius-md);
             overflow: hidden;
@@ -163,7 +164,7 @@
             right: 8px;
             width: 28px;
             height: 28px;
-            border: 1px solid rgba(226, 214, 196, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.04);
             color: rgba(230, 237, 243, 0.8);
@@ -178,7 +179,7 @@
 
         .copy-code-btn:hover {
             background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(226, 214, 196, 0.45);
+            border-color: rgba(255, 255, 255, 0.08);
             color: rgba(230, 237, 243, 1);
         }
 
@@ -193,7 +194,7 @@
             top: 8px;
             right: 44px;
             height: 28px;
-            border: 1px solid rgba(226, 214, 196, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.025);
             color: rgba(230, 237, 243, 0.62);
@@ -207,7 +208,7 @@
 
         .reset-code-btn:hover {
             background: rgba(255, 255, 255, 0.07);
-            border-color: rgba(226, 214, 196, 0.35);
+            border-color: rgba(255, 255, 255, 0.08);
             color: rgba(230, 237, 243, 0.9);
         }
         
@@ -222,7 +223,7 @@
         .splitter-h {
             height: 6px;
             cursor: row-resize;
-            background: rgba(226, 214, 196, 0.9);
+            background: rgba(255, 255, 255, 0.08);
         }
         
         .splitter-h:hover {
@@ -234,7 +235,7 @@
             height: 240px;
             min-height: 120px;
             background: var(--card);
-            border-top: 1px solid rgba(226, 214, 196, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
             padding: 16px 18px;
             overflow-y: auto;
         }
@@ -254,7 +255,7 @@
         
         th,
         td {
-            border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding: 8px;
             font-size: 14px;
         }
@@ -300,9 +301,9 @@
             display: inline-flex;
             gap: 2px;
             padding: 2px;
-            border: 1px solid rgba(226, 214, 196, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
-            background: rgba(255, 250, 242, 0.35);
+            background: rgba(18, 18, 18, 0.72);
         }
 
         .lang-btn {
@@ -319,15 +320,15 @@
         }
 
         .lang-btn.active {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(245, 158, 11, 0.1);
             color: var(--accent);
         }
         
         .task-tag {
             padding: 4px 10px;
             border-radius: 999px;
-            border: 1px solid rgba(226, 214, 196, 0.8);
-            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(245, 158, 11, 0.12);
             color: var(--accent);
             font-size: 12px;
             font-weight: 600;
@@ -342,7 +343,7 @@
             font-weight: 600;
             cursor: pointer;
             color: #fff;
-            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
+            box-shadow: 0 12px 24px rgba(245, 158, 11, 0.25);
         }
         
         .btn:hover {
@@ -448,7 +449,7 @@
                 width: 100%;
                 max-width: 100%;
                 border-right: none;
-                border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             }
             .splitter-v,
             .splitter-h {
@@ -594,7 +595,7 @@
             const body = document.getElementById("subs");
             const tr = document.createElement("tr");
 
-            const color = sub.status === "OK" ? "#4f4" : "#f55";
+            const color = sub.status === "OK" ? "#22C55E" : "#EF4444";
             const date = new Date(sub.date).toLocaleTimeString();
 
             tr.innerHTML = `
@@ -719,7 +720,7 @@
                 const latest = await loadMySubsForThisProblem();
                 if (latest && isSolvedVerdict(latest)) {
                     if (solvedSeenAtTick === null) solvedSeenAtTick = ticks;
-                    console.group("%c[XP TRACE][CLIENT] polling observed solved", "color:#7fff7f;font-weight:bold;");
+                    console.group("%c[XP TRACE][CLIENT] polling observed solved", "color:#22C55E;font-weight:bold;");
                     console.log("tick =", ticks);
                     console.log("submissionId =", latest._id || latest.id || null);
                     console.log("task =", latest.task);
@@ -745,7 +746,7 @@
                             const statsSnap = await (window.db?.ref(`users/${login}/stats`).get());
                             const stats = statsSnap && statsSnap.exists() ? (statsSnap.val() || {}) : {};
                             const solved = (stats && typeof stats.solved === "object" && stats.solved) ? stats.solved : {};
-                            console.group("%c[XP TRACE][CLIENT] stats snapshot after solved", "color:#7fff7f;font-weight:bold;");
+                            console.group("%c[XP TRACE][CLIENT] stats snapshot after solved", "color:#22C55E;font-weight:bold;");
                             console.log("login =", login);
                             console.log("taskId =", taskId);
                             console.log("stats.cnt =", stats.cnt);
@@ -889,12 +890,12 @@
             try {
                 pendingRow = addPendingSubmissionRow();
                 queueTimer = setTimeout(() => {
-                    updateSubmissionRow(pendingRow, "Тестируется", "#c9c9c9");
+                    updateSubmissionRow(pendingRow, "Тестируется", "#B0B0B0");
                 }, 800);
                 const verdict = await sendToJudge(taskId, code, user);
                 console.log("⬅ Вердикт от сервера:", verdict);
                 if (isSolvedVerdict(verdict)) {
-                    console.group("%c[XP TRACE][CLIENT] solved verdict received", "color:#7fff7f;font-weight:bold;");
+                    console.group("%c[XP TRACE][CLIENT] solved verdict received", "color:#22C55E;font-weight:bold;");
                     console.log("user =", user);
                     console.log("taskId =", taskId);
                     console.log("status =", verdict.status);
@@ -918,7 +919,7 @@
                 } else {
                     loadMySubsForThisProblem();
                     if ((verdict.statusLabel || verdict.status) === "QUEUE") {
-                        console.log("%c[XP TRACE][CLIENT] QUEUE -> startSubmissionPolling", "color:#c9c9c9;");
+                        console.log("%c[XP TRACE][CLIENT] QUEUE -> startSubmissionPolling", "color:#B0B0B0;");
                         startSubmissionPolling();
                     }
                 }
@@ -1036,7 +1037,7 @@
             const time = new Date().toLocaleTimeString();
             tr.innerHTML = `
                 <td>—</td>
-                <td style="color:#c9c9c9; font-weight:600;">В очереди</td>
+                <td style="color:#B0B0B0; font-weight:600;">В очереди</td>
                 <td>—</td>
                 <td>—</td>
                 <td>—</td>
@@ -1051,15 +1052,15 @@
             if (!row) return;
             const numericVerdict = /^\d+$/.test(String(verdict || "").trim());
             const verdictColor = colorOverride || (
-                numericVerdict ? "#7fff7f" :
-                verdict === "OK" ? "#7fff7f" :
-                verdict === "WA" ? "#ff7777" :
-                verdict === "RE" ? "#ffb37c" :
-                verdict === "QUEUE" ? "#c9c9c9" :
-                verdict === "TESTING" ? "#c9c9c9" :
-                verdict === "ERROR" ? "#ffb37c" :
-                verdict === "Нужен вход" ? "#ffb37c" :
-                "#ffd451"
+                numericVerdict ? "#22C55E" :
+                verdict === "OK" ? "#22C55E" :
+                verdict === "WA" ? "#EF4444" :
+                verdict === "RE" ? "#EF4444" :
+                verdict === "QUEUE" ? "#B0B0B0" :
+                verdict === "TESTING" ? "#B0B0B0" :
+                verdict === "ERROR" ? "#EF4444" :
+                verdict === "Нужен вход" ? "#EF4444" :
+                "#EF4444"
             );
             const cell = row.children[1];
             if (cell) {
@@ -1100,7 +1101,7 @@
    ============================================================ */
 
         async function loadMySubsForThisProblem() {
-            console.log("%c[loadMySubsForThisProblem()]", "color:#0af;");
+            console.log("%c[loadMySubsForThisProblem()]", "color:#F59E0B;");
 
             const user = getUser();
             if (!user) {
@@ -1122,18 +1123,18 @@
 
             const dbRef = window.db || null;
             if (!dbRef) {
-                tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Firebase временно недоступен</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7' style='color:#B0B0B0'>Firebase временно недоступен</td></tr>";
                 return null;
             }
 
-            tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Загрузка…</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='7' style='color:#B0B0B0'>Загрузка…</td></tr>";
 
             let snap;
             try {
                 snap = await dbRef.ref("submissions/global").get();
             } catch (err) {
                 console.warn("⚠ Не удалось загрузить посылки:", err);
-                tbody.innerHTML = "<tr><td colspan='7' style='color:#999'>Не удалось загрузить посылки</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7' style='color:#B0B0B0'>Не удалось загрузить посылки</td></tr>";
                 return null;
             }
 
@@ -1165,16 +1166,16 @@
                 const verdict = s.statusLabel || s.verdict || s.status || "ERROR";
                 const numericVerdict = /^\d+$/.test(String(verdict).trim());
                 const verdictColor =
-                    numericVerdict ? "#7fff7f" :
-                    String(verdict).startsWith("WA") ? "#ff7777" :
-                    String(verdict).startsWith("TL") ? "#ffd451" :
-                    String(verdict).startsWith("ML") ? "#ffd451" :
-                    String(verdict).startsWith("RE") ? "#ffb37c" :
-                    verdict === "OK" ? "#7fff7f" :
-                    verdict === "QUEUE" ? "#c9c9c9" :
-                    verdict === "TESTING" ? "#c9c9c9" :
-                    verdict === "ERROR" ? "#ffb37c" :
-                    "#ffd451";
+                    numericVerdict ? "#22C55E" :
+                    String(verdict).startsWith("WA") ? "#EF4444" :
+                    String(verdict).startsWith("TL") ? "#EF4444" :
+                    String(verdict).startsWith("ML") ? "#EF4444" :
+                    String(verdict).startsWith("RE") ? "#EF4444" :
+                    verdict === "OK" ? "#22C55E" :
+                    verdict === "QUEUE" ? "#B0B0B0" :
+                    verdict === "TESTING" ? "#B0B0B0" :
+                    verdict === "ERROR" ? "#EF4444" :
+                    "#EF4444";
 
                 const verdictLabel =
                     numericVerdict ? verdict :
@@ -1904,7 +1905,7 @@
                         inherit: true,
                         rules: [],
                         colors: {
-                            "editor.background": "#0b1119",
+                            "editor.background": "#0B0B0B",
                             "editor.lineHighlightBackground": "#112240",
                             "editorCursor.foreground": "#f0f6ff"
                         }

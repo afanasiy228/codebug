@@ -9,17 +9,17 @@
     <link rel="stylesheet" href="theme-dark.css">
     <style>
         :root {
-            --bg-0: #050816;
-            --bg-1: #0A1020;
-            --bg-2: #0D1424;
-            --line: rgba(148, 163, 184, 0.12);
-            --line-soft: rgba(148, 163, 184, 0.08);
-            --text: #F8FAFC;
-            --muted: #94A3B8;
+            --bg-0: #050505;
+            --bg-1: #0B0B0B;
+            --bg-2: #121212;
+            --line: rgba(255, 255, 255, 0.08);
+            --line-soft: rgba(255, 255, 255, 0.06);
+            --text: #FFFFFF;
+            --muted: #B0B0B0;
             --success: #22C55E;
             --success-soft: rgba(34, 197, 94, 0.15);
-            --blue: #3B82F6;
-            --blue-hover: #60A5FA;
+            --accent: #F59E0B;
+            --accent-hover: #FBBF24;
             --gold: #FBBF24;
             --danger: #EF4444;
             --danger-soft: rgba(239, 68, 68, 0.15);
@@ -32,8 +32,8 @@
             color: var(--text);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(circle at 9% -20%, rgba(59, 130, 246, 0.20), transparent 70%),
-                radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.10), transparent 70%),
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
                 linear-gradient(180deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
             min-height: 100vh;
             overflow-x: hidden;
@@ -56,8 +56,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(9, 15, 24, 0.8);
-            border-bottom: 1px solid rgba(84, 110, 132, 0.22);
+            background: rgba(5, 5, 5, 0.88);
+            border-bottom: 1px solid var(--line);
             backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
@@ -70,18 +70,18 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.3px;
-            color: #dbe6f2;
+            color: #FFFFFF;
         }
 
         nav a {
             margin-left: 24px;
-            color: #a3b4c5;
+            color: var(--muted);
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
         }
 
-        nav a:hover { color: #d9ebfb; }
+        nav a:hover { color: var(--accent-hover); }
 
         .hero {
             padding: 8px 0 2px;
@@ -136,7 +136,7 @@
         .level-title svg {
             width: 46px;
             height: 46px;
-            stroke: var(--blue-hover);
+            stroke: var(--accent-hover);
             stroke-width: 2.1;
             fill: none;
             flex: 0 0 46px;
@@ -158,7 +158,7 @@
 
         .level-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--blue), var(--blue-hover));
+            background: linear-gradient(90deg, var(--accent), var(--accent-hover));
             border-radius: 999px;
             width: 0;
             transition: width .28s ease;
@@ -217,7 +217,7 @@
 
         .metric-solved .metric-icon svg { stroke: var(--success); }
         .metric-accuracy .metric-icon svg { stroke: var(--success); }
-        .metric-exp .metric-icon svg { stroke: var(--blue-hover); }
+        .metric-exp .metric-icon svg { stroke: var(--accent-hover); }
         .metric-attempts .metric-icon svg { stroke: var(--danger); }
 
         .metric-value {
@@ -285,8 +285,8 @@
         .status-tab:hover { color: #d1deec !important; }
 
         .status-tab.active {
-            color: var(--blue-hover) !important;
-            border-bottom-color: var(--blue) !important;
+            color: var(--accent-hover) !important;
+            border-bottom-color: var(--accent) !important;
             background: transparent !important;
         }
 
@@ -318,15 +318,15 @@
             background-position: right 2px center !important;
         }
 
-        .compact-select:hover { border-bottom-color: rgba(59, 130, 246, 0.56) !important; }
+        .compact-select:hover { border-bottom-color: rgba(245, 158, 11, 0.56) !important; }
         .compact-select:focus {
             color: #f0f7ff !important;
-            border-bottom-color: rgba(96, 165, 250, 0.72) !important;
+            border-bottom-color: rgba(251, 191, 36, 0.72) !important;
         }
 
         .compact-select option {
             color: #deebf8;
-            background: #0b121a;
+            background: #121212;
         }
 
         .filter-actions {
@@ -396,7 +396,7 @@
 
         .filter-search input::placeholder { color: rgba(255, 255, 255, 0.45); }
 
-        .filter-search input:focus { border-bottom-color: rgba(96, 165, 250, 0.66) !important; }
+        .filter-search input:focus { border-bottom-color: rgba(251, 191, 36, 0.66) !important; }
 
         .filter-search-icon {
             position: absolute;
@@ -684,7 +684,7 @@
 
         .suggest-grid input:focus,
         .suggest-grid textarea:focus {
-            border-color: rgba(96, 165, 250, 0.72);
+            border-color: rgba(251, 191, 36, 0.72);
         }
 
         .suggest-file {
@@ -711,8 +711,8 @@
             padding: 9px 16px;
             font-size: 13px;
             font-weight: 700;
-            color: #F8FAFC;
-            background: linear-gradient(90deg, var(--blue), var(--blue-hover));
+            color: #FFFFFF;
+            background: linear-gradient(90deg, var(--accent), var(--accent-hover));
             cursor: pointer;
         }
 
@@ -1208,10 +1208,10 @@
         function difficultyMeta(diffRaw) {
             const diff = String(diffRaw || "").toLowerCase();
             const map = {
-                tutorial: { label: "Учебная", level: 1, color: "#5db8ff" },
-                easy: { label: "Лёгкая", level: 2, color: "#5db8ff" },
-                casual: { label: "Лёгкая", level: 2, color: "#5db8ff" },
-                normal: { label: "Нормальная", level: 3, color: "#3B82F6" },
+                tutorial: { label: "Учебная", level: 1, color: "#B0B0B0" },
+                easy: { label: "Лёгкая", level: 2, color: "#B0B0B0" },
+                casual: { label: "Лёгкая", level: 2, color: "#B0B0B0" },
+                normal: { label: "Нормальная", level: 3, color: "#F59E0B" },
                 hard: { label: "Сложная", level: 4, color: "#EF4444" },
                 insane: { label: "Очень сложная", level: 5, color: "#EF4444" },
                 extreme: { label: "Очень сложная", level: 5, color: "#EF4444" },
@@ -1220,7 +1220,7 @@
                 tourist: { label: "Экспертная", level: 5, color: "#FBBF24" },
                 expert: { label: "Экспертная", level: 5, color: "#FBBF24" }
             };
-            return map[diff] || { label: diffRaw || "—", level: 3, color: "#3B82F6" };
+            return map[diff] || { label: diffRaw || "—", level: 3, color: "#F59E0B" };
         }
 
         function taskTypeLabel(typeRaw) {

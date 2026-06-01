@@ -10,12 +10,12 @@
     <link rel="stylesheet" href="theme-dark.css">
     <style>
         :root {
-            --card-bg: #0f172a;
-            --card-stroke: rgba(148, 163, 184, 0.22);
-            --muted: #94a3b8;
-            --text: #e2e8f0;
-            --pro: #3B82F6;
-            --proplus: #60A5FA;
+            --card-bg: #121212;
+            --card-stroke: rgba(255, 255, 255, 0.08);
+            --muted: #B0B0B0;
+            --text: #FFFFFF;
+            --pro: #F59E0B;
+            --proplus: #FBBF24;
             --creator: #f59e0b;
         }
 
@@ -28,9 +28,9 @@
             font-family: "IBM Plex Sans", sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at 20% -20%, rgba(59, 130, 246, 0.20), transparent 70%),
-                radial-gradient(circle at 80% -30%, rgba(59, 130, 246, 0.10), transparent 70%),
-                #050816;
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
+                #050505;
         }
 
         header {
@@ -39,8 +39,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-            background: rgba(2, 6, 23, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(5, 5, 5, 0.88);
             backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
@@ -52,7 +52,7 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.3px;
-            color: #f8fafc;
+            color: #FFFFFF;
         }
 
         nav a {
@@ -64,7 +64,7 @@
         }
 
         nav a:hover {
-            color: #f8fafc;
+            color: #FFFFFF;
         }
 
         .page {
@@ -83,7 +83,7 @@
             padding: 6px 12px;
             border: 1px solid rgba(148, 163, 184, 0.35);
             border-radius: 999px;
-            color: #cbd5e1;
+            color: #B0B0B0;
             font-size: 12px;
             font-weight: 700;
             margin-bottom: 14px;
@@ -95,12 +95,12 @@
             font-size: clamp(30px, 4.2vw, 46px);
             line-height: 1.1;
             letter-spacing: 0;
-            color: #f8fafc;
+            color: #FFFFFF;
         }
 
         .sub {
             margin-top: 14px;
-            color: #94a3b8;
+            color: #B0B0B0;
             max-width: 720px;
             font-size: 16px;
             line-height: 1.6;
@@ -113,7 +113,7 @@
         }
 
         .tier {
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+            background: var(--card-bg);
             border: 1px solid var(--card-stroke);
             border-radius: 8px;
             padding: 18px 18px 16px;
@@ -132,7 +132,7 @@
             font-weight: 700;
             margin: 0 0 8px;
             line-height: 1.2;
-            color: #f8fafc;
+            color: #FFFFFF;
         }
 
         .tier-price {
@@ -151,7 +151,7 @@
         .feature-title {
             margin: 14px 0 8px;
             font-size: 13px;
-            color: #cbd5e1;
+            color: #B0B0B0;
             text-transform: uppercase;
             letter-spacing: .08em;
         }
@@ -159,7 +159,7 @@
         .feature-list {
             margin: 0;
             padding-left: 18px;
-            color: #dbeafe;
+            color: #FFFFFF;
             display: grid;
             gap: 8px;
             font-size: 14px;
@@ -167,7 +167,7 @@
             flex: 1;
         }
 
-        .tier.pro { border-color: rgba(59, 130, 246, 0.45); }
+        .tier.pro { border-color: rgba(245, 158, 11, 0.45); }
         .tier.pro .tier-price { color: var(--pro); }
 
         .tier.proplus { border-color: rgba(56, 189, 248, 0.45); }
@@ -177,8 +177,8 @@
             margin-top: 14px;
             border: 1px solid rgba(148, 163, 184, 0.34);
             border-radius: 8px;
-            background: #0b1220;
-            color: #e2e8f0;
+            background: #121212;
+            color: #FFFFFF;
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
@@ -187,12 +187,13 @@
         }
 
         .cta:hover {
-            border-color: rgba(226, 232, 240, 0.45);
+            border-color: rgba(251, 191, 36, 0.55);
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.18);
         }
 
         .footer-note {
             margin-top: 20px;
-            color: #94a3b8;
+            color: #B0B0B0;
             font-size: 13px;
             line-height: 1.55;
         }
@@ -202,19 +203,19 @@
             border: 1px solid rgba(148, 163, 184, 0.24);
             border-radius: 8px;
             padding: 14px 16px;
-            background: rgba(15, 23, 42, 0.7);
+            background: rgba(18, 18, 18, 0.7);
         }
 
         .compliance-box h3 {
             margin: 0 0 8px;
             font-size: 15px;
-            color: #e2e8f0;
+            color: #FFFFFF;
         }
 
         .compliance-list {
             margin: 0;
             padding-left: 18px;
-            color: #cbd5e1;
+            color: #B0B0B0;
             font-size: 14px;
             line-height: 1.6;
         }
@@ -248,7 +249,7 @@
         .support-line {
             margin-top: 12px;
             font-size: 14px;
-            color: #cbd5e1;
+            color: #B0B0B0;
             line-height: 1.6;
         }
 

@@ -9,16 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f1e7;
-      --bg-strong: #f0e6d8;
-      --ink: #1a1612;
-      --muted: #5f5b54;
-      --accent: #3B82F6;
-      --accent-strong: #60A5FA;
-      --warm: #f3b562;
-      --card: #fffaf2;
-      --stroke: #e2d6c4;
-      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --bg: #050505;
+      --bg-strong: #0B0B0B;
+      --ink: #FFFFFF;
+      --muted: #B0B0B0;
+      --accent: #F59E0B;
+      --accent-strong: #FBBF24;
+      --warm: #F59E0B;
+      --card: #121212;
+      --stroke: rgba(255, 255, 255, 0.08);
+      --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
       --radius-lg: 24px;
       --radius-md: 16px;
     }
@@ -32,16 +32,16 @@
       color: var(--ink);
       font-family: "IBM Plex Sans", sans-serif;
       background:
-        radial-gradient(1200px 500px at 15% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
-        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
         linear-gradient(180deg, var(--bg), var(--bg-strong));
       min-height: 100vh;
     }
 
     header {
       height: 72px;
-      background: rgba(255, 250, 242, 0.8);
-      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      background: rgba(5, 5, 5, 0.88);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: 0 4vw;
       display: flex;
       align-items: center;
@@ -50,7 +50,7 @@
       top: 0;
       z-index: 10;
       backdrop-filter: blur(12px);
-      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+      box-shadow: none;
     }
 
     .logo {
@@ -151,7 +151,7 @@
       align-items: center;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(59, 130, 246, 0.12);
+      background: rgba(245, 158, 11, 0.12);
       color: var(--accent);
       font-size: 12px;
       font-weight: 700;
@@ -165,11 +165,11 @@
       border-radius: 12px;
       cursor: pointer;
       font-weight: 600;
-      box-shadow: 0 14px 32px rgba(59, 130, 246, 0.25);
+      box-shadow: 0 14px 32px rgba(245, 158, 11, 0.25);
     }
 
     button.secondary {
-      background: rgba(59, 130, 246, 0.12);
+      background: rgba(245, 158, 11, 0.12);
       color: var(--accent);
     }
 
@@ -325,7 +325,7 @@
       const isPro = level !== "free";
       const color = isPro && typeof getSubscriptionNickColor === "function"
         ? getSubscriptionNickColor(sub)
-        : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#F8FAFC");
+        : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF");
       const nickHtml = (typeof buildStyledNickHtml === "function")
         ? buildStyledNickHtml(login, sub, color)
         : safeLogin;

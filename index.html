@@ -9,15 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
          :root {
-            --bg: #050816;
-            --bg2: #0A1020;
-            --card: #0D1424;
-            --line: rgba(148, 163, 184, 0.12);
-            --ink: #F8FAFC;
-            --muted: #94A3B8;
-            --accent: #3B82F6;
-            --accent-hover: #60A5FA;
-            --accent-border: rgba(59, 130, 246, 0.52);
+            --bg: #050505;
+            --bg2: #0B0B0B;
+            --card: #121212;
+            --line: rgba(255, 255, 255, 0.08);
+            --ink: #FFFFFF;
+            --muted: #B0B0B0;
+            --accent: #F59E0B;
+            --accent-hover: #FBBF24;
+            --accent-border: rgba(245, 158, 11, 0.52);
             --danger: #EF4444;
             --danger-soft: rgba(239, 68, 68, 0.15);
             --success: #22C55E;
@@ -26,8 +26,8 @@
             --code-hover: rgba(205, 221, 234, 0.78);
             --flash-red: rgba(239, 68, 68, 0.13);
             --flash-red-ink: rgba(248, 113, 113, 0.72);
-            --flash-blue: rgba(59, 130, 246, 0.12);
-            --flash-blue-ink: rgba(191, 219, 254, 0.72);
+            --flash-amber: rgba(245, 158, 11, 0.12);
+            --flash-amber-ink: rgba(253, 230, 138, 0.72);
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         
@@ -48,7 +48,7 @@
             overflow-y: auto;
             scroll-snap-type: y mandatory;
             scrollbar-width: thin;
-            scrollbar-color: rgba(59, 130, 246, 0.7) #0A1020;
+            scrollbar-color: rgba(245, 158, 11, 0.7) #0B0B0B;
         }
         
         .screen {
@@ -66,7 +66,7 @@
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid var(--line);
-            background: rgba(5, 8, 22, 0.62);
+            background: rgba(5, 5, 5, 0.72);
             backdrop-filter: blur(4px);
         }
         
@@ -83,9 +83,9 @@
             color: var(--ink);
         }
 
-        .brand-code { color: var(--accent); }
-        .brand-bug { color: var(--danger); }
-        .brand-suffix { color: var(--accent-hover); }
+        .brand-code,
+        .brand-bug,
+        .brand-suffix { color: var(--ink); }
         
         .top-nav nav {
             display: flex;
@@ -117,9 +117,8 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(circle at 74% 18%, rgba(59, 130, 246, 0.20), transparent 70%),
-                radial-gradient(circle at 14% 80%, rgba(59, 130, 246, 0.10), transparent 70%),
-                radial-gradient(circle at 82% 64%, rgba(239, 68, 68, 0.08), transparent 72%);
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%);
             pointer-events: none;
         }
         
@@ -193,11 +192,11 @@
             box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.22), 0 0 30px rgba(239, 68, 68, 0.10);
         }
         
-        .code-row.blue {
+        .code-row.amber {
             opacity: .42;
-            color: var(--flash-blue-ink);
-            background: var(--flash-blue);
-            box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18);
+            color: var(--flash-amber-ink);
+            background: var(--flash-amber);
+            box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.18);
         }
         
         .code-row.fade {
@@ -231,12 +230,12 @@
             font-weight: 700;
             color: var(--ink);
             letter-spacing: .2px;
-            text-shadow: 0 0 40px rgba(59, 130, 246, 0.25);
+            text-shadow: 0 0 25px rgba(245, 158, 11, 0.18);
         }
         
         .subtitle {
             margin: 10px 0 0;
-            color: #cbd5e1;
+            color: var(--muted);
             font-size: clamp(16px, 2vw, 23px);
             line-height: 1.26;
             text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
@@ -250,7 +249,7 @@
             border: 1px solid var(--accent-border);
             border-radius: 9px;
             padding: 10px 15px;
-            background: rgba(59, 130, 246, 0.15);
+            background: rgba(245, 158, 11, 0.15);
             color: var(--ink);
             text-decoration: none;
             font-size: 14px;
@@ -259,9 +258,9 @@
         }
         
         .cta:hover {
-            border-color: rgba(96, 165, 250, 0.74);
+            border-color: rgba(251, 191, 36, 0.74);
             color: #ffffff;
-            background: rgba(59, 130, 246, 0.25);
+            background: rgba(245, 158, 11, 0.25);
         }
         
         .about-roadmap {
@@ -271,8 +270,9 @@
             display: grid;
             align-content: start;
             background:
-                radial-gradient(circle at 82% 12%, rgba(59, 130, 246, 0.14), transparent 70%),
-                linear-gradient(180deg, rgba(5, 8, 22, 0.98), rgba(10, 16, 32, 0.98));
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
+                linear-gradient(180deg, rgba(5, 5, 5, 0.98), rgba(11, 11, 11, 0.98));
         }
 
         .about-roadmap::before {
@@ -373,7 +373,7 @@
             margin-top: 8px;
             border: 1px solid var(--line);
             border-radius: 12px;
-            background: rgba(13, 20, 36, 0.76);
+            background: #121212;
             padding: 26px 32px 24px;
         }
 
@@ -450,7 +450,7 @@
 
         .roadmap-step.active .roadmap-marker {
             border-color: var(--accent);
-            background: rgba(59, 130, 246, 0.15);
+            background: rgba(245, 158, 11, 0.15);
             color: var(--accent-hover);
         }
 
@@ -509,7 +509,7 @@
         .about-links {
             border: 1px solid var(--line);
             border-radius: 12px;
-            background: rgba(13, 20, 36, 0.76);
+            background: #121212;
             padding: 24px 32px;
         }
 
@@ -961,10 +961,10 @@ return 0; }`;
                 const row = rows[idx];
                 const txt = row.txt;
                 const original = baseText[idx];
-                const blue = Math.random() > 0.55;
+                const amber = Math.random() > 0.55;
 
-                row.row.classList.remove("red", "blue");
-                row.row.classList.add(blue ? "blue" : "red");
+                row.row.classList.remove("red", "amber");
+                row.row.classList.add(amber ? "amber" : "red");
                 if (Math.random() > 0.55) {
                     const next = mutateLine(original);
                     txt.textContent = next;
@@ -972,7 +972,7 @@ return 0; }`;
 
                 if (pulseTimer) clearTimeout(pulseTimer);
                 pulseTimer = setTimeout(() => {
-                    row.row.classList.remove("red", "blue");
+                    row.row.classList.remove("red", "amber");
                     txt.textContent = original;
                 }, 1000);
             }

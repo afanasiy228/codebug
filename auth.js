@@ -95,28 +95,28 @@ function ensureMobileNavStyles() {
     style.id = "mobile-nav-style";
     style.textContent = `
 header, .top-nav {
-    background: rgba(5, 8, 22, 0.88) !important;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12) !important;
+    background: rgba(5, 5, 5, 0.88) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
     backdrop-filter: blur(10px) !important;
 }
 header .logo, .top-nav .logo {
-    color: #f8fafc !important;
+    color: #FFFFFF !important;
 }
 header .brand-code, .top-nav .brand-code {
-    color: #3b82f6 !important;
+    color: #ffffff !important;
 }
 header .brand-bug, .top-nav .brand-bug {
-    color: #ef4444 !important;
+    color: #ffffff !important;
 }
 header .brand-suffix, .top-nav .brand-suffix {
-    color: #60a5fa !important;
+    color: #ffffff !important;
 }
 header nav a, .top-nav nav a {
-    color: #94a3b8 !important;
+    color: #b0b0b0 !important;
 }
 header nav a:hover, .top-nav nav a:hover {
-    color: #60a5fa !important;
+    color: #FBBF24 !important;
 }
 #nav-links {
     display: flex;
@@ -148,15 +148,15 @@ header nav a:hover, .top-nav nav a:hover {
 #nav-links .nav-account .nav-profile {
     padding: 6px 12px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    background: rgba(13, 20, 30, 0.88);
-    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #121212;
+    color: #FFFFFF !important;
     font-weight: 700;
 }
 #nav-links .nav-account .nav-profile:hover {
     color: #ffffff !important;
-    border-color: rgba(59, 130, 246, 0.55);
-    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(245, 158, 11, 0.55);
+    background: rgba(245, 158, 11, 0.15);
 }
 #nav-links .nav-burger {
     display: none;
@@ -165,9 +165,9 @@ header nav a:hover, .top-nav nav a:hover {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    background: rgba(13, 20, 30, 0.88);
-    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #121212;
+    color: #FFFFFF;
     font-size: 20px;
     cursor: pointer;
     position: relative;
@@ -180,7 +180,7 @@ header nav a:hover, .top-nav nav a:hover {
     right: -320px;
     width: 280px;
     height: 100%;
-    background: #0a1020;
+    background: #0B0B0B;
     padding: 80px 20px 24px;
     box-shadow: -20px 0 40px rgba(0, 0, 0, 0.45);
     z-index: 2002;
@@ -193,7 +193,7 @@ header nav a:hover, .top-nav nav a:hover {
     margin: 0;
     display: block;
     padding: 10px 0;
-    color: #f8fafc !important;
+    color: #FFFFFF !important;
     text-decoration: none;
 }
 #nav-overlay {
@@ -367,7 +367,7 @@ function getSubscriptionLevel(sub) {
 }
 
 function getRankNickColorByExp(exp) {
-    return "#F8FAFC";
+    return "#FFFFFF";
 }
 
 function hasSubscriptionAtLeast(sub, minLevel) {
@@ -376,7 +376,7 @@ function hasSubscriptionAtLeast(sub, minLevel) {
 }
 
 const PRO_NICK_SOLID_COLORS = [
-    "#3B82F6", "#60A5FA", "#38BDF8", "#2563EB"
+    "#F59E0B", "#FBBF24", "#F59E0B", "#D97706"
 ];
 const PRO_PLUS_NICK_THEMES = ["grad_ocean"];
 
@@ -412,13 +412,13 @@ function escapeInlineHtml(value) {
 function buildStyledNickHtml(login, sub, fallbackColor) {
     const safe = escapeInlineHtml(login);
     const level = getSubscriptionLevel(sub);
-    if (level === "free") return `<span style="color:#F8FAFC">${safe}</span>`;
+    if (level === "free") return `<span style="color:#FFFFFF">${safe}</span>`;
     const theme = getSubscriptionNickTheme(sub);
-    if (theme.startsWith("#")) return `<span style="color:#F8FAFC">${safe}</span>`;
+    if (theme.startsWith("#")) return `<span style="color:#FFFFFF">${safe}</span>`;
     if (theme === "grad_ocean") {
-        return `<span style="color:#F8FAFC">${safe}</span>`;
+        return `<span style="color:#FFFFFF">${safe}</span>`;
     }
-    return `<span style="color:#F8FAFC">${safe}</span>`;
+    return `<span style="color:#FFFFFF">${safe}</span>`;
 }
 
 function isProSubscription(sub) {
@@ -438,7 +438,7 @@ async function applyProBrandingToNavbar(login) {
     const nickColor = isPro ? getSubscriptionNickColor(sub) : getRankNickColorByExp(exp);
     const navProfile = document.querySelector("#nav-links .nav-profile");
     if (navProfile) {
-        navProfile.style.setProperty("color", isPro ? "#60A5FA" : "#F8FAFC", "important");
+        navProfile.style.setProperty("color", isPro ? "#FBBF24" : "#FFFFFF", "important");
         navProfile.style.fontWeight = "700";
         if (isPro) {
             const badge = level === "pro_plus" ? "PRO+" : "PRO";
@@ -512,7 +512,7 @@ function ensureGlobalFooter() {
             padding: 0 10px;
             border: 1px solid rgba(148, 163, 184, 0.35);
             border-radius: 8px;
-            color: #cbd5e1;
+            color: #B0B0B0;
             font-size: 12px;
             line-height: 1;
             text-decoration: none;
@@ -520,8 +520,8 @@ function ensureGlobalFooter() {
         }
         #global-legal-footer .cb-legal-btn:hover {
             border-color: rgba(125, 211, 252, 0.75);
-            color: #e2e8f0;
-            background: rgba(15, 23, 42, 0.9);
+            color: #FFFFFF;
+            background: rgba(18, 18, 18, 0.9);
         }
         @media (max-width: 700px) {
             .cb-legal-footer-inner {
@@ -732,7 +732,7 @@ function renderCaptchaWidget() {
         return;
     }
 
-    host.style.borderColor = "rgba(226, 214, 196, 0.9)";
+    host.style.borderColor = "rgba(255, 255, 255, 0.08)";
     host.innerHTML = "";
     captchaWidgetId = window.grecaptcha.render(host, {
         sitekey: siteKey,

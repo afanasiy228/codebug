@@ -10,16 +10,16 @@
 
     <style>
         :root {
-            --bg: #f7f1e7;
-            --bg-strong: #f0e6d8;
-            --ink: #1a1612;
-            --muted: #5f5b54;
-            --accent: #3B82F6;
-            --accent-strong: #60A5FA;
-            --warm: #f3b562;
-            --card: #fffaf2;
-            --stroke: #e2d6c4;
-            --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+            --bg: #050505;
+            --bg-strong: #0B0B0B;
+            --ink: #FFFFFF;
+            --muted: #B0B0B0;
+            --accent: #F59E0B;
+            --accent-strong: #FBBF24;
+            --warm: #F59E0B;
+            --card: #121212;
+            --stroke: rgba(255, 255, 255, 0.08);
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
         }
         
         body {
@@ -27,8 +27,8 @@
             color: var(--ink);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(1200px 500px at 15% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
-                radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
                 linear-gradient(180deg, var(--bg), var(--bg-strong));
         }
         
@@ -37,13 +37,13 @@
         }
 
         ::selection {
-            background: rgba(59, 130, 246, 0.2);
+            background: rgba(245, 158, 11, 0.2);
         }
 
         header {
             height: 72px;
-            background: rgba(255, 250, 242, 0.8);
-            border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+            background: rgba(5, 5, 5, 0.88);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding: 0 4vw;
             display: flex;
             justify-content: space-between;
@@ -52,7 +52,7 @@
             top: 0;
             z-index: 10;
             backdrop-filter: blur(12px);
-            box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+            box-shadow: none;
         }
         
         .logo {
@@ -127,9 +127,9 @@
         }
         
         th {
-            background: rgba(226, 214, 196, 0.4);
+            background: rgba(255, 255, 255, 0.08);
             padding: 14px;
-            border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             color: var(--ink);
             text-transform: uppercase;
             letter-spacing: 0.3px;
@@ -138,12 +138,12 @@
         
         td {
             padding: 12px;
-            border-bottom: 1px solid rgba(226, 214, 196, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             font-size: 14px;
         }
         
         tr:hover {
-            background: rgba(59, 130, 246, 0.06);
+            background: rgba(245, 158, 11, 0.06);
         }
         
         .empty {
@@ -154,35 +154,35 @@
         
         .task-card {
             padding: 6px 10px;
-            background: rgba(59, 130, 246, 0.08);
+            background: rgba(245, 158, 11, 0.08);
             border-radius: 10px;
             font-size: 14px;
             display: inline-block;
-            border: 1px solid rgba(226, 214, 196, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .verdict-ok {
-            color: #3B82F6;
+            color: #22C55E;
             font-weight: 700;
         }
         
         .verdict-wa {
-            color: #c0392b;
+            color: #EF4444;
             font-weight: 700;
         }
         
         .verdict-re {
-            color: #d35400;
+            color: #EF4444;
             font-weight: 700;
         }
         
         .verdict-tl {
-            color: #b7791f;
+            color: #EF4444;
             font-weight: 700;
         }
 
         .verdict-queue {
-            color: #7b8794;
+            color: #B0B0B0;
             font-weight: 700;
         }
 
@@ -320,11 +320,11 @@
             const isPro = level !== "free";
             const color = isPro && typeof getSubscriptionNickColor === "function"
                 ? getSubscriptionNickColor(sub)
-                : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#F8FAFC");
+                : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF");
             const nickHtml = (typeof buildStyledNickHtml === "function")
                 ? buildStyledNickHtml(login, sub, color)
                 : safeLogin;
-            const badge = isPro ? ` <span style="color:#bfdbfe;font-size:11px;font-weight:700;border:1px solid rgba(96,165,250,.5);border-radius:999px;padding:2px 6px;">${level === "pro_plus" ? "PRO+" : "PRO"}</span>` : "";
+            const badge = isPro ? ` <span style="color:#FBBF24;font-size:11px;font-weight:700;border:1px solid rgba(245,158,11,.45);border-radius:999px;padding:2px 6px;">${level === "pro_plus" ? "PRO+" : "PRO"}</span>` : "";
             return `<a href="profile.html?user=${encodeURIComponent(login)}" style="font-weight:700;text-decoration:none;">${nickHtml}</a>${badge}`;
         }
 

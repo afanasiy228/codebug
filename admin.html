@@ -9,16 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f1e7;
-      --bg-strong: #f0e6d8;
-      --ink: #1a1612;
-      --muted: #5f5b54;
-      --accent: #3B82F6;
-      --accent-strong: #60A5FA;
-      --warm: #f3b562;
-      --card: #fffaf2;
-      --stroke: #e2d6c4;
-      --shadow: 0 20px 60px rgba(26, 22, 18, 0.12);
+      --bg: #050505;
+      --bg-strong: #0B0B0B;
+      --ink: #FFFFFF;
+      --muted: #B0B0B0;
+      --accent: #F59E0B;
+      --accent-strong: #FBBF24;
+      --warm: #F59E0B;
+      --card: #121212;
+      --stroke: rgba(255, 255, 255, 0.08);
+      --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
       --radius-lg: 24px;
       --radius-md: 16px;
     }
@@ -32,15 +32,15 @@
       color: var(--ink);
       font-family: "IBM Plex Sans", sans-serif;
       background:
-        radial-gradient(1200px 500px at 15% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
-        radial-gradient(900px 500px at 85% 0%, rgba(243, 181, 98, 0.25), transparent 60%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
         linear-gradient(180deg, var(--bg), var(--bg-strong));
     }
 
     header {
       height: 72px;
-      background: rgba(255, 250, 242, 0.8);
-      border-bottom: 1px solid rgba(226, 214, 196, 0.6);
+      background: rgba(5, 5, 5, 0.88);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: 0 4vw;
       display: flex;
       align-items: center;
@@ -49,7 +49,7 @@
       top: 0;
       z-index: 10;
       backdrop-filter: blur(12px);
-      box-shadow: 0 12px 30px rgba(26, 22, 18, 0.08);
+      box-shadow: none;
     }
 
     .logo {
@@ -189,7 +189,7 @@
       padding: 6px;
       display: none;
       z-index: 5;
-      box-shadow: 0 14px 32px rgba(59, 130, 246, 0.15);
+      box-shadow: 0 14px 32px rgba(245, 158, 11, 0.15);
       max-height: 240px;
       overflow: auto;
     }
@@ -244,7 +244,7 @@
       padding: 8px 12px;
       border-radius: 10px;
       border: 1px solid var(--stroke);
-      background: rgba(59, 130, 246, 0.05);
+      background: rgba(245, 158, 11, 0.05);
     }
 
     .test-index {
@@ -265,7 +265,7 @@
       padding: 10px;
       border: 1px solid var(--stroke);
       border-radius: 12px;
-      background: rgba(59, 130, 246, 0.05);
+      background: rgba(245, 158, 11, 0.05);
     }
 
     .group-row select {
@@ -285,7 +285,7 @@
 
     .admin-secondary {
       border: 1px solid var(--stroke);
-      background: rgba(59, 130, 246, 0.08);
+      background: rgba(245, 158, 11, 0.08);
       color: var(--ink);
       padding: 6px 10px;
       border-radius: 10px;
@@ -301,7 +301,7 @@
       border-radius: 12px;
       cursor: pointer;
       font-weight: 600;
-      box-shadow: 0 14px 32px rgba(59, 130, 246, 0.25);
+      box-shadow: 0 14px 32px rgba(245, 158, 11, 0.25);
     }
 
     button:hover {
@@ -312,7 +312,7 @@
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid var(--stroke);
-      background: rgba(12, 18, 27, 0.12);
+      background: rgba(255, 255, 255, 0.04);
       font-size: 13px;
       color: var(--muted);
       max-height: 320px;
@@ -323,11 +323,11 @@
     .admin-log-box {
       position: sticky;
       top: 90px;
-      border: 1px solid rgba(243, 181, 98, 0.45);
+      border: 1px solid rgba(245, 158, 11, 0.45);
       box-shadow:
         0 20px 40px rgba(12, 16, 24, 0.2),
-        0 0 0 1px rgba(243, 181, 98, 0.22),
-        0 0 26px rgba(243, 181, 98, 0.2);
+        0 0 0 1px rgba(245, 158, 11, 0.22),
+        0 0 26px rgba(245, 158, 11, 0.15);
     }
 
     .admin-log-box h3 {
@@ -338,7 +338,7 @@
 
     .admin-log-box h3::before {
       content: "●";
-      color: #f3b562;
+      color: #F59E0B;
       font-size: 14px;
       line-height: 1;
     }
@@ -391,7 +391,7 @@
     }
 
     .task-row.task-hidden {
-      background: rgba(59, 130, 246, 0.08);
+      background: rgba(245, 158, 11, 0.08);
     }
 
     .task-meta {
@@ -416,7 +416,7 @@
       border-radius: 999px;
       font-size: 11px;
       font-weight: 600;
-      background: rgba(59, 130, 246, 0.15);
+      background: rgba(245, 158, 11, 0.15);
       color: var(--accent-strong);
     }
 
