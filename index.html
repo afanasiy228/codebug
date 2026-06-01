@@ -336,62 +336,83 @@
         .about-roadmap {
             position: relative;
             overflow: hidden;
-            padding: 88px 18px 72px;
+            padding: 36px 18px 34px;
             display: grid;
-            align-content: center;
-            background: linear-gradient(180deg, rgba(6, 10, 14, 0.98), rgba(8, 12, 17, 0.98));
+            align-content: start;
+            background: radial-gradient(980px 520px at 82% 12%, rgba(39, 83, 67, 0.11), transparent 64%), linear-gradient(180deg, rgba(6, 10, 14, 0.98), rgba(8, 12, 17, 0.98));
+        }
+
+        .about-roadmap::before {
+            content: "for (int i = 0; i < n; ++i) {\\A  if (a[i] != expected[i]) fix(i);\\A}\\A while (tests--) {\\A  debug(solution);\\A  submit(answer);\\A}";
+            position: absolute;
+            top: 22px;
+            right: 2vw;
+            width: min(820px, 48vw);
+            font-family: var(--mono);
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(159, 178, 190, 0.055);
+            white-space: pre;
+            pointer-events: none;
         }
 
         .about-shell {
             position: relative;
             z-index: 1;
-            width: min(980px, 100%);
+            width: min(1720px, calc(100vw - 150px));
             margin: 0 auto;
             display: grid;
-            gap: 40px;
+            gap: 22px;
         }
 
         .about-kicker {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-family: var(--mono);
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 18px;
+            font-weight: 700;
             line-height: 1.2;
-            color: #78bb96;
+            color: #6fc034;
+            text-transform: uppercase;
+            letter-spacing: 0;
         }
 
         .about-head h2 {
             margin: 0;
-            font-size: clamp(34px, 4.8vw, 54px);
+            font-size: clamp(54px, 6vw, 86px);
             line-height: 1.02;
-            color: #d8e1ea;
+            color: #edf3f8;
             letter-spacing: 0;
+            text-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
         }
 
         .about-lead {
-            margin: 15px 0 0;
-            color: #b8c6d1;
-            font-size: clamp(16px, 2vw, 19px);
-            line-height: 1.45;
-            max-width: 760px;
+            margin: 18px 0 0;
+            color: #d2d9e0;
+            font-size: clamp(18px, 1.45vw, 25px);
+            line-height: 1.38;
+            max-width: 860px;
         }
 
         .about-note {
             margin: 10px 0 0;
-            color: #8d9aa7;
-            font-size: 15px;
-            line-height: 1.5;
-            max-width: 680px;
+            color: #98a3ae;
+            font-size: clamp(17px, 1.3vw, 23px);
+            line-height: 1.45;
+            max-width: 900px;
         }
 
         .about-points {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-top: 14px;
         }
 
         .about-point {
-            padding: 0 26px;
+            display: grid;
+            grid-template-columns: 58px minmax(0, 1fr);
+            gap: 24px;
+            padding: 0 44px;
         }
 
         .about-point:first-child {
@@ -406,135 +427,163 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
-            margin-bottom: 14px;
-            color: #76bd96;
+            width: 42px;
+            height: 42px;
+            margin-top: 3px;
+            color: #6fc034;
         }
 
         .line-icon svg {
-            width: 26px;
-            height: 26px;
+            width: 42px;
+            height: 42px;
             display: block;
             fill: none;
             stroke: currentColor;
-            stroke-width: 1.7;
+            stroke-width: 1.9;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
         .about-point h3 {
             margin: 0;
-            color: #d5dde6;
-            font-size: 17px;
+            color: #dbe3eb;
+            font-size: clamp(20px, 1.45vw, 28px);
+            line-height: 1.2;
             font-weight: 700;
         }
 
         .about-point p {
-            margin: 8px 0 0;
-            color: #92a0ad;
-            font-size: 14px;
-            line-height: 1.45;
+            margin: 10px 0 0;
+            color: #96a1ad;
+            font-size: clamp(16px, 1.2vw, 22px);
+            line-height: 1.43;
+            max-width: 410px;
         }
 
         .roadmap {
-            width: min(640px, 100%);
+            margin-top: 4px;
+            border: 1px solid rgba(56, 73, 89, 0.54);
+            border-radius: 12px;
+            background: rgba(7, 13, 20, 0.54);
+            padding: 24px 32px 20px;
         }
 
         .roadmap h3,
         .about-links h3 {
             margin: 0;
-            color: #d8e3ee;
-            font-size: 22px;
+            color: #e0e8f0;
+            font-size: clamp(25px, 2vw, 35px);
             line-height: 1.2;
         }
 
         .roadmap-list {
             list-style: none;
             margin: 18px 0 0;
-            padding: 0 0 0 26px;
+            padding: 0 0 0 68px;
             position: relative;
             display: grid;
-            gap: 18px;
         }
 
         .roadmap-list::before {
             content: "";
             position: absolute;
-            left: 5px;
-            top: 8px;
-            bottom: 8px;
-            width: 1px;
-            background: rgba(96, 118, 111, 0.32);
+            left: 17px;
+            top: 16px;
+            bottom: 17px;
+            width: 2px;
+            background: rgba(89, 104, 120, 0.38);
         }
 
         .roadmap-step {
             position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            min-height: 54px;
+            gap: 24px;
+            border-bottom: 1px solid rgba(56, 73, 89, 0.34);
+        }
+
+        .roadmap-step:last-child {
+            border-bottom: none;
         }
 
         .roadmap-marker {
             position: absolute;
-            left: -26px;
-            top: 4px;
-            width: 11px;
-            height: 11px;
+            left: -68px;
+            top: 50%;
+            width: 36px;
+            height: 36px;
             border-radius: 999px;
-            border: 1px solid rgba(121, 139, 133, 0.64);
-            background: #78837f;
+            border: 2px solid rgba(102, 119, 141, 0.86);
+            background: #07101a;
+            transform: translateY(-50%);
         }
 
         .roadmap-step.done .roadmap-marker {
-            border-color: rgba(121, 210, 161, 0.85);
-            background: #68bf8e;
+            border-color: #6fc034;
+            background: rgba(111, 192, 52, 0.13);
+        }
+
+        .roadmap-step.done .roadmap-marker::before {
+            content: "";
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            width: 12px;
+            height: 7px;
+            border-left: 2px solid #6fc034;
+            border-bottom: 2px solid #6fc034;
+            transform: rotate(-45deg);
         }
 
         .roadmap-step.active .roadmap-marker {
-            border-color: rgba(202, 220, 107, 0.88);
-            background: #c7d55f;
+            border-color: rgba(102, 119, 141, 0.86);
+            background: #07101a;
         }
 
         .roadmap-title {
             margin: 0;
-            color: #d4dee8;
-            font-size: 15px;
+            color: #b9c3ce;
+            font-size: clamp(18px, 1.25vw, 24px);
             line-height: 1.35;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .roadmap-status {
             display: block;
-            margin-top: 4px;
-            font-family: var(--mono);
-            color: #7f8d9b;
-            font-size: 12px;
+            margin: 0;
+            color: #76818d;
+            font-size: clamp(16px, 1.1vw, 21px);
             line-height: 1.25;
+            white-space: nowrap;
         }
 
         .roadmap-step.done .roadmap-status {
-            color: #82c99e;
+            color: #76818d;
         }
 
         .roadmap-step.active .roadmap-status {
-            color: #c8d56d;
+            color: #76818d;
         }
 
         .about-links {
-            padding-top: 22px;
-            border-top: 1px solid rgba(64, 90, 78, 0.48);
-            display: grid;
-            gap: 18px;
+            border: 1px solid rgba(56, 73, 89, 0.54);
+            border-radius: 12px;
+            background: rgba(7, 13, 20, 0.54);
+            padding: 24px 32px;
         }
 
         .about-links-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 24px;
+            gap: 32px;
         }
 
         .about-link {
             display: grid;
-            grid-template-columns: 20px minmax(0, 1fr);
-            gap: 10px;
+            grid-template-columns: 38px minmax(0, 1fr);
+            gap: 22px;
             align-items: start;
             text-decoration: none;
             color: #c9d7e4;
@@ -549,35 +598,38 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 18px;
-            height: 18px;
-            margin-top: 2px;
-            color: #76bd96;
+            width: 34px;
+            height: 34px;
+            margin-top: 0;
+            color: #6fc034;
         }
 
         .contact-icon svg {
-            width: 18px;
-            height: 18px;
+            width: 34px;
+            height: 34px;
             display: block;
             fill: none;
             stroke: currentColor;
-            stroke-width: 1.7;
+            stroke-width: 1.9;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
         .about-link .label {
             display: block;
-            font-size: 12px;
-            color: #8ea2b6;
-            margin-bottom: 4px;
+            font-size: clamp(18px, 1.35vw, 25px);
+            font-weight: 700;
+            line-height: 1.2;
+            color: #dbe3eb;
+            margin-bottom: 8px;
         }
 
         .about-link .value {
             display: block;
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 1.3;
+            color: #6fc034;
+            font-size: clamp(17px, 1.25vw, 23px);
+            font-weight: 500;
+            line-height: 1.22;
             word-break: break-word;
         }
         
@@ -608,29 +660,77 @@
                 font-size: 21px;
             }
             .about-roadmap {
-                padding-top: 72px;
+                padding: 62px 18px 40px;
+            }
+            .about-roadmap::before {
+                display: none;
             }
             .about-shell {
-                gap: 34px;
+                width: min(560px, 92vw);
+                gap: 28px;
+            }
+            .about-kicker {
+                font-size: 13px;
+            }
+            .about-head h2 {
+                font-size: 48px;
+            }
+            .about-lead,
+            .about-note {
+                font-size: 16px;
             }
             .about-points {
                 grid-template-columns: 1fr;
-                gap: 22px;
+                gap: 18px;
+                margin-top: 0;
             }
             .about-point,
             .about-point:first-child {
+                grid-template-columns: 42px minmax(0, 1fr);
+                gap: 16px;
                 padding: 0;
             }
             .about-point + .about-point {
                 border-left: none;
-                padding-top: 22px;
+                padding-top: 18px;
                 border-top: 1px solid rgba(64, 90, 78, 0.48);
             }
+            .about-point h3 {
+                font-size: 18px;
+            }
+            .about-point p {
+                font-size: 15px;
+            }
+            .roadmap,
+            .about-links {
+                padding: 20px 18px;
+            }
             .roadmap-list {
-                padding-left: 24px;
+                padding-left: 52px;
+            }
+            .roadmap-list::before {
+                left: 15px;
+            }
+            .roadmap-step {
+                grid-template-columns: 1fr;
+                gap: 5px;
+                min-height: 62px;
+                align-items: center;
             }
             .roadmap-marker {
-                left: -24px;
+                left: -52px;
+                width: 32px;
+                height: 32px;
+            }
+            .roadmap-step.done .roadmap-marker::before {
+                left: 9px;
+                top: 7px;
+            }
+            .roadmap-title {
+                font-size: 16px;
+            }
+            .roadmap-status {
+                font-size: 13px;
             }
             .about-links-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -641,6 +741,10 @@
         @media (max-width: 520px) {
             .about-links-grid {
                 grid-template-columns: 1fr;
+            }
+            .about-link .label,
+            .about-link .value {
+                font-size: 16px;
             }
         }
     </style>
@@ -671,54 +775,53 @@
             <div class="about-head">
                 <span class="about-kicker">О платформе</span>
                 <h2>CodeBug</h2>
-                <p class="about-lead">CodeBug — платформа для тренировки отладки: открываешь задачу, находишь ошибку в готовом коде и отправляешь исправление на проверку.</p>
-                <p class="about-note">Здесь важны внимательность, чтение чужого кода и умение быстро понять, где сломалась логика.</p>
+                <p class="about-lead">Платформа для тренировки навыков отладки и написания кода.</p>
+                <p class="about-note">Решай задачи разных уровней сложности, находи ошибки в реальном коде и становись лучше каждый день.</p>
             </div>
 
             <div class="about-points" aria-label="Направления CodeBug">
                 <article class="about-point">
                     <span class="line-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24">
-                            <path d="M9 5h6"></path>
-                            <path d="M9 19h6"></path>
-                            <path d="M7 9h10"></path>
-                            <path d="M7 15h10"></path>
-                            <path d="M8 5v14"></path>
-                            <path d="M16 5v14"></path>
-                            <path d="M4 12h4"></path>
-                            <path d="M16 12h4"></path>
+                            <path d="M8 6L3 12l5 6"></path>
+                            <path d="M16 6l5 6-5 6"></path>
+                            <path d="M14 4l-4 16"></path>
                         </svg>
                     </span>
-                    <h3>Практика отладки</h3>
-                    <p>Задачи построены вокруг готового кода с ошибкой.</p>
+                    <div>
+                        <h3>Практика отладки</h3>
+                        <p>Реальные ошибки в коде и мгновенная проверка решений.</p>
+                    </div>
                 </article>
                 <article class="about-point">
                     <span class="line-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24">
-                            <path d="M4 19V5"></path>
-                            <path d="M4 19h16"></path>
-                            <path d="M7 15l4-4 3 3 5-7"></path>
-                            <path d="M16 7h3v3"></path>
+                            <path d="M5 19V13"></path>
+                            <path d="M10 19V9"></path>
+                            <path d="M15 19V5"></path>
+                            <path d="M20 19V3"></path>
                         </svg>
                     </span>
-                    <h3>Прогресс и рейтинг</h3>
-                    <p>Решения дают опыт, статистику и место в таблице.</p>
+                    <div>
+                        <h3>Прогресс и рейтинг</h3>
+                        <p>Следи за своим прогрессом, сравнивай результаты с другими.</p>
+                    </div>
                 </article>
                 <article class="about-point">
                     <span class="line-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24">
-                            <path d="M8 4h8"></path>
-                            <path d="M9 4v3"></path>
-                            <path d="M15 4v3"></path>
-                            <path d="M7 7h10v4a5 5 0 0 1-10 0V7z"></path>
-                            <path d="M7 9H4v2a3 3 0 0 0 3 3"></path>
-                            <path d="M17 9h3v2a3 3 0 0 1-3 3"></path>
-                            <path d="M12 16v3"></path>
-                            <path d="M9 20h6"></path>
+                            <path d="M9 19c0-2 1.5-3.5 3.5-3.5S16 17 16 19"></path>
+                            <path d="M5 19c0-1.7 1.1-3 2.7-3.4"></path>
+                            <path d="M19 19c0-1.7-1.1-3-2.7-3.4"></path>
+                            <circle cx="12.5" cy="10" r="3"></circle>
+                            <circle cx="6.5" cy="11.5" r="2"></circle>
+                            <circle cx="18.5" cy="11.5" r="2"></circle>
                         </svg>
                     </span>
-                    <h3>Соревнования</h3>
-                    <p>Контесты и турниры для проверки скорости и внимательности.</p>
+                    <div>
+                        <h3>Сообщество</h3>
+                        <p>Общайся, обменивайся опытом и участвуй в соревнованиях.</p>
+                    </div>
                 </article>
             </div>
 
@@ -727,39 +830,38 @@
                 <ol class="roadmap-list">
                     <li class="roadmap-step done">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Платформа и проверка решений</p>
-                        <span class="roadmap-status">готово</span>
+                        <p class="roadmap-title">Запуск платформы и системы задач</p>
+                        <span class="roadmap-status">Апрель 2025</span>
                     </li>
                     <li class="roadmap-step done">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Профили и рейтинг</p>
-                        <span class="roadmap-status">готово</span>
+                        <p class="roadmap-title">Система рейтинга и профилей пользователей</p>
+                        <span class="roadmap-status">Май 2025</span>
                     </li>
                     <li class="roadmap-step active">
                         <span class="roadmap-marker" aria-hidden="true"></span>
                         <p class="roadmap-title">Соревнования и события</p>
-                        <span class="roadmap-status">в работе</span>
+                        <span class="roadmap-status">Июнь 2025</span>
                     </li>
                     <li class="roadmap-step todo">
                         <span class="roadmap-marker" aria-hidden="true"></span>
                         <p class="roadmap-title">Достижения и бейджи</p>
-                        <span class="roadmap-status">дальше</span>
+                        <span class="roadmap-status">Июль 2025</span>
                     </li>
                     <li class="roadmap-step todo">
                         <span class="roadmap-marker" aria-hidden="true"></span>
                         <p class="roadmap-title">Командные турниры</p>
-                        <span class="roadmap-status">дальше</span>
+                        <span class="roadmap-status">Август 2025</span>
                     </li>
                     <li class="roadmap-step todo">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">База задач</p>
-                        <span class="roadmap-status">пополняется</span>
+                        <p class="roadmap-title">Мобильное приложение</p>
+                        <span class="roadmap-status">Сентябрь 2025</span>
                     </li>
                 </ol>
             </section>
 
             <section class="about-links" aria-label="Ссылки CodeBug">
-                <h3>Связь</h3>
                 <div class="about-links-grid">
                     <a class="about-link" href="https://codebug.online" target="_blank" rel="noopener noreferrer">
                         <span class="contact-icon" aria-hidden="true">
