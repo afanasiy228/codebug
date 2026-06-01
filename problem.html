@@ -712,10 +712,13 @@
         function startSubmissionPolling() {
             if (SUBS_POLL_TIMER) clearInterval(SUBS_POLL_TIMER);
             let ticks = 0;
+            let solvedSeenAtTick = null;
+            let solvedStatsLogged = false;
             SUBS_POLL_TIMER = setInterval(async () => {
                 ticks += 1;
                 const latest = await loadMySubsForThisProblem();
                 if (latest && isSolvedVerdict(latest)) {
+                    if (solvedSeenAtTick === null) solvedSeenAtTick = ticks;
                     console.group("%c[XP TRACE][CLIENT] polling observed solved", "color:#7fff7f;font-weight:bold;");
                     console.log("tick =", ticks);
                     console.log("submissionId =", latest._id || latest.id || null);
@@ -733,10 +736,35 @@
                     console.log("xpError =", latest.xpError || null);
                     console.log("backend should have recalculated users/<login>/stats by now.");
                     console.groupEnd();
+
+                    if (!solvedStatsLogged) {
+                        solvedStatsLogged = true;
+                        try {
+                            const login = getUser();
+                            const taskId = resolveTaskIdFromLocation();
+                            const statsSnap = await (window.db?.ref(`users/${login}/stats`).get());
+                            const stats = statsSnap && statsSnap.exists() ? (statsSnap.val() || {}) : {};
+                            const solved = (stats && typeof stats.solved === "object" && stats.solved) ? stats.solved : {};
+                            console.group("%c[XP TRACE][CLIENT] stats snapshot after solved", "color:#7fff7f;font-weight:bold;");
+                            console.log("login =", login);
+                            console.log("taskId =", taskId);
+                            console.log("stats.cnt =", stats.cnt);
+                            console.log("stats.exp =", stats.exp);
+                            console.log("stats.solved.has(task) =", !!solved[String(taskId)] || !!solved[taskId]);
+                            console.groupEnd();
+                        } catch (e) {
+                            console.warn("[XP TRACE][CLIENT] failed to read stats snapshot:", e);
+                        }
+                    }
                 }
                 const firstStatus = document.querySelector("#subs tr td:nth-child(2)")?.textContent?.trim()?.toUpperCase() || "";
                 const stillPending = firstStatus === "В ОЧЕРЕДИ" || firstStatus === "ТЕСТИРУЕТСЯ" || firstStatus === "QUEUE" || firstStatus === "TESTING";
-                if (!stillPending || ticks > 120) {
+                const solvedButTracePending =
+                    !!(latest && isSolvedVerdict(latest) && (latest.xpMarked === undefined && !latest.xpError));
+                const graceAfterSolvedTicks =
+                    solvedSeenAtTick === null ? 0 : (ticks - solvedSeenAtTick);
+                const keepPollingForTrace = solvedButTracePending && graceAfterSolvedTicks < 8;
+                if ((!stillPending && !keepPollingForTrace) || ticks > 120) {
                     console.log("[XP TRACE][CLIENT] polling stop", { ticks, firstStatus, stillPending });
                     clearInterval(SUBS_POLL_TIMER);
                     SUBS_POLL_TIMER = null;

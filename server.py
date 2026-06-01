@@ -862,6 +862,17 @@ def _run_submission_job(job):
                     "passedGroups": result_obj["passedGroups"],
                 })
                 updated = True
+                print(
+                    "[XP TRACE][SERVER] submission final status written:",
+                    {
+                        "submissionId": submission_id,
+                        "login": login,
+                        "task": task,
+                        "status": result_obj.get("status"),
+                        "statusLabel": result_obj.get("statusLabel"),
+                        "score": result_obj.get("score"),
+                    },
+                )
                 break
             except Exception as e:
                 print(f"Queue final firebase update failed (attempt {attempt + 1}/3):", e)
@@ -912,6 +923,18 @@ def _run_submission_job(job):
                 })
             except Exception as e:
                 print("[XP TRACE][SERVER] failed to write xp trace to submission:", e)
+    else:
+        print(
+            "[XP TRACE][SERVER] submission not solved-like, stats untouched:",
+            {
+                "submissionId": submission_id,
+                "login": login,
+                "task": task,
+                "status": result_obj.get("status"),
+                "statusLabel": result_obj.get("statusLabel"),
+                "score": result_obj.get("score"),
+            },
+        )
 
 
 def _submit_worker():
