@@ -342,22 +342,6 @@
             background: linear-gradient(180deg, rgba(6, 10, 14, 0.98), rgba(8, 12, 17, 0.98));
         }
 
-        .about-code-texture {
-            position: absolute;
-            top: 72px;
-            right: max(-160px, -8vw);
-            z-index: 0;
-            width: min(680px, 74vw);
-            margin: 0;
-            font-family: var(--mono);
-            font-size: 13px;
-            line-height: 1.55;
-            color: rgba(199, 221, 211, 0.06);
-            white-space: pre;
-            pointer-events: none;
-            user-select: none;
-        }
-
         .about-shell {
             position: relative;
             z-index: 1;
@@ -419,76 +403,24 @@
         }
 
         .line-icon {
-            position: relative;
-            display: block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             width: 28px;
             height: 28px;
             margin-bottom: 14px;
             color: #76bd96;
         }
 
-        .line-icon::before,
-        .line-icon::after {
-            content: "";
-            position: absolute;
-            border-color: currentColor;
-        }
-
-        .line-icon.debug::before {
-            width: 15px;
-            height: 15px;
-            border: 1.5px solid currentColor;
-            border-radius: 999px;
-            left: 3px;
-            top: 3px;
-        }
-
-        .line-icon.debug::after {
-            width: 10px;
-            border-top: 1.5px solid currentColor;
-            left: 17px;
-            top: 19px;
-            transform: rotate(42deg);
-            transform-origin: left center;
-        }
-
-        .line-icon.progress::before {
-            width: 24px;
-            height: 18px;
-            left: 2px;
-            top: 5px;
-            border-left: 1.5px solid currentColor;
-            border-bottom: 1.5px solid currentColor;
-        }
-
-        .line-icon.progress::after {
-            width: 19px;
-            height: 9px;
-            left: 6px;
-            top: 8px;
-            border-top: 1.5px solid currentColor;
-            border-right: 1.5px solid currentColor;
-            transform: skewY(-23deg);
-        }
-
-        .line-icon.contest::before {
-            width: 17px;
-            height: 17px;
-            left: 5px;
-            top: 7px;
-            border: 1.5px solid currentColor;
-            border-radius: 999px;
-        }
-
-        .line-icon.contest::after {
-            width: 10px;
-            height: 6px;
-            left: 9px;
-            top: 2px;
-            border-top: 1.5px solid currentColor;
-            border-left: 1.5px solid currentColor;
-            border-right: 1.5px solid currentColor;
-            border-radius: 4px 4px 0 0;
+        .line-icon svg {
+            width: 26px;
+            height: 26px;
+            display: block;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .about-point h3 {
@@ -507,8 +439,6 @@
 
         .roadmap {
             width: min(640px, 100%);
-            padding: 20px 22px 22px;
-            background: rgba(10, 16, 21, 0.38);
         }
 
         .roadmap h3,
@@ -616,65 +546,24 @@
         }
 
         .contact-icon {
-            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             width: 18px;
             height: 18px;
             margin-top: 2px;
             color: #76bd96;
         }
 
-        .contact-icon::before,
-        .contact-icon::after {
-            content: "";
-            position: absolute;
-            border-color: currentColor;
-        }
-
-        .contact-icon.site::before {
-            inset: 2px;
-            border: 1.4px solid currentColor;
-            border-radius: 999px;
-        }
-
-        .contact-icon.site::after {
-            left: 4px;
-            right: 4px;
-            top: 8px;
-            border-top: 1.4px solid currentColor;
-        }
-
-        .contact-icon.tg::before {
-            left: 2px;
-            top: 3px;
-            width: 14px;
-            height: 10px;
-            border-top: 1.4px solid currentColor;
-            border-right: 1.4px solid currentColor;
-            transform: skewX(-28deg) rotate(-18deg);
-        }
-
-        .contact-icon.tg::after {
-            left: 7px;
-            top: 8px;
-            width: 8px;
-            border-top: 1.4px solid currentColor;
-            transform: rotate(-38deg);
-        }
-
-        .contact-icon.mail::before {
-            inset: 3px 1px;
-            border: 1.4px solid currentColor;
-            border-radius: 2px;
-        }
-
-        .contact-icon.mail::after {
-            left: 3px;
-            top: 6px;
-            width: 12px;
-            height: 6px;
-            border-left: 1.4px solid currentColor;
-            border-bottom: 1.4px solid currentColor;
-            transform: rotate(-45deg);
+        .contact-icon svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .about-link .label {
@@ -720,12 +609,6 @@
             }
             .about-roadmap {
                 padding-top: 72px;
-            }
-            .about-code-texture {
-                top: 58px;
-                right: -260px;
-                width: 640px;
-                font-size: 12px;
             }
             .about-shell {
                 gap: 34px;
@@ -784,22 +667,6 @@
     </section>
 
     <section class="screen about-roadmap" id="aboutCodeBug">
-        <pre class="about-code-texture" aria-hidden="true">function submitFix(task) {
-  const source = editor.value();
-  const diff = compare(source, task.brokenCode);
-  if (!diff.changed) return status("no changes");
-
-  runTests(source)
-    .then(report => {
-      if (report.failed) highlight(report.line);
-      else saveSolution({ task, source });
-    });
-}
-
-for (const testcase of tests) {
-  const actual = run(testcase.input);
-  assert.equal(actual, testcase.answer);
-}</pre>
         <div class="about-shell">
             <div class="about-head">
                 <span class="about-kicker">О платформе</span>
@@ -810,17 +677,46 @@ for (const testcase of tests) {
 
             <div class="about-points" aria-label="Направления CodeBug">
                 <article class="about-point">
-                    <span class="line-icon debug" aria-hidden="true"></span>
+                    <span class="line-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 5h6"></path>
+                            <path d="M9 19h6"></path>
+                            <path d="M7 9h10"></path>
+                            <path d="M7 15h10"></path>
+                            <path d="M8 5v14"></path>
+                            <path d="M16 5v14"></path>
+                            <path d="M4 12h4"></path>
+                            <path d="M16 12h4"></path>
+                        </svg>
+                    </span>
                     <h3>Практика отладки</h3>
                     <p>Задачи построены вокруг готового кода с ошибкой.</p>
                 </article>
                 <article class="about-point">
-                    <span class="line-icon progress" aria-hidden="true"></span>
+                    <span class="line-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 19V5"></path>
+                            <path d="M4 19h16"></path>
+                            <path d="M7 15l4-4 3 3 5-7"></path>
+                            <path d="M16 7h3v3"></path>
+                        </svg>
+                    </span>
                     <h3>Прогресс и рейтинг</h3>
                     <p>Решения дают опыт, статистику и место в таблице.</p>
                 </article>
                 <article class="about-point">
-                    <span class="line-icon contest" aria-hidden="true"></span>
+                    <span class="line-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8 4h8"></path>
+                            <path d="M9 4v3"></path>
+                            <path d="M15 4v3"></path>
+                            <path d="M7 7h10v4a5 5 0 0 1-10 0V7z"></path>
+                            <path d="M7 9H4v2a3 3 0 0 0 3 3"></path>
+                            <path d="M17 9h3v2a3 3 0 0 1-3 3"></path>
+                            <path d="M12 16v3"></path>
+                            <path d="M9 20h6"></path>
+                        </svg>
+                    </span>
                     <h3>Соревнования</h3>
                     <p>Контесты и турниры для проверки скорости и внимательности.</p>
                 </article>
@@ -866,28 +762,52 @@ for (const testcase of tests) {
                 <h3>Связь</h3>
                 <div class="about-links-grid">
                     <a class="about-link" href="https://codebug.online" target="_blank" rel="noopener noreferrer">
-                        <span class="contact-icon site" aria-hidden="true"></span>
+                        <span class="contact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <path d="M3 12h18"></path>
+                                <path d="M12 3a14 14 0 0 1 0 18"></path>
+                                <path d="M12 3a14 14 0 0 0 0 18"></path>
+                            </svg>
+                        </span>
                         <span>
                             <span class="label">Сайт</span>
                             <span class="value">codebug.online</span>
                         </span>
                     </a>
                     <a class="about-link" href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">
-                        <span class="contact-icon tg" aria-hidden="true"></span>
+                        <span class="contact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 4L3 11l7 3"></path>
+                                <path d="M21 4l-5 16-6-6"></path>
+                                <path d="M10 14l4-4"></path>
+                            </svg>
+                        </span>
                         <span>
                             <span class="label">Telegram</span>
                             <span class="value">@codebug_official</span>
                         </span>
                     </a>
                     <a class="about-link" href="https://t.me/codebug_reviews" target="_blank" rel="noopener noreferrer">
-                        <span class="contact-icon tg" aria-hidden="true"></span>
+                        <span class="contact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 4L3 11l7 3"></path>
+                                <path d="M21 4l-5 16-6-6"></path>
+                                <path d="M10 14l4-4"></path>
+                            </svg>
+                        </span>
                         <span>
                             <span class="label">Отзывы</span>
                             <span class="value">@codebug_reviews</span>
                         </span>
                     </a>
                     <a class="about-link" href="mailto:support@codebug.online">
-                        <span class="contact-icon mail" aria-hidden="true"></span>
+                        <span class="contact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 6h16v12H4z"></path>
+                                <path d="M4 7l8 6 8-6"></path>
+                            </svg>
+                        </span>
                         <span>
                             <span class="label">Поддержка</span>
                             <span class="value">support@codebug.online</span>
