@@ -718,12 +718,19 @@
                 if (latest && isSolvedVerdict(latest)) {
                     console.group("%c[XP TRACE][CLIENT] polling observed solved", "color:#7fff7f;font-weight:bold;");
                     console.log("tick =", ticks);
+                    console.log("submissionId =", latest._id || latest.id || null);
                     console.log("task =", latest.task);
                     console.log("verdict =", latest.verdict);
                     console.log("status =", latest.status);
                     console.log("statusLabel =", latest.statusLabel);
                     console.log("score =", latest.score);
                     console.log("date =", latest.date ? new Date(latest.date).toISOString() : null);
+                    console.log("xpMarked =", latest.xpMarked);
+                    console.log("xpAlreadySolved =", latest.xpAlreadySolved);
+                    console.log("xpBeforeCnt =", latest.xpBeforeCnt, "xpAfterCnt =", latest.xpAfterCnt);
+                    console.log("xpBeforeExp =", latest.xpBeforeExp, "xpAfterExp =", latest.xpAfterExp);
+                    console.log("xpHasTaskAfter =", latest.xpHasTaskAfter);
+                    console.log("xpError =", latest.xpError || null);
                     console.log("backend should have recalculated users/<login>/stats by now.");
                     console.groupEnd();
                 }
@@ -1107,11 +1114,16 @@
                 return null;
             }
 
-            const all = Object.values(snap.val());
+            const all = Object.entries(snap.val() || {}).map(([id, value]) => ({
+                ...(value || {}),
+                _id: id
+            }));
+            console.log("[XP TRACE][CLIENT] submissions loaded:", all.length, "currentUser=", user, "taskId=", taskId);
 
             const mine = all
                 .filter(s => s.login === user && Number(s.task) === Number(taskId))
                 .sort((a, b) => b.date - a.date);
+            console.log("[XP TRACE][CLIENT] mine filtered:", mine.length, mine[0] ? { id: mine[0]._id, verdict: mine[0].verdict, score: mine[0].score } : null);
 
             if (mine.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";

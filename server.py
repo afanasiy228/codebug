@@ -896,7 +896,22 @@ def _run_submission_job(job):
     })
     if solved_like:
         print(f"[XP TRACE][SERVER] calling _mark_task_solved_for_user(login={login}, task={task})")
-        _mark_task_solved_for_user(login, task)
+        mark_trace = _mark_task_solved_for_user(login, task) or {}
+        print("[XP TRACE][SERVER] mark trace:", mark_trace)
+        if submission_id and FIREBASE_READY:
+            try:
+                db.reference(f"submissions/global/{submission_id}").update({
+                    "xpMarked": bool(mark_trace.get("ok")),
+                    "xpAlreadySolved": mark_trace.get("alreadySolved"),
+                    "xpBeforeCnt": mark_trace.get("beforeCnt"),
+                    "xpAfterCnt": mark_trace.get("afterCnt"),
+                    "xpBeforeExp": mark_trace.get("beforeExp"),
+                    "xpAfterExp": mark_trace.get("afterExp"),
+                    "xpHasTaskAfter": mark_trace.get("hasTaskAfter"),
+                    "xpError": mark_trace.get("error"),
+                })
+            except Exception as e:
+                print("[XP TRACE][SERVER] failed to write xp trace to submission:", e)
 
 
 def _submit_worker():
@@ -2613,12 +2628,26 @@ def _normalize_solved_map(raw):
 
 
 def _mark_task_solved_for_user(login, task):
+    trace = {
+        "ok": False,
+        "login": str(login or "").strip(),
+        "task": str(task or "").strip(),
+        "alreadySolved": None,
+        "beforeCnt": None,
+        "beforeExp": None,
+        "afterCnt": None,
+        "afterExp": None,
+        "hasTaskAfter": None,
+        "error": None,
+    }
     if not FIREBASE_READY:
-        return
+        trace["error"] = "FIREBASE_NOT_READY"
+        return trace
     login = str(login or "").strip()
     task = str(task or "").strip()
     if not login or not task:
-        return
+        trace["error"] = "INVALID_LOGIN_OR_TASK"
+        return trace
     try:
         task_difficulties = _load_task_difficulties()
         stats_ref = db.reference(f"users/{login}/stats")
@@ -2629,6 +2658,9 @@ def _mark_task_solved_for_user(login, task):
         before_exp = int(current.get("exp") or 0)
         solved_map = _normalize_solved_map(current.get("solved"))
         already_solved = bool(solved_map.get(task))
+        trace["alreadySolved"] = already_solved
+        trace["beforeCnt"] = before_cnt
+        trace["beforeExp"] = before_exp
         solved_map[task] = True
         exp = sum(
             _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
@@ -2655,18 +2687,26 @@ def _mark_task_solved_for_user(login, task):
         )
         stats_ref.update(payload)
         final_stats = stats_ref.get() or {}
+        final_stats = final_stats if isinstance(final_stats, dict) else {}
+        final_solved = _normalize_solved_map(final_stats.get("solved"))
+        trace["afterCnt"] = int(final_stats.get("cnt") or 0)
+        trace["afterExp"] = int(final_stats.get("exp") or 0)
+        trace["hasTaskAfter"] = bool(final_solved.get(task))
+        trace["ok"] = True
         print(
             "[XP TRACE][SERVER] stats committed:",
             {
                 "login": login,
                 "task": task,
-                "finalCnt": (final_stats or {}).get("cnt"),
-                "finalExp": (final_stats or {}).get("exp"),
-                "hasTask": bool(_normalize_solved_map((final_stats or {}).get("solved")).get(task)),
+                "finalCnt": final_stats.get("cnt"),
+                "finalExp": final_stats.get("exp"),
+                "hasTask": bool(final_solved.get(task)),
             },
         )
     except Exception as e:
         print(f"mark solved stats update failed (login={login}, task={task}):", e)
+        trace["error"] = str(e)
+    return trace
 
 
 def _xp_for_difficulty(difficulty):
