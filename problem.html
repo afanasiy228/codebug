@@ -716,11 +716,7 @@
                 ticks += 1;
                 const latest = await loadMySubsForThisProblem();
                 if (latest && isSolvedVerdict(latest)) {
-                    const user = getUser();
-                    const taskId = getCurrentTaskId();
-                    if (user && Number.isFinite(taskId)) {
-                        submitOK(user, String(taskId), TASK_DIFFICULTY);
-                    }
+                    // solved/cnt/exp обновляются только на сервере
                 }
                 const firstStatus = document.querySelector("#subs tr td:nth-child(2)")?.textContent?.trim()?.toUpperCase() || "";
                 const stillPending = firstStatus === "В ОЧЕРЕДИ" || firstStatus === "ТЕСТИРУЕТСЯ" || firstStatus === "QUEUE" || firstStatus === "TESTING";
@@ -835,7 +831,7 @@
                         startSubmissionPolling();
                     }
                 }
-                if (isSolvedVerdict(verdict)) submitOK(user, taskId, TASK_DIFFICULTY);
+                // Начисление solved/exp/cnt выполняется сервером в worker после финального verdict.
                 console.log("💾 Firebase сохранено OK");
 
             } catch (e) {
@@ -1111,76 +1107,8 @@
         }
 
 
-        async function submitOK(user, taskId, difficulty) {
-            console.log("%c[submitOK()] START", "color:#0f0; font-weight:bold;");
-            console.log("→ user:", user, " taskId:", taskId, " difficulty:", difficulty);
-
-            if (!user) {
-                console.error("❌ submitOK: user = null");
-                return;
-            }
-
-            const dbRef = window.db || null;
-            if (!dbRef) {
-                console.warn("⚠ submitOK skipped: Firebase DB недоступна");
-                return;
-            }
-            const ref = dbRef.ref("users/" + user + "/stats");
-
-            let snap;
-            try {
-                snap = await ref.get();
-            } catch (e) {
-                console.error("🔥 ERROR loading stats:", e);
-                return;
-            }
-
-            let data = snap.val();
-            console.log("✔ Loaded stats:", data);
-
-            // === ГЛАВНОЕ ИСПРАВЛЕНИЕ ===
-            if (!data) data = {};
-            if (!data.solved) data.solved = {};
-            if (!data.exp) data.exp = 0;
-            if (!data.cnt) data.cnt = 0;
-
-            console.log("✔ After fix:", data);
-
-            // уже решена
-            if (data.solved[taskId]) {
-                console.log("✓ Task already solved → stop");
-                return;
-            }
-
-            // отметить как решённую
-            data.solved[taskId] = true;
-
-            // XP
-            let addXP = 0;
-            if (difficulty === "tutorial") addXP = 2;
-            else if (difficulty === "easy") addXP = 4;
-            else if (difficulty === "casual") addXP = 7;
-            else if (difficulty === "normal") addXP = 12;
-            else if (difficulty === "hard") addXP = 20;
-            else if (difficulty === "insane") addXP = 30;
-            else if (difficulty === "extreme") addXP = 45;
-            else if (difficulty === "ultra") addXP = 60;
-            else if (difficulty === "impossible") addXP = 80;
-            else if (difficulty === "tourist") addXP = 110;
-            else addXP = 5;
-
-            data.exp += addXP;
-            data.cnt = Object.keys(data.solved).length;
-
-            console.log("🔥 NEW STATS:", data);
-
-            try {
-                await ref.set(data);
-                console.log("✔ Stats saved");
-            } catch (e) {
-                console.error("🔥 ERROR saving stats:", e);
-            }
-        }
+        // submitOK intentionally removed:
+        // stats writes from client caused race/overwrite with backend worker updates.
     </script>
 
 

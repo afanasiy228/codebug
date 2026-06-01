@@ -2581,22 +2581,25 @@ def _mark_task_solved_for_user(login, task):
     if not login or not task:
         return
     try:
-        solved_ref = db.reference(f"users/{login}/stats/solved")
-        solved_map = _normalize_solved_map(solved_ref.get())
-        solved_map[task] = True
-        solved_ref.set(solved_map)
-
         task_difficulties = _load_task_difficulties()
-        exp = sum(
-            _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
-            for task_id in solved_map
-        )
-        db.reference(f"users/{login}/stats").update({
-            "cnt": len(solved_map),
-            "exp": exp
-        })
+        stats_ref = db.reference(f"users/{login}/stats")
+
+        def _txn(current):
+            current = current if isinstance(current, dict) else {}
+            solved_map = _normalize_solved_map(current.get("solved"))
+            solved_map[task] = True
+            exp = sum(
+                _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
+                for task_id in solved_map
+            )
+            current["solved"] = solved_map
+            current["cnt"] = len(solved_map)
+            current["exp"] = exp
+            return current
+
+        stats_ref.transaction(_txn)
     except Exception as e:
-        print("mark solved stats update failed:", e)
+        print(f"mark solved stats update failed (login={login}, task={task}):", e)
 
 
 def _xp_for_difficulty(difficulty):
