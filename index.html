@@ -9,19 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
          :root {
-            --bg: #07090b;
-            --bg2: #0a0f12;
-            --line: #1a232a;
-            --ink: #d6dee6;
-            --muted: #8d9aa7;
-            --accent: #2e7755;
-            --accent-border: rgba(71, 144, 106, 0.52);
+            --bg: #050816;
+            --bg2: #0A1020;
+            --card: #0D1424;
+            --line: rgba(148, 163, 184, 0.12);
+            --ink: #F8FAFC;
+            --muted: #94A3B8;
+            --accent: #3B82F6;
+            --accent-hover: #60A5FA;
+            --accent-border: rgba(59, 130, 246, 0.52);
+            --danger: #EF4444;
+            --danger-soft: rgba(239, 68, 68, 0.15);
+            --success: #22C55E;
+            --success-soft: rgba(34, 197, 94, 0.15);
             --code: rgba(148, 168, 184, 0.52);
             --code-hover: rgba(205, 221, 234, 0.78);
-            --flash-red: rgba(178, 76, 76, 0.085);
-            --flash-red-ink: rgba(255, 219, 219, 0.46);
-            --flash-green: rgba(62, 141, 98, 0.085);
-            --flash-green-ink: rgba(219, 255, 233, 0.46);
+            --flash-red: rgba(239, 68, 68, 0.13);
+            --flash-red-ink: rgba(248, 113, 113, 0.72);
+            --flash-blue: rgba(59, 130, 246, 0.12);
+            --flash-blue-ink: rgba(191, 219, 254, 0.72);
             --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         
@@ -42,7 +48,7 @@
             overflow-y: auto;
             scroll-snap-type: y mandatory;
             scrollbar-width: thin;
-            scrollbar-color: #27323a #0a0d10;
+            scrollbar-color: rgba(59, 130, 246, 0.7) #0A1020;
         }
         
         .screen {
@@ -59,8 +65,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-bottom: 1px solid rgba(26, 35, 42, 0.48);
-            background: rgba(7, 10, 12, 0.34);
+            border-bottom: 1px solid var(--line);
+            background: rgba(5, 8, 22, 0.62);
             backdrop-filter: blur(4px);
         }
         
@@ -74,8 +80,12 @@
         .top-nav .logo {
             font-size: 20px;
             font-weight: 700;
-            color: #d2dce5;
+            color: var(--ink);
         }
+
+        .brand-code { color: var(--accent); }
+        .brand-bug { color: var(--danger); }
+        .brand-suffix { color: var(--accent-hover); }
         
         .top-nav nav {
             display: flex;
@@ -83,7 +93,7 @@
         }
 
         .top-nav nav a {
-            color: #91a0ad;
+            color: var(--muted);
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
@@ -91,7 +101,7 @@
         }
         
         .top-nav nav a:hover {
-            color: #ccd7e1;
+            color: var(--accent-hover);
         }
         
         .hero {
@@ -106,7 +116,10 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: radial-gradient(920px 480px at 74% 18%, rgba(40, 94, 69, 0.14), transparent 72%), radial-gradient(720px 420px at 14% 80%, rgba(23, 52, 41, 0.12), transparent 70%);
+            background:
+                radial-gradient(circle at 74% 18%, rgba(59, 130, 246, 0.20), transparent 70%),
+                radial-gradient(circle at 14% 80%, rgba(59, 130, 246, 0.10), transparent 70%),
+                radial-gradient(circle at 82% 64%, rgba(239, 68, 68, 0.08), transparent 72%);
             pointer-events: none;
         }
         
@@ -177,14 +190,14 @@
             opacity: .42;
             color: var(--flash-red-ink);
             background: var(--flash-red);
-            box-shadow: inset 0 0 0 1px rgba(217, 118, 118, 0.11);
+            box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.22), 0 0 30px rgba(239, 68, 68, 0.10);
         }
         
-        .code-row.green {
+        .code-row.blue {
             opacity: .42;
-            color: var(--flash-green-ink);
-            background: var(--flash-green);
-            box-shadow: inset 0 0 0 1px rgba(117, 201, 150, 0.11);
+            color: var(--flash-blue-ink);
+            background: var(--flash-blue);
+            box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18);
         }
         
         .code-row.fade {
@@ -216,14 +229,14 @@
             font-size: clamp(32px, 4.9vw, 52px);
             line-height: 1;
             font-weight: 700;
-            color: rgba(159, 212, 183, 0.92);
+            color: var(--ink);
             letter-spacing: .2px;
-            text-shadow: 0 0 20px rgba(54, 111, 81, 0.24);
+            text-shadow: 0 0 40px rgba(59, 130, 246, 0.25);
         }
         
         .subtitle {
             margin: 10px 0 0;
-            color: #c3d0dc;
+            color: #cbd5e1;
             font-size: clamp(16px, 2vw, 23px);
             line-height: 1.26;
             text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
@@ -237,8 +250,8 @@
             border: 1px solid var(--accent-border);
             border-radius: 9px;
             padding: 10px 15px;
-            background: rgba(16, 24, 21, 0.36);
-            color: #bdd0c5;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--ink);
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
@@ -246,9 +259,9 @@
         }
         
         .cta:hover {
-            border-color: rgba(84, 163, 122, 0.64);
-            color: #d0e0d7;
-            background: rgba(27, 57, 43, 0.5);
+            border-color: rgba(96, 165, 250, 0.74);
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.25);
         }
         
         .about-roadmap {
@@ -257,7 +270,9 @@
             padding: 56px 0 52px;
             display: grid;
             align-content: start;
-            background: radial-gradient(980px 520px at 82% 12%, rgba(39, 83, 67, 0.11), transparent 64%), linear-gradient(180deg, rgba(6, 10, 14, 0.98), rgba(8, 12, 17, 0.98));
+            background:
+                radial-gradient(circle at 82% 12%, rgba(59, 130, 246, 0.14), transparent 70%),
+                linear-gradient(180deg, rgba(5, 8, 22, 0.98), rgba(10, 16, 32, 0.98));
         }
 
         .about-roadmap::before {
@@ -291,7 +306,7 @@
             font-size: 15px;
             font-weight: 700;
             line-height: 1.2;
-            color: #8bf34a;
+            color: var(--accent-hover);
             text-transform: uppercase;
             letter-spacing: 0;
         }
@@ -331,7 +346,7 @@
         }
 
         .about-metric + .about-metric {
-            border-left: 1px solid rgba(64, 90, 78, 0.48);
+            border-left: 1px solid rgba(148, 163, 184, 0.18);
         }
 
         .metric-icon {
@@ -340,7 +355,7 @@
             justify-content: center;
             width: 38px;
             height: 38px;
-            color: #8bf34a;
+            color: var(--accent);
         }
 
         .metric-icon svg {
@@ -356,9 +371,9 @@
 
         .roadmap {
             margin-top: 8px;
-            border: 1px solid rgba(56, 73, 89, 0.54);
+            border: 1px solid var(--line);
             border-radius: 12px;
-            background: rgba(7, 13, 20, 0.54);
+            background: rgba(13, 20, 36, 0.76);
             padding: 26px 32px 24px;
         }
 
@@ -395,7 +410,7 @@
             align-items: center;
             min-height: 56px;
             gap: 24px;
-            border-bottom: 1px solid rgba(56, 73, 89, 0.34);
+            border-bottom: 1px solid var(--line);
         }
 
         .roadmap-step:last-child {
@@ -416,9 +431,9 @@
         }
 
         .roadmap-step.done .roadmap-marker {
-            border-color: #8bf34a;
-            background: rgba(139, 243, 74, 0.12);
-            color: #8bf34a;
+            border-color: var(--success);
+            background: var(--success-soft);
+            color: var(--success);
         }
 
         .roadmap-step.done .roadmap-marker::before {
@@ -434,9 +449,9 @@
         }
 
         .roadmap-step.active .roadmap-marker {
-            border-color: #cde95b;
-            background: rgba(205, 233, 91, 0.12);
-            color: #cde95b;
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-hover);
         }
 
         .roadmap-step.active .roadmap-marker::before,
@@ -492,9 +507,9 @@
         }
 
         .about-links {
-            border: 1px solid rgba(56, 73, 89, 0.54);
+            border: 1px solid var(--line);
             border-radius: 12px;
-            background: rgba(7, 13, 20, 0.54);
+            background: rgba(13, 20, 36, 0.76);
             padding: 24px 32px;
         }
 
@@ -525,7 +540,7 @@
             width: 32px;
             height: 32px;
             margin-top: 0;
-            color: #7ee042;
+            color: var(--accent);
         }
 
         .contact-icon svg {
@@ -550,7 +565,7 @@
 
         .about-link .value {
             display: block;
-            color: #8bea4a;
+            color: var(--accent-hover);
             font-size: clamp(15px, 1.05vw, 20px);
             font-weight: 500;
             line-height: 1.22;
@@ -667,7 +682,7 @@
 <body>
     <div class="top-nav">
         <div class="top-nav-inner">
-            <span class="logo">CodeBug</span>
+            <span class="logo"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></span>
             <nav id="nav-links"></nav>
         </div>
     </div>
@@ -677,7 +692,7 @@
 
         <div class="hero-content">
             <div class="hero-right">
-                <h1 class="brand">CodeBug</h1>
+                <h1 class="brand"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></h1>
                 <p class="subtitle">Платформа для тренировки дебага.</p>
                 <a class="cta" href="train.html">К тренировке</a>
             </div>
@@ -946,10 +961,10 @@ return 0; }`;
                 const row = rows[idx];
                 const txt = row.txt;
                 const original = baseText[idx];
-                const green = Math.random() > 0.55;
+                const blue = Math.random() > 0.55;
 
-                row.row.classList.remove("red", "green");
-                row.row.classList.add(green ? "green" : "red");
+                row.row.classList.remove("red", "blue");
+                row.row.classList.add(blue ? "blue" : "red");
                 if (Math.random() > 0.55) {
                     const next = mutateLine(original);
                     txt.textContent = next;
@@ -957,7 +972,7 @@ return 0; }`;
 
                 if (pulseTimer) clearTimeout(pulseTimer);
                 pulseTimer = setTimeout(() => {
-                    row.row.classList.remove("red", "green");
+                    row.row.classList.remove("red", "blue");
                     txt.textContent = original;
                 }, 1000);
             }

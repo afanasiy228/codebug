@@ -10,22 +10,24 @@
 
     <style>
         :root {
-            --bg: #11181b;
-            --bg-strong: #0f1619;
-            --ink: #e5eef6;
-            --muted: #9eb0bf;
-            --accent: #84e0d0;
-            --accent-strong: #67c7b7;
-            --warm: #f0d463;
-            --card: #1c2529;
-            --stroke: rgba(154, 178, 196, 0.26);
+            --bg: #050816;
+            --bg-strong: #0A1020;
+            --ink: #F8FAFC;
+            --muted: #94A3B8;
+            --accent: #3B82F6;
+            --accent-strong: #60A5FA;
+            --danger: #EF4444;
+            --success: #22C55E;
+            --warm: #FBBF24;
+            --card: #0D1424;
+            --stroke: rgba(148, 163, 184, 0.12);
             --shadow: 0 20px 52px rgba(0, 0, 0, 0.35);
         }
         
         body {
             background:
-                radial-gradient(1100px 460px at 18% -12%, rgba(86, 136, 112, 0.18), transparent 62%),
-                radial-gradient(900px 440px at 90% 0%, rgba(64, 108, 118, 0.18), transparent 60%),
+                radial-gradient(circle at 18% -12%, rgba(59, 130, 246, 0.20), transparent 70%),
+                radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.10), transparent 70%),
                 linear-gradient(180deg, var(--bg), var(--bg-strong));
             color: var(--ink);
             margin: 0;
@@ -37,13 +39,13 @@
         }
 
         ::selection {
-            background: rgba(15, 118, 110, 0.2);
+            background: rgba(59, 130, 246, 0.24);
         }
         
         header {
             height: 72px;
-            background: rgba(20, 30, 34, 0.88);
-            border-bottom: 1px solid rgba(128, 151, 166, 0.28);
+            background: rgba(5, 8, 22, 0.88);
+            border-bottom: 1px solid var(--stroke);
             padding: 0 4vw;
             display: flex;
             align-items: center;
@@ -62,6 +64,10 @@
             letter-spacing: 0.4px;
             font-family: "Space Grotesk", sans-serif;
         }
+
+        .brand-code { color: var(--accent); }
+        .brand-bug { color: var(--danger); }
+        .brand-suffix { color: var(--accent-strong); }
         
         nav a {
             margin-left: 20px;
@@ -95,8 +101,8 @@
             border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
-            color: #b8efe5;
-            background: rgba(110, 231, 183, 0.12);
+            color: var(--accent-strong);
+            background: rgba(59, 130, 246, 0.15);
             margin-bottom: 12px;
         }
 
@@ -141,7 +147,7 @@
             padding: 8px 10px;
             border-bottom: 1px solid rgba(114, 136, 152, 0.28);
             border-radius: 8px;
-            background: rgba(19, 29, 36, 0.6);
+            background: rgba(13, 20, 36, 0.76);
             overflow: hidden;
             transition: background-color .14s ease, transform .14s ease, filter .14s ease;
         }
@@ -162,12 +168,12 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(12, 20, 26, 0.76), rgba(15, 24, 32, 0.62));
+            background: linear-gradient(90deg, rgba(5, 8, 22, 0.84), rgba(10, 16, 32, 0.72));
             z-index: 1;
         }
 
         .rating-row:hover {
-            background: rgba(26, 40, 49, 0.72);
+            background: rgba(59, 130, 246, 0.12);
             transform: translateX(2px);
             filter: brightness(1.06);
         }
@@ -187,10 +193,14 @@
         .place {
             font-size: 22px;
             font-weight: 700;
-            color: #8cdccc;
+            color: var(--accent);
             text-align: left;
             padding-left: 2px;
         }
+
+        .rating-row:nth-child(1) .place { color: #FBBF24; }
+        .rating-row:nth-child(2) .place { color: #CBD5E1; }
+        .rating-row:nth-child(3) .place { color: #C2410C; }
         
         .user-block {
             display: flex;
@@ -206,11 +216,11 @@
             border-radius: 8px;
             object-fit: cover;
             border: 0;
-            background: rgba(15, 118, 110, 0.15);
+            background: rgba(59, 130, 246, 0.15);
         }
         
         .ava.default {
-            background: rgba(15, 118, 110, 0.2);
+            background: rgba(59, 130, 246, 0.15);
             color: #e6f0f8;
             display: flex;
             justify-content: center;
@@ -239,7 +249,7 @@
             min-width: 0;
             max-width: 100%;
             line-height: 1.12;
-            color: #e6f1fa;
+            color: #F8FAFC;
             text-decoration: none;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -247,7 +257,7 @@
         }
 
         .user-name a:hover {
-            color: #9fe8d9;
+            color: var(--accent-strong);
         }
 
         
@@ -282,8 +292,15 @@
         .user-solved {
             text-align: right;
             font-size: 15px;
-            color: #d2e0ec;
             font-weight: 600;
+        }
+
+        .user-exp {
+            color: var(--accent-strong);
+        }
+
+        .user-solved {
+            color: var(--success);
         }
 
         @media (max-width: 640px) {
@@ -321,7 +338,7 @@
 <body>
 
     <header>
-        <div class="logo">CodeBug</div>
+        <div class="logo"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></div>
         <nav id="nav-links"></nav>
     </header>
 
@@ -379,16 +396,16 @@
         }
 
         const RATING_COVER_PRESETS = {
-            cover_1: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)",
-            cover_2: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)",
+            cover_1: "linear-gradient(120deg,#0D1424 0%,#3B82F6 100%)",
+            cover_2: "linear-gradient(120deg,#050816 0%,#2563EB 55%,#60A5FA 100%)",
             cover_3: "linear-gradient(120deg,#1e3c72 0%,#2a5298 100%)",
-            cover_4: "linear-gradient(120deg,#f6d365 0%,#fda085 100%)",
+            cover_4: "linear-gradient(120deg,#0A1020 0%,#EF4444 100%)",
             cover_5: "linear-gradient(120deg,#0f2027 0%,#203a43 50%,#2c5364 100%)",
-            cover_6: "linear-gradient(120deg,#ff9a9e 0%,#fad0c4 100%)",
-            cover_7: "linear-gradient(120deg,#43cea2 0%,#185a9d 100%)",
-            cover_8: "linear-gradient(120deg,#667eea 0%,#764ba2 100%)",
-            cover_9: "linear-gradient(120deg,#00c6ff 0%,#0072ff 30%,#6a11cb 70%,#2575fc 100%)",
-            cover_10: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)"
+            cover_6: "linear-gradient(120deg,#111827 0%,#334155 100%)",
+            cover_7: "linear-gradient(120deg,#0D1424 0%,#1D4ED8 100%)",
+            cover_8: "linear-gradient(120deg,#050816 0%,#1E293B 50%,#3B82F6 100%)",
+            cover_9: "linear-gradient(120deg,#0A1020 0%,#0072ff 35%,#3B82F6 100%)",
+            cover_10: "linear-gradient(120deg,#050816 0%,#0D1424 50%,#60A5FA 100%)"
         };
 
         function getRowBanner(style, level) {
@@ -438,7 +455,7 @@
                 const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
                 const isPro = level !== "free";
                 const proColor = (isPro && typeof getSubscriptionNickColor === "function") ? getSubscriptionNickColor(sub) : "#60a5fa";
-                const loginColor = isPro ? proColor : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(Number(u.exp || 0)) : "#27ae60");
+                const loginColor = isPro ? proColor : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(Number(u.exp || 0)) : "#F8FAFC");
                 const styledNick = (typeof buildStyledNickHtml === "function")
                     ? buildStyledNickHtml(u.login, sub, loginColor)
                     : safeLogin;

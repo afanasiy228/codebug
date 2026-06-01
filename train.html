@@ -9,19 +9,20 @@
     <link rel="stylesheet" href="theme-dark.css">
     <style>
         :root {
-            --bg-0: #050b11;
-            --bg-1: #08121a;
-            --bg-2: #0a1823;
-            --line: rgba(122, 145, 164, 0.24);
-            --line-soft: rgba(122, 145, 164, 0.16);
-            --text: #e5eef7;
-            --muted: #8ea0b1;
-            --green: #38d38e;
-            --green-soft: rgba(56, 211, 142, 0.16);
-            --blue: #6db6ff;
-            --violet: #b590ff;
-            --gold: #efcf67;
-            --danger: #ff6b7f;
+            --bg-0: #050816;
+            --bg-1: #0A1020;
+            --bg-2: #0D1424;
+            --line: rgba(148, 163, 184, 0.12);
+            --line-soft: rgba(148, 163, 184, 0.08);
+            --text: #F8FAFC;
+            --muted: #94A3B8;
+            --success: #22C55E;
+            --success-soft: rgba(34, 197, 94, 0.15);
+            --blue: #3B82F6;
+            --blue-hover: #60A5FA;
+            --gold: #FBBF24;
+            --danger: #EF4444;
+            --danger-soft: rgba(239, 68, 68, 0.15);
         }
 
         * { box-sizing: border-box; }
@@ -31,8 +32,8 @@
             color: var(--text);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(1200px 680px at 9% -20%, rgba(40, 133, 115, 0.22), transparent 62%),
-                radial-gradient(1100px 560px at 90% 0%, rgba(72, 137, 190, 0.2), transparent 62%),
+                radial-gradient(circle at 9% -20%, rgba(59, 130, 246, 0.20), transparent 70%),
+                radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.10), transparent 70%),
                 linear-gradient(180deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
             min-height: 100vh;
             overflow-x: hidden;
@@ -135,7 +136,7 @@
         .level-title svg {
             width: 46px;
             height: 46px;
-            stroke: #8cdf3f;
+            stroke: var(--blue-hover);
             stroke-width: 2.1;
             fill: none;
             flex: 0 0 46px;
@@ -157,7 +158,7 @@
 
         .level-fill {
             height: 100%;
-            background: #45b985;
+            background: linear-gradient(90deg, var(--blue), var(--blue-hover));
             border-radius: 999px;
             width: 0;
             transition: width .28s ease;
@@ -214,10 +215,10 @@
             stroke-linejoin: round;
         }
 
-        .metric-solved .metric-icon svg { stroke: #58d67f; }
-        .metric-accuracy .metric-icon svg { stroke: #e1c15a; }
-        .metric-exp .metric-icon svg { stroke: #9ee84d; }
-        .metric-attempts .metric-icon svg { stroke: #58b8e9; }
+        .metric-solved .metric-icon svg { stroke: var(--success); }
+        .metric-accuracy .metric-icon svg { stroke: var(--success); }
+        .metric-exp .metric-icon svg { stroke: var(--blue-hover); }
+        .metric-attempts .metric-icon svg { stroke: var(--danger); }
 
         .metric-value {
             font-size: 22px;
@@ -284,8 +285,8 @@
         .status-tab:hover { color: #d1deec !important; }
 
         .status-tab.active {
-            color: #9ef018 !important;
-            border-bottom-color: #9ef018 !important;
+            color: var(--blue-hover) !important;
+            border-bottom-color: var(--blue) !important;
             background: transparent !important;
         }
 
@@ -312,15 +313,15 @@
             appearance: none;
             -webkit-appearance: none;
             color-scheme: dark;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2389cb4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2360A5FA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
             background-repeat: no-repeat !important;
             background-position: right 2px center !important;
         }
 
-        .compact-select:hover { border-bottom-color: rgba(158, 240, 24, 0.56) !important; }
+        .compact-select:hover { border-bottom-color: rgba(59, 130, 246, 0.56) !important; }
         .compact-select:focus {
             color: #f0f7ff !important;
-            border-bottom-color: rgba(158, 240, 24, 0.72) !important;
+            border-bottom-color: rgba(96, 165, 250, 0.72) !important;
         }
 
         .compact-select option {
@@ -395,7 +396,7 @@
 
         .filter-search input::placeholder { color: rgba(255, 255, 255, 0.45); }
 
-        .filter-search input:focus { border-bottom-color: rgba(158, 240, 24, 0.66) !important; }
+        .filter-search input:focus { border-bottom-color: rgba(96, 165, 250, 0.66) !important; }
 
         .filter-search-icon {
             position: absolute;
@@ -453,8 +454,8 @@
         }
 
         .solve-mark.solved {
-            background: #47cf78;
-            border-color: #47cf78;
+            background: var(--success);
+            border-color: var(--success);
         }
 
         .solve-icon {
@@ -683,7 +684,7 @@
 
         .suggest-grid input:focus,
         .suggest-grid textarea:focus {
-            border-color: rgba(82, 209, 163, 0.72);
+            border-color: rgba(96, 165, 250, 0.72);
         }
 
         .suggest-file {
@@ -710,8 +711,8 @@
             padding: 9px 16px;
             font-size: 13px;
             font-weight: 700;
-            color: #041411;
-            background: linear-gradient(90deg, #49d79b, #75e4b8);
+            color: #F8FAFC;
+            background: linear-gradient(90deg, var(--blue), var(--blue-hover));
             cursor: pointer;
         }
 
@@ -1210,16 +1211,16 @@
                 tutorial: { label: "Учебная", level: 1, color: "#5db8ff" },
                 easy: { label: "Лёгкая", level: 2, color: "#5db8ff" },
                 casual: { label: "Лёгкая", level: 2, color: "#5db8ff" },
-                normal: { label: "Нормальная", level: 3, color: "#48d883" },
-                hard: { label: "Сложная", level: 4, color: "#ad7cff" },
-                insane: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
-                extreme: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
-                ultra: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
-                impossible: { label: "Очень сложная", level: 5, color: "#ff5f6f" },
-                tourist: { label: "Экспертная", level: 5, color: "#f0a24a" },
-                expert: { label: "Экспертная", level: 5, color: "#f0a24a" }
+                normal: { label: "Нормальная", level: 3, color: "#3B82F6" },
+                hard: { label: "Сложная", level: 4, color: "#EF4444" },
+                insane: { label: "Очень сложная", level: 5, color: "#EF4444" },
+                extreme: { label: "Очень сложная", level: 5, color: "#EF4444" },
+                ultra: { label: "Очень сложная", level: 5, color: "#EF4444" },
+                impossible: { label: "Очень сложная", level: 5, color: "#EF4444" },
+                tourist: { label: "Экспертная", level: 5, color: "#FBBF24" },
+                expert: { label: "Экспертная", level: 5, color: "#FBBF24" }
             };
-            return map[diff] || { label: diffRaw || "—", level: 3, color: "#48d883" };
+            return map[diff] || { label: diffRaw || "—", level: 3, color: "#3B82F6" };
         }
 
         function taskTypeLabel(typeRaw) {

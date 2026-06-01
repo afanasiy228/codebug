@@ -10,15 +10,17 @@
 
     <style>
         :root {
-            --bg: #11181b;
-            --bg-strong: #0f1619;
-            --ink: #e5eef6;
-            --muted: #a4b2be;
-            --accent: #84e0d0;
-            --accent-strong: #67c7b7;
-            --warm: #f0d463;
-            --card: #1c2529;
-            --stroke: rgba(154, 178, 196, 0.32);
+            --bg: #050816;
+            --bg-strong: #0A1020;
+            --ink: #F8FAFC;
+            --muted: #94A3B8;
+            --accent: #3B82F6;
+            --accent-strong: #60A5FA;
+            --danger: #EF4444;
+            --success: #22C55E;
+            --warm: #FBBF24;
+            --card: #0D1424;
+            --stroke: rgba(148, 163, 184, 0.12);
             --shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
             --radius-lg: 24px;
             --radius-md: 16px;
@@ -29,13 +31,13 @@
             color: var(--ink);
             font-family: "IBM Plex Sans", sans-serif;
             background:
-                radial-gradient(1100px 420px at 20% -10%, rgba(86, 136, 112, 0.2), transparent 62%),
-                radial-gradient(900px 420px at 90% 0%, rgba(64, 108, 118, 0.2), transparent 60%),
+                radial-gradient(circle at 20% -10%, rgba(59, 130, 246, 0.20), transparent 70%),
+                radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.10), transparent 70%),
                 linear-gradient(180deg, var(--bg), var(--bg-strong));
         }
 
         ::selection {
-            background: rgba(132, 224, 208, 0.2);
+            background: rgba(59, 130, 246, 0.24);
         }
         
         * {
@@ -45,8 +47,8 @@
         
         header {
             height: 72px;
-            background: rgba(20, 30, 34, 0.88);
-            border-bottom: 1px solid rgba(128, 151, 166, 0.28);
+            background: rgba(5, 8, 22, 0.88);
+            border-bottom: 1px solid var(--stroke);
             padding: 0 4vw;
             display: flex;
             align-items: center;
@@ -65,6 +67,10 @@
             letter-spacing: 0.4px;
             color: #edf4fb;
         }
+
+        .brand-code { color: var(--accent); }
+        .brand-bug { color: var(--danger); }
+        .brand-suffix { color: var(--accent-strong); }
         
         nav a {
             margin-left: 20px;
@@ -102,13 +108,13 @@
             border-radius: 0;
             overflow: hidden;
             margin-bottom: 0;
-            background: #162127;
+            background: var(--bg-card, #0D1424);
             box-shadow: none;
         }
 
         .profile-cover {
             height: 310px;
-            background-image: linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%);
+            background-image: linear-gradient(120deg,#0D1424 0%,#3B82F6 100%);
             background-position: center;
             background-size: cover;
             background-repeat: no-repeat;
@@ -203,17 +209,17 @@
             align-items: center;
             padding: 5px 12px;
             border-radius: 999px;
-            border: 1px solid rgba(248, 113, 182, 0.55);
-            color: #ffd8ed;
-            background: rgba(236, 72, 153, 0.22);
+            border: 1px solid rgba(96, 165, 250, 0.55);
+            color: #BFDBFE;
+            background: rgba(59, 130, 246, 0.15);
             font-size: 13px;
             font-weight: 700;
             margin-bottom: 0;
         }
         .pro-badge.pro-plus {
-            background: rgba(110, 231, 183, 0.2);
-            border-color: rgba(110, 231, 183, 0.5);
-            color: #ccfbe8;
+            background: rgba(59, 130, 246, 0.20);
+            border-color: rgba(96, 165, 250, 0.65);
+            color: #DBEAFE;
         }
 
         .logout-icon-btn {
@@ -337,6 +343,20 @@
             white-space: normal;
             word-break: break-word;
             line-height: 1.15;
+        }
+
+        .osu-stat-row:nth-child(2) .osu-stat-value,
+        .osu-stat-row:nth-child(3) .osu-stat-value {
+            color: var(--success);
+        }
+
+        .osu-stat-row:nth-child(4) .osu-stat-value,
+        .osu-stat-row.activity .osu-stat-value {
+            color: var(--accent-strong);
+        }
+
+        .osu-stat-row:nth-child(5) .osu-stat-value {
+            color: var(--danger);
         }
 
         .osu-graph {
@@ -511,13 +531,11 @@
         }
         
         .last-row-ok {
-            background: rgba(15, 118, 110, 0.12);
-            /* мягкая зелёная подсветка */
+            background: rgba(34, 197, 94, 0.15);
         }
         
         .last-row-wa {
-            background: rgba(192, 57, 43, 0.12);
-            /* легкая красная */
+            background: rgba(239, 68, 68, 0.15);
         }
         
         .last-row-other {
@@ -919,8 +937,8 @@
         }
 
         .cover-option.active {
-            border-color: rgba(34, 197, 94, 0.95);
-            box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45);
+            border-color: rgba(96, 165, 250, 0.95);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45);
         }
 
         .cover-thumb {
@@ -1087,7 +1105,7 @@
 <body>
 
     <header>
-        <div class="logo">CodeBug</div>
+        <div class="logo"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></div>
         <nav id="nav-links"></nav>
     </header>
 
@@ -1155,32 +1173,32 @@
                 </div>
                 <div class="osu-side-stats">
                     <div class="osu-stat-row global">
-                        <div class="osu-stat-icon" style="color:#f0d463;">🏆</div>
+                        <div class="osu-stat-icon" style="color:#FBBF24;">🏆</div>
                         <div class="osu-stat-label">Место в мире</div>
                         <div class="osu-stat-value" id="globalRankValue">#—</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#f8d66a;">✓</div>
+                        <div class="osu-stat-icon" style="color:#22C55E;">✓</div>
                         <div class="osu-stat-label">Решено</div>
                         <div class="osu-stat-value" id="osuSolvedCount">0</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#ec4899;">◎</div>
+                        <div class="osu-stat-icon" style="color:#22C55E;">◎</div>
                         <div class="osu-stat-label">AC%</div>
                         <div class="osu-stat-value" id="osuAcRateValue">0%</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#a855f7;">⬡</div>
+                        <div class="osu-stat-icon" style="color:#60A5FA;">⬡</div>
                         <div class="osu-stat-label">Опыт</div>
                         <div class="osu-stat-value" id="osuExpValue">0</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#38bdf8;">↻</div>
+                        <div class="osu-stat-icon" style="color:#EF4444;">↻</div>
                         <div class="osu-stat-label">Попытки</div>
                         <div class="osu-stat-value" id="osuAttemptsValue">0</div>
                     </div>
                     <div class="osu-stat-row activity">
-                        <div class="osu-stat-icon" style="color:#22c55e;">⌁</div>
+                        <div class="osu-stat-icon" style="color:#60A5FA;">⌁</div>
                         <div class="osu-stat-label">Последняя активность</div>
                         <div class="osu-stat-value" id="lastActive">—</div>
                     </div>
@@ -1298,20 +1316,20 @@
         const user = currentUser;
         let currentSubscription = null;
         let currentSubscriptionLevel = "free";
-        const PRO_COLOR_PALETTE = ["#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399", "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"];
-        const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
-        const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix", "blood_ink"];
+        const PRO_COLOR_PALETTE = ["#3B82F6", "#60A5FA", "#38BDF8", "#2563EB"];
+        const PRO_PLUS_THEMES = ["grad_ocean"];
+        const PRO_PLUS_EXTRA_THEMES = [];
         const COVER_PRESETS = [
-            { id: "cover_1", name: "Мятный рассвет", bg: "linear-gradient(120deg,#84fab0 0%,#8fd3f4 100%)" },
-            { id: "cover_2", name: "Фиолетовый сон", bg: "linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%)" },
+            { id: "cover_1", name: "Синий код", bg: "linear-gradient(120deg,#0D1424 0%,#3B82F6 100%)" },
+            { id: "cover_2", name: "Navy build", bg: "linear-gradient(120deg,#050816 0%,#2563EB 55%,#60A5FA 100%)" },
             { id: "cover_3", name: "Глубокое море", bg: "linear-gradient(120deg,#1e3c72 0%,#2a5298 100%)" },
-            { id: "cover_4", name: "Пыльный закат", bg: "linear-gradient(120deg,#f6d365 0%,#fda085 100%)" },
+            { id: "cover_4", name: "Баг найден", bg: "linear-gradient(120deg,#0A1020 0%,#EF4444 100%)" },
             { id: "cover_5", name: "Ночной техно", bg: "linear-gradient(120deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" },
-            { id: "cover_6", name: "Розовое небо", bg: "linear-gradient(120deg,#ff9a9e 0%,#fad0c4 100%)" },
-            { id: "cover_7", name: "Аква-волна", bg: "linear-gradient(120deg,#43cea2 0%,#185a9d 100%)" },
-            { id: "cover_8", name: "Космос", bg: "linear-gradient(120deg,#667eea 0%,#764ba2 100%)" },
-            { id: "cover_9", name: "Северное сияние", bg: "linear-gradient(120deg,#00c6ff 0%,#0072ff 30%,#6a11cb 70%,#2575fc 100%)" },
-            { id: "cover_10", name: "Лесное стекло", bg: "linear-gradient(120deg,#134e5e 0%,#71b280 100%)" }
+            { id: "cover_6", name: "Slate terminal", bg: "linear-gradient(120deg,#111827 0%,#334155 100%)" },
+            { id: "cover_7", name: "Compiler blue", bg: "linear-gradient(120deg,#0D1424 0%,#1D4ED8 100%)" },
+            { id: "cover_8", name: "Debug console", bg: "linear-gradient(120deg,#050816 0%,#1E293B 50%,#3B82F6 100%)" },
+            { id: "cover_9", name: "Runtime trace", bg: "linear-gradient(120deg,#0A1020 0%,#0072ff 35%,#3B82F6 100%)" },
+            { id: "cover_10", name: "Cold deploy", bg: "linear-gradient(120deg,#050816 0%,#0D1424 50%,#60A5FA 100%)" }
         ];
         const DEFAULT_COVER_ID = "cover_1";
         let currentProfileStyle = {};
@@ -1421,33 +1439,18 @@
         }
 
         function getRankColor(exp, login) {
-            if (typeof getRankNickColorByExp === "function") return getRankNickColorByExp(exp);
-            const maxExp = 2000;
-            const t = Math.max(0, Math.min(1, Number(exp || 0) / maxExp));
-            const light = Math.round(72 - t * 36);
-            return `hsl(145 58% ${light}%)`;
+            return "#F8FAFC";
         }
 
         function getNickThemeSampleStyle(theme) {
             if (String(theme).startsWith("#")) return `color:${theme};`;
-            if (theme === "grad_ocean") return "background:linear-gradient(90deg,#38bdf8,#22d3ee,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;";
-            if (theme === "grad_sunset") return "background:linear-gradient(90deg,#fb7185,#f59e0b,#facc15);-webkit-background-clip:text;background-clip:text;color:transparent;";
-            if (theme === "grad_candy") return "background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent;";
-            if (theme === "grad_aurora") return "background:linear-gradient(90deg,#22c55e,#14b8a6,#3b82f6,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "grad_ocean") return "background:linear-gradient(90deg,#3B82F6,#60A5FA,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent;";
             return "";
         }
 
         function getNickThemeLabel(theme) {
             const map = {
-                grad_ocean: "Градиент Океан",
-                grad_sunset: "Градиент Закат",
-                grad_candy: "Градиент Кэнди",
-                grad_aurora: "Градиент Аврора",
-                nutella: "Nutella (CF)",
-                rainbow: "Радуга",
-                fire_ice: "Огонь/Лёд",
-                matrix: "Матрица",
-                blood_ink: "Кровавые чернила"
+                grad_ocean: "Синий градиент"
             };
             return map[String(theme)] || String(theme);
         }
@@ -1464,25 +1467,6 @@
         function buildThemeSampleHtml(theme, sampleLogin) {
             const nick = String(sampleLogin || viewedUser || currentUser || "user").trim().slice(0, 16);
             const safeNick = safeInlineText(nick || "user");
-            if (theme === "nutella") {
-                const first = safeNick.slice(0, 1) || "u";
-                const rest = safeNick.slice(1) || "";
-                return `<span><span style="color:#ffffff">${first}</span><span style="color:#dc2626">${rest}</span></span>`;
-            }
-            if (theme === "rainbow") {
-                const colors = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"];
-                return safeNick.split("").map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
-            }
-            if (theme === "matrix") {
-                const colors = ["#22c55e", "#16a34a", "#4ade80"];
-                return safeNick.split("").map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
-            }
-            if (theme === "fire_ice") {
-                return `<span style="background:linear-gradient(90deg,#ef4444 0%,#f97316 45%,#38bdf8 55%,#2563eb 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">${safeNick}</span>`;
-            }
-            if (theme === "blood_ink") {
-                return `<span style="background:linear-gradient(180deg,#f87171 0%,#b91c1c 42%,#0b0b0b 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 0 rgba(0,0,0,.45),0 8px 16px rgba(127,29,29,.35);">${safeNick}</span>`;
-            }
             return `<span style="${getNickThemeSampleStyle(theme)}">${safeNick}</span>`;
         }
 
@@ -1984,7 +1968,7 @@
             }
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
-                navProfileEl.style.setProperty("color", proNickColor || nickColor, "important");
+                navProfileEl.style.setProperty("color", isPro ? "#60A5FA" : "#F8FAFC", "important");
                 const navTier = level === "pro_plus" ? "PRO+" : "PRO";
                 navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
             }
@@ -2003,7 +1987,7 @@
             // ---- RANK ----
             const rankEl = document.getElementById("rank");
             rankEl.innerText = getRank(stats.exp || 0);
-            rankEl.style.setProperty("color", nickColor, "important");
+            rankEl.style.setProperty("color", "#94A3B8", "important");
             const avatarBlock = document.querySelector(".avatar-block");
             if (avatarBlock) {
                 const seasonalEnabled = !!(sub && sub.visuals && sub.visuals.seasonalEnabled);
