@@ -2622,39 +2622,38 @@ def _mark_task_solved_for_user(login, task):
     try:
         task_difficulties = _load_task_difficulties()
         stats_ref = db.reference(f"users/{login}/stats")
-
-        def _txn(current):
-            current = current if isinstance(current, dict) else {}
-            before_solved = _normalize_solved_map(current.get("solved"))
-            before_cnt = int(current.get("cnt") or 0)
-            before_exp = int(current.get("exp") or 0)
-            solved_map = _normalize_solved_map(current.get("solved"))
-            already_solved = bool(solved_map.get(task))
-            solved_map[task] = True
-            exp = sum(
-                _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
-                for task_id in solved_map
-            )
-            current["solved"] = solved_map
-            current["cnt"] = len(solved_map)
-            current["exp"] = exp
-            print(
-                "[XP TRACE][SERVER] stats txn:",
-                {
-                    "login": login,
-                    "task": task,
-                    "alreadySolved": already_solved,
-                    "beforeCnt": before_cnt,
-                    "beforeExp": before_exp,
-                    "beforeSolvedSize": len(before_solved),
-                    "afterCnt": current["cnt"],
-                    "afterExp": current["exp"],
-                    "afterSolvedSize": len(solved_map),
-                },
-            )
-            return current
-
-        stats_ref.transaction(_txn)
+        current = stats_ref.get() or {}
+        current = current if isinstance(current, dict) else {}
+        before_solved = _normalize_solved_map(current.get("solved"))
+        before_cnt = int(current.get("cnt") or 0)
+        before_exp = int(current.get("exp") or 0)
+        solved_map = _normalize_solved_map(current.get("solved"))
+        already_solved = bool(solved_map.get(task))
+        solved_map[task] = True
+        exp = sum(
+            _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
+            for task_id in solved_map
+        )
+        payload = {
+            "solved": solved_map,
+            "cnt": len(solved_map),
+            "exp": exp,
+        }
+        print(
+            "[XP TRACE][SERVER] stats recompute before write:",
+            {
+                "login": login,
+                "task": task,
+                "alreadySolved": already_solved,
+                "beforeCnt": before_cnt,
+                "beforeExp": before_exp,
+                "beforeSolvedSize": len(before_solved),
+                "afterCnt": payload["cnt"],
+                "afterExp": payload["exp"],
+                "afterSolvedSize": len(solved_map),
+            },
+        )
+        stats_ref.update(payload)
         final_stats = stats_ref.get() or {}
         print(
             "[XP TRACE][SERVER] stats committed:",
