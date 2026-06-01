@@ -1,5 +1,0 @@
-Task 0
-Test 1: WA
-Final verdict: WA
-found
-Final verdict: CE

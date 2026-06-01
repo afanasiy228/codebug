@@ -4,3 +4,40 @@ codebug_tasks_deploy.pub
 tasks/
 .tasks_repo/
 .codebug_work/
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+env/
+.env/
+
+# Test, type checker, and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.coverage
+htmlcov/
+
+# Build outputs and compiled artifacts
+build/
+dist/
+*.egg-info/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Logs and temporary files
+*.log
+*.err
+*.tmp
+*.temp
