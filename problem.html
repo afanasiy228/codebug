@@ -791,6 +791,31 @@
             return parsed;
         }
 
+        async function resolveSubmitLogin() {
+            const localLogin = (typeof getUser === "function" ? String(getUser() || "").trim() : "");
+            try {
+                const auth = window.firebase?.auth?.();
+                const authUser = auth?.currentUser;
+                if (!authUser) return localLogin;
+                const mapFn =
+                    window.resolveLoginByUidOrEmail ||
+                    (typeof resolveLoginByUidOrEmail === "function" ? resolveLoginByUidOrEmail : null);
+                if (typeof mapFn === "function") {
+                    const mapped = String(await mapFn(authUser.uid, authUser.email) || "").trim();
+                    if (mapped) {
+                        if (typeof setUser === "function") setUser(mapped);
+                        if (mapped !== localLogin) {
+                            console.warn("[XP TRACE][CLIENT] submit login corrected via uid map:", { from: localLogin, to: mapped });
+                        }
+                        return mapped;
+                    }
+                }
+            } catch (e) {
+                console.warn("[XP TRACE][CLIENT] resolveSubmitLogin failed:", e);
+            }
+            return localLogin;
+        }
+
         async function submitCode() {
             console.log("[submitCode] старт");
 
@@ -803,7 +828,7 @@
                 return;
             }
 
-            const user = getUser();
+            const user = await resolveSubmitLogin();
 
             if (!user) {
                 alert("зарегстрируйтесь чтобы решать задачи");
@@ -827,7 +852,7 @@
                 queueTimer = setTimeout(() => {
                     updateSubmissionRow(pendingRow, "Тестируется", "#c9c9c9");
                 }, 800);
-                const verdict = await sendToJudge(taskId, code);
+                const verdict = await sendToJudge(taskId, code, user);
                 console.log("⬅ Вердикт от сервера:", verdict);
                 if (isSolvedVerdict(verdict)) {
                     console.group("%c[XP TRACE][CLIENT] solved verdict received", "color:#7fff7f;font-weight:bold;");
@@ -893,16 +918,19 @@
             return token;
         }
 
-        async function sendToJudge(taskId, code) {
+        async function sendToJudge(taskId, code, submitUserLogin) {
             console.log("%c[sendToJudge()] → fetch()", "color:#aaf");
 
             const payload = {
                 task: taskId,
                 code: code,
                 language: TASK_LANGUAGE,
-                user: getUser(),
+                user: String(submitUserLogin || (typeof getUser === "function" ? getUser() : "") || "").trim(),
                 contestId: new URL(location.href).searchParams.get("contest")
             };
+            if (!payload.user) {
+                throw new Error("Не удалось определить логин для submit");
+            }
 
             console.log("Payload JSON:", payload);
 
