@@ -1215,6 +1215,20 @@
             return tags.length ? `${type} · ${tags.join(" · ")}` : type;
         }
 
+        function taskSearchText(problem) {
+            const rawTags = Array.isArray(problem.tags) ? problem.tags : [];
+            const normalizedTags = rawTags.map(normalizeTag);
+            return [
+                problem.title,
+                taskTypeLabel(problem.taskType),
+                problem.taskType,
+                problem.difficulty,
+                problem.language,
+                ...rawTags,
+                ...normalizedTags
+            ].map((value) => String(value || "").toLowerCase()).join(" ");
+        }
+
         function taskExp(problem) {
             const d = String(problem.difficulty || "").toLowerCase();
             return Number(XP_BY_DIFFICULTY[d] || 5);
@@ -1250,7 +1264,7 @@
             return baseList.filter((p) => {
                 if (difficulty && p.difficulty !== difficulty) return false;
                 if (language && (p.language || "cpp") !== language) return false;
-                if (query && !String(p.title || "").toLowerCase().includes(query)) return false;
+                if (query && !taskSearchText(p).includes(query)) return false;
                 const solved = isTaskSolved(p.id);
                 if (currentStatusFilter === "solved" && !solved) return false;
                 if (currentStatusFilter === "unsolved" && solved) return false;
