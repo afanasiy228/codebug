@@ -45,11 +45,6 @@
       ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
     },
 
-    "site": {
-      ".read": true,
-      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
-    },
-
     "contests": {
       ".read": true,
       ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
