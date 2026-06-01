@@ -2759,11 +2759,11 @@ def _load_task_difficulties():
     for name in os.listdir(TASKS_REPO_DIR):
         if not str(name).isdigit():
             continue
-        problem = load_json(os.path.join(TASKS_REPO_DIR, name, "problem.json")) or {}
+        problem = _read_json(os.path.join(TASKS_REPO_DIR, name, "problem.json")) or {}
         if problem:
             difficulties[str(name)] = str(problem.get("difficulty") or "")
             continue
-        meta = load_json(os.path.join(TASKS_REPO_DIR, name, "meta.json")) or {}
+        meta = _read_json(os.path.join(TASKS_REPO_DIR, name, "meta.json")) or {}
         difficulties[str(name)] = str(meta.get("difficulty") or "")
     return difficulties
 
