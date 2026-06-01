@@ -716,11 +716,21 @@
                 ticks += 1;
                 const latest = await loadMySubsForThisProblem();
                 if (latest && isSolvedVerdict(latest)) {
-                    // solved/cnt/exp обновляются только на сервере
+                    console.group("%c[XP TRACE][CLIENT] polling observed solved", "color:#7fff7f;font-weight:bold;");
+                    console.log("tick =", ticks);
+                    console.log("task =", latest.task);
+                    console.log("verdict =", latest.verdict);
+                    console.log("status =", latest.status);
+                    console.log("statusLabel =", latest.statusLabel);
+                    console.log("score =", latest.score);
+                    console.log("date =", latest.date ? new Date(latest.date).toISOString() : null);
+                    console.log("backend should have recalculated users/<login>/stats by now.");
+                    console.groupEnd();
                 }
                 const firstStatus = document.querySelector("#subs tr td:nth-child(2)")?.textContent?.trim()?.toUpperCase() || "";
                 const stillPending = firstStatus === "В ОЧЕРЕДИ" || firstStatus === "ТЕСТИРУЕТСЯ" || firstStatus === "QUEUE" || firstStatus === "TESTING";
                 if (!stillPending || ticks > 120) {
+                    console.log("[XP TRACE][CLIENT] polling stop", { ticks, firstStatus, stillPending });
                     clearInterval(SUBS_POLL_TIMER);
                     SUBS_POLL_TIMER = null;
                 }
@@ -819,6 +829,22 @@
                 }, 800);
                 const verdict = await sendToJudge(taskId, code);
                 console.log("⬅ Вердикт от сервера:", verdict);
+                if (isSolvedVerdict(verdict)) {
+                    console.group("%c[XP TRACE][CLIENT] solved verdict received", "color:#7fff7f;font-weight:bold;");
+                    console.log("user =", user);
+                    console.log("taskId =", taskId);
+                    console.log("status =", verdict.status);
+                    console.log("statusLabel =", verdict.statusLabel);
+                    console.log("rawVerdict =", verdict.rawVerdict);
+                    console.log("score =", verdict.score);
+                    console.log("timeMs =", verdict.timeMs);
+                    console.log("memoryMb =", verdict.memoryMb);
+                    console.log("passedGroups =", verdict.passedGroups);
+                    console.log("firebaseSaved =", verdict.firebaseSaved);
+                    console.log("firebaseError =", verdict.firebaseError || null);
+                    console.log("exp/cnt/solved are updated on backend worker only.");
+                    console.groupEnd();
+                }
                 clearTimeout(queueTimer);
                 queueTimer = null;
                 updateSubmissionRow(pendingRow, verdict.statusLabel || verdict.status || "ERROR");
@@ -828,6 +854,7 @@
                 } else {
                     loadMySubsForThisProblem();
                     if ((verdict.statusLabel || verdict.status) === "QUEUE") {
+                        console.log("%c[XP TRACE][CLIENT] QUEUE -> startSubmissionPolling", "color:#c9c9c9;");
                         startSubmissionPolling();
                     }
                 }

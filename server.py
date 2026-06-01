@@ -834,6 +834,20 @@ def _run_submission_job(job):
             "passedGroups": parsed["passedGroups"],
             "log": log_text,
         })
+        print(
+            "[XP TRACE][SERVER] judge parsed:",
+            {
+                "login": login,
+                "task": task,
+                "submissionId": submission_id,
+                "final": final,
+                "status": public_status,
+                "statusLabel": status_label,
+                "score": parsed.get("score"),
+                "firstFail": parsed.get("firstFail"),
+                "passedGroups": parsed.get("passedGroups"),
+            },
+        )
 
     if submission_id and FIREBASE_READY:
         updated = False
@@ -861,6 +875,19 @@ def _run_submission_job(job):
         "rawVerdict": result_obj.get("rawVerdict"),
         "score": result_obj.get("score"),
     })
+    print(
+        "[XP TRACE][SERVER] solved check:",
+        {
+            "login": login,
+            "task": task,
+            "submissionId": submission_id,
+            "status": result_obj.get("status"),
+            "statusLabel": result_obj.get("statusLabel"),
+            "rawVerdict": result_obj.get("rawVerdict"),
+            "score": result_obj.get("score"),
+            "isSolved": solved_like,
+        },
+    )
     _append_activity(login, "submission", {
         "task": task,
         "verdict": result_obj.get("status"),
@@ -868,6 +895,7 @@ def _run_submission_job(job):
         "contestId": job.get("contestId"),
     })
     if solved_like:
+        print(f"[XP TRACE][SERVER] calling _mark_task_solved_for_user(login={login}, task={task})")
         _mark_task_solved_for_user(login, task)
 
 
@@ -2586,7 +2614,11 @@ def _mark_task_solved_for_user(login, task):
 
         def _txn(current):
             current = current if isinstance(current, dict) else {}
+            before_solved = _normalize_solved_map(current.get("solved"))
+            before_cnt = int(current.get("cnt") or 0)
+            before_exp = int(current.get("exp") or 0)
             solved_map = _normalize_solved_map(current.get("solved"))
+            already_solved = bool(solved_map.get(task))
             solved_map[task] = True
             exp = sum(
                 _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
@@ -2595,9 +2627,34 @@ def _mark_task_solved_for_user(login, task):
             current["solved"] = solved_map
             current["cnt"] = len(solved_map)
             current["exp"] = exp
+            print(
+                "[XP TRACE][SERVER] stats txn:",
+                {
+                    "login": login,
+                    "task": task,
+                    "alreadySolved": already_solved,
+                    "beforeCnt": before_cnt,
+                    "beforeExp": before_exp,
+                    "beforeSolvedSize": len(before_solved),
+                    "afterCnt": current["cnt"],
+                    "afterExp": current["exp"],
+                    "afterSolvedSize": len(solved_map),
+                },
+            )
             return current
 
         stats_ref.transaction(_txn)
+        final_stats = stats_ref.get() or {}
+        print(
+            "[XP TRACE][SERVER] stats committed:",
+            {
+                "login": login,
+                "task": task,
+                "finalCnt": (final_stats or {}).get("cnt"),
+                "finalExp": (final_stats or {}).get("exp"),
+                "hasTask": bool(_normalize_solved_map((final_stats or {}).get("solved")).get(task)),
+            },
+        )
     except Exception as e:
         print(f"mark solved stats update failed (login={login}, task={task}):", e)
 
