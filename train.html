@@ -231,9 +231,9 @@
 
         .metric-label {
             color: #718596;
-            font-size: 7px;
-            font-weight: 500;
-            letter-spacing: 0.05em;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.045em;
             text-transform: uppercase;
             margin-top: 2px;
             white-space: nowrap;
@@ -302,20 +302,31 @@
             box-shadow: none !important;
             color: #d7e7f7 !important;
             border-radius: 0;
-            padding: 0 24px 0 2px;
+            border-bottom: 1px solid rgba(122, 145, 164, 0.3) !important;
+            padding: 0 24px 2px 2px;
             min-width: 142px;
-            height: 24px;
+            height: 30px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             outline: none;
             appearance: none;
             -webkit-appearance: none;
+            color-scheme: dark;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2389cb4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
             background-repeat: no-repeat !important;
             background-position: right 2px center !important;
         }
 
-        .compact-select:focus { color: #f0f7ff !important; }
+        .compact-select:hover { border-bottom-color: rgba(158, 240, 24, 0.56) !important; }
+        .compact-select:focus {
+            color: #f0f7ff !important;
+            border-bottom-color: rgba(158, 240, 24, 0.72) !important;
+        }
+
+        .compact-select option {
+            color: #deebf8;
+            background: #0b121a;
+        }
 
         .filter-actions {
             display: inline-flex;
@@ -348,6 +359,16 @@
             align-items: center;
             gap: 6px;
             white-space: nowrap;
+        }
+
+        .random-link svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .random-link:hover { color: #e3edf8 !important; }
@@ -911,7 +932,15 @@
                     </select>
                 </div>
                 <div class="filter-actions">
-                    <button type="button" class="random-link" id="randomBtn"><span>⟳</span>Случайная задача</button>
+                    <button type="button" class="random-link" id="randomBtn">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 3v5h-5"></path>
+                            <path d="M3 12a7 7 0 0 1 12-4l1 1"></path>
+                            <path d="M3 21v-5h5"></path>
+                            <path d="M21 12a7 7 0 0 1-12 4l-1-1"></path>
+                        </svg>
+                        Случайная задача
+                    </button>
                     <div class="filter-search">
                         <input id="searchInput" type="text" placeholder="Поиск задачи…">
                         <svg class="filter-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
