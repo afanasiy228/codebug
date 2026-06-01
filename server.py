@@ -1881,6 +1881,17 @@ def submit():
     code = payload["code"]
     login = payload["user_login"]
     contest_id = payload["contest_id"]
+    auth_header = request.headers.get("Authorization", "")
+    token_login = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.removeprefix("Bearer ").strip()
+        if token:
+            token_login = _resolve_login_from_token(token)
+            if token_login and token_login != login:
+                print(
+                    f"[submit] login override by token: payload_user={login} -> token_user={token_login}"
+                )
+                login = token_login
     # Temporary rollback: take login directly from payload (legacy behavior).
     # Auth token is not required for /submit in this mode.
     tier = _subscription_tier_label(login)
