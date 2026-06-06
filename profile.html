@@ -775,17 +775,20 @@
         }
         .pro-style-modal.open { display: flex; }
         .pro-style-card {
-            width: min(620px, 100%);
+            width: min(1080px, 100%);
+            max-height: min(86vh, 820px);
+            overflow: auto;
             border-radius: 14px;
-            border: 1px solid rgba(148, 163, 184, .28);
+            border: 1px solid rgba(245, 158, 11, .38);
             background: #121212;
-            padding: 18px;
+            padding: 24px;
             box-shadow: 0 24px 64px rgba(2, 6, 23, .6);
         }
         .pro-style-title {
             margin: 0 0 8px;
             color: #FFFFFF;
-            font-size: 22px;
+            font-size: 30px;
+            line-height: 1.1;
         }
         .pro-preview-list {
             margin-top: 10px;
@@ -803,22 +806,22 @@
         }
         .choice-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-            margin-top: 8px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 10px;
         }
         .choice-btn {
             width: 100%;
             margin: 0;
             text-align: left;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, .08);
+            padding: 18px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, .08);
             background: linear-gradient(180deg, rgba(18,18,18,.98), rgba(11,11,11,.98)) !important;
             color: #FFFFFF;
             cursor: pointer;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
-            min-height: 72px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+            min-height: 126px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -830,11 +833,11 @@
         }
         .choice-btn.active {
             border-color: rgba(245,158,11,.95);
-            box-shadow: 0 0 0 1px rgba(245,158,11,.45), 0 10px 24px rgba(245, 158, 11, .18);
+            box-shadow: 0 0 0 1px rgba(245,158,11,.45), 0 16px 36px rgba(245, 158, 11, .22);
         }
         .choice-btn .sample {
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 42px;
+            font-weight: 800;
             font-family: "Space Grotesk", sans-serif;
             line-height: 1;
             white-space: nowrap;
@@ -842,12 +845,13 @@
             text-overflow: ellipsis;
         }
         .choice-btn .meta {
-            margin-top: 7px;
-            font-size: 12px;
+            margin-top: 18px;
+            font-size: 15px;
             color: #FFFFFF;
-            font-weight: 600;
+            font-weight: 800;
             opacity: .9;
             text-transform: uppercase;
+            letter-spacing: .03em;
         }
         .editable-nick {
             cursor: pointer;
@@ -1330,9 +1334,12 @@
         const user = currentUser;
         let currentSubscription = null;
         let currentSubscriptionLevel = "free";
-        const PRO_COLOR_PALETTE = ["#F59E0B", "#FBBF24", "#F59E0B", "#D97706"];
-        const PRO_PLUS_THEMES = ["grad_ocean"];
-        const PRO_PLUS_EXTRA_THEMES = [];
+        const PRO_COLOR_PALETTE = [
+            "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
+            "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"
+        ];
+        const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
+        const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix", "blood_ink"];
         const COVER_PRESETS = [
             { id: "cover_1", name: "Amber code", bg: "linear-gradient(120deg,#121212 0%,#F59E0B 100%)" },
             { id: "cover_2", name: "Dark build", bg: "linear-gradient(120deg,#050505 0%,#D97706 55%,#FBBF24 100%)" },
@@ -1458,13 +1465,27 @@
 
         function getNickThemeSampleStyle(theme) {
             if (String(theme).startsWith("#")) return `color:${theme};`;
-            if (theme === "grad_ocean") return "background:linear-gradient(90deg,#F59E0B,#FBBF24,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "grad_ocean") return "background:linear-gradient(90deg,#38bdf8,#22d3ee,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "grad_sunset") return "background:linear-gradient(90deg,#fb7185,#f97316,#facc15);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "grad_candy") return "background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "grad_aurora") return "background:linear-gradient(90deg,#22c55e,#06b6d4,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "fire_ice") return "background:linear-gradient(90deg,#ef4444,#f97316,#38bdf8,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent;";
+            if (theme === "matrix") return "color:#22c55e;text-shadow:0 0 8px rgba(34,197,94,.28);";
+            if (theme === "blood_ink") return "color:#0b0b0b;text-shadow:1px 1px 0 #7f0f16,2px 2px 0 rgba(127,15,22,.75),0 0 12px rgba(127,15,22,.35);";
             return "";
         }
 
         function getNickThemeLabel(theme) {
             const map = {
-                grad_ocean: "Синий градиент"
+                grad_ocean: "Синий градиент",
+                grad_sunset: "Градиент закат",
+                grad_candy: "Градиент candy",
+                grad_aurora: "Градиент aurora",
+                nutella: "Nutella (CF)",
+                rainbow: "Радуга",
+                fire_ice: "Огонь/лёд",
+                matrix: "Matrix",
+                blood_ink: "Blud ink"
             };
             return map[String(theme)] || String(theme);
         }
@@ -1481,6 +1502,13 @@
         function buildThemeSampleHtml(theme, sampleLogin) {
             const nick = String(sampleLogin || viewedUser || currentUser || "user").trim().slice(0, 16);
             const safeNick = safeInlineText(nick || "user");
+            if (theme === "nutella") {
+                return Array.from(safeNick).map((ch, i) => `<span style="color:${i === 0 ? "#ffffff" : "#ef4444"}">${ch}</span>`).join("");
+            }
+            if (theme === "rainbow") {
+                const colors = ["#ef4444", "#f97316", "#facc15", "#22c55e", "#06b6d4", "#8b5cf6", "#f472b6"];
+                return Array.from(safeNick).map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
+            }
             return `<span style="${getNickThemeSampleStyle(theme)}">${safeNick}</span>`;
         }
 

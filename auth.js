@@ -388,9 +388,13 @@ function hasSubscriptionAtLeast(sub, minLevel) {
 }
 
 const PRO_NICK_SOLID_COLORS = [
-    "#F59E0B", "#FBBF24", "#F59E0B", "#D97706"
+    "#60a5fa", "#38bdf8", "#a78bfa", "#22d3ee", "#34d399",
+    "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6"
 ];
-const PRO_PLUS_NICK_THEMES = ["grad_ocean"];
+const PRO_PLUS_NICK_THEMES = [
+    "grad_ocean", "grad_sunset", "grad_candy", "grad_aurora",
+    "nutella", "rainbow", "fire_ice", "matrix", "blood_ink"
+];
 
 function getAllowedNickThemesForLevel(level) {
     const base = [...PRO_NICK_SOLID_COLORS];
@@ -426,9 +430,35 @@ function buildStyledNickHtml(login, sub, fallbackColor) {
     const level = getSubscriptionLevel(sub);
     if (level === "free") return `<span style="color:#FFFFFF">${safe}</span>`;
     const theme = getSubscriptionNickTheme(sub);
-    if (theme.startsWith("#")) return `<span style="color:#FFFFFF">${safe}</span>`;
+    if (theme.startsWith("#")) return `<span style="color:${theme}">${safe}</span>`;
     if (theme === "grad_ocean") {
-        return `<span style="color:#FFFFFF">${safe}</span>`;
+        return `<span style="background:linear-gradient(90deg,#38bdf8,#22d3ee,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "grad_sunset") {
+        return `<span style="background:linear-gradient(90deg,#fb7185,#f97316,#facc15);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "grad_candy") {
+        return `<span style="background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "grad_aurora") {
+        return `<span style="background:linear-gradient(90deg,#22c55e,#06b6d4,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "nutella") {
+        const letters = Array.from(safe);
+        return letters.map((ch, i) => `<span style="color:${i === 0 ? "#ffffff" : "#ef4444"}">${ch}</span>`).join("");
+    }
+    if (theme === "rainbow") {
+        const colors = ["#ef4444", "#f97316", "#facc15", "#22c55e", "#06b6d4", "#8b5cf6", "#f472b6"];
+        return Array.from(safe).map((ch, i) => `<span style="color:${colors[i % colors.length]}">${ch}</span>`).join("");
+    }
+    if (theme === "fire_ice") {
+        return `<span style="background:linear-gradient(90deg,#ef4444,#f97316,#38bdf8,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent;">${safe}</span>`;
+    }
+    if (theme === "matrix") {
+        return `<span style="color:#22c55e;text-shadow:0 0 8px rgba(34,197,94,.28);">${safe}</span>`;
+    }
+    if (theme === "blood_ink") {
+        return `<span style="color:#0b0b0b;text-shadow:1px 1px 0 #7f0f16,2px 2px 0 rgba(127,15,22,.75),0 0 12px rgba(127,15,22,.35);">${safe}</span>`;
     }
     return `<span style="color:#FFFFFF">${safe}</span>`;
 }
