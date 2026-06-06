@@ -744,18 +744,17 @@
         </div>
         <div id="subscriptionRequestsList" class="task-visibility-list"></div>
         <hr style="border:none;border-top:1px solid rgba(148,163,184,.2);margin:14px 0;">
-        <p class="admin-note">Быстрое назначение подписки по логину.</p>
+        <p class="admin-note">Управление сроком подписки по логину. Дни можно добавлять и вычитать, например 30, 10, 50 или -10.</p>
         <input id="quickSubLogin" class="admin-input" type="text" placeholder="Логин пользователя">
         <div class="admin-actions">
           <select id="quickSubTier" class="admin-input" style="max-width:180px;">
             <option value="pro">pro</option>
             <option value="pro_plus">pro_plus</option>
           </select>
-          <select id="quickSubStatus" class="admin-input" style="max-width:180px;">
-            <option value="active">active</option>
-            <option value="disabled">disabled</option>
-          </select>
-          <button type="button" onclick="adminQuickSetSubscription()">Применить</button>
+          <input id="quickSubDays" class="admin-input" type="number" step="1" value="30" placeholder="Дней: 30, -10" style="max-width:180px;">
+          <button type="button" onclick="adminAddSubscriptionDays()">Добавить дни</button>
+          <button type="button" onclick="adminSetSubscriptionInfinite()">Бесконечность</button>
+          <button type="button" class="admin-secondary" onclick="adminRemoveSubscription()">Убрать подписку</button>
         </div>
       </div>
 
@@ -1932,26 +1931,51 @@
       setAdminLog(`Доступ снят: ${login}`);
     }
 
+    function subscriptionFeaturesForTier(tier) {
+      return {
+        earlyAccess: String(tier || "pro").toLowerCase() !== "pro"
+      };
+    }
+
+    function activeSubscriptionPayload(login, tier, expiresAt, extra = {}) {
+      const now = Date.now();
+      return {
+        tier: String(tier || "pro").toLowerCase(),
+        status: "active",
+        activatedAt: extra.activatedAt || now,
+        updatedAt: now,
+        expiresAt,
+        infinite: expiresAt === null,
+        graceUntil: null,
+        paymentWarning: null,
+        failedPaymentAt: null,
+        nicknameChangedAt: extra.nicknameChangedAt || null,
+        visuals: extra.visuals && typeof extra.visuals === "object" ? extra.visuals : { seasonalEnabled: true },
+        features: subscriptionFeaturesForTier(tier)
+      };
+    }
+
     async function setSubscriptionStatus(login, tier, status) {
       const now = Date.now();
-      const update = {
-        tier: String(tier || "pro"),
-        status,
-        updatedAt: now,
-        features: {
-          earlyAccess: String(tier || "pro").toLowerCase() !== "pro"
-        }
-      };
       if (status === "active") {
-        update.activatedAt = now;
-        update.expiresAt = now + 30 * 24 * 60 * 60 * 1000;
-        update.graceUntil = null;
-        update.paymentWarning = null;
-        if (!update.visuals) update.visuals = {};
-        update.visuals = { seasonalEnabled: true };
+        const snap = await db.ref("users/" + login + "/subscription").get();
+        const current = snap.exists() && typeof snap.val() === "object" ? snap.val() : {};
+        await db.ref("users/" + login + "/subscription").update(
+          activeSubscriptionPayload(login, tier, now + 30 * 24 * 60 * 60 * 1000, current)
+        );
+        setAdminLog(`Подписка ${login}: active +30 дней`);
+        return;
       }
-      await db.ref("users/" + login + "/subscription").update(update);
-      setAdminLog(`Подписка ${login}: ${status}`);
+      await db.ref("users/" + login + "/subscription").update({
+        tier: String(tier || "pro").toLowerCase(),
+        status: "disabled",
+        updatedAt: now,
+        disabledAt: now,
+        infinite: false,
+        paymentWarning: null,
+        features: { earlyAccess: false }
+      });
+      setAdminLog(`Подписка ${login}: disabled`);
     }
 
     async function adminResolveSubscriptionRequest(key, action) {
@@ -1966,21 +1990,9 @@
       const payload = (req.payload && typeof req.payload === "object") ? req.payload : {};
       if (!login) return;
       if (action === "activate") {
-        await db.ref("users/" + login + "/subscription").set({
-          tier: String(selectedTier || payload.tier || tier || "pro").toLowerCase(),
-          status: "active",
-          activatedAt: Date.now(),
-          updatedAt: Date.now(),
-          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-          graceUntil: null,
-          paymentWarning: null,
-          nicknameChangedAt: payload.nicknameChangedAt || null,
-          visuals: payload.visuals && typeof payload.visuals === "object" ? payload.visuals : { seasonalEnabled: true },
-          features: {
-            earlyAccess: String(selectedTier).toLowerCase() !== "pro"
-          }
-        });
-        await setSubscriptionStatus(login, selectedTier, "active");
+        await db.ref("users/" + login + "/subscription").set(
+          activeSubscriptionPayload(login, selectedTier || payload.tier || tier || "pro", Date.now() + 30 * 24 * 60 * 60 * 1000, payload)
+        );
         await reqRef.update({ status: "approved", resolvedAt: Date.now() });
       } else {
         await setSubscriptionStatus(login, selectedTier, "disabled");
@@ -2032,48 +2044,106 @@
       });
     }
 
-    async function adminQuickSetSubscription() {
+    function readQuickSubscriptionLogin() {
       const login = String(document.getElementById("quickSubLogin")?.value || "").trim();
-      const tier = String(document.getElementById("quickSubTier")?.value || "pro").trim().toLowerCase();
-      const status = String(document.getElementById("quickSubStatus")?.value || "active").trim().toLowerCase();
       if (!login) {
-        setAdminLog("Укажи логин для назначения подписки.");
-        return;
+        setAdminLog("Укажи логин пользователя.");
+        return null;
       }
+      return login;
+    }
+
+    function readQuickSubscriptionTier() {
+      const tier = String(document.getElementById("quickSubTier")?.value || "pro").trim().toLowerCase();
       if (!["pro", "pro_plus"].includes(tier)) {
         setAdminLog("Некорректный tier.");
+        return null;
+      }
+      return tier;
+    }
+
+    async function adminAddSubscriptionDays() {
+      const login = readQuickSubscriptionLogin();
+      const tier = readQuickSubscriptionTier();
+      const days = Number(document.getElementById("quickSubDays")?.value || 0);
+      if (!login || !tier) return;
+      if (!Number.isFinite(days) || !Number.isInteger(days)) {
+        setAdminLog("Кол-во дней должно быть целым числом, например 30 или -10.");
         return;
       }
-      if (!["active", "disabled"].includes(status)) {
-        setAdminLog("Некорректный status.");
+      if (days === 0) {
+        setAdminLog("Укажи ненулевое количество дней.");
         return;
       }
+      const now = Date.now();
+      const deltaMs = days * 24 * 60 * 60 * 1000;
       try {
-        await setSubscriptionStatus(login, tier, status);
-        if (status === "active") {
-          await db.ref("users/" + login + "/subscription").update({
+        const ref = db.ref("users/" + login + "/subscription");
+        const snap = await ref.get();
+        const current = snap.exists() && typeof snap.val() === "object" ? snap.val() : {};
+        let base = Number(current.expiresAt || 0);
+        if (current.infinite === true || current.expiresAt === null) {
+          base = now;
+        }
+        if (!Number.isFinite(base) || base < now) base = now;
+        const expiresAt = Math.max(0, base + deltaMs);
+        if (expiresAt <= now) {
+          await ref.update({
             tier,
-            status,
-            activatedAt: Date.now(),
-            updatedAt: Date.now(),
-            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+            status: "disabled",
+            updatedAt: now,
+            disabledAt: now,
+            expiresAt,
+            infinite: false,
             graceUntil: null,
             paymentWarning: null,
-            visuals: { seasonalEnabled: true },
-            features: { earlyAccess: tier !== "pro" }
-          });
-        } else {
-          await db.ref("users/" + login + "/subscription").update({
-            tier,
-            status,
-            updatedAt: Date.now(),
             features: { earlyAccess: false }
           });
+          setAdminLog(`Подписка ${login}: срок уменьшен, подписка отключена.`);
+        } else {
+          await ref.update(activeSubscriptionPayload(login, tier, expiresAt, current));
+          const left = Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000));
+          setAdminLog(`Подписка ${login}: ${tier}, добавлено ${days} дн., осталось ${left} дн.`);
         }
-        setAdminLog(`Быстрое назначение: ${login} -> ${tier}/${status}`);
       } catch (err) {
         console.error(err);
-        setAdminLog(`Ошибка назначения подписки: ${err?.message || err}`);
+        setAdminLog(`Ошибка изменения срока подписки: ${err?.message || err}`);
+      }
+    }
+
+    async function adminSetSubscriptionInfinite() {
+      const login = readQuickSubscriptionLogin();
+      const tier = readQuickSubscriptionTier();
+      if (!login || !tier) return;
+      try {
+        const ref = db.ref("users/" + login + "/subscription");
+        const snap = await ref.get();
+        const current = snap.exists() && typeof snap.val() === "object" ? snap.val() : {};
+        await ref.update(activeSubscriptionPayload(login, tier, null, current));
+        setAdminLog(`Подписка ${login}: ${tier}, бесконечность.`);
+      } catch (err) {
+        console.error(err);
+        setAdminLog(`Ошибка установки бесконечной подписки: ${err?.message || err}`);
+      }
+    }
+
+    async function adminRemoveSubscription() {
+      const login = readQuickSubscriptionLogin();
+      const tier = readQuickSubscriptionTier() || "pro";
+      if (!login) return;
+      try {
+        await setSubscriptionStatus(login, tier, "disabled");
+        await db.ref("users/" + login + "/subscription").update({
+          expiresAt: 0,
+          graceUntil: null,
+          infinite: false,
+          paymentWarning: null,
+          features: { earlyAccess: false }
+        });
+        setAdminLog(`Подписка ${login} убрана.`);
+      } catch (err) {
+        console.error(err);
+        setAdminLog(`Ошибка снятия подписки: ${err?.message || err}`);
       }
     }
 
