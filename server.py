@@ -86,6 +86,7 @@ PLATEGA_SUCCESS_URL = os.getenv("PLATEGA_SUCCESS_URL", f"{PUBLIC_SITE_URL}/donat
 PLATEGA_FAILED_URL = os.getenv("PLATEGA_FAILED_URL", f"{PUBLIC_SITE_URL}/donate.html?payment=failed")
 SUBSCRIPTION_PRICE_PRO_RUB = float(os.getenv("SUBSCRIPTION_PRICE_PRO_RUB", "1"))
 SUBSCRIPTION_PRICE_PRO_PLUS_RUB = float(os.getenv("SUBSCRIPTION_PRICE_PRO_PLUS_RUB", "2"))
+PLATEGA_AMOUNT_MULTIPLIER = float(os.getenv("PLATEGA_AMOUNT_MULTIPLIER", "1.14"))
 RUNTIME_WORK_DIR = os.getenv("CODEBUG_WORK_DIR", os.path.abspath(".codebug_work"))
 SEED_ADMIN_LOGINS = [
     login.strip() for login in os.getenv("SEED_ADMIN_LOGINS", "afanasy").split(",")
@@ -333,6 +334,17 @@ def _subscription_price_for_tier(tier):
     if tier == "pro_plus":
         return SUBSCRIPTION_PRICE_PRO_PLUS_RUB
     return None
+
+
+def _platega_amount_for_price(price):
+    try:
+        price = float(price)
+        multiplier = float(PLATEGA_AMOUNT_MULTIPLIER or 1)
+        if multiplier <= 0:
+            multiplier = 1
+        return round(price / multiplier, 2)
+    except Exception:
+        return price
 
 
 def _normalize_subscription(login, raw, write_back=False):
@@ -3123,15 +3135,19 @@ def platega_create_payment():
     tier = str(data.get("tier") or "").strip().lower()
     if tier not in {"pro", "pro_plus"}:
         return _api_error("invalid_tier", 400, "INVALID_TIER")
-    amount = _subscription_price_for_tier(tier)
-    if amount is None:
+    public_price = _subscription_price_for_tier(tier)
+    if public_price is None:
         return _api_error("invalid_tier", 400, "INVALID_TIER")
+    amount = _platega_amount_for_price(public_price)
 
     label = "PRO+" if tier == "pro_plus" else "PRO"
     payload_obj = {
         "login": login,
         "tier": tier,
         "periodDays": SUBSCRIPTION_PERIOD_DAYS,
+        "publicPrice": public_price,
+        "providerAmount": amount,
+        "amountMultiplier": PLATEGA_AMOUNT_MULTIPLIER,
         "createdAt": _now_ms()
     }
     body = {
@@ -3163,6 +3179,8 @@ def platega_create_payment():
             "login": login,
             "tier": tier,
             "label": label,
+            "publicPrice": public_price,
+            "amountMultiplier": PLATEGA_AMOUNT_MULTIPLIER,
             "amount": amount,
             "currency": PLATEGA_CURRENCY,
             "status": str(result.get("status") or "PENDING").upper(),
@@ -3182,6 +3200,8 @@ def platega_create_payment():
             "status": "awaiting_payment",
             "provider": "platega",
             "transactionId": transaction_id,
+            "publicPrice": public_price,
+            "amountMultiplier": PLATEGA_AMOUNT_MULTIPLIER,
             "amount": amount,
             "currency": PLATEGA_CURRENCY,
             "paymentUrl": payment_url,
@@ -3704,7 +3724,15 @@ def public_config():
     }
     return jsonify({
         "firebase": firebase_public,
-        "recaptchaSiteKey": RECAPTCHA_SITE_KEY
+        "recaptchaSiteKey": RECAPTCHA_SITE_KEY,
+        "subscriptions": {
+            "periodDays": SUBSCRIPTION_PERIOD_DAYS,
+            "prices": {
+                "pro": SUBSCRIPTION_PRICE_PRO_RUB,
+                "pro_plus": SUBSCRIPTION_PRICE_PRO_PLUS_RUB
+            },
+            "currency": PLATEGA_CURRENCY
+        }
     })
 
 

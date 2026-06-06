@@ -10,13 +10,11 @@
     <link rel="stylesheet" href="theme-dark.css">
     <style>
         :root {
-            --card-bg: #121212;
-            --card-stroke: rgba(255, 255, 255, 0.08);
             --muted: #B0B0B0;
             --text: #FFFFFF;
-            --pro: #F59E0B;
-            --proplus: #FBBF24;
-            --creator: #f59e0b;
+            --amber: #F59E0B;
+            --amber-soft: rgba(245, 158, 11, 0.16);
+            --line: rgba(255, 255, 255, 0.10);
         }
 
         * {
@@ -28,8 +26,8 @@
             font-family: "IBM Plex Sans", sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
-                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
+                radial-gradient(circle at 78% 18%, rgba(245, 158, 11, 0.11), transparent 34%),
+                radial-gradient(circle at 12% 78%, rgba(245, 158, 11, 0.07), transparent 34%),
                 #050505;
         }
 
@@ -68,110 +66,115 @@
         }
 
         .page {
-            max-width: 1150px;
+            max-width: 1180px;
             margin: 0 auto;
-            padding: 42px 22px 72px;
+            padding: 76px 26px 80px;
         }
 
         .hero {
-            margin-bottom: 24px;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            border-radius: 999px;
-            color: #B0B0B0;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 14px;
+            margin-bottom: 72px;
         }
 
         h1 {
             margin: 0;
             font-family: "Space Grotesk", sans-serif;
-            font-size: clamp(30px, 4.2vw, 46px);
+            font-size: clamp(42px, 6vw, 72px);
             line-height: 1.1;
             letter-spacing: 0;
             color: #FFFFFF;
         }
 
         .sub {
-            margin-top: 14px;
+            margin-top: 18px;
             color: #B0B0B0;
-            max-width: 720px;
-            font-size: 16px;
+            max-width: 620px;
+            font-size: 18px;
             line-height: 1.6;
         }
 
         .payment-status {
             display: none;
-            margin: 18px 0 26px;
-            padding: 12px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(148, 163, 184, 0.24);
-            background: rgba(18, 18, 18, 0.78);
+            margin: -42px 0 44px;
+            padding: 0 0 14px;
+            border-bottom: 1px solid var(--line);
             color: #dbe8f3;
             font-size: 14px;
             line-height: 1.5;
         }
 
         .payment-status.warn {
-            border-color: rgba(245, 158, 11, 0.45);
             color: #FDE68A;
         }
 
         .payment-status.ok {
-            border-color: rgba(34, 197, 94, 0.45);
             color: #BBF7D0;
         }
 
         .tiers {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
+            gap: 72px;
+            position: relative;
+            align-items: start;
+        }
+
+        .tiers::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            background: var(--line);
         }
 
         .tier {
-            background: var(--card-bg);
-            border: 1px solid var(--card-stroke);
-            border-radius: 8px;
-            padding: 18px 18px 16px;
             display: flex;
             flex-direction: column;
-            min-height: 460px;
+            min-height: 520px;
         }
 
         .tier-head {
-            margin-bottom: 12px;
+            margin-bottom: 42px;
         }
 
         .tier-name {
             font-family: "Space Grotesk", sans-serif;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
-            margin: 0 0 8px;
+            margin: 0 0 24px;
             line-height: 1.2;
             color: #FFFFFF;
+            letter-spacing: .06em;
+            text-transform: uppercase;
         }
 
         .tier-price {
-            font-size: 18px;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(54px, 6.5vw, 84px);
             font-weight: 700;
             margin: 0;
+            line-height: 0.95;
+            color: #FFFFFF;
+            letter-spacing: -0.02em;
+        }
+
+        .tier-period {
+            margin-left: 10px;
+            color: var(--muted);
+            font-size: 18px;
+            font-weight: 500;
         }
 
         .tier-note {
-            margin: 8px 0 0;
+            margin: 20px 0 0;
             color: var(--muted);
-            font-size: 14px;
+            font-size: 15px;
             line-height: 1.5;
         }
 
         .feature-title {
-            margin: 14px 0 8px;
+            margin: 0 0 18px;
             font-size: 13px;
             color: #B0B0B0;
             text-transform: uppercase;
@@ -180,117 +183,102 @@
 
         .feature-list {
             margin: 0;
-            padding-left: 18px;
+            padding: 0;
+            list-style: none;
             color: #FFFFFF;
             display: grid;
-            gap: 8px;
-            font-size: 14px;
+            gap: 18px;
+            font-size: 16px;
             line-height: 1.45;
             flex: 1;
         }
 
-        .tier.pro { border-color: rgba(245, 158, 11, 0.45); }
-        .tier.pro .tier-price { color: var(--pro); }
+        .feature-list li {
+            display: grid;
+            grid-template-columns: 18px 1fr;
+            gap: 12px;
+            align-items: start;
+            color: rgba(255, 255, 255, 0.88);
+        }
 
-        .tier.proplus { border-color: rgba(56, 189, 248, 0.45); }
-        .tier.proplus .tier-price { color: var(--proplus); }
+        .feature-list li::before {
+            content: "✓";
+            color: var(--amber);
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .checkout-row {
+            margin-top: 66px;
+            padding-top: 24px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .secure-title {
+            margin: 0;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .secure-sub {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .checkout-actions {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
 
         .cta {
-            margin-top: 14px;
-            border: 1px solid rgba(148, 163, 184, 0.34);
-            border-radius: 8px;
-            background: #121212;
+            border: 0;
+            background: transparent;
             color: #FFFFFF;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 16px;
             cursor: pointer;
-            padding: 11px 12px;
-            width: 100%;
+            padding: 0;
         }
 
         .cta:hover {
-            border-color: rgba(251, 191, 36, 0.55);
-            box-shadow: 0 0 25px rgba(245, 158, 11, 0.18);
+            color: var(--amber);
         }
 
-        .footer-note {
-            margin-top: 20px;
-            color: #B0B0B0;
-            font-size: 13px;
-            line-height: 1.55;
-        }
-
-        .compliance-box {
-            margin-top: 18px;
-            border: 1px solid rgba(148, 163, 184, 0.24);
-            border-radius: 8px;
-            padding: 14px 16px;
-            background: rgba(18, 18, 18, 0.7);
-        }
-
-        .compliance-box h3 {
-            margin: 0 0 8px;
-            font-size: 15px;
-            color: #FFFFFF;
-        }
-
-        .compliance-list {
-            margin: 0;
-            padding-left: 18px;
-            color: #B0B0B0;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .doc-actions {
-            margin-top: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .doc-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(125, 211, 252, 0.45);
-            border-radius: 8px;
-            padding: 10px 12px;
-            color: #7dd3fc;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            background: rgba(2, 6, 23, 0.55);
-        }
-
-        .doc-btn:hover {
-            border-color: rgba(125, 211, 252, 0.8);
-            color: #e0f2fe;
-        }
-
-        .support-line {
-            margin-top: 12px;
-            font-size: 14px;
-            color: #B0B0B0;
-            line-height: 1.6;
-        }
-
-        .support-line a {
-            color: #7dd3fc;
-            text-decoration: none;
-        }
-
-        .support-line a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 1024px) {
+        @media (max-width: 860px) {
+            .page {
+                padding-top: 48px;
+            }
             .tiers {
                 grid-template-columns: 1fr;
+                gap: 46px;
             }
-
+            .tiers::before {
+                display: none;
+            }
             .tier {
                 min-height: auto;
+                padding-bottom: 42px;
+                border-bottom: 1px solid var(--line);
+            }
+            .tier:last-child {
+                border-bottom: 0;
+                padding-bottom: 0;
+            }
+            .checkout-row {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .checkout-actions {
+                justify-content: flex-start;
             }
         }
     </style>
@@ -304,9 +292,8 @@
 
     <main class="page">
         <section class="hero">
-            <div class="badge">Подписки</div>
-            <h1>Поддержка CodeBug и расширенные возможности</h1>
-            <p class="sub">Выбери подходящий уровень. Любая подписка помогает развивать платформу и открывает дополнительные инструменты для тренировок и контестов.</p>
+            <h1>Поддержка CodeBug</h1>
+            <p class="sub">Подписка помогает развивать платформу и открывает дополнительные возможности для тренировок, профиля и соревнований.</p>
         </section>
 
         <div id="paymentStatus" class="payment-status"></div>
@@ -315,7 +302,7 @@
             <article class="tier pro">
                 <div class="tier-head">
                     <h2 class="tier-name">PRO</h2>
-                    <p class="tier-price">99₽ / месяц</p>
+                    <p class="tier-price"><span id="pricePro">—</span><span class="tier-period">/ месяц</span></p>
                     <p class="tier-note">Для обычных активных пользователей.</p>
                 </div>
                 <p class="feature-title">Что входит</p>
@@ -329,13 +316,12 @@
                     <li>Доступ к seasonal cosmetics</li>
                     <li>Новый логотип</li>
                 </ul>
-                <button class="cta" onclick="showDonateInfo('PRO')">Выбрать PRO</button>
             </article>
 
             <article class="tier proplus">
                 <div class="tier-head">
                     <h2 class="tier-name">PRO+</h2>
-                    <p class="tier-price">199₽ / месяц</p>
+                    <p class="tier-price"><span id="priceProPlus">—</span><span class="tier-period">/ месяц</span></p>
                     <p class="tier-note">Расширенный набор инструментов для постоянных тренировок.</p>
                 </div>
                 <p class="feature-title">Что входит</p>
@@ -347,9 +333,19 @@
                     <li>Ранний доступ к новым функциям (early access)</li>
                     <li>Персональные подборки задач</li>
                 </ul>
-                <button class="cta" onclick="showDonateInfo('PRO+')">Выбрать PRO+</button>
             </article>
 
+        </section>
+
+        <section class="checkout-row">
+            <div>
+                <p class="secure-title">Безопасная оплата.</p>
+                <p class="secure-sub">Платёж обрабатывается через Platega. Подписка включается после подтверждения оплаты.</p>
+            </div>
+            <div class="checkout-actions">
+                <button class="cta" onclick="showDonateInfo('PRO')">Выбрать PRO →</button>
+                <button class="cta" onclick="showDonateInfo('PRO+')">Выбрать PRO+ →</button>
+            </div>
         </section>
 
     </main>
@@ -368,6 +364,29 @@
 
         function apiBase() {
             return window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+        }
+
+        function formatRubPrice(value) {
+            const num = Number(value);
+            if (!Number.isFinite(num)) return "—";
+            const rounded = Math.round(num * 100) / 100;
+            const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+            return `${text}₽`;
+        }
+
+        async function loadSubscriptionPrices() {
+            let config = window.CODEBUG_PUBLIC_CONFIG || {};
+            if (!config.subscriptions) {
+                try {
+                    const res = await fetch(`${apiBase()}/public-config`, { cache: "no-store" });
+                    if (res.ok) config = await res.json();
+                } catch (_) {}
+            }
+            const prices = config?.subscriptions?.prices || {};
+            const pro = document.getElementById("pricePro");
+            const proPlus = document.getElementById("priceProPlus");
+            if (pro) pro.textContent = formatRubPrice(prices.pro);
+            if (proPlus) proPlus.textContent = formatRubPrice(prices.pro_plus);
         }
 
         function showPaymentStatus(text, kind = "") {
@@ -469,6 +488,7 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             updateNavbar();
+            loadSubscriptionPrices();
             loadSubscriptionStatus();
         });
     </script>
