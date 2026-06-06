@@ -1944,6 +1944,9 @@
       };
       if (status === "active") {
         update.activatedAt = now;
+        update.expiresAt = now + 30 * 24 * 60 * 60 * 1000;
+        update.graceUntil = null;
+        update.paymentWarning = null;
         if (!update.visuals) update.visuals = {};
         update.visuals = { seasonalEnabled: true };
       }
@@ -1968,6 +1971,9 @@
           status: "active",
           activatedAt: Date.now(),
           updatedAt: Date.now(),
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+          graceUntil: null,
+          paymentWarning: null,
           nicknameChangedAt: payload.nicknameChangedAt || null,
           visuals: payload.visuals && typeof payload.visuals === "object" ? payload.visuals : { seasonalEnabled: true },
           features: {
@@ -2050,6 +2056,9 @@
             status,
             activatedAt: Date.now(),
             updatedAt: Date.now(),
+            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+            graceUntil: null,
+            paymentWarning: null,
             visuals: { seasonalEnabled: true },
             features: { earlyAccess: tier !== "pro" }
           });

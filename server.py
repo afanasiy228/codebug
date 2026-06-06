@@ -73,6 +73,19 @@ PUBLIC_FIREBASE_WEB_PROJECT_ID = os.getenv("PUBLIC_FIREBASE_WEB_PROJECT_ID", "")
 PUBLIC_FIREBASE_WEB_STORAGE_BUCKET = os.getenv("PUBLIC_FIREBASE_WEB_STORAGE_BUCKET", "")
 PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID = os.getenv("PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID", "")
 PUBLIC_FIREBASE_WEB_APP_ID = os.getenv("PUBLIC_FIREBASE_WEB_APP_ID", "")
+PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL", "https://codebug.online").rstrip("/")
+PUBLIC_API_BASE = os.getenv("PUBLIC_API_BASE", "https://codebug.onrender.com").rstrip("/")
+PLATEGA_API_BASE = os.getenv("PLATEGA_API_BASE", "https://app.platega.io").rstrip("/")
+PLATEGA_CREATE_PATH = os.getenv("PLATEGA_CREATE_PATH", "/v2/transaction/process")
+PLATEGA_MERCHANT_ID = os.getenv("PLATEGA_MERCHANT_ID", "")
+PLATEGA_SECRET = os.getenv("PLATEGA_SECRET", "")
+PLATEGA_PAYMENT_METHOD = os.getenv("PLATEGA_PAYMENT_METHOD", "").strip()
+PLATEGA_CURRENCY = os.getenv("PLATEGA_CURRENCY", "RUB")
+PLATEGA_CALLBACK_URL = os.getenv("PLATEGA_CALLBACK_URL", f"{PUBLIC_API_BASE}/payments/platega/callback")
+PLATEGA_SUCCESS_URL = os.getenv("PLATEGA_SUCCESS_URL", f"{PUBLIC_SITE_URL}/donate.html?payment=success")
+PLATEGA_FAILED_URL = os.getenv("PLATEGA_FAILED_URL", f"{PUBLIC_SITE_URL}/donate.html?payment=failed")
+SUBSCRIPTION_PRICE_PRO_RUB = float(os.getenv("SUBSCRIPTION_PRICE_PRO_RUB", "99"))
+SUBSCRIPTION_PRICE_PRO_PLUS_RUB = float(os.getenv("SUBSCRIPTION_PRICE_PRO_PLUS_RUB", "199"))
 RUNTIME_WORK_DIR = os.getenv("CODEBUG_WORK_DIR", os.path.abspath(".codebug_work"))
 SEED_ADMIN_LOGINS = [
     login.strip() for login in os.getenv("SEED_ADMIN_LOGINS", "afanasy").split(",")
@@ -130,6 +143,13 @@ REDIS_URL = os.getenv("REDIS_URL", "").strip()
 RATE_LIMIT_PREFIX = (os.getenv("RATE_LIMIT_PREFIX", "codebug:rl") or "codebug:rl").strip()
 REDIS_RATE_CLIENT = None
 
+
+def _ensure_firebase_ready():
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    return FIREBASE_READY
+
 MAX_CODE_SIZE_BYTES = int(os.getenv("MAX_CODE_SIZE_BYTES", str(512 * 1024)))
 MAX_INPUT_SIZE_BYTES = int(os.getenv("MAX_INPUT_SIZE_BYTES", str(512 * 1024)))
 MAX_EDITOR_PREFIX_BYTES = int(os.getenv("MAX_EDITOR_PREFIX_BYTES", str(512 * 1024)))
@@ -160,6 +180,8 @@ PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"
 PROFILE_COVER_PRESETS = {f"cover_{i}" for i in range(1, 11)}
 DEFAULT_PROFILE_COVER_ID = "cover_1"
 MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))
+SUBSCRIPTION_PERIOD_DAYS = int(os.getenv("SUBSCRIPTION_PERIOD_DAYS", "30"))
+SUBSCRIPTION_GRACE_DAYS = int(os.getenv("SUBSCRIPTION_GRACE_DAYS", "10"))
 
 
 def _api_error(error, status=400, code=None):
@@ -284,6 +306,90 @@ def _require_user_login():
     return login, None
 
 
+def _now_ms():
+    return int(time.time() * 1000)
+
+
+def _to_int(value, default=0):
+    try:
+        if value is None or value == "":
+            return default
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def _subscription_features_for_tier(tier):
+    tier = str(tier or "").strip().lower()
+    return {
+        "earlyAccess": tier in {"pro_plus", "creator_dev"}
+    }
+
+
+def _subscription_price_for_tier(tier):
+    tier = str(tier or "").strip().lower()
+    if tier == "pro":
+        return SUBSCRIPTION_PRICE_PRO_RUB
+    if tier == "pro_plus":
+        return SUBSCRIPTION_PRICE_PRO_PLUS_RUB
+    return None
+
+
+def _normalize_subscription(login, raw, write_back=False):
+    if not isinstance(raw, dict):
+        raw = {}
+    now = _now_ms()
+    status = str(raw.get("status") or "").strip().lower()
+    tier = str(raw.get("tier") or "").strip().lower()
+    expires_at = _to_int(raw.get("expiresAt"))
+    grace_until = _to_int(raw.get("graceUntil") or raw.get("paymentGraceUntil"))
+    changed = {}
+
+    if status == "active" and expires_at and expires_at < now:
+        if grace_until and grace_until >= now:
+            status = "grace"
+            changed["status"] = "grace"
+        else:
+            status = "disabled"
+            changed.update({"status": "disabled", "disabledAt": now})
+    elif status == "grace" and grace_until and grace_until < now:
+        status = "disabled"
+        changed.update({"status": "disabled", "disabledAt": now})
+
+    days_left = None
+    if status == "active" and expires_at:
+        days_left = max(0, int((expires_at - now + 86_399_999) // 86_400_000))
+    grace_days_left = None
+    if status == "grace" and grace_until:
+        grace_days_left = max(0, int((grace_until - now + 86_399_999) // 86_400_000))
+
+    if changed and write_back and login and FIREBASE_READY:
+        try:
+            changed["updatedAt"] = now
+            db.reference(f"users/{login}/subscription").update(changed)
+        except Exception as e:
+            print("subscription normalize write failed:", e)
+
+    visuals = raw.get("visuals") if isinstance(raw.get("visuals"), dict) else {}
+    features = raw.get("features") if isinstance(raw.get("features"), dict) else _subscription_features_for_tier(tier)
+    return {
+        "tier": tier,
+        "status": status,
+        "updatedAt": raw.get("updatedAt"),
+        "activatedAt": raw.get("activatedAt"),
+        "expiresAt": expires_at or raw.get("expiresAt"),
+        "graceUntil": grace_until or raw.get("graceUntil"),
+        "daysLeft": days_left,
+        "graceDaysLeft": grace_days_left,
+        "paymentWarning": raw.get("paymentWarning"),
+        "failedPaymentAt": raw.get("failedPaymentAt"),
+        "lastPaymentAt": raw.get("lastPaymentAt"),
+        "nicknameChangedAt": raw.get("nicknameChangedAt"),
+        "visuals": visuals,
+        "features": features
+    }
+
+
 def _get_user_subscription(login):
     if not FIREBASE_READY or not login:
         return {}
@@ -291,18 +397,7 @@ def _get_user_subscription(login):
         raw = db.reference(f"users/{login}/subscription").get() or {}
         if not isinstance(raw, dict):
             return {}
-        tier = str(raw.get("tier") or "").strip().lower()
-        status = str(raw.get("status") or "").strip().lower()
-        visuals = raw.get("visuals") if isinstance(raw.get("visuals"), dict) else {}
-        return {
-            "tier": tier,
-            "status": status,
-            "updatedAt": raw.get("updatedAt"),
-            "activatedAt": raw.get("activatedAt"),
-            "nicknameChangedAt": raw.get("nicknameChangedAt"),
-            "visuals": visuals,
-            "features": raw.get("features") if isinstance(raw.get("features"), dict) else {}
-        }
+        return _normalize_subscription(login, raw, write_back=True)
     except Exception as e:
         print("subscription read failed:", e)
         return {}
@@ -314,7 +409,7 @@ def _is_pro_active(login):
 
 def _is_active_tier(login, tier):
     sub = _get_user_subscription(login)
-    if sub.get("status") != "active":
+    if sub.get("status") not in {"active", "grace"}:
         return False
     user_tier = sub.get("tier")
     rank = {"pro": 1, "pro_plus": 2, "creator_dev": 2}
@@ -332,7 +427,7 @@ def _is_dev_active(login):
 def _subscription_tier_label(login):
     sub = _get_user_subscription(login)
     tier = sub.get("tier", "")
-    if sub.get("status") != "active":
+    if sub.get("status") not in {"active", "grace"}:
         return "free"
     if tier == "creator_dev":
         return "pro_plus"
@@ -2573,7 +2668,7 @@ def admin_purge_users():
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
-    if not FIREBASE_READY:
+    if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
 
     deleted_auth = 0
@@ -2847,7 +2942,7 @@ def profile_change_login():
         if left > 0:
             return _api_error("nickname_cooldown", 429, f"COOLDOWN_{left}")
 
-    if not FIREBASE_READY:
+    if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
     try:
         current_uid = None
@@ -2913,6 +3008,283 @@ def profile_change_login():
         return jsonify({"status": "ok", "oldLogin": login, "newLogin": new_login, "nextChangeAt": now_ms + NICKNAME_CHANGE_COOLDOWN_SECONDS * 1000})
     except Exception as e:
         return _server_error("change_login_failed", "CHANGE_LOGIN_FAILED", exc=e)
+
+
+def _platega_headers():
+    return {
+        "X-MerchantId": PLATEGA_MERCHANT_ID,
+        "X-Secret": PLATEGA_SECRET,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+
+def _platega_request(path, method="GET", payload=None, timeout=20):
+    url = urllib.parse.urljoin(PLATEGA_API_BASE + "/", str(path or "").lstrip("/"))
+    data = None
+    if payload is not None:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=data, method=method.upper(), headers=_platega_headers())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8", "ignore")
+            return json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "ignore")
+        raise RuntimeError(f"Platega HTTP {e.code}: {body[:1000]}") from e
+
+
+def _activate_paid_subscription(login, tier, transaction_id, amount=None):
+    now = _now_ms()
+    period_ms = SUBSCRIPTION_PERIOD_DAYS * 86_400_000
+    ref = db.reference(f"users/{login}/subscription")
+    current = ref.get() or {}
+    if not isinstance(current, dict):
+        current = {}
+    normalized = _normalize_subscription(login, current, write_back=False)
+    current_exp = _to_int(normalized.get("expiresAt"))
+    base = current_exp if normalized.get("status") in {"active", "grace"} and current_exp > now else now
+    expires_at = base + period_ms
+    payload = {
+        "tier": str(tier or "pro").lower(),
+        "status": "active",
+        "activatedAt": current.get("activatedAt") or now,
+        "updatedAt": now,
+        "expiresAt": expires_at,
+        "graceUntil": None,
+        "paymentWarning": None,
+        "failedPaymentAt": None,
+        "lastPaymentAt": now,
+        "lastPaymentTransactionId": transaction_id,
+        "lastPaymentAmount": amount,
+        "visuals": current.get("visuals") if isinstance(current.get("visuals"), dict) else {"seasonalEnabled": True},
+        "features": _subscription_features_for_tier(tier)
+    }
+    payload["visuals"]["seasonalEnabled"] = True
+    ref.update(payload)
+    _append_activity(login, "subscription_payment", {
+        "tier": tier,
+        "transactionId": transaction_id,
+        "expiresAt": expires_at
+    })
+    return _normalize_subscription(login, payload, write_back=False)
+
+
+def _mark_paid_subscription_problem(login, tier, transaction_id, status):
+    now = _now_ms()
+    ref = db.reference(f"users/{login}/subscription")
+    current = ref.get() or {}
+    if not isinstance(current, dict):
+        current = {}
+    normalized = _normalize_subscription(login, current, write_back=False)
+    if str(status).upper() == "CHARGEBACKED":
+        update = {
+            "tier": str(tier or normalized.get("tier") or "pro").lower(),
+            "status": "disabled",
+            "paymentWarning": "chargeback",
+            "failedPaymentAt": now,
+            "updatedAt": now,
+            "features": {"earlyAccess": False}
+        }
+    elif normalized.get("status") in {"active", "grace"}:
+        update = {
+            "tier": str(tier or normalized.get("tier") or "pro").lower(),
+            "status": "grace",
+            "paymentWarning": "payment_failed",
+            "failedPaymentAt": now,
+            "graceUntil": max(_to_int(normalized.get("graceUntil")), now + SUBSCRIPTION_GRACE_DAYS * 86_400_000),
+            "updatedAt": now,
+            "features": _subscription_features_for_tier(tier or normalized.get("tier"))
+        }
+    else:
+        update = {
+            "tier": str(tier or normalized.get("tier") or "pro").lower(),
+            "status": "disabled",
+            "paymentWarning": "payment_failed",
+            "failedPaymentAt": now,
+            "updatedAt": now,
+            "features": {"earlyAccess": False}
+        }
+    ref.update(update)
+    return _normalize_subscription(login, {**current, **update}, write_back=False)
+
+
+@app.route("/payments/platega/create", methods=["POST"])
+def platega_create_payment():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if not _ensure_firebase_ready():
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    if not PLATEGA_MERCHANT_ID or not PLATEGA_SECRET:
+        return _api_error("payments_not_configured", 503, "PAYMENTS_NOT_CONFIGURED")
+
+    data = request.get_json(silent=True) or {}
+    tier = str(data.get("tier") or "").strip().lower()
+    if tier not in {"pro", "pro_plus"}:
+        return _api_error("invalid_tier", 400, "INVALID_TIER")
+    amount = _subscription_price_for_tier(tier)
+    if amount is None:
+        return _api_error("invalid_tier", 400, "INVALID_TIER")
+
+    label = "PRO+" if tier == "pro_plus" else "PRO"
+    payload_obj = {
+        "login": login,
+        "tier": tier,
+        "periodDays": SUBSCRIPTION_PERIOD_DAYS,
+        "createdAt": _now_ms()
+    }
+    body = {
+        "paymentDetails": {
+            "amount": amount,
+            "currency": PLATEGA_CURRENCY
+        },
+        "description": f"CodeBug {label} на {SUBSCRIPTION_PERIOD_DAYS} дней для {login}",
+        "return": PLATEGA_SUCCESS_URL,
+        "failedUrl": PLATEGA_FAILED_URL,
+        "payload": json.dumps(payload_obj, ensure_ascii=False)
+    }
+    if PLATEGA_PAYMENT_METHOD:
+        try:
+            body["paymentMethod"] = int(PLATEGA_PAYMENT_METHOD)
+        except ValueError:
+            body["paymentMethod"] = PLATEGA_PAYMENT_METHOD
+
+    try:
+        result = _platega_request(PLATEGA_CREATE_PATH, method="POST", payload=body)
+        transaction_id = str(result.get("transactionId") or result.get("id") or "").strip()
+        payment_url = str(result.get("redirect") or result.get("url") or result.get("payformSuccessUrl") or "").strip()
+        if not transaction_id or not payment_url:
+            print("[payments][platega] unexpected create response:", result)
+            return _api_error("payment_provider_bad_response", 502, "PAYMENT_PROVIDER_BAD_RESPONSE")
+
+        record = {
+            "provider": "platega",
+            "login": login,
+            "tier": tier,
+            "label": label,
+            "amount": amount,
+            "currency": PLATEGA_CURRENCY,
+            "status": str(result.get("status") or "PENDING").upper(),
+            "transactionId": transaction_id,
+            "paymentUrl": payment_url,
+            "expiresIn": result.get("expiresIn"),
+            "createdAt": _now_ms(),
+            "updatedAt": _now_ms(),
+            "request": body,
+            "providerResponse": result
+        }
+        db.reference(f"subscriptions/payments/{transaction_id}").set(record)
+        db.reference(f"subscriptions/requests/{transaction_id}").set({
+            "login": login,
+            "tier": tier,
+            "label": label,
+            "status": "awaiting_payment",
+            "provider": "platega",
+            "transactionId": transaction_id,
+            "amount": amount,
+            "currency": PLATEGA_CURRENCY,
+            "paymentUrl": payment_url,
+            "createdAt": record["createdAt"],
+            "updatedAt": record["updatedAt"]
+        })
+        return jsonify({
+            "ok": True,
+            "transactionId": transaction_id,
+            "status": record["status"],
+            "paymentUrl": payment_url,
+            "redirect": payment_url
+        })
+    except Exception as e:
+        return _server_error("payment_create_failed", "PAYMENT_CREATE_FAILED", exc=e, status=502)
+
+
+@app.route("/payments/platega/callback", methods=["POST"])
+def platega_callback():
+    merchant_id = request.headers.get("X-MerchantId", "")
+    secret = request.headers.get("X-Secret", "")
+    if not PLATEGA_MERCHANT_ID or not PLATEGA_SECRET or merchant_id != PLATEGA_MERCHANT_ID or secret != PLATEGA_SECRET:
+        print("[payments][platega] callback auth failed", {"merchant": merchant_id})
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _ensure_firebase_ready():
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+
+    data = request.get_json(silent=True) or {}
+    transaction_id = str(data.get("id") or data.get("transactionId") or "").strip()
+    status = str(data.get("status") or "").strip().upper()
+    if not transaction_id or not status:
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+
+    try:
+        pay_ref = db.reference(f"subscriptions/payments/{transaction_id}")
+        payment = pay_ref.get() or {}
+        if not isinstance(payment, dict) or not payment:
+            print("[payments][platega] callback for unknown transaction:", transaction_id, data)
+            return _api_error("payment_not_found", 404, "PAYMENT_NOT_FOUND")
+        login = str(payment.get("login") or "").strip()
+        tier = str(payment.get("tier") or "pro").strip().lower()
+        amount = data.get("amount", payment.get("amount"))
+        now = _now_ms()
+        pay_ref.update({
+            "status": status,
+            "callback": data,
+            "updatedAt": now,
+            "confirmedAt": now if status == "CONFIRMED" else payment.get("confirmedAt")
+        })
+        db.reference(f"subscriptions/requests/{transaction_id}").update({
+            "status": "approved" if status == "CONFIRMED" else status.lower(),
+            "callbackStatus": status,
+            "updatedAt": now,
+            "resolvedAt": now if status in {"CONFIRMED", "CANCELED", "CHARGEBACKED"} else None
+        })
+        if status == "CONFIRMED":
+            subscription = _activate_paid_subscription(login, tier, transaction_id, amount)
+            print("[payments][platega] subscription activated", login, tier, transaction_id)
+        elif status in {"CANCELED", "CHARGEBACKED"}:
+            subscription = _mark_paid_subscription_problem(login, tier, transaction_id, status)
+            print("[payments][platega] subscription payment problem", login, tier, status, transaction_id)
+        else:
+            subscription = _get_user_subscription(login)
+        return jsonify({"ok": True, "status": status, "subscription": subscription})
+    except Exception as e:
+        return _server_error("payment_callback_failed", "PAYMENT_CALLBACK_FAILED", exc=e)
+
+
+@app.route("/payments/subscription-status", methods=["GET"])
+def payment_subscription_status():
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    return jsonify({"ok": True, "login": login, "subscription": _get_user_subscription(login)})
+
+
+@app.route("/users/<path:login>/profile-lite", methods=["GET"])
+def user_profile_lite(login):
+    if not _ensure_firebase_ready():
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    login = str(login or "").strip()
+    if not login:
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    try:
+        data = db.reference(f"users/{login}").get() or {}
+        if not isinstance(data, dict) or not data:
+            return _api_error("not_found", 404, "NOT_FOUND")
+        profile_style = data.get("profileStyle") if isinstance(data.get("profileStyle"), dict) else {}
+        stats = data.get("stats") if isinstance(data.get("stats"), dict) else {}
+        raw_sub = data.get("subscription") if isinstance(data.get("subscription"), dict) else {}
+        return jsonify({
+            "login": data.get("login") or login,
+            "avatar": data.get("avatar"),
+            "profileStyle": profile_style,
+            "subscription": _normalize_subscription(login, raw_sub, write_back=True),
+            "stats": {
+                "cnt": stats.get("cnt", 0),
+                "exp": stats.get("exp", 0),
+                "rating": stats.get("rating", 0)
+            }
+        })
+    except Exception as e:
+        return _server_error("profile_lite_failed", "PROFILE_LITE_FAILED", exc=e)
 
 
 @app.route("/profile/set-nick-color", methods=["POST"])

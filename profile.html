@@ -257,6 +257,19 @@
             font-weight: 600;
         }
 
+        .subscription-line {
+            display: none;
+            margin-top: 6px;
+            color: #9fb0bd;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+
+        .subscription-line.warn {
+            color: #FDE68A;
+        }
+
         .osu-overview {
             margin: 0 28px 10px;
             border-top: 0;
@@ -1136,6 +1149,7 @@
                         <button id="logoutIconBtn" class="logout-icon-btn" type="button" title="Выйти из аккаунта" aria-label="Выйти из аккаунта" style="display:none;">⎋</button>
                     </div>
                     <div class="rank-text" id="rank">Ранг загружается...</div>
+                    <div class="subscription-line" id="subscriptionLine"></div>
                 </div>
             </section>
 
@@ -1964,6 +1978,29 @@
                     proBadge.textContent = "PRO+";
                 } else {
                     proBadge.textContent = "PRO";
+                }
+            }
+            const subscriptionLine = document.getElementById("subscriptionLine");
+            if (subscriptionLine) {
+                subscriptionLine.classList.remove("warn");
+                subscriptionLine.style.display = "none";
+                subscriptionLine.textContent = "";
+                if (isPro && sub) {
+                    const tierLabel = level === "pro_plus" ? "PRO+" : "PRO";
+                    const status = String(sub.status || "").toLowerCase();
+                    const now = Date.now();
+                    const expiresAt = Number(sub.expiresAt || 0);
+                    const graceUntil = Number(sub.graceUntil || sub.paymentGraceUntil || 0);
+                    const daysLeft = sub.daysLeft ?? (expiresAt ? Math.max(0, Math.ceil((expiresAt - now) / 86400000)) : null);
+                    const graceDaysLeft = sub.graceDaysLeft ?? (graceUntil ? Math.max(0, Math.ceil((graceUntil - now) / 86400000)) : null);
+                    if (status === "grace") {
+                        subscriptionLine.textContent = `Оплата не прошла. На продление: ${graceDaysLeft ?? "—"} дн.`;
+                        subscriptionLine.classList.add("warn");
+                        subscriptionLine.style.display = "block";
+                    } else if (status === "active") {
+                        subscriptionLine.textContent = `${tierLabel}: осталось ${daysLeft ?? "—"} дн.`;
+                        subscriptionLine.style.display = "block";
+                    }
                 }
             }
             const navProfileEl = document.querySelector("#nav-links .nav-profile");

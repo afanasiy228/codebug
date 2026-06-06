@@ -349,6 +349,11 @@ async function getUserSubscription(login) {
         return {
             tier: String(val.tier || "").toLowerCase(),
             status: String(val.status || "").toLowerCase(),
+            expiresAt: val.expiresAt || null,
+            graceUntil: val.graceUntil || val.paymentGraceUntil || null,
+            daysLeft: val.daysLeft ?? null,
+            graceDaysLeft: val.graceDaysLeft ?? null,
+            paymentWarning: val.paymentWarning || null,
             features: (val.features && typeof val.features === "object") ? val.features : {},
             visuals: (val.visuals && typeof val.visuals === "object") ? val.visuals : {}
         };
@@ -358,7 +363,14 @@ async function getUserSubscription(login) {
 }
 
 function getSubscriptionLevel(sub) {
-    if (!sub || String(sub.status || "").toLowerCase() !== "active") return "free";
+    if (!sub) return "free";
+    const status = String(sub.status || "").toLowerCase();
+    if (!["active", "grace"].includes(status)) return "free";
+    const now = Date.now();
+    const expiresAt = Number(sub.expiresAt || 0);
+    const graceUntil = Number(sub.graceUntil || 0);
+    if (status === "active" && expiresAt && expiresAt < now && (!graceUntil || graceUntil < now)) return "free";
+    if (status === "grace" && graceUntil && graceUntil < now) return "free";
     const tier = String(sub.tier || "").toLowerCase();
     if (tier === "creator_dev") return "pro_plus";
     if (tier === "pro_plus") return "pro_plus";

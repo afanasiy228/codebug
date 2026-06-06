@@ -106,6 +106,28 @@
             line-height: 1.6;
         }
 
+        .payment-status {
+            display: none;
+            margin: 18px 0 26px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            background: rgba(18, 18, 18, 0.78);
+            color: #dbe8f3;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .payment-status.warn {
+            border-color: rgba(245, 158, 11, 0.45);
+            color: #FDE68A;
+        }
+
+        .payment-status.ok {
+            border-color: rgba(34, 197, 94, 0.45);
+            color: #BBF7D0;
+        }
+
         .tiers {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -287,6 +309,8 @@
             <p class="sub">Выбери подходящий уровень. Любая подписка помогает развивать платформу и открывает дополнительные инструменты для тренировок и контестов.</p>
         </section>
 
+        <div id="paymentStatus" class="payment-status"></div>
+
         <section class="tiers">
             <article class="tier pro">
                 <div class="tier-head">
@@ -331,6 +355,7 @@
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase.js"></script>
     <script src="auth.js?v=20260528-3"></script>
@@ -341,7 +366,25 @@
             "PRO+": "pro_plus"
         };
 
-        async function markSubscriptionPlan(planLabel) {
+        function apiBase() {
+            return window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+        }
+
+        function showPaymentStatus(text, kind = "") {
+            const el = document.getElementById("paymentStatus");
+            if (!el) return;
+            if (!text) {
+                el.style.display = "none";
+                el.textContent = "";
+                el.className = "payment-status";
+                return;
+            }
+            el.textContent = text;
+            el.className = "payment-status" + (kind ? ` ${kind}` : "");
+            el.style.display = "block";
+        }
+
+        async function createSubscriptionPayment(planLabel) {
             const login = typeof getUser === "function" ? getUser() : null;
             if (!login) {
                 alert("Сначала войди в аккаунт.");
@@ -351,42 +394,83 @@
             const tier = PLAN_TO_TIER[planLabel];
             if (!tier) return false;
 
-            const payload = {
-                tier,
-                label: planLabel,
-                status: "pending_payment",
-                activatedAt: null,
-                nicknameChangedAt: null,
-                visuals: {
-                    seasonalEnabled: true
-                },
-                updatedAt: Date.now()
-            };
-
             try {
-                await db.ref("subscriptions/requests").push().set({
-                    login,
-                    tier,
-                    label: planLabel,
-                    status: "pending_payment",
-                    payload,
-                    createdAt: Date.now()
+                const token = typeof getFreshAuthToken === "function"
+                    ? await getFreshAuthToken({ timeoutMs: 4000, forceRefresh: true })
+                    : localStorage.getItem("idToken");
+                if (!token) {
+                    alert("Нужен повторный вход перед оплатой.");
+                    window.location.href = "auth.html?next=donate.html";
+                    return false;
+                }
+                showPaymentStatus("Создаём ссылку на оплату...", "");
+                const res = await fetch(`${apiBase()}/payments/platega/create`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ tier })
                 });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const msg = data.code === "PAYMENTS_NOT_CONFIGURED"
+                        ? "Оплата ещё не настроена на сервере."
+                        : `Не удалось создать оплату: ${data.code || res.status}`;
+                    showPaymentStatus(msg, "warn");
+                    return false;
+                }
+                const url = data.paymentUrl || data.redirect;
+                if (!url) {
+                    showPaymentStatus("Платёж создан, но Platega не вернула ссылку.", "warn");
+                    return false;
+                }
+                window.location.href = url;
                 return true;
             } catch (e) {
-                console.error("subscription mark failed", e);
-                alert("Не удалось сохранить выбор подписки. Попробуй ещё раз.");
+                console.error("payment create failed", e);
+                showPaymentStatus("Не удалось открыть оплату. Попробуй ещё раз.", "warn");
                 return false;
             }
         }
 
         async function showDonateInfo(plan) {
-            const ok = await markSubscriptionPlan(plan);
-            if (!ok) return;
-            alert(`Тариф ${plan} отмечен в профиле. Для активации отправь оплату и укажи логин в поддержку.`);
+            await createSubscriptionPayment(plan);
         }
 
-        document.addEventListener("DOMContentLoaded", updateNavbar);
+        async function loadSubscriptionStatus() {
+            const params = new URLSearchParams(location.search);
+            if (params.get("payment") === "success") {
+                showPaymentStatus("Платёж принят. Подписка включится после подтверждения Platega.", "ok");
+            } else if (params.get("payment") === "failed") {
+                showPaymentStatus("Оплата не прошла. Можно попробовать продлить подписку ещё раз.", "warn");
+            }
+            try {
+                const token = typeof getFreshAuthToken === "function"
+                    ? await getFreshAuthToken({ timeoutMs: 1800 })
+                    : localStorage.getItem("idToken");
+                if (!token) return;
+                const res = await fetch(`${apiBase()}/payments/subscription-status`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const sub = data.subscription || {};
+                const tier = sub.tier === "pro_plus" ? "PRO+" : (sub.tier === "pro" ? "PRO" : "");
+                if (sub.status === "active" && tier) {
+                    showPaymentStatus(`${tier} активна. Осталось дней: ${sub.daysLeft ?? "—"}.`, "ok");
+                } else if (sub.status === "grace" && tier) {
+                    showPaymentStatus(`${tier}: оплата продления не прошла. Осталось ${sub.graceDaysLeft ?? "—"} дней, чтобы продлить подписку.`, "warn");
+                }
+            } catch (e) {
+                console.warn("subscription status load failed", e);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updateNavbar();
+            loadSubscriptionStatus();
+        });
     </script>
 </body>
 
