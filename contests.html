@@ -105,14 +105,6 @@
       gap: 14px;
     }
 
-    .title-mark {
-      color: var(--amber);
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 25px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
     .page-title {
       margin: 0;
       font-family: "Space Grotesk", sans-serif;
@@ -144,7 +136,7 @@
     }
 
     .create-trigger:hover {
-      color: #FBBF24;
+      color: var(--amber);
     }
 
     .user-stats {
@@ -242,24 +234,24 @@
       border-radius: 50%;
       border: 1px solid var(--line-strong);
       background:
-        radial-gradient(circle at 30% 28%, rgba(245, 158, 11, 0.32), transparent 44%),
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.08), transparent 44%),
         rgba(255, 255, 255, 0.03);
       position: relative;
       display: grid;
       place-items: center;
       overflow: hidden;
-      color: var(--amber);
+      color: var(--muted-strong);
       font-family: "Space Grotesk", sans-serif;
       font-size: 13px;
       font-weight: 800;
     }
 
     .contest-row:hover .contest-icon {
-      border-color: var(--amber);
+      border-color: var(--line-strong);
     }
 
     .contest-icon::after {
-      content: "{}";
+      content: "♛";
       position: absolute;
       inset: 0;
       display: grid;
@@ -330,7 +322,7 @@
     }
 
     .type-badge.final {
-      color: var(--amber);
+      color: var(--ink);
     }
 
     .visibility-badge {
@@ -370,7 +362,7 @@
     }
 
     .contest-action:hover {
-      color: #FBBF24;
+      color: var(--amber);
     }
 
     .contest-action[disabled] {
@@ -431,7 +423,7 @@
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
+      gap: 5px 8px;
     }
 
     .calendar-day {
@@ -446,10 +438,12 @@
       position: relative;
       font: inherit;
       font-size: 13px;
+      transition: color 120ms ease, outline-color 120ms ease;
     }
 
     .calendar-day:hover {
       color: var(--ink);
+      background: transparent;
     }
 
     .calendar-day.is-muted {
@@ -778,12 +772,12 @@
       border-radius: 18px;
       border: 1px solid var(--line-strong);
       background:
-        radial-gradient(circle at 32% 24%, rgba(245, 158, 11, 0.28), transparent 44%),
+        radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.07), transparent 44%),
         rgba(255, 255, 255, 0.025);
       display: grid;
       place-items: center;
       overflow: hidden;
-      color: var(--amber);
+      color: var(--muted-strong);
       font-family: "Space Grotesk", sans-serif;
       font-weight: 800;
     }
@@ -826,6 +820,16 @@
       padding: 13px 14px;
       font: inherit;
       text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .datetime-display::after {
+      content: "◷";
+      color: var(--muted);
+      font-size: 15px;
     }
 
     .datetime-display:hover,
@@ -916,8 +920,9 @@
     }
 
     .picker-day.is-selected {
-      color: #0B0D10;
-      background: var(--amber);
+      color: var(--ink);
+      outline: 1px solid var(--amber);
+      background: transparent;
       font-weight: 900;
     }
 
@@ -960,15 +965,20 @@
     .submit-create {
       justify-self: start;
       appearance: none;
-      border: 0;
+      border: 1px solid var(--line-strong);
       border-radius: 999px;
-      background: var(--amber);
-      color: #080B0F;
+      background: transparent;
+      color: var(--ink);
       cursor: pointer;
       margin-top: 8px;
       padding: 11px 18px;
       font: inherit;
       font-weight: 900;
+    }
+
+    .submit-create:hover {
+      color: var(--amber);
+      border-color: rgba(245, 158, 11, 0.5);
     }
 
     .modal-note {
@@ -1042,11 +1052,10 @@
       <div>
         <div class="title-row">
           <h1 class="page-title">Соревнования</h1>
-          <span class="title-mark">{ }</span>
         </div>
         <p class="page-subtitle">Участвуй в соревнованиях, проверяй навыки и поднимайся в рейтинге.</p>
       </div>
-      <button class="create-trigger" type="button" id="openCreateModal">Создать соревнование +</button>
+      <button class="create-trigger" type="button" id="openCreateModal">+ Создать соревнование</button>
     </section>
 
     <section class="user-stats" aria-label="Статистика пользователя">
@@ -1166,7 +1175,7 @@
         <div class="form-row">
           <label>Логотип соревнования</label>
           <div class="logo-upload">
-            <div class="logo-preview" id="ccLogoPreview">{ }</div>
+            <div class="logo-preview" id="ccLogoPreview">♛</div>
             <div>
               <label class="file-action">
                 Выбрать png, jpg, webp или gif
@@ -1841,7 +1850,7 @@
       state.selectedCreateType = "";
       state.logoData = "";
       const preview = document.getElementById("ccLogoPreview");
-      if (preview) preview.innerHTML = "{ }";
+      if (preview) preview.innerHTML = "♛";
       state.datePickers.start = null;
       state.datePickers.end = null;
       document.getElementById("ccStart").value = "";
@@ -1861,20 +1870,20 @@
         const file = input.files && input.files[0];
         state.logoData = "";
         if (!file) {
-          if (preview) preview.innerHTML = "{ }";
+          if (preview) preview.innerHTML = "♛";
           return;
         }
         const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
         if (!allowed.has(file.type)) {
           alert("Поддерживаются только png, jpg, webp и gif.");
           input.value = "";
-          if (preview) preview.innerHTML = "{ }";
+          if (preview) preview.innerHTML = "♛";
           return;
         }
         if (file.size > 350 * 1024) {
           alert("Логотип слишком большой. Используй файл до 350 KB.");
           input.value = "";
-          if (preview) preview.innerHTML = "{ }";
+          if (preview) preview.innerHTML = "♛";
           return;
         }
         const reader = new FileReader();
