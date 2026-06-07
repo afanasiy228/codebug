@@ -3,24 +3,24 @@
 
 <head>
   <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Соревнования — CodeBug</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Соревнования - CodeBug</title>
   <link rel="icon" type="image/png" href="/logo.png?v=2">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #050505;
-      --bg-strong: #0B0B0B;
-      --ink: #FFFFFF;
-      --muted: #B0B0B0;
-      --accent: #F59E0B;
-      --accent-strong: #FBBF24;
-      --warm: #F59E0B;
-      --card: #121212;
-      --stroke: rgba(255, 255, 255, 0.08);
-      --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-      --radius-lg: 24px;
-      --radius-md: 16px;
+      --bg: #070A0D;
+      --bg-soft: #080B0F;
+      --ink: #F3F5F7;
+      --muted: #8B96A8;
+      --muted-strong: #B8C0CC;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --green: #4ADE80;
+      --amber: #F59E0B;
+      --purple: #A78BFA;
+      --blue: #60A5FA;
+      --danger: #F87171;
     }
 
     * {
@@ -29,155 +29,773 @@
 
     body {
       margin: 0;
+      min-height: 100vh;
       color: var(--ink);
       font-family: "IBM Plex Sans", sans-serif;
       background:
-        radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
-                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
-        linear-gradient(180deg, var(--bg), var(--bg-strong));
-      min-height: 100vh;
+        radial-gradient(circle at 86% 8%, rgba(245, 158, 11, 0.065), transparent 34rem),
+        radial-gradient(circle at 8% 72%, rgba(74, 222, 128, 0.035), transparent 28rem),
+        linear-gradient(180deg, var(--bg), var(--bg-soft));
     }
 
     header {
-      height: 72px;
-      background: rgba(5, 5, 5, 0.88);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      height: 68px;
+      background: rgba(7, 10, 13, 0.88);
+      border-bottom: 1px solid var(--line);
       padding: 0 4vw;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
-      z-index: 10;
-      backdrop-filter: blur(12px);
-      box-shadow: none;
+      z-index: 30;
+      backdrop-filter: blur(14px);
     }
 
     .logo {
       font-family: "Space Grotesk", sans-serif;
       font-size: 20px;
       font-weight: 700;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.02em;
       color: var(--ink);
     }
 
     nav a {
+      position: relative;
       margin-left: 20px;
-      color: var(--muted);
+      color: var(--muted-strong);
       text-decoration: none;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
     }
 
-    nav a:hover {
-      color: var(--accent);
+    nav a:hover,
+    nav a.active {
+      color: var(--ink);
     }
 
-    .container {
-      width: min(1100px, 92vw);
-      margin: 40px auto 80px;
+    nav a.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -14px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+
+    .page {
+      width: min(1560px, 94vw);
+      margin: 42px auto 90px;
+    }
+
+    .page-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 32px;
+      align-items: end;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .title-mark {
+      color: var(--amber);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 25px;
+      font-weight: 700;
+      line-height: 1;
     }
 
     .page-title {
-      font-size: 34px;
-      font-weight: 700;
+      margin: 0;
       font-family: "Space Grotesk", sans-serif;
-      margin: 0 0 10px;
+      font-size: clamp(38px, 5vw, 68px);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+      font-weight: 700;
     }
 
     .page-subtitle {
-      margin: 0 0 24px;
+      margin: 18px 0 0;
+      max-width: 720px;
+      color: var(--muted-strong);
+      font-size: 20px;
+      line-height: 1.5;
+    }
+
+    .create-trigger {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--amber);
+      cursor: pointer;
+      padding: 0;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .create-trigger:hover {
+      color: #FBBF24;
+    }
+
+    .user-stats {
+      display: flex;
+      align-items: baseline;
+      gap: clamp(28px, 5vw, 76px);
+      padding: 28px 0 30px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .user-stat {
+      display: grid;
+      gap: 5px;
+    }
+
+    .user-stat strong {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .user-stat span {
       color: var(--muted);
-      line-height: 1.6;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.9fr) minmax(340px, 1fr);
+      gap: clamp(44px, 5vw, 78px);
+      align-items: start;
+      margin-top: 38px;
+    }
+
+    .left-column,
+    .right-column {
+      min-width: 0;
+    }
+
+    .right-column {
+      display: grid;
+      gap: 44px;
     }
 
     .section {
-      margin-bottom: 32px;
+      margin-bottom: 40px;
     }
 
-    .section h2 {
-      font-size: 22px;
-      margin: 0 0 14px;
+    .section-title {
+      margin: 0 0 18px;
+      color: var(--ink);
       font-family: "Space Grotesk", sans-serif;
-    }
-
-    .contest-grid {
-      display: grid;
-      gap: 16px;
-    }
-
-    .contest-card {
-      padding: 18px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--stroke);
-      background: var(--card);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 10px;
-    }
-
-    .contest-title {
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 700;
-      margin: 0;
+      letter-spacing: -0.025em;
     }
 
-    .contest-meta {
-      font-size: 13px;
-      color: var(--muted);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .contest-list {
+      border-top: 1px solid var(--line);
     }
 
-    .profile-link {
-      color: var(--accent);
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .profile-link:hover {
-      text-decoration: underline;
-    }
-
-    .contest-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .badge {
-      display: inline-flex;
+    .contest-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
       align-items: center;
-      padding: 4px 10px;
+      min-height: 92px;
+      padding: 19px 0;
+      border-bottom: 1px solid var(--line);
+      transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .contest-row:hover {
+      border-bottom-color: rgba(255, 255, 255, 0.16);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.026), transparent 76%);
+    }
+
+    .contest-main {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .contest-icon {
+      width: 16px;
+      height: 16px;
+      margin-top: 5px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+      position: relative;
+    }
+
+    .contest-row:hover .contest-icon {
+      border-color: var(--amber);
+    }
+
+    .contest-icon::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      background: var(--amber);
+      opacity: 0.75;
+    }
+
+    .contest-icon.sprint::after {
+      background: var(--green);
+    }
+
+    .contest-icon.beginner::after {
+      background: var(--blue);
+    }
+
+    .contest-icon.final::after {
+      background: var(--amber);
+    }
+
+    .contest-icon.other::after {
+      background: var(--purple);
+    }
+
+    .contest-copy {
+      min-width: 0;
+    }
+
+    .contest-name-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .contest-name {
+      appearance: none;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      text-align: left;
+    }
+
+    .contest-name:hover {
+      color: #FFFFFF;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 5px;
+    }
+
+    .type-badge,
+    .visibility-badge {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .type-badge.ranked {
+      color: var(--purple);
+    }
+
+    .type-badge.sprint {
+      color: var(--green);
+    }
+
+    .type-badge.beginner {
+      color: var(--blue);
+    }
+
+    .type-badge.final {
+      color: var(--amber);
+    }
+
+    .visibility-badge {
+      color: var(--muted);
+    }
+
+    .contest-description {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .contest-data {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 22px;
+      color: var(--muted-strong);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .contest-data span {
+      color: var(--muted-strong);
+    }
+
+    .contest-action {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--amber);
+      cursor: pointer;
+      padding: 0;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .contest-action:hover {
+      color: #FBBF24;
+    }
+
+    .contest-action[disabled] {
+      color: var(--muted);
+      cursor: default;
+    }
+
+    .empty-line {
+      color: var(--muted);
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .side-section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .side-section-title h2 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    .side-section-title span,
+    .side-filter {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .calendar-head {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .calendar-day {
+      min-height: 34px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted-strong);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      position: relative;
+      font: inherit;
+      font-size: 13px;
+    }
+
+    .calendar-day:hover {
+      color: var(--ink);
+    }
+
+    .calendar-day.is-muted {
+      color: rgba(139, 150, 168, 0.32);
+      cursor: default;
+    }
+
+    .calendar-day.is-today {
+      outline: 1px solid var(--line-strong);
+    }
+
+    .calendar-day.is-selected {
+      outline: 1px solid var(--amber);
+      color: var(--ink);
+    }
+
+    .day-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 2px;
+    }
+
+    .day-dot {
+      width: 4px;
+      height: 4px;
       border-radius: 999px;
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--accent);
+      background: var(--purple);
+    }
+
+    .day-dot.ranked {
+      background: var(--amber);
+    }
+
+    .day-dot.sprint {
+      background: var(--green);
+    }
+
+    .day-dot.other {
+      background: var(--purple);
+    }
+
+    .calendar-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+      color: var(--muted);
       font-size: 12px;
       font-weight: 700;
     }
 
-    button {
-      padding: 8px 16px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 14px 32px rgba(245, 158, 11, 0.25);
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    button.secondary {
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--accent);
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--purple);
     }
 
-    .empty {
-      padding: 18px;
-      border-radius: var(--radius-lg);
-      border: 1px dashed var(--stroke);
+    .legend-dot.ranked {
+      background: var(--amber);
+    }
+
+    .legend-dot.sprint {
+      background: var(--green);
+    }
+
+    .date-filter {
+      margin-top: 14px;
       color: var(--muted);
+      font-size: 13px;
+    }
+
+    .date-filter button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--amber);
+      cursor: pointer;
+      padding: 0;
+      margin-left: 8px;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .rating-graph {
+      display: block;
+      width: 100%;
+      height: 148px;
+      overflow: visible;
+    }
+
+    .graph-grid {
+      stroke: rgba(255, 255, 255, 0.07);
+      stroke-dasharray: 4 8;
+    }
+
+    .graph-line {
+      fill: none;
+      stroke: var(--green);
+      stroke-width: 2;
+    }
+
+    .graph-dot {
+      fill: var(--bg);
+      stroke: var(--green);
+      stroke-width: 2;
+    }
+
+    .graph-empty {
+      fill: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .rating-growth {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .results-list {
+      border-top: 1px solid var(--line);
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 16px;
+      align-items: center;
+      min-height: 46px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted-strong);
+      font-size: 14px;
+    }
+
+    .result-row strong {
+      color: var(--ink);
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result-row span:last-child {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.62);
+      backdrop-filter: blur(12px);
+    }
+
+    .modal.is-open {
+      display: flex;
+    }
+
+    .modal-panel {
+      width: min(760px, 100%);
+      max-height: min(820px, calc(100vh - 48px));
+      overflow: auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background: #0B0E12;
+      padding: 28px;
+    }
+
+    .modal-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .modal-top h2 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 28px;
+      letter-spacing: -0.035em;
+    }
+
+    .modal-close {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 28px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .contest-type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .contest-type {
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--ink);
+      cursor: pointer;
+      padding: 18px;
+      font: inherit;
+    }
+
+    .contest-type strong {
+      display: block;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+      margin-bottom: 7px;
+    }
+
+    .contest-type span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .contest-type.is-selected {
+      border-color: rgba(245, 158, 11, 0.65);
+    }
+
+    .contest-type[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .create-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 7px;
+    }
+
+    .form-row label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .form-row input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0F1318;
+      color: var(--ink);
+      padding: 13px 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    .form-row input:focus {
+      border-color: rgba(245, 158, 11, 0.55);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .submit-create {
+      justify-self: start;
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      background: var(--amber);
+      color: #080B0F;
+      cursor: pointer;
+      margin-top: 8px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .modal-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 4px 0 0;
+    }
+
+    @media (max-width: 980px) {
+      .page-head,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .page-head {
+        align-items: start;
+      }
+
+      .create-trigger {
+        justify-self: start;
+      }
+
+      .contest-row {
+        grid-template-columns: 1fr;
+      }
+
+      .contest-data {
+        justify-content: start;
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 680px) {
+      header {
+        padding: 0 20px;
+      }
+
+      .page {
+        width: min(100% - 36px, 1560px);
+        margin-top: 30px;
+      }
+
+      .user-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+      }
+
+      .contest-type-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-panel {
+        padding: 22px;
+      }
     }
   </style>
   <link rel="stylesheet" href="theme-dark.css">
@@ -189,41 +807,145 @@
     <nav id="nav-links"></nav>
   </header>
 
-  <main class="container">
-    <h1 class="page-title">Соревнования</h1>
-    <p class="page-subtitle">Идущие, предстоящие и прошедшие соревнования. Регистрация обязательна для участия.</p>
-    <section class="section" id="createContestSection" style="display:none;">
-      <h2>Создать приватное соревнование (PRO+)</h2>
-      <div style="display:grid;gap:10px;">
-        <input id="ccTitle" placeholder="Название" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
-        <input id="ccTasks" placeholder="ID задач через запятую (например: 1,2,3)" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
-        <input id="ccAllowed" placeholder="Логины участников через запятую" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
-        <label style="color:var(--muted);font-size:13px;">Старт (UTC ISO)</label>
-        <input id="ccStart" placeholder="2026-06-10T15:00:00Z" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
-        <label style="color:var(--muted);font-size:13px;">Финиш (UTC ISO)</label>
-        <input id="ccEnd" placeholder="2026-06-10T18:00:00Z" style="padding:10px;border-radius:10px;border:1px solid var(--stroke);background:#0b1528;color:#fff;">
-        <button type="button" onclick="createPrivateContest()">Создать</button>
+  <main class="page">
+    <section class="page-head">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">Соревнования</h1>
+          <span class="title-mark">{ }</span>
+        </div>
+        <p class="page-subtitle">Участвуй в соревнованиях, проверяй навыки и поднимайся в рейтинге.</p>
+      </div>
+      <button class="create-trigger" type="button" id="openCreateModal">Создать соревнование +</button>
+    </section>
+
+    <section class="user-stats" aria-label="Статистика пользователя">
+      <div class="user-stat">
+        <strong id="statPassed">0</strong>
+        <span>пройдено</span>
+      </div>
+      <div class="user-stat">
+        <strong id="statRating">0</strong>
+        <span>текущий рейтинг</span>
+      </div>
+      <div class="user-stat">
+        <strong id="statCreated">0</strong>
+        <span>создано</span>
+      </div>
+      <div class="user-stat">
+        <strong id="statWins">0</strong>
+        <span>побед</span>
       </div>
     </section>
 
-    <section class="section">
-      <h2>Идут сейчас</h2>
-      <div id="ongoingList" class="contest-grid"></div>
-      <div id="ongoingEmpty" class="empty" style="display:none;">Сейчас нет активных соревнований.</div>
-    </section>
+    <section class="layout">
+      <div class="left-column">
+        <section class="section">
+          <h2 class="section-title">Идут сейчас</h2>
+          <div id="ongoingList" class="contest-list"></div>
+          <div id="ongoingEmpty" class="empty-line" style="display:none;">Сейчас нет активных соревнований.</div>
+        </section>
 
-    <section class="section">
-      <h2>Предстоящие</h2>
-      <div id="upcomingList" class="contest-grid"></div>
-      <div id="upcomingEmpty" class="empty" style="display:none;">Нет запланированных соревнований.</div>
-    </section>
+        <section class="section">
+          <h2 class="section-title">Предстоящие</h2>
+          <div id="upcomingList" class="contest-list"></div>
+          <div id="upcomingEmpty" class="empty-line" style="display:none;">Нет запланированных соревнований.</div>
+        </section>
 
-    <section class="section">
-      <h2>Прошедшие</h2>
-      <div id="finishedList" class="contest-grid"></div>
-      <div id="finishedEmpty" class="empty" style="display:none;">Пока нет прошедших соревнований.</div>
+        <section class="section">
+          <h2 class="section-title">Прошедшие</h2>
+          <div id="finishedList" class="contest-list"></div>
+          <div id="finishedEmpty" class="empty-line" style="display:none;">Пока нет прошедших соревнований.</div>
+        </section>
+      </div>
+
+      <aside class="right-column" aria-label="Календарь и результаты">
+        <section>
+          <div class="side-section-title">
+            <h2>Календарь</h2>
+            <span id="calendarMonth">-</span>
+          </div>
+          <div class="calendar-head" aria-hidden="true">
+            <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-legend">
+            <span class="legend-item"><i class="legend-dot ranked"></i>рейтинговые</span>
+            <span class="legend-item"><i class="legend-dot sprint"></i>спринты</span>
+            <span class="legend-item"><i class="legend-dot"></i>другие</span>
+          </div>
+          <div class="date-filter" id="dateFilterText" style="display:none;"></div>
+        </section>
+
+        <section>
+          <div class="side-section-title">
+            <h2>Динамика рейтинга</h2>
+            <span class="side-filter">за 30 дней <b class="rating-growth" id="ratingGrowth"></b></span>
+          </div>
+          <svg class="rating-graph" viewBox="0 0 360 148" role="img" aria-label="График рейтинга">
+            <g id="ratingGraph"></g>
+          </svg>
+        </section>
+
+        <section>
+          <div class="side-section-title">
+            <h2>Последние результаты</h2>
+          </div>
+          <div class="results-list" id="latestResults"></div>
+        </section>
+      </aside>
     </section>
   </main>
+
+  <div class="modal" id="contestModal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="contestModalTitle">
+      <div class="modal-top">
+        <div>
+          <h2 id="contestModalTitle">Создать соревнование</h2>
+          <p class="modal-note">Сначала выбери тип, затем заполни параметры соревнования.</p>
+        </div>
+        <button class="modal-close" type="button" id="closeCreateModal" aria-label="Закрыть">×</button>
+      </div>
+
+      <div class="contest-type-grid">
+        <button class="contest-type" type="button" id="selectPrivateContest" data-type="private">
+          <strong>Приватное соревнование</strong>
+          <span>Доступно: PRO+ и админам. Укажи логины участников, которым будет доступна регистрация.</span>
+        </button>
+        <button class="contest-type" type="button" id="selectGlobalContest" data-type="public">
+          <strong>Глобальное соревнование</strong>
+          <span>Доступно: только администраторам. Соревнование будет видно всем пользователям.</span>
+        </button>
+      </div>
+
+      <form class="create-form" id="createContestForm" style="display:none;">
+        <div class="form-row">
+          <label for="ccTitle">Название</label>
+          <input id="ccTitle" type="text" placeholder="CodeBug Weekly #78" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label for="ccTasks">Задачи</label>
+          <input id="ccTasks" type="text" placeholder="ID через запятую, например: 1,2,3">
+        </div>
+        <div class="form-row" id="allowedUsersRow">
+          <label for="ccAllowed">Участники</label>
+          <input id="ccAllowed" type="text" placeholder="Логины через запятую">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="ccStart">Старт</label>
+            <input id="ccStart" type="datetime-local">
+          </div>
+          <div class="form-row">
+            <label for="ccEnd">Финиш</label>
+            <input id="ccEnd" type="datetime-local">
+          </div>
+        </div>
+        <p class="modal-note">Время берётся из твоего локального часового пояса и отправляется на сервер как timestamp.</p>
+        <button class="submit-create" type="submit">Создать</button>
+      </form>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -235,74 +957,23 @@
     updateNavbar();
 
     const user = getUser();
+    const state = {
+      contests: [],
+      visibleContests: [],
+      selectedDateKey: "",
+      selectedCreateType: "",
+      canCreatePrivate: false,
+      canCreateGlobal: false,
+      isAdmin: false,
+      userStats: {},
+      ratingHistory: [],
+      registrations: {}
+    };
 
-    async function initCreateContestSection() {
-      if (!user) return;
-      try {
-        const sub = await getUserSubscription(user);
-        const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
-        if (level === "pro_plus") {
-          const sec = document.getElementById("createContestSection");
-          if (sec) sec.style.display = "block";
-        }
-      } catch (_) {}
-    }
-
-    async function createPrivateContest() {
-      if (!user) {
-        window.location.href = "auth.html";
-        return;
-      }
-      const title = String(document.getElementById("ccTitle")?.value || "").trim();
-      const tasks = String(document.getElementById("ccTasks")?.value || "").split(",").map(x => Number(x.trim())).filter(x => Number.isInteger(x));
-      const allowed = String(document.getElementById("ccAllowed")?.value || "").split(",").map(x => x.trim()).filter(Boolean);
-      const startRaw = String(document.getElementById("ccStart")?.value || "").trim();
-      const endRaw = String(document.getElementById("ccEnd")?.value || "").trim();
-      const start = Date.parse(startRaw);
-      const end = Date.parse(endRaw);
-      if (!title || !tasks.length || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
-        alert("Проверь поля формы.");
-        return;
-      }
-      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
-      const auth = typeof getAuth === "function" ? getAuth() : null;
-      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
-      const resp = await fetch(`${base}/contests/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          title,
-          tasks,
-          allowedUsers: allowed,
-          start,
-          end,
-          visibility: "private"
-        })
+    function markActiveNav() {
+      document.querySelectorAll('#nav-links a[href="contests.html"]').forEach((link) => {
+        link.classList.add("active");
       });
-      const payload = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        alert(payload.error || "Не удалось создать контест");
-        return;
-      }
-      alert("Контест создан.");
-      loadContests();
-    }
-
-    function formatUtc(ts) {
-      if (!ts) return "—";
-      return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
-    }
-
-    function formatContestEnd(contest) {
-      if (!contest?.end) return "—";
-      const durationMs = Math.max(0, Number(contest.end) - Number(contest.start || 0));
-      if (durationMs > 1000 * 60 * 60 * 24 * 365) {
-        return "Без ограничения времени";
-      }
-      return formatUtc(contest.end);
     }
 
     function escapeHtml(value) {
@@ -314,33 +985,82 @@
         .replace(/'/g, "&#039;");
     }
 
-    const contestListUserSubCache = {};
-    const contestListUserExpCache = {};
-
-    function profileLink(login) {
-      const safeLogin = escapeHtml(login);
-      const sub = contestListUserSubCache[String(login)] || {};
-      const exp = Number(contestListUserExpCache[String(login)] || 0);
-      const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
-      const isPro = level !== "free";
-      const color = isPro && typeof getSubscriptionNickColor === "function"
-        ? getSubscriptionNickColor(sub)
-        : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF");
-      const nickHtml = (typeof buildStyledNickHtml === "function")
-        ? buildStyledNickHtml(login, sub, color)
-        : safeLogin;
-      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>`;
+    function formatNumber(value) {
+      const n = Number(value || 0);
+      return Number.isFinite(n) ? n.toLocaleString("ru-RU") : "0";
     }
 
-    function renderAuthorLinks(authors) {
-      return (authors || []).map(profileLink).join(", ") || "—";
+    function dateKey(ts) {
+      const d = new Date(Number(ts || 0));
+      if (!Number.isFinite(d.getTime())) return "";
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDateTime(ts) {
+      const d = new Date(Number(ts || 0));
+      if (!Number.isFinite(d.getTime())) return "—";
+      return d.toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).replace(".", "");
+    }
+
+    function formatTimeLeft(end) {
+      const left = Math.max(0, Number(end || 0) - Date.now());
+      const hours = Math.floor(left / 3600000);
+      const mins = Math.floor((left % 3600000) / 60000);
+      if (hours >= 24) return `${Math.floor(hours / 24)} д ${hours % 24} ч`;
+      if (hours > 0) return `${hours} ч ${mins} мин`;
+      return `${mins} мин`;
     }
 
     function statusFromTimes(start, end) {
       const now = Date.now();
-      if (now < start) return "upcoming";
-      if (now >= start && now <= end) return "ongoing";
+      if (now < Number(start || 0)) return "upcoming";
+      if (now >= Number(start || 0) && now <= Number(end || 0)) return "ongoing";
       return "finished";
+    }
+
+    function contestKind(contest) {
+      const raw = String(contest.kind || contest.type || contest.category || "").toLowerCase();
+      if (raw.includes("sprint") || raw.includes("спринт")) return "sprint";
+      if (raw.includes("beginner") || raw.includes("нович")) return "beginner";
+      if (raw.includes("final") || raw.includes("финал")) return "final";
+      if (raw.includes("other") || raw.includes("друг")) return "other";
+      return "ranked";
+    }
+
+    function kindLabel(kind) {
+      return {
+        ranked: "РЕЙТИНГОВОЕ",
+        sprint: "СПРИНТ",
+        beginner: "ДЛЯ НОВИЧКОВ",
+        final: "ФИНАЛ",
+        other: "ДРУГОЕ"
+      }[kind] || "РЕЙТИНГОВОЕ";
+    }
+
+    function statusLabel(status) {
+      return status === "ongoing" ? "Идет сейчас" : status === "upcoming" ? "Регистрация открыта" : "Завершено";
+    }
+
+    function contestDescription(contest) {
+      return String(contest.description || contest.subtitle || "Соревнование CodeBug по задачам на внимательность к коду.").trim();
+    }
+
+    function getParticipantsText(contest) {
+      const count = Number(contest.participantsCount || contest.registeredCount || 0);
+      if (Number.isFinite(count) && count > 0) return `${count} участников`;
+      return "участники: —";
+    }
+
+    function openContest(id) {
+      window.location.href = `contest.html?id=${encodeURIComponent(id)}`;
     }
 
     async function registerContest(contestId, status) {
@@ -350,9 +1070,10 @@
         return;
       }
       if (status === "finished") {
-        alert("Регистрация на завершённый контест закрыта.");
+        openContest(contestId);
         return;
       }
+
       const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const auth = typeof getAuth === "function" ? getAuth() : null;
       const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
@@ -369,12 +1090,14 @@
         alert(payload.error || "Не удалось зарегистрироваться");
         return;
       }
+      state.registrations[contestId] = true;
       loadContests();
     }
 
     async function renderList(list, containerId, emptyId) {
       const container = document.getElementById(containerId);
       const empty = document.getElementById(emptyId);
+      if (!container || !empty) return;
       container.innerHTML = "";
       if (!list.length) {
         empty.style.display = "block";
@@ -383,96 +1106,459 @@
       empty.style.display = "none";
 
       for (const contest of list) {
-        let registered = false;
-        if (user) {
-          const regSnap = await db.ref(`contest_regs/${contest.id}/${user}`).get();
-          registered = regSnap.exists();
-        }
-
-        const card = document.createElement("div");
-        card.className = "contest-card";
-        const registerDisabled = contest.status === "finished" || registered;
-        const registerLabel = contest.status === "finished"
-          ? "Регистрация закрыта"
-          : (registered ? "Вы зарегистрированы" : "Зарегистрироваться");
         const safeId = String(contest.id || "");
-        card.innerHTML = `
-          <div class="badge">${contest.statusLabel}</div>
-          <h3 class="contest-title">${escapeHtml(contest.title || "Соревнование")}</h3>
-          <div class="contest-meta">
-            <span>Старт: ${formatUtc(contest.start)}</span>
-            <span>Финиш: ${formatContestEnd(contest)}</span>
-            <span>Автор(ы): ${renderAuthorLinks(contest.authors)}</span>
+        const kind = contestKind(contest);
+        const registered = Boolean(state.registrations[safeId]);
+        const row = document.createElement("article");
+        row.className = "contest-row";
+        const actionLabel = contest.status === "finished"
+          ? "Результаты →"
+          : contest.status === "ongoing"
+            ? (registered ? "Открыть →" : "Участвовать →")
+            : "Подробнее →";
+        const timeLabel = contest.status === "ongoing"
+          ? formatTimeLeft(contest.end)
+          : formatDateTime(contest.status === "finished" ? contest.end : contest.start);
+        const visibility = String(contest.visibility || "public").toLowerCase() === "private" ? "ПРИВАТНОЕ" : "";
+        row.innerHTML = `
+          <div class="contest-main">
+            <span class="contest-icon ${kind}" aria-hidden="true"></span>
+            <div class="contest-copy">
+              <div class="contest-name-line">
+                <button class="contest-name" type="button">${escapeHtml(contest.title || "Соревнование")}</button>
+                <span class="type-badge ${kind}">${kindLabel(kind)}</span>
+                ${visibility ? `<span class="visibility-badge">${visibility}</span>` : ""}
+              </div>
+              <p class="contest-description">${escapeHtml(contestDescription(contest))}</p>
+            </div>
           </div>
-          <div class="contest-actions">
-            <button type="button" class="open-contest-btn">Открыть</button>
-            <button type="button" class="secondary register-contest-btn" ${registerDisabled ? "disabled" : ""}>
-              ${registerLabel}
-            </button>
+          <div class="contest-data">
+            <span>${getParticipantsText(contest)}</span>
+            <span>${escapeHtml(statusLabel(contest.status))}</span>
+            <span>${escapeHtml(timeLabel)}</span>
+            <button type="button" class="contest-action">${actionLabel}</button>
           </div>
         `;
-        card.querySelector(".open-contest-btn")?.addEventListener("click", () => openContest(safeId));
-        card.querySelector(".register-contest-btn")?.addEventListener("click", () => registerContest(safeId, contest.status));
-        container.appendChild(card);
-      }
-    }
-
-    function openContest(id) {
-      window.location.href = `contest.html?id=${id}`;
-    }
-
-    async function loadContests() {
-      const snap = await db.ref("contests").get();
-      const usersSnap = await db.ref("users").get();
-      if (usersSnap.exists()) {
-        const usersData = usersSnap.val() || {};
-        for (const [login, data] of Object.entries(usersData)) {
-          contestListUserSubCache[String(login)] = (data && data.subscription) || {};
-          contestListUserExpCache[String(login)] = Number(data?.stats?.exp || 0);
-        }
-      }
-      const contests = [];
-      if (snap.exists()) {
-        const data = snap.val();
-        Object.keys(data).forEach(id => {
-          const item = data[id];
-          contests.push({
-            id,
-            ...item
-          });
+        row.querySelector(".contest-name")?.addEventListener("click", () => openContest(safeId));
+        row.querySelector(".contest-action")?.addEventListener("click", () => {
+          if (contest.status === "ongoing" && !registered) registerContest(safeId, contest.status);
+          else openContest(safeId);
         });
+        container.appendChild(row);
       }
+    }
 
-      const now = Date.now();
+    function filterBySelectedDate(list) {
+      if (!state.selectedDateKey) return list;
+      return list.filter((contest) => dateKey(contest.start) === state.selectedDateKey || dateKey(contest.end) === state.selectedDateKey);
+    }
+
+    async function renderContests() {
+      const list = filterBySelectedDate(state.visibleContests);
       const ongoing = [];
       const upcoming = [];
       const finished = [];
 
-      contests.forEach(contest => {
-        const visibility = String(contest.visibility || "public").toLowerCase();
-        const owner = String(contest.ownerLogin || "").trim();
-        const allowed = Array.isArray(contest.allowedUsers) ? contest.allowedUsers.map(v => String(v || "").trim()) : [];
-        if (visibility === "private" && (!user || (user !== owner && !allowed.includes(user)))) {
-          return;
-        }
+      list.forEach((contest) => {
         const status = statusFromTimes(contest.start, contest.end);
-        const statusLabel = status === "ongoing" ? "Идет" : status === "upcoming" ? "Скоро" : "Завершен";
-        const entry = { ...contest, status, statusLabel };
+        const entry = { ...contest, status };
         if (status === "ongoing") ongoing.push(entry);
         else if (status === "upcoming") upcoming.push(entry);
         else finished.push(entry);
       });
 
-      ongoing.sort((a, b) => a.end - b.end);
-      upcoming.sort((a, b) => a.start - b.start);
-      finished.sort((a, b) => b.end - a.end);
+      ongoing.sort((a, b) => Number(a.end || 0) - Number(b.end || 0));
+      upcoming.sort((a, b) => Number(a.start || 0) - Number(b.start || 0));
+      finished.sort((a, b) => Number(b.end || 0) - Number(a.end || 0));
 
       await renderList(ongoing, "ongoingList", "ongoingEmpty");
       await renderList(upcoming, "upcomingList", "upcomingEmpty");
       await renderList(finished, "finishedList", "finishedEmpty");
+      renderLatestResults(finished);
     }
 
-    initCreateContestSection();
+    function renderUserStats() {
+      const solved = Number(state.userStats?.cnt || state.userStats?.solvedCount || 0);
+      const exp = Number(state.userStats?.exp || 0);
+      const created = state.visibleContests.filter((contest) => String(contest.ownerLogin || "") === String(user || "")).length;
+      const wins = Number(state.userStats?.contestWins || state.userStats?.wins || 0);
+      document.getElementById("statPassed").textContent = formatNumber(solved);
+      document.getElementById("statRating").textContent = formatNumber(exp);
+      document.getElementById("statCreated").textContent = formatNumber(created);
+      document.getElementById("statWins").textContent = formatNumber(wins);
+    }
+
+    function monthTitle(date) {
+      return date.toLocaleString("ru-RU", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
+    }
+
+    function renderCalendar(contests) {
+      const grid = document.getElementById("calendarGrid");
+      const title = document.getElementById("calendarMonth");
+      if (!grid || !title) return;
+      grid.innerHTML = "";
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const startOffset = (first.getDay() + 6) % 7;
+      const todayKey = dateKey(Date.now());
+      const eventMap = new Map();
+      contests.forEach((contest) => {
+        const key = dateKey(contest.start);
+        if (!key) return;
+        const arr = eventMap.get(key) || [];
+        arr.push(contestKind(contest));
+        eventMap.set(key, arr);
+      });
+
+      title.textContent = monthTitle(now);
+
+      for (let i = 0; i < startOffset; i += 1) {
+        const empty = document.createElement("span");
+        empty.className = "calendar-day is-muted";
+        empty.textContent = "";
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= last.getDate(); day += 1) {
+        const current = new Date(now.getFullYear(), now.getMonth(), day);
+        const key = dateKey(current.getTime());
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "calendar-day";
+        if (key === todayKey) button.classList.add("is-today");
+        if (key === state.selectedDateKey) button.classList.add("is-selected");
+        button.textContent = String(day);
+        const kinds = (eventMap.get(key) || []).slice(0, 2);
+        if (kinds.length) {
+          const dots = document.createElement("span");
+          dots.className = "day-dots";
+          kinds.forEach((kind) => {
+            const dot = document.createElement("i");
+            dot.className = `day-dot ${kind === "sprint" ? "sprint" : kind === "ranked" ? "ranked" : "other"}`;
+            dots.appendChild(dot);
+          });
+          button.appendChild(dots);
+        }
+        button.addEventListener("click", () => {
+          if (!eventMap.has(key)) return;
+          state.selectedDateKey = state.selectedDateKey === key ? "" : key;
+          renderCalendar(state.visibleContests);
+          renderDateFilter();
+          renderContests();
+        });
+        grid.appendChild(button);
+      }
+    }
+
+    function renderDateFilter() {
+      const el = document.getElementById("dateFilterText");
+      if (!el) return;
+      if (!state.selectedDateKey) {
+        el.style.display = "none";
+        el.innerHTML = "";
+        return;
+      }
+      el.style.display = "block";
+      el.innerHTML = `Фильтр по дате: ${escapeHtml(state.selectedDateKey)} <button type="button">сбросить</button>`;
+      el.querySelector("button")?.addEventListener("click", () => {
+        state.selectedDateKey = "";
+        renderCalendar(state.visibleContests);
+        renderDateFilter();
+        renderContests();
+      });
+    }
+
+    function renderRatingGraph() {
+      const graph = document.getElementById("ratingGraph");
+      const growth = document.getElementById("ratingGrowth");
+      if (!graph) return;
+      graph.innerHTML = "";
+      const width = 360;
+      const height = 148;
+      const top = 16;
+      const bottom = 124;
+
+      for (let i = 0; i < 4; i += 1) {
+        const y = top + i * ((bottom - top) / 3);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", "0");
+        line.setAttribute("x2", String(width));
+        line.setAttribute("y1", String(y));
+        line.setAttribute("y2", String(y));
+        line.setAttribute("class", "graph-grid");
+        graph.appendChild(line);
+      }
+
+      const points = Array.isArray(state.ratingHistory) ? state.ratingHistory.slice(-30) : [];
+      if (points.length < 2) {
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", "0");
+        text.setAttribute("y", "78");
+        text.setAttribute("class", "graph-empty");
+        text.textContent = "Пока нет данных по рейтингу";
+        graph.appendChild(text);
+        if (growth) growth.textContent = "";
+        return;
+      }
+
+      const values = points.map((p) => Number(p.value ?? p.rating ?? p.exp ?? 0)).filter(Number.isFinite);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = Math.max(1, max - min);
+      const coords = values.map((value, index) => {
+        const x = values.length === 1 ? 0 : index * (width / (values.length - 1));
+        const y = bottom - ((value - min) / range) * (bottom - top);
+        return [x, y];
+      });
+      const path = coords.map(([x, y], index) => `${index ? "L" : "M"} ${x.toFixed(2)} ${y.toFixed(2)}`).join(" ");
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      line.setAttribute("d", path);
+      line.setAttribute("class", "graph-line");
+      graph.appendChild(line);
+      coords.forEach(([x, y]) => {
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", String(x));
+        circle.setAttribute("cy", String(y));
+        circle.setAttribute("r", "3");
+        circle.setAttribute("class", "graph-dot");
+        graph.appendChild(circle);
+      });
+      const delta = values[values.length - 1] - values[0];
+      if (growth) growth.textContent = delta > 0 ? `+${formatNumber(delta)}` : delta < 0 ? String(delta) : "";
+    }
+
+    function renderLatestResults(finished) {
+      const container = document.getElementById("latestResults");
+      if (!container) return;
+      container.innerHTML = "";
+      const registeredFinished = finished.filter((contest) => state.registrations[String(contest.id || "")]).slice(0, 5);
+      if (!registeredFinished.length) {
+        const row = document.createElement("div");
+        row.className = "result-row";
+        row.innerHTML = `<strong>Пока нет результатов</strong><span>—</span><span>—</span>`;
+        container.appendChild(row);
+        return;
+      }
+      registeredFinished.forEach((contest) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "result-row";
+        row.style.background = "transparent";
+        row.style.borderLeft = "0";
+        row.style.borderRight = "0";
+        row.style.borderTop = "0";
+        row.style.width = "100%";
+        row.style.textAlign = "left";
+        row.style.cursor = "pointer";
+        row.innerHTML = `<strong>${escapeHtml(contest.title || "Соревнование")}</strong><span>#—</span><span>результаты</span>`;
+        row.addEventListener("click", () => openContest(contest.id));
+        container.appendChild(row);
+      });
+    }
+
+    async function loadUserData() {
+      if (!user) {
+        renderUserStats();
+        renderRatingGraph();
+        return;
+      }
+      try {
+        const userSnap = await db.ref(`users/${user}`).get();
+        const data = userSnap.exists() ? (userSnap.val() || {}) : {};
+        state.userStats = data.stats || {};
+        state.ratingHistory = Array.isArray(data.ratingHistory) ? data.ratingHistory : [];
+      } catch (err) {
+        console.warn("contest user data load failed", err);
+      }
+    }
+
+    async function loadRegistration(contestId) {
+      if (!user || !contestId) return false;
+      if (Object.prototype.hasOwnProperty.call(state.registrations, contestId)) {
+        return state.registrations[contestId];
+      }
+      try {
+        const snap = await db.ref(`contest_regs/${contestId}/${user}`).get();
+        state.registrations[contestId] = snap.exists();
+      } catch (_) {
+        state.registrations[contestId] = false;
+      }
+      return state.registrations[contestId];
+    }
+
+    async function loadContests() {
+      try {
+        const snap = await db.ref("contests").get();
+        const contests = [];
+        if (snap.exists()) {
+          const data = snap.val() || {};
+          Object.keys(data).forEach((id) => {
+            const item = data[id] || {};
+            contests.push({ id, ...item });
+          });
+        }
+
+        state.visibleContests = contests.filter((contest) => {
+          const visibility = String(contest.visibility || "public").toLowerCase();
+          const owner = String(contest.ownerLogin || "").trim();
+          const allowed = Array.isArray(contest.allowedUsers) ? contest.allowedUsers.map((v) => String(v || "").trim()) : [];
+          return visibility !== "private" || (user && (user === owner || allowed.includes(user)));
+        });
+
+        for (const contest of state.visibleContests) {
+          await loadRegistration(String(contest.id || ""));
+        }
+
+        renderUserStats();
+        renderCalendar(state.visibleContests);
+        renderDateFilter();
+        await renderContests();
+      } catch (err) {
+        console.warn("contests load failed", err);
+      }
+    }
+
+    function openModal() {
+      const modal = document.getElementById("contestModal");
+      modal?.classList.add("is-open");
+      modal?.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("contestModal");
+      modal?.classList.remove("is-open");
+      modal?.setAttribute("aria-hidden", "true");
+    }
+
+    function updateCreateAccessUi() {
+      const privateBtn = document.getElementById("selectPrivateContest");
+      const globalBtn = document.getElementById("selectGlobalContest");
+      if (privateBtn) {
+        privateBtn.disabled = !state.canCreatePrivate;
+        privateBtn.querySelector("span").textContent = state.canCreatePrivate
+          ? "Доступно: PRO+ и админам. Укажи логины участников, которым будет доступна регистрация."
+          : "Недоступно для вашего аккаунта.";
+      }
+      if (globalBtn) {
+        globalBtn.disabled = !state.canCreateGlobal;
+        globalBtn.querySelector("span").textContent = state.canCreateGlobal
+          ? "Доступно: только администраторам. Соревнование будет видно всем пользователям."
+          : "Недоступно для вашего аккаунта.";
+      }
+    }
+
+    async function resolveCreateAccess() {
+      if (!user) {
+        updateCreateAccessUi();
+        return;
+      }
+      try {
+        const [sub, isAdmin] = await Promise.all([
+          getUserSubscription(user),
+          typeof checkAdminAccess === "function" ? checkAdminAccess() : Promise.resolve(false)
+        ]);
+        const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
+        state.isAdmin = Boolean(isAdmin);
+        state.canCreatePrivate = state.isAdmin || level === "pro_plus";
+        state.canCreateGlobal = state.isAdmin;
+      } catch (err) {
+        console.warn("contest create access failed", err);
+      }
+      updateCreateAccessUi();
+    }
+
+    function selectCreateType(type) {
+      const canUse = type === "public" ? state.canCreateGlobal : state.canCreatePrivate;
+      if (!canUse) return;
+      state.selectedCreateType = type;
+      document.getElementById("createContestForm").style.display = "grid";
+      document.getElementById("allowedUsersRow").style.display = type === "private" ? "grid" : "none";
+      document.querySelectorAll(".contest-type").forEach((btn) => {
+        btn.classList.toggle("is-selected", btn.dataset.type === type);
+      });
+    }
+
+    function parseTasks(raw) {
+      return String(raw || "")
+        .split(",")
+        .map((x) => Number(String(x).trim()))
+        .filter((x) => Number.isInteger(x) && x >= 0);
+    }
+
+    function parseLocalDateTime(value) {
+      const ts = Date.parse(String(value || ""));
+      return Number.isFinite(ts) ? ts : NaN;
+    }
+
+    async function createContestFromForm(event) {
+      event.preventDefault();
+      if (!user) {
+        window.location.href = "auth.html";
+        return;
+      }
+      const visibility = state.selectedCreateType || "private";
+      if (visibility === "public" && !state.canCreateGlobal) return;
+      if (visibility === "private" && !state.canCreatePrivate) return;
+
+      const title = String(document.getElementById("ccTitle")?.value || "").trim();
+      const tasks = parseTasks(document.getElementById("ccTasks")?.value);
+      const allowed = String(document.getElementById("ccAllowed")?.value || "")
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+      const start = parseLocalDateTime(document.getElementById("ccStart")?.value);
+      const end = parseLocalDateTime(document.getElementById("ccEnd")?.value);
+
+      if (!title || !tasks.length || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        alert("Проверь название, задачи и время соревнования.");
+        return;
+      }
+
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      const auth = typeof getAuth === "function" ? getAuth() : null;
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      const resp = await fetch(`${base}/contests/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          title,
+          tasks,
+          allowedUsers: visibility === "private" ? allowed : [],
+          start,
+          end,
+          visibility
+        })
+      });
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        alert(payload.error || "Не удалось создать соревнование");
+        return;
+      }
+      closeModal();
+      document.getElementById("createContestForm").reset();
+      state.selectedCreateType = "";
+      await loadContests();
+    }
+
+    document.getElementById("openCreateModal")?.addEventListener("click", openModal);
+    document.getElementById("closeCreateModal")?.addEventListener("click", closeModal);
+    document.getElementById("contestModal")?.addEventListener("click", (event) => {
+      if (event.target.id === "contestModal") closeModal();
+    });
+    document.getElementById("selectPrivateContest")?.addEventListener("click", () => selectCreateType("private"));
+    document.getElementById("selectGlobalContest")?.addEventListener("click", () => selectCreateType("public"));
+    document.getElementById("createContestForm")?.addEventListener("submit", createContestFromForm);
+
+    markActiveNav();
+    resolveCreateAccess();
+    loadUserData().then(() => {
+      renderUserStats();
+      renderRatingGraph();
+    });
     loadContests();
   </script>
 </body>

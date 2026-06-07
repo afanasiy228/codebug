@@ -3639,7 +3639,8 @@ def contests_create():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
-    if not _is_pro_plus_active(login):
+    is_admin = _is_admin_request()
+    if not is_admin and not _is_pro_plus_active(login):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
     global FIREBASE_READY
     if not FIREBASE_READY:
@@ -3658,8 +3659,8 @@ def contests_create():
     visibility = str(data.get("visibility") or "private").strip().lower()
     if visibility not in {"private", "public"}:
         visibility = "private"
-    if visibility == "public" and not _is_dev_active(login):
-        visibility = "private"
+    if visibility == "public" and not is_admin:
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
     allowed = data.get("allowedUsers") or []
     if not isinstance(allowed, list):
         allowed = []
