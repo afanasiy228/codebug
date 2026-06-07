@@ -3652,9 +3652,20 @@ def contests_create():
     tasks = data.get("tasks") or []
     if not title or not isinstance(tasks, list) or not tasks:
         return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    description = str(data.get("description") or "").strip()[:1000]
+    logo = str(data.get("logo") or "").strip()
+    if logo:
+        if len(logo) > 500_000 or not re.match(r"^data:image/(png|jpe?g|webp|gif);base64,", logo, re.I):
+            return _api_error("invalid_logo", 400, "INVALID_LOGO")
     start = int(data.get("start") or 0)
     end = int(data.get("end") or 0)
-    if end <= start:
+    try:
+        start_year = time.gmtime(start / 1000).tm_year
+        end_year = time.gmtime(end / 1000).tm_year
+    except Exception:
+        start_year = 0
+        end_year = 0
+    if end <= start or not (2020 <= start_year <= 2100) or not (2020 <= end_year <= 2100):
         return _api_error("invalid_time_range", 400, "INVALID_TIME_RANGE")
     visibility = str(data.get("visibility") or "private").strip().lower()
     if visibility not in {"private", "public"}:
@@ -3669,6 +3680,8 @@ def contests_create():
         allowed.append(login)
     payload = {
         "title": title,
+        "description": description,
+        "logo": logo,
         "authors": [login],
         "tasks": [int(x) for x in tasks if str(x).isdigit()],
         "start": start,

@@ -134,7 +134,7 @@
       appearance: none;
       border: 0;
       background: transparent;
-      color: var(--amber);
+      color: var(--ink);
       cursor: pointer;
       padding: 0;
       font: inherit;
@@ -229,19 +229,29 @@
 
     .contest-main {
       display: grid;
-      grid-template-columns: 24px minmax(0, 1fr);
+      grid-template-columns: 36px minmax(0, 1fr);
       gap: 16px;
       align-items: start;
       min-width: 0;
     }
 
     .contest-icon {
-      width: 16px;
-      height: 16px;
-      margin-top: 5px;
+      width: 34px;
+      height: 34px;
+      margin-top: 2px;
       border-radius: 50%;
       border: 1px solid var(--line-strong);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(245, 158, 11, 0.32), transparent 44%),
+        rgba(255, 255, 255, 0.03);
       position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--amber);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 800;
     }
 
     .contest-row:hover .contest-icon {
@@ -249,28 +259,21 @@
     }
 
     .contest-icon::after {
-      content: "";
+      content: "{}";
       position: absolute;
-      inset: 4px;
-      border-radius: inherit;
-      background: var(--amber);
-      opacity: 0.75;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      opacity: 0.9;
     }
 
-    .contest-icon.sprint::after {
-      background: var(--green);
-    }
-
-    .contest-icon.beginner::after {
-      background: var(--blue);
-    }
-
-    .contest-icon.final::after {
-      background: var(--amber);
-    }
-
-    .contest-icon.other::after {
-      background: var(--purple);
+    .contest-logo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
     }
 
     .contest-copy {
@@ -376,11 +379,19 @@
     }
 
     .empty-line {
-      color: var(--muted);
-      padding: 18px 0;
+      color: var(--muted-strong);
+      padding: 20px 0;
       border-top: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
       font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .empty-line strong {
+      display: block;
+      color: var(--ink);
+      font-size: 15px;
+      margin-bottom: 4px;
     }
 
     .side-section-title {
@@ -655,14 +666,27 @@
     }
 
     .contest-type {
+      position: relative;
       text-align: left;
       border: 1px solid var(--line);
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.02);
+      background: transparent;
       color: var(--ink);
       cursor: pointer;
-      padding: 18px;
+      padding: 18px 18px 18px 20px;
       font: inherit;
+      transition: border-color 150ms ease, background 150ms ease, opacity 150ms ease;
+    }
+
+    .contest-type::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      bottom: 14px;
+      width: 2px;
+      border-radius: 999px;
+      background: transparent;
     }
 
     .contest-type strong {
@@ -681,6 +705,19 @@
 
     .contest-type.is-selected {
       border-color: rgba(245, 158, 11, 0.65);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .contest-type.is-selected::before {
+      background: var(--amber);
+    }
+
+    .contest-type.is-selected strong {
+      color: var(--ink);
+    }
+
+    .contest-type.is-selected span {
+      color: var(--muted-strong);
     }
 
     .contest-type[disabled] {
@@ -706,7 +743,8 @@
       text-transform: uppercase;
     }
 
-    .form-row input {
+    .form-row input,
+    .form-row textarea {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -717,8 +755,200 @@
       outline: none;
     }
 
-    .form-row input:focus {
+    .form-row textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .form-row input:focus,
+    .form-row textarea:focus {
       border-color: rgba(245, 158, 11, 0.55);
+    }
+
+    .logo-upload {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .logo-preview {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      border: 1px solid var(--line-strong);
+      background:
+        radial-gradient(circle at 32% 24%, rgba(245, 158, 11, 0.28), transparent 44%),
+        rgba(255, 255, 255, 0.025);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--amber);
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 800;
+    }
+
+    .logo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .file-action {
+      display: inline-flex;
+      width: fit-content;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .file-action:hover {
+      color: var(--amber);
+    }
+
+    .file-action input {
+      display: none;
+    }
+
+    .datetime-field {
+      position: relative;
+    }
+
+    .datetime-display {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0F1318;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 13px 14px;
+      font: inherit;
+      text-align: left;
+    }
+
+    .datetime-display:hover,
+    .datetime-field.is-open .datetime-display {
+      border-color: rgba(245, 158, 11, 0.55);
+    }
+
+    .datetime-popover {
+      display: none;
+      position: absolute;
+      z-index: 90;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      background: #0B0E12;
+      padding: 14px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .datetime-field.is-open .datetime-popover {
+      display: block;
+    }
+
+    .picker-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .picker-head strong {
+      font-size: 14px;
+    }
+
+    .picker-nav {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted-strong);
+      cursor: pointer;
+      font: inherit;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 6px;
+    }
+
+    .picker-nav:hover {
+      color: var(--amber);
+    }
+
+    .picker-weekdays,
+    .picker-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .picker-weekdays {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .picker-weekdays span {
+      text-align: center;
+    }
+
+    .picker-day {
+      aspect-ratio: 1;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted-strong);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      transition: background 120ms ease, color 120ms ease;
+    }
+
+    .picker-day:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .picker-day.is-selected {
+      color: #0B0D10;
+      background: var(--amber);
+      font-weight: 900;
+    }
+
+    .picker-day.is-muted {
+      color: rgba(139, 150, 168, 0.3);
+      cursor: default;
+    }
+
+    .picker-time {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .picker-time input {
+      padding: 9px 10px;
+      border-radius: 10px;
+    }
+
+    .picker-apply {
+      width: 100%;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.14);
+      color: var(--amber);
+      cursor: pointer;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 900;
     }
 
     .form-grid {
@@ -843,19 +1073,28 @@
         <section class="section">
           <h2 class="section-title">Идут сейчас</h2>
           <div id="ongoingList" class="contest-list"></div>
-          <div id="ongoingEmpty" class="empty-line" style="display:none;">Сейчас нет активных соревнований.</div>
+          <div id="ongoingEmpty" class="empty-line" style="display:none;">
+            <strong>Пока нет активных соревнований</strong>
+            Создай своё соревнование или дождись новых событий.
+          </div>
         </section>
 
         <section class="section">
           <h2 class="section-title">Предстоящие</h2>
           <div id="upcomingList" class="contest-list"></div>
-          <div id="upcomingEmpty" class="empty-line" style="display:none;">Нет запланированных соревнований.</div>
+          <div id="upcomingEmpty" class="empty-line" style="display:none;">
+            <strong>Пока нет предстоящих соревнований</strong>
+            Создай своё соревнование или дождись новых событий.
+          </div>
         </section>
 
         <section class="section">
           <h2 class="section-title">Прошедшие</h2>
           <div id="finishedList" class="contest-list"></div>
-          <div id="finishedEmpty" class="empty-line" style="display:none;">Пока нет прошедших соревнований.</div>
+          <div id="finishedEmpty" class="empty-line" style="display:none;">
+            <strong>Пока нет прошедших соревнований</strong>
+            Результаты появятся после первого завершённого события.
+          </div>
         </section>
       </div>
 
@@ -885,6 +1124,7 @@
           <svg class="rating-graph" viewBox="0 0 360 148" role="img" aria-label="График рейтинга">
             <g id="ratingGraph"></g>
           </svg>
+          <div class="date-filter" id="currentRatingText">Текущий рейтинг: 0</div>
         </section>
 
         <section>
@@ -924,6 +1164,23 @@
           <input id="ccTitle" type="text" placeholder="CodeBug Weekly #78" autocomplete="off">
         </div>
         <div class="form-row">
+          <label>Логотип соревнования</label>
+          <div class="logo-upload">
+            <div class="logo-preview" id="ccLogoPreview">{ }</div>
+            <div>
+              <label class="file-action">
+                Выбрать png, jpg, webp или gif
+                <input id="ccLogo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+              </label>
+              <p class="modal-note">Превью будет использоваться в списках соревнований. Если логотип не выбран, останется дефолтная иконка.</p>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="ccDescription">Описание</label>
+          <textarea id="ccDescription" placeholder="Коротко опиши формат соревнования"></textarea>
+        </div>
+        <div class="form-row">
           <label for="ccTasks">Задачи</label>
           <input id="ccTasks" type="text" placeholder="ID через запятую, например: 1,2,3">
         </div>
@@ -932,13 +1189,17 @@
           <input id="ccAllowed" type="text" placeholder="Логины через запятую">
         </div>
         <div class="form-grid">
-          <div class="form-row">
-            <label for="ccStart">Старт</label>
-            <input id="ccStart" type="datetime-local">
+          <div class="form-row datetime-field" id="startPicker">
+            <label>Старт</label>
+            <button class="datetime-display" type="button" id="startDisplay">Выбрать дату и время</button>
+            <input id="ccStart" type="hidden">
+            <div class="datetime-popover" id="startPopover"></div>
           </div>
-          <div class="form-row">
-            <label for="ccEnd">Финиш</label>
-            <input id="ccEnd" type="datetime-local">
+          <div class="form-row datetime-field" id="endPicker">
+            <label>Финиш</label>
+            <button class="datetime-display" type="button" id="endDisplay">Выбрать дату и время</button>
+            <input id="ccEnd" type="hidden">
+            <div class="datetime-popover" id="endPopover"></div>
           </div>
         </div>
         <p class="modal-note">Время берётся из твоего локального часового пояса и отправляется на сервер как timestamp.</p>
@@ -967,7 +1228,12 @@
       isAdmin: false,
       userStats: {},
       ratingHistory: [],
-      registrations: {}
+      registrations: {},
+      logoData: "",
+      datePickers: {
+        start: null,
+        end: null
+      }
     };
 
     function markActiveNav() {
@@ -990,8 +1256,21 @@
       return Number.isFinite(n) ? n.toLocaleString("ru-RU") : "0";
     }
 
+    function normalizeTimestamp(value) {
+      if (value === null || value === undefined || value === "") return 0;
+      let n = Number(value);
+      if (!Number.isFinite(n)) n = Date.parse(String(value));
+      if (!Number.isFinite(n)) return 0;
+      if (n > 1000000000 && n < 100000000000) n *= 1000;
+      const d = new Date(n);
+      const year = d.getFullYear();
+      if (!Number.isFinite(d.getTime()) || year < 2020 || year > 2100) return 0;
+      return n;
+    }
+
     function dateKey(ts) {
-      const d = new Date(Number(ts || 0));
+      const normalized = normalizeTimestamp(ts);
+      const d = new Date(normalized);
       if (!Number.isFinite(d.getTime())) return "";
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -1000,7 +1279,9 @@
     }
 
     function formatDateTime(ts) {
-      const d = new Date(Number(ts || 0));
+      const normalized = normalizeTimestamp(ts);
+      if (!normalized) return "—";
+      const d = new Date(normalized);
       if (!Number.isFinite(d.getTime())) return "—";
       return d.toLocaleString("ru-RU", {
         day: "2-digit",
@@ -1011,7 +1292,7 @@
     }
 
     function formatTimeLeft(end) {
-      const left = Math.max(0, Number(end || 0) - Date.now());
+      const left = Math.max(0, normalizeTimestamp(end) - Date.now());
       const hours = Math.floor(left / 3600000);
       const mins = Math.floor((left % 3600000) / 60000);
       if (hours >= 24) return `${Math.floor(hours / 24)} д ${hours % 24} ч`;
@@ -1021,8 +1302,11 @@
 
     function statusFromTimes(start, end) {
       const now = Date.now();
-      if (now < Number(start || 0)) return "upcoming";
-      if (now >= Number(start || 0) && now <= Number(end || 0)) return "ongoing";
+      const safeStart = normalizeTimestamp(start);
+      const safeEnd = normalizeTimestamp(end);
+      if (!safeStart || !safeEnd) return "finished";
+      if (now < safeStart) return "upcoming";
+      if (now >= safeStart && now <= safeEnd) return "ongoing";
       return "finished";
     }
 
@@ -1051,6 +1335,14 @@
 
     function contestDescription(contest) {
       return String(contest.description || contest.subtitle || "Соревнование CodeBug по задачам на внимательность к коду.").trim();
+    }
+
+    function contestLogoHtml(contest) {
+      const logo = String(contest.logo || contest.logoUrl || "").trim();
+      if (/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(logo) || /^https?:\/\//i.test(logo)) {
+        return `<img class="contest-logo" src="${escapeHtml(logo)}" alt="">`;
+      }
+      return "";
     }
 
     function getParticipantsText(contest) {
@@ -1122,7 +1414,7 @@
         const visibility = String(contest.visibility || "public").toLowerCase() === "private" ? "ПРИВАТНОЕ" : "";
         row.innerHTML = `
           <div class="contest-main">
-            <span class="contest-icon ${kind}" aria-hidden="true"></span>
+            <span class="contest-icon ${kind}" aria-hidden="true">${contestLogoHtml(contest)}</span>
             <div class="contest-copy">
               <div class="contest-name-line">
                 <button class="contest-name" type="button">${escapeHtml(contest.title || "Соревнование")}</button>
@@ -1167,9 +1459,9 @@
         else finished.push(entry);
       });
 
-      ongoing.sort((a, b) => Number(a.end || 0) - Number(b.end || 0));
-      upcoming.sort((a, b) => Number(a.start || 0) - Number(b.start || 0));
-      finished.sort((a, b) => Number(b.end || 0) - Number(a.end || 0));
+      ongoing.sort((a, b) => normalizeTimestamp(a.end) - normalizeTimestamp(b.end));
+      upcoming.sort((a, b) => normalizeTimestamp(a.start) - normalizeTimestamp(b.start));
+      finished.sort((a, b) => normalizeTimestamp(b.end) - normalizeTimestamp(a.end));
 
       await renderList(ongoing, "ongoingList", "ongoingEmpty");
       await renderList(upcoming, "upcomingList", "upcomingEmpty");
@@ -1272,6 +1564,7 @@
     function renderRatingGraph() {
       const graph = document.getElementById("ratingGraph");
       const growth = document.getElementById("ratingGrowth");
+      const currentText = document.getElementById("currentRatingText");
       if (!graph) return;
       graph.innerHTML = "";
       const width = 360;
@@ -1291,18 +1584,8 @@
       }
 
       const points = Array.isArray(state.ratingHistory) ? state.ratingHistory.slice(-30) : [];
-      if (points.length < 2) {
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", "0");
-        text.setAttribute("y", "78");
-        text.setAttribute("class", "graph-empty");
-        text.textContent = "Пока нет данных по рейтингу";
-        graph.appendChild(text);
-        if (growth) growth.textContent = "";
-        return;
-      }
-
-      const values = points.map((p) => Number(p.value ?? p.rating ?? p.exp ?? 0)).filter(Number.isFinite);
+      let values = points.map((p) => Number(p.value ?? p.rating ?? p.exp ?? 0)).filter(Number.isFinite);
+      if (values.length < 2) values = [0, 0, 0, 0, 0];
       const min = Math.min(...values);
       const max = Math.max(...values);
       const range = Math.max(1, max - min);
@@ -1326,6 +1609,7 @@
       });
       const delta = values[values.length - 1] - values[0];
       if (growth) growth.textContent = delta > 0 ? `+${formatNumber(delta)}` : delta < 0 ? String(delta) : "";
+      if (currentText) currentText.textContent = `Текущий рейтинг: ${formatNumber(values[values.length - 1] || 0)}`;
     }
 
     function renderLatestResults(finished) {
@@ -1391,13 +1675,18 @@
       try {
         const snap = await db.ref("contests").get();
         const contests = [];
-        if (snap.exists()) {
-          const data = snap.val() || {};
-          Object.keys(data).forEach((id) => {
-            const item = data[id] || {};
-            contests.push({ id, ...item });
+      if (snap.exists()) {
+        const data = snap.val() || {};
+        Object.keys(data).forEach((id) => {
+          const item = data[id] || {};
+          contests.push({
+            id,
+            ...item,
+            start: normalizeTimestamp(item.start),
+            end: normalizeTimestamp(item.end)
           });
-        }
+        });
+      }
 
         state.visibleContests = contests.filter((contest) => {
           const visibility = String(contest.visibility || "public").toLowerCase();
@@ -1417,6 +1706,185 @@
       } catch (err) {
         console.warn("contests load failed", err);
       }
+    }
+
+    function formatPickerDisplay(ms) {
+      const ts = normalizeTimestamp(ms);
+      if (!ts) return "Выбрать дату и время";
+      return new Date(ts).toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function pickerMonthTitle(year, month) {
+      return new Date(year, month, 1)
+        .toLocaleString("ru-RU", { month: "long", year: "numeric" })
+        .replace(/^./, (c) => c.toUpperCase());
+    }
+
+    function closeDatePickers() {
+      document.querySelectorAll(".datetime-field").forEach((field) => field.classList.remove("is-open"));
+    }
+
+    function ensurePickerState(kind) {
+      if (state.datePickers[kind]) return state.datePickers[kind];
+      const now = new Date();
+      now.setSeconds(0, 0);
+      state.datePickers[kind] = {
+        selected: null,
+        viewYear: now.getFullYear(),
+        viewMonth: now.getMonth(),
+        hour: kind === "start" ? 18 : 21,
+        minute: 0
+      };
+      return state.datePickers[kind];
+    }
+
+    function renderDatePicker(kind) {
+      const picker = ensurePickerState(kind);
+      const popover = document.getElementById(`${kind}Popover`);
+      if (!popover) return;
+      const first = new Date(picker.viewYear, picker.viewMonth, 1);
+      const last = new Date(picker.viewYear, picker.viewMonth + 1, 0);
+      const offset = (first.getDay() + 6) % 7;
+      const selectedKey = picker.selected ? dateKey(picker.selected) : "";
+      let daysHtml = "";
+      for (let i = 0; i < offset; i += 1) {
+        daysHtml += `<span class="picker-day is-muted"></span>`;
+      }
+      for (let day = 1; day <= last.getDate(); day += 1) {
+        const current = new Date(picker.viewYear, picker.viewMonth, day).getTime();
+        const isSelected = selectedKey === dateKey(current);
+        daysHtml += `<button class="picker-day ${isSelected ? "is-selected" : ""}" type="button" data-day="${day}">${day}</button>`;
+      }
+
+      popover.innerHTML = `
+        <div class="picker-head">
+          <button class="picker-nav" type="button" data-nav="-1">‹</button>
+          <strong>${pickerMonthTitle(picker.viewYear, picker.viewMonth)}</strong>
+          <button class="picker-nav" type="button" data-nav="1">›</button>
+        </div>
+        <div class="picker-weekdays" aria-hidden="true">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+        <div class="picker-days">${daysHtml}</div>
+        <div class="picker-time">
+          <input class="picker-hour" type="number" min="0" max="23" value="${String(picker.hour).padStart(2, "0")}" aria-label="Часы">
+          <input class="picker-minute" type="number" min="0" max="59" value="${String(picker.minute).padStart(2, "0")}" aria-label="Минуты">
+        </div>
+        <button class="picker-apply" type="button">Выбрать</button>
+      `;
+
+      popover.querySelectorAll("[data-nav]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          picker.viewMonth += Number(btn.dataset.nav || 0);
+          if (picker.viewMonth < 0) {
+            picker.viewMonth = 11;
+            picker.viewYear -= 1;
+          } else if (picker.viewMonth > 11) {
+            picker.viewMonth = 0;
+            picker.viewYear += 1;
+          }
+          renderDatePicker(kind);
+        });
+      });
+      popover.querySelectorAll("[data-day]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          picker.selected = new Date(picker.viewYear, picker.viewMonth, Number(btn.dataset.day || 1)).getTime();
+          renderDatePicker(kind);
+        });
+      });
+      popover.querySelector(".picker-hour")?.addEventListener("input", (event) => {
+        picker.hour = Math.max(0, Math.min(23, Number(event.target.value || 0)));
+      });
+      popover.querySelector(".picker-minute")?.addEventListener("input", (event) => {
+        picker.minute = Math.max(0, Math.min(59, Number(event.target.value || 0)));
+      });
+      popover.querySelector(".picker-apply")?.addEventListener("click", () => {
+        if (!picker.selected) {
+          alert("Выбери дату.");
+          return;
+        }
+        const picked = new Date(picker.selected);
+        picked.setHours(picker.hour, picker.minute, 0, 0);
+        const value = picked.getTime();
+        document.getElementById(`cc${kind === "start" ? "Start" : "End"}`).value = String(value);
+        document.getElementById(`${kind}Display`).textContent = formatPickerDisplay(value);
+        closeDatePickers();
+      });
+    }
+
+    function setupDatePicker(kind) {
+      ensurePickerState(kind);
+      renderDatePicker(kind);
+      document.getElementById(`${kind}Display`)?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const field = document.getElementById(`${kind}Picker`);
+        const willOpen = !field?.classList.contains("is-open");
+        closeDatePickers();
+        if (willOpen) {
+          field?.classList.add("is-open");
+          renderDatePicker(kind);
+        }
+      });
+      document.getElementById(`${kind}Popover`)?.addEventListener("click", (event) => event.stopPropagation());
+    }
+
+    function resetCreateFormUi() {
+      document.getElementById("createContestForm")?.reset();
+      document.getElementById("createContestForm").style.display = "none";
+      document.querySelectorAll(".contest-type").forEach((btn) => btn.classList.remove("is-selected"));
+      state.selectedCreateType = "";
+      state.logoData = "";
+      const preview = document.getElementById("ccLogoPreview");
+      if (preview) preview.innerHTML = "{ }";
+      state.datePickers.start = null;
+      state.datePickers.end = null;
+      document.getElementById("ccStart").value = "";
+      document.getElementById("ccEnd").value = "";
+      document.getElementById("startDisplay").textContent = "Выбрать дату и время";
+      document.getElementById("endDisplay").textContent = "Выбрать дату и время";
+      ensurePickerState("start");
+      ensurePickerState("end");
+      renderDatePicker("start");
+      renderDatePicker("end");
+    }
+
+    function setupLogoInput() {
+      const input = document.getElementById("ccLogo");
+      const preview = document.getElementById("ccLogoPreview");
+      input?.addEventListener("change", () => {
+        const file = input.files && input.files[0];
+        state.logoData = "";
+        if (!file) {
+          if (preview) preview.innerHTML = "{ }";
+          return;
+        }
+        const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+        if (!allowed.has(file.type)) {
+          alert("Поддерживаются только png, jpg, webp и gif.");
+          input.value = "";
+          if (preview) preview.innerHTML = "{ }";
+          return;
+        }
+        if (file.size > 350 * 1024) {
+          alert("Логотип слишком большой. Используй файл до 350 KB.");
+          input.value = "";
+          if (preview) preview.innerHTML = "{ }";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          state.logoData = result;
+          if (preview) preview.innerHTML = `<img src="${escapeHtml(result)}" alt="">`;
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     function openModal() {
@@ -1454,10 +1922,12 @@
         return;
       }
       try {
-        const [sub, isAdmin] = await Promise.all([
+        const [sub, adminSnap, fallbackAdmin] = await Promise.all([
           getUserSubscription(user),
+          db.ref(`admins/${user}`).get().catch(() => null),
           typeof checkAdminAccess === "function" ? checkAdminAccess() : Promise.resolve(false)
         ]);
+        const isAdmin = Boolean((adminSnap && adminSnap.exists && adminSnap.exists()) || fallbackAdmin);
         const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
         state.isAdmin = Boolean(isAdmin);
         state.canCreatePrivate = state.isAdmin || level === "pro_plus";
@@ -1487,8 +1957,8 @@
     }
 
     function parseLocalDateTime(value) {
-      const ts = Date.parse(String(value || ""));
-      return Number.isFinite(ts) ? ts : NaN;
+      const ts = normalizeTimestamp(value);
+      return ts || NaN;
     }
 
     async function createContestFromForm(event) {
@@ -1502,6 +1972,7 @@
       if (visibility === "private" && !state.canCreatePrivate) return;
 
       const title = String(document.getElementById("ccTitle")?.value || "").trim();
+      const description = String(document.getElementById("ccDescription")?.value || "").trim();
       const tasks = parseTasks(document.getElementById("ccTasks")?.value);
       const allowed = String(document.getElementById("ccAllowed")?.value || "")
         .split(",")
@@ -1526,6 +1997,8 @@
         },
         body: JSON.stringify({
           title,
+          description,
+          logo: state.logoData || "",
           tasks,
           allowedUsers: visibility === "private" ? allowed : [],
           start,
@@ -1539,8 +2012,7 @@
         return;
       }
       closeModal();
-      document.getElementById("createContestForm").reset();
-      state.selectedCreateType = "";
+      resetCreateFormUi();
       await loadContests();
     }
 
@@ -1552,6 +2024,10 @@
     document.getElementById("selectPrivateContest")?.addEventListener("click", () => selectCreateType("private"));
     document.getElementById("selectGlobalContest")?.addEventListener("click", () => selectCreateType("public"));
     document.getElementById("createContestForm")?.addEventListener("submit", createContestFromForm);
+    document.addEventListener("click", closeDatePickers);
+    setupLogoInput();
+    setupDatePicker("start");
+    setupDatePicker("end");
 
     markActiveNav();
     resolveCreateAccess();
