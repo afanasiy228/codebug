@@ -858,28 +858,62 @@ async function resolveEmailByIdentity(identity) {
 }
 
 async function ensureUserProfile(login, userAuth) {
-    const profileRef = db.ref("users/" + login);
-    const snap = await profileRef.get();
-    if (!snap.exists()) {
-        await profileRef.set({
-            login,
-            id: userAuth.uid,
-            email: normalizeEmail(userAuth.email),
-            emailVerified: !!userAuth.emailVerified,
-            created: Date.now(),
-            stats: {
+    const now = Date.now();
+    const baseStats = {
+        exp: 0,
+        cnt: 0,
+        rating: 0,
+        solved: {}
+    };
+    const lightStats = {
+        exp: 0,
+        cnt: 0,
+        rating: 0
+    };
+    const idSnap = await db.ref("users/" + login + "/id").get();
+    if (!idSnap.exists()) {
+        await db.ref().update({
+            ["users/" + login]: {
+                login,
+                id: userAuth.uid,
+                email: normalizeEmail(userAuth.email),
+                emailVerified: !!userAuth.emailVerified,
+                created: now,
+                stats: baseStats,
+                avatarUrl: "",
+                coverUrl: "",
+                updatedAt: now
+            },
+            ["publicProfiles/" + login]: {
+                login,
+                avatarUrl: "",
+                coverUrl: "",
+                stats: lightStats,
+                profileStyle: { coverId: null },
+                subscription: null,
+                updatedAt: now
+            },
+            ["ratingLeaderboard/" + login]: {
+                login,
                 exp: 0,
                 cnt: 0,
-                solved: {}
-            },
-            avatar: ""
+                rating: 0,
+                avatarUrl: "",
+                profileStyle: { coverId: null },
+                subscription: null,
+                updatedAt: now
+            }
         });
     } else {
-        await profileRef.update({
-            id: userAuth.uid,
-            email: normalizeEmail(userAuth.email),
-            emailVerified: !!userAuth.emailVerified,
-            updatedAt: Date.now()
+        await db.ref().update({
+            ["users/" + login + "/id"]: userAuth.uid,
+            ["users/" + login + "/email"]: normalizeEmail(userAuth.email),
+            ["users/" + login + "/emailVerified"]: !!userAuth.emailVerified,
+            ["users/" + login + "/updatedAt"]: now,
+            ["publicProfiles/" + login + "/login"]: login,
+            ["publicProfiles/" + login + "/updatedAt"]: now,
+            ["ratingLeaderboard/" + login + "/login"]: login,
+            ["ratingLeaderboard/" + login + "/updatedAt"]: now
         });
     }
 
@@ -990,8 +1024,7 @@ async function registerUser(login, email, pass) {
     const auth = getAuth();
     if (!auth) return { ok: false, error: "Firebase Auth не инициализирован" };
 
-    const profileRef = db.ref("users/" + login);
-    const snap = await profileRef.get();
+    const snap = await db.ref("users/" + login + "/id").get();
     if (snap.exists()) return { ok: false, error: "Логин уже занят" };
 
     const e = normalizeEmail(email);
@@ -1148,23 +1181,61 @@ async function cancelPendingRegistration() {
 
 
 /* ============================
-   AVATAR BASE64
+   IMAGE URL UPLOAD
 ============================ */
-async function uploadAvatarBase64(login, file) {
-    return new Promise((resolve, reject) => {
-        if (!file) return resolve(null);
+async function uploadImage(file, type) {
+    const allowedTypes = ["avatar", "cover", "competitionLogo"];
+    if (!file) throw new Error("Файл не выбран");
+    if (!allowedTypes.includes(type)) throw new Error("Неверный тип изображения");
 
-        const reader = new FileReader();
+    const config = window.CODEBUG_CLOUDINARY || window.CODEBUG_PUBLIC_CONFIG?.cloudinary || {};
+    if (!config.cloudName || !config.uploadPreset) {
+        throw new Error("Загрузка изображений не настроена");
+    }
 
-        reader.onload = e => resolve(e.target.result);
-        reader.onerror = () => reject("Ошибка чтения файла");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", config.uploadPreset);
+    formData.append("folder", "codebug/" + type);
 
-        reader.readAsDataURL(file);
+    const response = await fetch("https://api.cloudinary.com/v1_1/" + config.cloudName + "/image/upload", {
+        method: "POST",
+        body: formData
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.secure_url) {
+        throw new Error(data.error?.message || "Ошибка загрузки изображения");
+    }
+    return data.secure_url;
+}
+
+async function saveAvatarUrl(login, avatarUrl) {
+    const updatedAt = Date.now();
+    return db.ref().update({
+        ["users/" + login + "/avatarUrl"]: avatarUrl,
+        ["users/" + login + "/updatedAt"]: updatedAt,
+        ["publicProfiles/" + login + "/avatarUrl"]: avatarUrl,
+        ["publicProfiles/" + login + "/updatedAt"]: updatedAt,
+        ["ratingLeaderboard/" + login + "/avatarUrl"]: avatarUrl,
+        ["ratingLeaderboard/" + login + "/updatedAt"]: updatedAt
     });
 }
 
-async function saveAvatar(login, base64) {
-    return db.ref("users/" + login + "/avatar").set(base64);
+async function saveCoverUrl(login, coverUrl) {
+    const updatedAt = Date.now();
+    return db.ref().update({
+        ["users/" + login + "/coverUrl"]: coverUrl,
+        ["users/" + login + "/updatedAt"]: updatedAt,
+        ["publicProfiles/" + login + "/coverUrl"]: coverUrl,
+        ["publicProfiles/" + login + "/updatedAt"]: updatedAt
+    });
+}
+
+async function saveCompetitionLogoUrl(competitionId, logoUrl) {
+    return db.ref("competitions/" + competitionId).update({
+        logoUrl,
+        updatedAt: Date.now()
+    });
 }
 
 
@@ -1284,6 +1355,8 @@ window.getSubscriptionNickColor = getSubscriptionNickColor;
 window.getUser = getUser;
 window.getUid = getUid;
 if (!window.db && db) window.db = db;
-window.uploadAvatarBase64 = uploadAvatarBase64;
-window.saveAvatar = saveAvatar;
+window.uploadImage = uploadImage;
+window.saveAvatarUrl = saveAvatarUrl;
+window.saveCoverUrl = saveCoverUrl;
+window.saveCompetitionLogoUrl = saveCompetitionLogoUrl;
 window.startPresence = startPresence;

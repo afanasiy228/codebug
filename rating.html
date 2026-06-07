@@ -411,9 +411,9 @@
 
         function getRowBanner(style, level) {
             const profileStyle = (style && typeof style === "object") ? style : {};
-            const custom = String(profileStyle.customCover || "").trim();
+            const custom = String(profileStyle.coverUrl || "").trim();
             const canUseCustom = level !== "free";
-            if (canUseCustom && /^data:image\//i.test(custom)) return `url("${custom}")`;
+            if (canUseCustom && (/^https?:\/\//i.test(custom) || custom.startsWith("/"))) return `url("${custom}")`;
             const coverIdRaw = String(profileStyle.coverId || "").trim().toLowerCase();
             if (!coverIdRaw) return "";
             return RATING_COVER_PRESETS[coverIdRaw] || "";
@@ -423,7 +423,7 @@
               ЗАГРУЗКА РЕЙТИНГА
         ====================== */
         async function loadRating() {
-            const snap = await firebase.database().ref("users").get();
+            const snap = await firebase.database().ref("ratingLeaderboard").get();
             if (!snap.exists()) return;
 
             const list = document.getElementById("rating-list");
@@ -433,14 +433,12 @@
 
             for (let login in users) {
                 let u = users[login];
-                let st = u.stats || {};
 
                 arr.push({
-                    login,
-                    avatar: u.avatar || null,
-                    exp: st.exp || 0,
-                    solvedCount: Number(st.cnt || 0),
-                    solved: st.solved || {}, // объект решённых
+                    login: u.login || login,
+                    avatarUrl: u.avatarUrl || "",
+                    exp: u.exp || 0,
+                    solvedCount: Number(u.cnt || u.solved || 0),
                     subscription: u.subscription || null,
                     profileStyle: u.profileStyle || null
                 });
@@ -460,14 +458,13 @@
                 const styledNick = (typeof buildStyledNickHtml === "function")
                     ? buildStyledNickHtml(u.login, sub, loginColor)
                     : safeLogin;
-                const avatarUrl = typeof u.avatar === "string" ? u.avatar.trim() : "";
-                const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") || /^data:image\//i.test(avatarUrl) ? avatarUrl : "";
+                const avatarUrl = typeof u.avatarUrl === "string" ? u.avatarUrl.trim() : "";
+                const avatarSafe = /^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith("/") ? avatarUrl : "";
                 let avatarHTML = avatarSafe ?
                     `<a href="${profileUrl}"><img class="ava" src="${escapeHtml(avatarSafe)}" alt="avatar" loading="lazy"></a>` :
                     `<a href="${profileUrl}" style="text-decoration:none;"><div class="ava default">${safeLogin[0].toUpperCase()}</div></a>`;
 
                 let solvedCnt = Number.isFinite(u.solvedCount) ? u.solvedCount : 0;
-                if (!solvedCnt) solvedCnt = Object.keys(u.solved || {}).length;
                 const rowBanner = getRowBanner(u.profileStyle, level);
                 const hasBanner = !!rowBanner;
 

@@ -508,12 +508,12 @@
 
       const regs = Object.values(regsSnap.val());
       const regUsers = regs.map(r => r.login);
-      const usersSnap = await db.ref("users").get();
+      const usersSnap = await db.ref("ratingLeaderboard").get();
       if (usersSnap.exists()) {
         const usersData = usersSnap.val() || {};
         for (const login of regUsers) {
           contestUserSubCache[String(login)] = (usersData[login] && usersData[login].subscription) || {};
-          contestUserExpCache[String(login)] = Number(usersData[login]?.stats?.exp || 0);
+          contestUserExpCache[String(login)] = Number(usersData[login]?.exp || 0);
         }
       }
 

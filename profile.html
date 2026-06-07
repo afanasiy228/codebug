@@ -1522,10 +1522,10 @@
             if (!coverEl) return;
             const style = (styleData && typeof styleData === "object") ? styleData : {};
             const preset = coverPresetById(style.coverId || DEFAULT_COVER_ID);
-            const custom = String(style.customCover || "").trim();
+            const custom = String(style.coverUrl || "").trim();
             const canUseCustom = (subLevel !== "free");
 
-            if (custom && custom.startsWith("data:image/") && canUseCustom) {
+            if (custom && (/^https?:\/\//i.test(custom) || custom.startsWith("/")) && canUseCustom) {
                 coverEl.style.backgroundImage = `url("${custom}")`;
             } else {
                 coverEl.style.backgroundImage = preset.bg;
@@ -1977,7 +1977,11 @@
                 if (!data || typeof data !== "object") return;
             const stats = data.stats || {};
             const sub = data.subscription || null;
-            const profileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
+            const rawProfileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
+            const profileStyle = {
+                ...rawProfileStyle,
+                coverUrl: data.coverUrl || rawProfileStyle.coverUrl || ""
+            };
             currentSubscription = sub;
             const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
             currentSubscriptionLevel = level;
@@ -2060,8 +2064,8 @@
             }
 
             // ---- AVATAR ----
-            if (data.avatar) {
-                document.getElementById("avatar").src = data.avatar;
+            if (data.avatarUrl) {
+                document.getElementById("avatar").src = data.avatarUrl;
             } else {
                 const svg = `
                 <svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'>
@@ -2116,20 +2120,57 @@
             // 1) Start full profile in background immediately.
             let liteData = null;
             let fullApplied = false;
-            const loadFullProfile = async () => {
+            const loadLightProfileFromDb = async () => {
                 try {
-                    const full = await dbRead("users/" + viewedUser, { retries: 2, sdkTimeoutMs: 450, restTimeoutMs: 4200 });
-                    if (full && typeof full === "object") {
+                    const publicProfile = await dbRead("publicProfiles/" + viewedUser, { retries: 2, sdkTimeoutMs: 450, restTimeoutMs: 2200 });
+                    if (publicProfile && typeof publicProfile === "object") {
                         fullApplied = true;
-                        applyProfileData(full);
-                        return full;
+                        applyProfileData(publicProfile);
+                        return publicProfile;
+                    }
+
+                    const [
+                        login,
+                        avatarUrl,
+                        coverUrl,
+                        stats,
+                        subscription,
+                        coverId
+                    ] = await Promise.all([
+                        dbRead("users/" + viewedUser + "/login", { retries: 1 }),
+                        dbRead("users/" + viewedUser + "/avatarUrl", { retries: 1 }),
+                        dbRead("users/" + viewedUser + "/coverUrl", { retries: 1 }),
+                        dbRead("users/" + viewedUser + "/stats", { retries: 1 }),
+                        dbRead("users/" + viewedUser + "/subscription", { retries: 1 }),
+                        dbRead("users/" + viewedUser + "/profileStyle/coverId", { retries: 1 })
+                    ]);
+
+                    if (login) {
+                        const light = {
+                            login,
+                            avatarUrl: avatarUrl || "",
+                            coverUrl: coverUrl || "",
+                            stats: {
+                                cnt: Number(stats?.cnt || 0),
+                                exp: Number(stats?.exp || 0),
+                                rating: Number(stats?.rating || 0)
+                            },
+                            subscription: subscription || null,
+                            profileStyle: {
+                                coverId: coverId || DEFAULT_COVER_ID,
+                                coverUrl: coverUrl || ""
+                            }
+                        };
+                        fullApplied = true;
+                        applyProfileData(light);
+                        return light;
                     }
                 } catch (e) {
-                    console.warn("full profile load failed", e);
+                    console.warn("light profile load failed", e);
                 }
                 return liteData && typeof liteData === "object" ? liteData : null;
             };
-            const fullDataPromise = loadFullProfile();
+            const fullDataPromise = loadLightProfileFromDb();
 
             // 2) Fast first paint via lightweight endpoint.
             try {
@@ -2197,7 +2238,7 @@
 
             const style = (styleData && typeof styleData === "object") ? styleData : {};
             const activeId = String(style.coverId || DEFAULT_COVER_ID).toLowerCase();
-            const hasCustom = !!String(style.customCover || "").trim();
+            const hasCustom = !!String(style.coverUrl || "").trim();
             const isPro = level !== "free";
 
             grid.innerHTML = "";
@@ -2254,7 +2295,7 @@
                     return;
                 }
                 currentProfileStyle.coverId = payload.coverId || coverId;
-                delete currentProfileStyle.customCover;
+                delete currentProfileStyle.coverUrl;
                 applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
                 renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
             } catch (_) {
@@ -2281,12 +2322,7 @@
                 return;
             }
             try {
-                const base64 = await new Promise((resolve, reject) => {
-                    const r = new FileReader();
-                    r.onload = () => resolve(r.result);
-                    r.onerror = reject;
-                    r.readAsDataURL(file);
-                });
+                const coverUrl = await uploadImage(file, "cover");
                 const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
                 const headers = { "Content-Type": "application/json" };
                 const auth = typeof getAuth === "function" ? getAuth() : null;
@@ -2294,14 +2330,14 @@
                 const res = await fetch(`${base}/profile/set-cover`, {
                     method: "POST",
                     headers,
-                    body: JSON.stringify({ customImage: String(base64 || "") })
+                    body: JSON.stringify({ coverUrl })
                 });
                 const payload = await res.json().catch(() => ({}));
                 if (!res.ok) {
                     if (errorEl) errorEl.textContent = payload.error || "Не удалось загрузить шапку.";
                     return;
                 }
-                currentProfileStyle.customCover = String(base64 || "");
+                currentProfileStyle.coverUrl = String(coverUrl || "");
                 if (payload.coverId) currentProfileStyle.coverId = payload.coverId;
                 applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
                 renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
@@ -2329,7 +2365,7 @@
                     if (errorEl) errorEl.textContent = payload.error || "Не удалось убрать кастомную шапку.";
                     return;
                 }
-                delete currentProfileStyle.customCover;
+                delete currentProfileStyle.coverUrl;
                 currentProfileStyle.coverId = payload.coverId || currentProfileStyle.coverId || DEFAULT_COVER_ID;
                 applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
                 renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
@@ -2626,7 +2662,7 @@
                 result.textContent = "Это ваш логин.";
                 return;
             }
-            const snap = await db.ref("users/" + login).get();
+            const snap = await db.ref("users/" + login + "/id").get();
             if (!snap.exists()) {
                 result.textContent = "Пользователь не найден.";
                 return;
@@ -2720,15 +2756,15 @@
             if (!file) return;
 
             try {
-                const base64 = await uploadAvatarBase64(currentUser, file);
-                await saveAvatar(currentUser, base64);
+                const avatarUrl = await uploadImage(file, "avatar");
+                await saveAvatarUrl(currentUser, avatarUrl);
 
-                document.getElementById("avatar").src = base64;
+                document.getElementById("avatar").src = avatarUrl;
                 document.getElementById("avatar-error").innerText = "";
 
                 alert("Аватар обновлён!");
-            } catch {
-                document.getElementById("avatar-error").innerText = "Ошибка загрузки";
+            } catch (e) {
+                document.getElementById("avatar-error").innerText = e.message || "Ошибка загрузки";
             }
         }
 

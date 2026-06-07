@@ -73,6 +73,8 @@ PUBLIC_FIREBASE_WEB_PROJECT_ID = os.getenv("PUBLIC_FIREBASE_WEB_PROJECT_ID", "")
 PUBLIC_FIREBASE_WEB_STORAGE_BUCKET = os.getenv("PUBLIC_FIREBASE_WEB_STORAGE_BUCKET", "")
 PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID = os.getenv("PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID", "")
 PUBLIC_FIREBASE_WEB_APP_ID = os.getenv("PUBLIC_FIREBASE_WEB_APP_ID", "")
+PUBLIC_CLOUDINARY_CLOUD_NAME = os.getenv("PUBLIC_CLOUDINARY_CLOUD_NAME", "")
+PUBLIC_CLOUDINARY_UPLOAD_PRESET = os.getenv("PUBLIC_CLOUDINARY_UPLOAD_PRESET", "")
 PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL", "https://codebug.online").rstrip("/")
 PUBLIC_API_BASE = os.getenv("PUBLIC_API_BASE", "https://codebug.onrender.com").rstrip("/")
 PLATEGA_API_BASE = os.getenv("PLATEGA_API_BASE", "https://app.platega.io").rstrip("/")
@@ -3286,16 +3288,48 @@ def user_profile_lite(login):
     if not login:
         return _api_error("invalid_login", 400, "INVALID_LOGIN")
     try:
-        data = db.reference(f"users/{login}").get() or {}
-        if not isinstance(data, dict) or not data:
+        public_profile = db.reference(f"publicProfiles/{login}").get() or {}
+        if isinstance(public_profile, dict) and public_profile:
+            stats = public_profile.get("stats") if isinstance(public_profile.get("stats"), dict) else {}
+            profile_style = public_profile.get("profileStyle") if isinstance(public_profile.get("profileStyle"), dict) else {}
+            raw_sub = public_profile.get("subscription") if isinstance(public_profile.get("subscription"), dict) else {}
+            return jsonify({
+                "login": public_profile.get("login") or login,
+                "avatarUrl": public_profile.get("avatarUrl") or "",
+                "coverUrl": public_profile.get("coverUrl") or "",
+                "profileStyle": {
+                    "coverId": profile_style.get("coverId"),
+                    "coverUrl": public_profile.get("coverUrl") or profile_style.get("coverUrl") or ""
+                },
+                "subscription": _normalize_subscription(login, raw_sub, write_back=False),
+                "stats": {
+                    "cnt": stats.get("cnt", stats.get("solved", 0)),
+                    "exp": stats.get("exp", 0),
+                    "rating": stats.get("rating", 0)
+                }
+            })
+
+        user_ref = db.reference(f"users/{login}")
+        profile_style = user_ref.child("profileStyle").get() or {}
+        if not isinstance(profile_style, dict):
+            profile_style = {}
+        stats = user_ref.child("stats").get() or {}
+        if not isinstance(stats, dict):
+            stats = {}
+        raw_sub = user_ref.child("subscription").get() or {}
+        if not isinstance(raw_sub, dict):
+            raw_sub = {}
+        login_value = user_ref.child("login").get()
+        if not login_value:
             return _api_error("not_found", 404, "NOT_FOUND")
-        profile_style = data.get("profileStyle") if isinstance(data.get("profileStyle"), dict) else {}
-        stats = data.get("stats") if isinstance(data.get("stats"), dict) else {}
-        raw_sub = data.get("subscription") if isinstance(data.get("subscription"), dict) else {}
         return jsonify({
-            "login": data.get("login") or login,
-            "avatar": data.get("avatar"),
-            "profileStyle": profile_style,
+            "login": login_value or login,
+            "avatarUrl": user_ref.child("avatarUrl").get() or "",
+            "coverUrl": user_ref.child("coverUrl").get() or "",
+            "profileStyle": {
+                "coverId": profile_style.get("coverId"),
+                "coverUrl": user_ref.child("coverUrl").get() or ""
+            },
             "subscription": _normalize_subscription(login, raw_sub, write_back=True),
             "stats": {
                 "cnt": stats.get("cnt", 0),
@@ -3358,29 +3392,19 @@ def profile_set_cover():
 
     data = request.get_json(silent=True) or {}
     cover_id = str(data.get("coverId") or "").strip().lower()
-    custom_image = data.get("customImage")
+    cover_url = str(data.get("coverUrl") or "").strip()
     clear_custom = bool(data.get("clearCustom"))
 
-    if not cover_id and custom_image is None and not clear_custom:
+    if not cover_id and not cover_url and not clear_custom:
         return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     if cover_id and cover_id not in PROFILE_COVER_PRESETS:
         return _api_error("invalid_cover_id", 400, "INVALID_COVER_ID")
 
-    has_custom_payload = custom_image is not None
-    normalized_custom = None
-    if has_custom_payload:
-        if not isinstance(custom_image, str):
-            return _api_error("invalid_custom_cover", 400, "INVALID_CUSTOM_COVER")
-        normalized_custom = custom_image.strip()
-        if normalized_custom:
-            if not _is_pro_active(login):
-                return _api_error("pro_required", 403, "PRO_REQUIRED")
-            if not normalized_custom.startswith("data:image/"):
-                return _api_error("invalid_custom_cover", 400, "INVALID_CUSTOM_COVER")
-            if len(normalized_custom.encode("utf-8", errors="replace")) > MAX_PROFILE_COVER_IMAGE_BYTES:
-                return _api_error("custom_cover_too_large", 400, "CUSTOM_COVER_TOO_LARGE")
-        else:
-            clear_custom = True
+    if cover_url:
+        if not _is_pro_active(login):
+            return _api_error("pro_required", 403, "PRO_REQUIRED")
+        if not (cover_url.startswith("https://") or cover_url.startswith("http://") or cover_url.startswith("/")):
+            return _api_error("invalid_cover_url", 400, "INVALID_COVER_URL")
 
     try:
         ref = db.reference(f"users/{login}/profileStyle")
@@ -3390,17 +3414,31 @@ def profile_set_cover():
 
         next_style = dict(current)
         next_style["coverId"] = cover_id or str(next_style.get("coverId") or DEFAULT_PROFILE_COVER_ID)
-        if clear_custom:
-            next_style.pop("customCover", None)
-        if normalized_custom:
-            next_style["customCover"] = normalized_custom
+        next_style.pop("customCover", None)
         next_style["updatedAt"] = int(time.time() * 1000)
 
         ref.set(next_style)
+        updates = {
+            f"users/{login}/profileStyle": next_style,
+            f"publicProfiles/{login}/profileStyle/coverId": next_style.get("coverId"),
+            f"publicProfiles/{login}/updatedAt": next_style["updatedAt"],
+            f"ratingLeaderboard/{login}/profileStyle/coverId": next_style.get("coverId"),
+            f"ratingLeaderboard/{login}/updatedAt": next_style["updatedAt"]
+        }
+        if clear_custom:
+            updates[f"users/{login}/coverUrl"] = ""
+            updates[f"publicProfiles/{login}/coverUrl"] = ""
+            updates[f"ratingLeaderboard/{login}/profileStyle/coverUrl"] = ""
+        if cover_url:
+            updates[f"users/{login}/coverUrl"] = cover_url
+            updates[f"publicProfiles/{login}/coverUrl"] = cover_url
+            updates[f"ratingLeaderboard/{login}/profileStyle/coverUrl"] = cover_url
+        db.reference("/").update(updates)
         return jsonify({
             "ok": True,
             "coverId": next_style.get("coverId"),
-            "hasCustomCover": bool(next_style.get("customCover"))
+            "coverUrl": cover_url if cover_url else "",
+            "hasCustomCover": bool(cover_url)
         })
     except Exception as e:
         return _server_error("set_cover_failed", "SET_COVER_FAILED", exc=e)
@@ -3739,6 +3777,10 @@ def public_config():
     return jsonify({
         "firebase": firebase_public,
         "recaptchaSiteKey": RECAPTCHA_SITE_KEY,
+        "cloudinary": {
+            "cloudName": PUBLIC_CLOUDINARY_CLOUD_NAME,
+            "uploadPreset": PUBLIC_CLOUDINARY_UPLOAD_PRESET
+        },
         "subscriptions": {
             "periodDays": SUBSCRIPTION_PERIOD_DAYS,
             "prices": {

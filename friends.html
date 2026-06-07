@@ -175,9 +175,8 @@
       const rows = [];
 
       for (const login of friends) {
-        const userSnap = await db.ref("users/" + login).get();
-        const stats = userSnap.exists() ? (userSnap.val().stats || {}) : {};
-        const rating = stats.rating || 0;
+        const ratingSnap = await db.ref("ratingLeaderboard/" + login + "/rating").get();
+        const rating = Number(ratingSnap.val() || 0);
         rows.push({ login, rating });
       }
 

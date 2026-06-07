@@ -340,12 +340,12 @@
                 }
 
                 submissions = Object.values(snap.val()).filter(s => s && typeof s === "object");
-                const usersSnap = await firebase.database().ref("users").get();
+                const usersSnap = await firebase.database().ref("ratingLeaderboard").get();
                 if (usersSnap.exists()) {
                     const usersData = usersSnap.val() || {};
                     for (const [login, data] of Object.entries(usersData)) {
                         userSubCache[String(login)] = (data && data.subscription) || {};
-                        userExpCache[String(login)] = Number(data?.stats?.exp || 0);
+                        userExpCache[String(login)] = Number(data?.exp || 0);
                     }
                 }
 
