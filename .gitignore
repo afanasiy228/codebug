@@ -4,6 +4,7 @@ codebug_tasks_deploy.pub
 tasks/
 .tasks_repo/
 .codebug_work/
+backups/
 
 # Python caches and local environments
 __pycache__/

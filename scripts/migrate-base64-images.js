@@ -8,8 +8,8 @@ const DATABASE_URL =
     process.env.PUBLIC_FIREBASE_WEB_DATABASE_URL ||
     "https://codebug-47347-default-rtdb.europe-west1.firebasedatabase.app";
 
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || process.env.PUBLIC_CLOUDINARY_CLOUD_NAME || "";
-const CLOUDINARY_UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET || "";
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || process.env.PUBLIC_CLOUDINARY_CLOUD_NAME || "dez5af9sr";
+const CLOUDINARY_UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET || "codebug_uploads";
 const SHOULD_APPLY = process.argv.includes("--apply");
 const CONFIRMED = process.argv.includes("--confirm-delete-base64");
 
@@ -138,6 +138,7 @@ async function applyTask(task) {
         });
         await patchJson(`ratingLeaderboard/${safeSegment(task.login)}/profileStyle`, {
             coverUrl: imageUrl,
+            updatedAt,
         });
     }
 
@@ -146,16 +147,20 @@ async function applyTask(task) {
 
 async function main() {
     const users = await readJson("users");
+    const usersBeforeBytes = bytesOf(users);
     const tasks = collectImageTasks(users || {});
     const avatarTasks = tasks.filter((task) => task.type === "avatar");
     const coverTasks = tasks.filter((task) => task.type === "cover");
+    const affectedUsers = new Set(tasks.map((task) => task.login));
 
     console.log(JSON.stringify({
         mode: SHOULD_APPLY ? "apply" : "dry-run",
-        usersBytes: bytesOf(users),
+        usersCount: Object.keys(users || {}).length,
+        usersBytes: usersBeforeBytes,
         avatarBase64Users: avatarTasks.length,
         coverBase64Users: coverTasks.length,
         totalBase64Bytes: tasks.reduce((sum, task) => sum + task.bytes, 0),
+        affectedUsers: Array.from(affectedUsers).sort(),
         plannedChanges: tasks.map(({ login, type, sourcePath, targetUrlField, bytes }) => ({
             login,
             type,
@@ -174,14 +179,32 @@ async function main() {
     const backupPath = await writeBackup(users);
     console.log(`Backup written: ${backupPath}`);
 
+    const migrated = [];
+    const skipped = [];
     for (const task of tasks) {
         try {
             const imageUrl = await applyTask(task);
+            migrated.push({ login: task.login, type: task.type, sourcePath: task.sourcePath, imageUrl });
             console.log(`Migrated ${task.sourcePath} -> ${imageUrl}`);
         } catch (error) {
-            console.error(`Skipped ${task.sourcePath}: ${error.message || error}`);
+            const message = error.message || String(error);
+            skipped.push({ login: task.login, type: task.type, sourcePath: task.sourcePath, error: message });
+            console.error(`Skipped ${task.sourcePath}: ${message}`);
         }
     }
+
+    const usersAfter = await readJson("users");
+    const migratedUsers = new Set(migrated.map((item) => item.login));
+    console.log(JSON.stringify({
+        applySummary: {
+            usersBytesBefore: usersBeforeBytes,
+            usersBytesAfter: bytesOf(usersAfter),
+            migratedUsersCount: migratedUsers.size,
+            migratedImagesCount: migrated.length,
+            skippedCount: skipped.length,
+            skipped,
+        }
+    }, null, 2));
 }
 
 main().catch((error) => {

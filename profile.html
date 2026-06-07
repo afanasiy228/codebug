@@ -1681,16 +1681,15 @@
             globalEl.innerHTML = "#—";
 
             try {
-                const users = (await dbRead("users", { retries: 1, sdkTimeoutMs: 350, restTimeoutMs: 5000, forceRest: true })) || {};
-                const entries = Object.entries(users)
+                const leaderboard = (await dbRead("ratingLeaderboard", { retries: 1, sdkTimeoutMs: 350, restTimeoutMs: 1800, forceRest: true })) || {};
+                const entries = Object.entries(leaderboard)
                     .filter(([, u]) => u && typeof u === "object")
                     .map(([login, u]) => {
-                        const stats = (u.stats && typeof u.stats === "object") ? u.stats : {};
                         return {
-                            login,
-                            rating: Number(stats.rating || 0),
-                            exp: Number(stats.exp || 0),
-                            solved: Number(stats.cnt || 0)
+                            login: u.login || login,
+                            rating: Number(u.rating || 0),
+                            exp: Number(u.exp || 0),
+                            solved: Number(u.cnt || u.solved || 0)
                         };
                     });
 

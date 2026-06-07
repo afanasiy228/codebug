@@ -1188,7 +1188,10 @@ async function uploadImage(file, type) {
     if (!file) throw new Error("Файл не выбран");
     if (!allowedTypes.includes(type)) throw new Error("Неверный тип изображения");
 
-    const config = window.CODEBUG_CLOUDINARY || window.CODEBUG_PUBLIC_CONFIG?.cloudinary || {};
+    const config = window.CODEBUG_CLOUDINARY || window.CODEBUG_PUBLIC_CONFIG?.cloudinary || {
+        cloudName: "dez5af9sr",
+        uploadPreset: "codebug_uploads"
+    };
     if (!config.cloudName || !config.uploadPreset) {
         throw new Error("Загрузка изображений не настроена");
     }
