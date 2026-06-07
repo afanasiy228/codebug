@@ -1039,9 +1039,644 @@
     }
   </style>
   <link rel="stylesheet" href="theme-dark.css">
+  <style>
+    body.contests-page {
+      --surface: #0B0D10;
+      --surface-soft: #101318;
+      --surface-subtle: #151922;
+      --text-soft: #C8D0DA;
+      --text-dim: #7D8794;
+      --amber-soft: rgba(245, 158, 11, 0.10);
+      --amber-line: rgba(245, 158, 11, 0.34);
+      background: #050607 !important;
+    }
+
+    body.contests-page::before,
+    body.contests-page::after {
+      display: none !important;
+    }
+
+    body.contests-page header {
+      background: rgba(5, 6, 7, 0.94) !important;
+      box-shadow: none !important;
+    }
+
+    body.contests-page .page {
+      margin-top: 34px;
+    }
+
+    body.contests-page .page-head {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      align-items: start;
+      padding-bottom: 22px;
+    }
+
+    body.contests-page .title-row {
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    body.contests-page .page-title {
+      font-size: clamp(34px, 4vw, 54px);
+      letter-spacing: -0.04em;
+    }
+
+    body.contests-page .page-subtitle {
+      margin-top: 12px;
+      max-width: 640px;
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    body.contests-page .create-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      border: 1px solid rgba(245, 158, 11, 0.72) !important;
+      border-radius: 8px;
+      background: var(--amber) !important;
+      color: #090A0C !important;
+      box-shadow: none !important;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    body.contests-page .create-trigger:hover {
+      background: #FBBF24 !important;
+      color: #08090A !important;
+    }
+
+    body.contests-page .user-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      margin-top: 18px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.018);
+      overflow: hidden;
+    }
+
+    body.contests-page .user-stat {
+      padding: 16px 18px;
+      border-right: 1px solid var(--line);
+    }
+
+    body.contests-page .user-stat:last-child {
+      border-right: 0;
+    }
+
+    body.contests-page .user-stat strong {
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    body.contests-page .user-stat span {
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    body.contests-page .layout {
+      grid-template-columns: minmax(0, 1.75fr) minmax(320px, 0.72fr);
+      gap: clamp(30px, 4vw, 58px);
+      margin-top: 32px;
+    }
+
+    body.contests-page .right-column {
+      gap: 34px;
+    }
+
+    body.contests-page .right-column > section {
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    body.contests-page .right-column > section:last-child {
+      border-bottom: 0;
+    }
+
+    body.contests-page .section {
+      margin-bottom: 34px;
+    }
+
+    body.contests-page .section-title,
+    body.contests-page .side-section-title h2 {
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+
+    body.contests-page .contest-list {
+      display: grid;
+      gap: 12px;
+      border-top: 0;
+    }
+
+    body.contests-page .contest-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      min-height: 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.018);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+
+    body.contests-page .contest-row:hover {
+      background: rgba(255, 255, 255, 0.032);
+      border-color: var(--line-strong);
+    }
+
+    body.contests-page .contest-main {
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    body.contests-page .contest-icon {
+      width: 44px;
+      height: 44px;
+      margin-top: 0;
+      border-radius: 10px;
+      background: #11151B;
+      box-shadow: none;
+    }
+
+    body.contests-page .contest-icon::after {
+      content: "CB";
+      color: var(--text-dim);
+      font-size: 12px;
+      letter-spacing: 0;
+    }
+
+    body.contests-page .contest-name-line {
+      align-items: center;
+      gap: 8px;
+    }
+
+    body.contests-page .contest-name {
+      background: transparent !important;
+      color: var(--ink) !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      font-size: 22px;
+      letter-spacing: -0.025em;
+      padding: 0;
+    }
+
+    body.contests-page .contest-name:hover {
+      color: #FFFFFF !important;
+      text-decoration-color: rgba(255, 255, 255, 0.42);
+    }
+
+    body.contests-page .type-badge,
+    body.contests-page .visibility-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.026);
+      padding: 0 8px;
+      color: var(--text-dim);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+    }
+
+    body.contests-page .type-badge.ranked {
+      color: #F8C36A;
+      border-color: rgba(245, 158, 11, 0.22);
+      background: rgba(245, 158, 11, 0.06);
+    }
+
+    body.contests-page .visibility-badge.private {
+      color: #C4B5FD;
+      border-color: rgba(167, 139, 250, 0.25);
+    }
+
+    body.contests-page .visibility-badge.public {
+      color: #A7F3D0;
+      border-color: rgba(74, 222, 128, 0.20);
+    }
+
+    body.contests-page .contest-description {
+      margin-top: 8px;
+      max-width: 720px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    body.contests-page .contest-data {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, auto)) minmax(110px, auto);
+      justify-content: start;
+      gap: 10px 14px;
+      padding-left: 60px;
+      color: var(--text-dim);
+      white-space: normal;
+    }
+
+    body.contests-page .contest-data span {
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    body.contests-page .contest-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      border: 1px solid var(--amber-line) !important;
+      border-radius: 7px;
+      background: var(--amber-soft) !important;
+      color: #F8C36A !important;
+      box-shadow: none !important;
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    body.contests-page .contest-action:hover {
+      border-color: rgba(245, 158, 11, 0.62) !important;
+      background: rgba(245, 158, 11, 0.16) !important;
+    }
+
+    body.contests-page .empty-line,
+    body.contests-page .empty-state {
+      border: 1px dashed var(--line-strong);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.014);
+      color: var(--text-dim);
+      padding: 18px;
+    }
+
+    body.contests-page .calendar-head {
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    body.contests-page .calendar-grid {
+      gap: 4px;
+    }
+
+    body.contests-page .calendar-day {
+      min-height: 36px;
+      border: 1px solid transparent !important;
+      border-radius: 8px;
+      background: transparent !important;
+      color: var(--text-dim) !important;
+      box-shadow: none !important;
+      font-size: 13px;
+    }
+
+    body.contests-page .calendar-day:hover {
+      background: rgba(255, 255, 255, 0.04) !important;
+      color: var(--ink) !important;
+    }
+
+    body.contests-page .calendar-day.has-events {
+      color: var(--text-soft) !important;
+    }
+
+    body.contests-page .calendar-day.is-muted {
+      background: transparent !important;
+      color: rgba(125, 135, 148, 0.35) !important;
+    }
+
+    body.contests-page .calendar-day.is-today {
+      border-color: var(--line-strong) !important;
+      color: var(--ink) !important;
+      outline: 0;
+    }
+
+    body.contests-page .calendar-day.is-selected {
+      border-color: var(--amber-line) !important;
+      background: var(--amber-soft) !important;
+      color: var(--ink) !important;
+      outline: 0;
+    }
+
+    body.contests-page .day-dots {
+      bottom: 4px;
+    }
+
+    body.contests-page .calendar-legend {
+      gap: 12px;
+      margin-top: 14px;
+      font-size: 12px;
+    }
+
+    body.contests-page .date-filter button,
+    body.contests-page .picker-nav,
+    body.contests-page .modal-close,
+    body.contests-page .file-action,
+    body.contests-page .logo-remove,
+    body.contests-page .modal-cancel {
+      box-shadow: none !important;
+    }
+
+    body.contests-page .rating-graph-wrap {
+      position: relative;
+      min-height: 148px;
+    }
+
+    body.contests-page .rating-empty {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1px dashed var(--line-strong);
+      border-radius: 10px;
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.45;
+      padding: 18px;
+    }
+
+    body.contests-page .rating-empty.is-visible {
+      display: flex;
+    }
+
+    body.contests-page .results-list {
+      display: grid;
+      gap: 8px;
+      border-top: 0;
+    }
+
+    body.contests-page .result-row {
+      min-height: 48px;
+      border: 1px solid var(--line) !important;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.018) !important;
+      box-shadow: none !important;
+      padding: 0 12px;
+    }
+
+    body.contests-page button.result-row {
+      color: var(--text-soft) !important;
+    }
+
+    body.contests-page .modal {
+      align-items: stretch;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: none;
+    }
+
+    body.contests-page .modal-panel {
+      display: flex;
+      flex-direction: column;
+      align-self: center;
+      width: min(820px, 100%);
+      max-height: min(880px, calc(100vh - 40px));
+      overflow: hidden;
+      border-radius: 12px;
+      background: #0A0C10;
+      padding: 0;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+    }
+
+    body.contests-page .modal-scroll {
+      overflow: auto;
+      padding: 28px 28px 24px;
+    }
+
+    body.contests-page .modal-top {
+      margin-bottom: 22px;
+    }
+
+    body.contests-page .modal-close {
+      background: transparent !important;
+      color: var(--text-dim) !important;
+      border: 0 !important;
+      padding: 0;
+    }
+
+    body.contests-page .contest-type {
+      border-color: var(--line) !important;
+      border-radius: 10px;
+      background: #0F1217 !important;
+      color: var(--ink) !important;
+      box-shadow: none !important;
+      padding: 18px;
+    }
+
+    body.contests-page .contest-type:hover:not(:disabled) {
+      border-color: var(--line-strong) !important;
+      background: #12161D !important;
+    }
+
+    body.contests-page .contest-type.is-selected {
+      border-color: rgba(245, 158, 11, 0.60) !important;
+      background: rgba(245, 158, 11, 0.08) !important;
+    }
+
+    body.contests-page .contest-type[disabled] {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.018) !important;
+      color: var(--text-dim) !important;
+    }
+
+    body.contests-page .contest-type[disabled] strong {
+      color: var(--text-dim);
+    }
+
+    body.contests-page .form-row input,
+    body.contests-page .form-row textarea,
+    body.contests-page .datetime-display,
+    body.contests-page .picker-time input {
+      border-color: var(--line) !important;
+      border-radius: 8px;
+      background: #0F1217 !important;
+      color: var(--ink) !important;
+      box-shadow: none !important;
+    }
+
+    body.contests-page .datetime-display {
+      color: var(--text-soft) !important;
+    }
+
+    body.contests-page .form-row.has-error input,
+    body.contests-page .form-row.has-error textarea,
+    body.contests-page .form-row.has-error .datetime-display {
+      border-color: rgba(248, 113, 113, 0.7) !important;
+    }
+
+    body.contests-page .field-error,
+    body.contests-page .form-error {
+      color: #FCA5A5;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    body.contests-page .form-error {
+      display: none;
+      border: 1px solid rgba(248, 113, 113, 0.24);
+      border-radius: 8px;
+      background: rgba(248, 113, 113, 0.08);
+      padding: 10px 12px;
+    }
+
+    body.contests-page .form-error.is-visible {
+      display: block;
+    }
+
+    body.contests-page .logo-upload {
+      grid-template-columns: 84px minmax(0, 1fr);
+      align-items: start;
+    }
+
+    body.contests-page .logo-preview {
+      width: 76px;
+      height: 76px;
+      border-radius: 12px;
+      background: #11151B;
+    }
+
+    body.contests-page .logo-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    body.contests-page .file-action,
+    body.contests-page .logo-remove,
+    body.contests-page .modal-cancel {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      border: 1px solid var(--line-strong) !important;
+      border-radius: 7px;
+      background: #11151B !important;
+      color: var(--text-soft) !important;
+      padding: 0 11px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    body.contests-page .logo-remove:hover,
+    body.contests-page .modal-cancel:hover,
+    body.contests-page .file-action:hover {
+      color: var(--ink) !important;
+      border-color: rgba(255, 255, 255, 0.22) !important;
+    }
+
+    body.contests-page .datetime-popover {
+      border-radius: 10px;
+      background: #0A0C10;
+    }
+
+    body.contests-page .picker-day,
+    body.contests-page .picker-nav,
+    body.contests-page .picker-apply {
+      box-shadow: none !important;
+    }
+
+    body.contests-page .picker-day,
+    body.contests-page .picker-nav {
+      background: transparent !important;
+      color: var(--text-dim) !important;
+      border: 0 !important;
+    }
+
+    body.contests-page .picker-day:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+      color: var(--ink) !important;
+    }
+
+    body.contests-page .picker-day.is-selected,
+    body.contests-page .picker-apply {
+      border: 1px solid var(--amber-line) !important;
+      background: var(--amber-soft) !important;
+      color: #F8C36A !important;
+    }
+
+    body.contests-page .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border-top: 1px solid var(--line);
+      background: #0A0C10;
+      padding: 16px 28px;
+    }
+
+    body.contests-page .submit-create {
+      justify-self: auto;
+      min-height: 38px;
+      margin: 0;
+      border: 1px solid rgba(245, 158, 11, 0.72) !important;
+      border-radius: 8px;
+      background: var(--amber) !important;
+      color: #090A0C !important;
+      box-shadow: none !important;
+      padding: 0 16px;
+    }
+
+    body.contests-page .submit-create:hover {
+      background: #FBBF24 !important;
+      color: #090A0C !important;
+    }
+
+    body.contests-page .submit-create:disabled {
+      border-color: var(--line) !important;
+      background: rgba(255, 255, 255, 0.045) !important;
+      color: var(--text-dim) !important;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 980px) {
+      body.contests-page .layout,
+      body.contests-page .page-head {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      body.contests-page .title-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      body.contests-page .user-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      body.contests-page .user-stat:nth-child(2n) {
+        border-right: 0;
+      }
+
+      body.contests-page .contest-data {
+        grid-template-columns: 1fr;
+        padding-left: 0;
+      }
+
+      body.contests-page .modal {
+        padding: 10px;
+      }
+
+      body.contests-page .modal-scroll {
+        padding: 22px 18px;
+      }
+
+      body.contests-page .modal-actions {
+        padding: 14px 18px;
+      }
+    }
+  </style>
 </head>
 
-<body>
+<body class="contests-page">
   <header>
     <div class="logo">CodeBug</div>
     <nav id="nav-links"></nav>
@@ -1052,10 +1687,10 @@
       <div>
         <div class="title-row">
           <h1 class="page-title">Соревнования</h1>
+          <button class="create-trigger" type="button" id="openCreateModal">+ Создать соревнование</button>
         </div>
         <p class="page-subtitle">Участвуй в соревнованиях, проверяй навыки и поднимайся в рейтинге.</p>
       </div>
-      <button class="create-trigger" type="button" id="openCreateModal">+ Создать соревнование</button>
     </section>
 
     <section class="user-stats" aria-label="Статистика пользователя">
@@ -1130,9 +1765,12 @@
             <h2>Динамика рейтинга</h2>
             <span class="side-filter">за 30 дней <b class="rating-growth" id="ratingGrowth"></b></span>
           </div>
-          <svg class="rating-graph" viewBox="0 0 360 148" role="img" aria-label="График рейтинга">
-            <g id="ratingGraph"></g>
-          </svg>
+          <div class="rating-graph-wrap">
+            <svg class="rating-graph" viewBox="0 0 360 148" role="img" aria-label="График рейтинга">
+              <g id="ratingGraph"></g>
+            </svg>
+            <div class="rating-empty" id="ratingEmpty">После участия в нескольких соревнованиях здесь появится динамика рейтинга.</div>
+          </div>
           <div class="date-filter" id="currentRatingText">Текущий рейтинг: 0</div>
         </section>
 
@@ -1148,63 +1786,68 @@
 
   <div class="modal" id="contestModal" aria-hidden="true">
     <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="contestModalTitle">
-      <div class="modal-top">
-        <div>
-          <h2 id="contestModalTitle">Создать соревнование</h2>
-          <p class="modal-note">Сначала выбери тип, затем заполни параметры соревнования.</p>
+      <div class="modal-scroll">
+        <div class="modal-top">
+          <div>
+            <h2 id="contestModalTitle">Создать соревнование</h2>
+            <p class="modal-note">Выбери режим и задай параметры запуска.</p>
+          </div>
+          <button class="modal-close" type="button" id="closeCreateModal" aria-label="Закрыть">×</button>
         </div>
-        <button class="modal-close" type="button" id="closeCreateModal" aria-label="Закрыть">×</button>
-      </div>
 
-      <div class="contest-type-grid">
-        <button class="contest-type" type="button" id="selectPrivateContest" data-type="private">
-          <strong>Приватное соревнование</strong>
-          <span>Доступно: PRO+ и админам. Укажи логины участников, которым будет доступна регистрация.</span>
-        </button>
-        <button class="contest-type" type="button" id="selectGlobalContest" data-type="public">
-          <strong>Глобальное соревнование</strong>
-          <span>Доступно: только администраторам. Соревнование будет видно всем пользователям.</span>
-        </button>
-      </div>
+        <div class="contest-type-grid">
+          <button class="contest-type" type="button" id="selectPrivateContest" data-type="private">
+            <strong>Приватное соревнование</strong>
+            <span>Для PRO+ и админов. Регистрация доступна только указанным участникам.</span>
+          </button>
+          <button class="contest-type" type="button" id="selectGlobalContest" data-type="public">
+            <strong>Глобальное соревнование</strong>
+            <span>Для администраторов. Соревнование видно всем пользователям CodeBug.</span>
+          </button>
+        </div>
 
-      <form class="create-form" id="createContestForm" style="display:none;">
-        <div class="form-row">
+        <form class="create-form" id="createContestForm" style="display:none;" novalidate>
+        <div class="form-error" id="createFormError"></div>
+        <div class="form-row" data-field="title">
           <label for="ccTitle">Название</label>
           <input id="ccTitle" type="text" placeholder="CodeBug Weekly #78" autocomplete="off">
         </div>
         <div class="form-row">
           <label>Логотип соревнования</label>
           <div class="logo-upload">
-            <div class="logo-preview" id="ccLogoPreview">♛</div>
+            <div class="logo-preview" id="ccLogoPreview">CB</div>
             <div>
-              <label class="file-action">
-                Выбрать png, jpg, webp или gif
-                <input id="ccLogo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
-              </label>
+              <div class="logo-actions">
+                <label class="file-action" id="ccLogoAction">
+                  Загрузить логотип
+                  <input id="ccLogo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                </label>
+                <button class="logo-remove" type="button" id="removeLogoBtn" style="display:none;">Удалить</button>
+              </div>
               <p class="modal-note">Превью будет использоваться в списках соревнований. Если логотип не выбран, останется дефолтная иконка.</p>
             </div>
           </div>
         </div>
-        <div class="form-row">
+        <div class="form-row" data-field="description">
           <label for="ccDescription">Описание</label>
           <textarea id="ccDescription" placeholder="Коротко опиши формат соревнования"></textarea>
         </div>
-        <div class="form-row">
+        <div class="form-row" data-field="tasks">
           <label for="ccTasks">Задачи</label>
           <input id="ccTasks" type="text" placeholder="ID через запятую, например: 1,2,3">
         </div>
-        <div class="form-row" id="allowedUsersRow">
+        <div class="form-row" id="allowedUsersRow" data-field="allowed">
           <label for="ccAllowed">Участники</label>
           <input id="ccAllowed" type="text" placeholder="Логины через запятую">
         </div>
         <div class="form-grid">
-          <div class="form-row datetime-field" id="startPicker">
+          <div class="form-row datetime-field" id="startPicker" data-field="start">
             <label>Старт</label>
             <button class="datetime-display" type="button" id="startDisplay">Выбрать дату и время</button>
             <input id="ccStart" type="hidden">
             <div class="datetime-popover" id="startPopover"></div>
           </div>
-          <div class="form-row datetime-field" id="endPicker">
+          <div class="form-row datetime-field" id="endPicker" data-field="end">
             <label>Финиш</label>
             <button class="datetime-display" type="button" id="endDisplay">Выбрать дату и время</button>
             <input id="ccEnd" type="hidden">
@@ -1212,8 +1855,12 @@
           </div>
         </div>
         <p class="modal-note">Время берётся из твоего локального часового пояса и отправляется на сервер как timestamp.</p>
-        <button class="submit-create" type="submit">Создать</button>
-      </form>
+        </form>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel" type="button" id="cancelCreateModal">Отмена</button>
+        <button class="submit-create" type="submit" form="createContestForm" id="submitCreateContest" disabled>Создать соревнование</button>
+      </div>
     </div>
   </div>
 
@@ -1420,7 +2067,9 @@
         const timeLabel = contest.status === "ongoing"
           ? formatTimeLeft(contest.end)
           : formatDateTime(contest.status === "finished" ? contest.end : contest.start);
-        const visibility = String(contest.visibility || "public").toLowerCase() === "private" ? "ПРИВАТНОЕ" : "";
+        const isPrivate = String(contest.visibility || "public").toLowerCase() === "private";
+        const visibility = isPrivate ? "ПРИВАТНОЕ" : "ГЛОБАЛЬНОЕ";
+        const visibilityClass = isPrivate ? "private" : "public";
         row.innerHTML = `
           <div class="contest-main">
             <span class="contest-icon ${kind}" aria-hidden="true">${contestLogoHtml(contest)}</span>
@@ -1428,7 +2077,7 @@
               <div class="contest-name-line">
                 <button class="contest-name" type="button">${escapeHtml(contest.title || "Соревнование")}</button>
                 <span class="type-badge ${kind}">${kindLabel(kind)}</span>
-                ${visibility ? `<span class="visibility-badge">${visibility}</span>` : ""}
+                <span class="visibility-badge ${visibilityClass}">${visibility}</span>
               </div>
               <p class="contest-description">${escapeHtml(contestDescription(contest))}</p>
             </div>
@@ -1481,7 +2130,7 @@
     function renderUserStats() {
       const solved = Number(state.userStats?.cnt || state.userStats?.solvedCount || 0);
       const exp = Number(state.userStats?.exp || 0);
-      const created = state.visibleContests.filter((contest) => String(contest.ownerLogin || "") === String(user || "")).length;
+      const created = user ? state.visibleContests.filter((contest) => String(contest.ownerLogin || "") === String(user || "")).length : 0;
       const wins = Number(state.userStats?.contestWins || state.userStats?.wins || 0);
       document.getElementById("statPassed").textContent = formatNumber(solved);
       document.getElementById("statRating").textContent = formatNumber(exp);
@@ -1532,6 +2181,7 @@
         button.textContent = String(day);
         const kinds = (eventMap.get(key) || []).slice(0, 2);
         if (kinds.length) {
+          button.classList.add("has-events");
           const dots = document.createElement("span");
           dots.className = "day-dots";
           kinds.forEach((kind) => {
@@ -1542,7 +2192,6 @@
           button.appendChild(dots);
         }
         button.addEventListener("click", () => {
-          if (!eventMap.has(key)) return;
           state.selectedDateKey = state.selectedDateKey === key ? "" : key;
           renderCalendar(state.visibleContests);
           renderDateFilter();
@@ -1574,6 +2223,7 @@
       const graph = document.getElementById("ratingGraph");
       const growth = document.getElementById("ratingGrowth");
       const currentText = document.getElementById("currentRatingText");
+      const empty = document.getElementById("ratingEmpty");
       if (!graph) return;
       graph.innerHTML = "";
       const width = 360;
@@ -1593,8 +2243,15 @@
       }
 
       const points = Array.isArray(state.ratingHistory) ? state.ratingHistory.slice(-30) : [];
-      let values = points.map((p) => Number(p.value ?? p.rating ?? p.exp ?? 0)).filter(Number.isFinite);
-      if (values.length < 2) values = [0, 0, 0, 0, 0];
+      const values = points.map((p) => Number(p.value ?? p.rating ?? p.exp ?? 0)).filter(Number.isFinite);
+      const currentRating = values.length ? values[values.length - 1] : Number(state.userStats?.exp || 0);
+      if (values.length < 2) {
+        if (empty) empty.classList.add("is-visible");
+        if (growth) growth.textContent = "";
+        if (currentText) currentText.textContent = `Текущий рейтинг: ${formatNumber(currentRating || 0)}`;
+        return;
+      }
+      if (empty) empty.classList.remove("is-visible");
       const min = Math.min(...values);
       const max = Math.max(...values);
       const range = Math.max(1, max - min);
@@ -1628,8 +2285,8 @@
       const registeredFinished = finished.filter((contest) => state.registrations[String(contest.id || "")]).slice(0, 5);
       if (!registeredFinished.length) {
         const row = document.createElement("div");
-        row.className = "result-row";
-        row.innerHTML = `<strong>Пока нет результатов</strong><span>—</span><span>—</span>`;
+        row.className = "empty-state";
+        row.innerHTML = `<strong>Пока нет результатов</strong><br>Завершённые соревнования, в которых ты участвовал, появятся здесь.`;
         container.appendChild(row);
         return;
       }
@@ -1637,10 +2294,6 @@
         const row = document.createElement("button");
         row.type = "button";
         row.className = "result-row";
-        row.style.background = "transparent";
-        row.style.borderLeft = "0";
-        row.style.borderRight = "0";
-        row.style.borderTop = "0";
         row.style.width = "100%";
         row.style.textAlign = "left";
         row.style.cursor = "pointer";
@@ -1714,6 +2367,11 @@
         await renderContests();
       } catch (err) {
         console.warn("contests load failed", err);
+        state.visibleContests = [];
+        renderUserStats();
+        renderCalendar([]);
+        renderDateFilter();
+        await renderContests();
       }
     }
 
@@ -1850,7 +2508,14 @@
       state.selectedCreateType = "";
       state.logoData = "";
       const preview = document.getElementById("ccLogoPreview");
-      if (preview) preview.innerHTML = "♛";
+      if (preview) preview.innerHTML = "CB";
+      const logoAction = document.getElementById("ccLogoAction");
+      if (logoAction) logoAction.firstChild.textContent = "Загрузить логотип";
+      const removeLogo = document.getElementById("removeLogoBtn");
+      if (removeLogo) removeLogo.style.display = "none";
+      const submit = document.getElementById("submitCreateContest");
+      if (submit) submit.disabled = true;
+      clearFormErrors();
       state.datePickers.start = null;
       state.datePickers.end = null;
       document.getElementById("ccStart").value = "";
@@ -1866,24 +2531,31 @@
     function setupLogoInput() {
       const input = document.getElementById("ccLogo");
       const preview = document.getElementById("ccLogoPreview");
+      const logoAction = document.getElementById("ccLogoAction");
+      const remove = document.getElementById("removeLogoBtn");
+      const clearLogo = () => {
+        state.logoData = "";
+        if (input) input.value = "";
+        if (preview) preview.innerHTML = "CB";
+        if (logoAction) logoAction.firstChild.textContent = "Загрузить логотип";
+        if (remove) remove.style.display = "none";
+      };
       input?.addEventListener("change", () => {
         const file = input.files && input.files[0];
         state.logoData = "";
         if (!file) {
-          if (preview) preview.innerHTML = "♛";
+          clearLogo();
           return;
         }
         const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
         if (!allowed.has(file.type)) {
           alert("Поддерживаются только png, jpg, webp и gif.");
-          input.value = "";
-          if (preview) preview.innerHTML = "♛";
+          clearLogo();
           return;
         }
         if (file.size > 350 * 1024) {
           alert("Логотип слишком большой. Используй файл до 350 KB.");
-          input.value = "";
-          if (preview) preview.innerHTML = "♛";
+          clearLogo();
           return;
         }
         const reader = new FileReader();
@@ -1891,9 +2563,12 @@
           const result = String(reader.result || "");
           state.logoData = result;
           if (preview) preview.innerHTML = `<img src="${escapeHtml(result)}" alt="">`;
+          if (logoAction) logoAction.firstChild.textContent = "Заменить логотип";
+          if (remove) remove.style.display = "inline-flex";
         };
         reader.readAsDataURL(file);
       });
+      remove?.addEventListener("click", clearLogo);
     }
 
     function openModal() {
@@ -1914,14 +2589,14 @@
       if (privateBtn) {
         privateBtn.disabled = !state.canCreatePrivate;
         privateBtn.querySelector("span").textContent = state.canCreatePrivate
-          ? "Доступно: PRO+ и админам. Укажи логины участников, которым будет доступна регистрация."
-          : "Недоступно для вашего аккаунта.";
+          ? "Для PRO+ и админов. Регистрация доступна только указанным участникам."
+          : "Недоступно: нужен тариф PRO+ или права администратора.";
       }
       if (globalBtn) {
         globalBtn.disabled = !state.canCreateGlobal;
         globalBtn.querySelector("span").textContent = state.canCreateGlobal
-          ? "Доступно: только администраторам. Соревнование будет видно всем пользователям."
-          : "Недоступно для вашего аккаунта.";
+          ? "Для администраторов. Соревнование видно всем пользователям CodeBug."
+          : "Недоступно: глобальные соревнования создают только администраторы.";
       }
     }
 
@@ -1953,6 +2628,9 @@
       state.selectedCreateType = type;
       document.getElementById("createContestForm").style.display = "grid";
       document.getElementById("allowedUsersRow").style.display = type === "private" ? "grid" : "none";
+      const submit = document.getElementById("submitCreateContest");
+      if (submit) submit.disabled = false;
+      clearFormErrors();
       document.querySelectorAll(".contest-type").forEach((btn) => {
         btn.classList.toggle("is-selected", btn.dataset.type === type);
       });
@@ -1968,6 +2646,33 @@
     function parseLocalDateTime(value) {
       const ts = normalizeTimestamp(value);
       return ts || NaN;
+    }
+
+    function clearFormErrors() {
+      document.querySelectorAll("#createContestForm .field-error").forEach((node) => node.remove());
+      document.querySelectorAll("#createContestForm .has-error").forEach((row) => row.classList.remove("has-error"));
+      const formError = document.getElementById("createFormError");
+      if (formError) {
+        formError.classList.remove("is-visible");
+        formError.textContent = "";
+      }
+    }
+
+    function setFieldError(field, message) {
+      const row = document.querySelector(`#createContestForm [data-field="${field}"]`);
+      if (!row) return;
+      row.classList.add("has-error");
+      const error = document.createElement("div");
+      error.className = "field-error";
+      error.textContent = message;
+      row.appendChild(error);
+    }
+
+    function setFormError(message) {
+      const formError = document.getElementById("createFormError");
+      if (!formError) return;
+      formError.textContent = message;
+      formError.classList.add("is-visible");
     }
 
     async function createContestFromForm(event) {
@@ -1990,8 +2695,33 @@
       const start = parseLocalDateTime(document.getElementById("ccStart")?.value);
       const end = parseLocalDateTime(document.getElementById("ccEnd")?.value);
 
-      if (!title || !tasks.length || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
-        alert("Проверь название, задачи и время соревнования.");
+      clearFormErrors();
+      let hasErrors = false;
+      if (!title) {
+        setFieldError("title", "Укажи название соревнования.");
+        hasErrors = true;
+      }
+      if (!tasks.length) {
+        setFieldError("tasks", "Укажи хотя бы одну задачу по ID.");
+        hasErrors = true;
+      }
+      if (visibility === "private" && !allowed.length) {
+        setFieldError("allowed", "Для приватного соревнования нужен хотя бы один участник.");
+        hasErrors = true;
+      }
+      if (!Number.isFinite(start)) {
+        setFieldError("start", "Выбери дату и время старта.");
+        hasErrors = true;
+      }
+      if (!Number.isFinite(end)) {
+        setFieldError("end", "Выбери дату и время финиша.");
+        hasErrors = true;
+      } else if (Number.isFinite(start) && end <= start) {
+        setFieldError("end", "Финиш должен быть позже старта.");
+        hasErrors = true;
+      }
+      if (hasErrors) {
+        setFormError("Проверь поля перед созданием соревнования.");
         return;
       }
 
@@ -2027,6 +2757,7 @@
 
     document.getElementById("openCreateModal")?.addEventListener("click", openModal);
     document.getElementById("closeCreateModal")?.addEventListener("click", closeModal);
+    document.getElementById("cancelCreateModal")?.addEventListener("click", closeModal);
     document.getElementById("contestModal")?.addEventListener("click", (event) => {
       if (event.target.id === "contestModal") closeModal();
     });
