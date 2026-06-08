@@ -49,6 +49,31 @@ LAST_TASKS_SYNC = 0.0
 MAX_GENERATED_TESTS = int(os.getenv("MAX_GENERATED_TESTS", "200"))
 JUDGE_PROCESS_TIMEOUT = int(os.getenv("JUDGE_PROCESS_TIMEOUT", "120"))
 SUPPORTED_LANGUAGES = {"cpp", "python"}
+PROFILE_LITE_CACHE_TTL = int(os.getenv("PROFILE_LITE_CACHE_TTL", "30"))
+RECOMMENDATIONS_CACHE_TTL = int(os.getenv("RECOMMENDATIONS_CACHE_TTL", "120"))
+PROFILE_RUNTIME_CACHE = {}
+PROFILE_RUNTIME_CACHE_LOCK = threading.Lock()
+
+
+def _cache_get(key):
+    now = time.time()
+    with PROFILE_RUNTIME_CACHE_LOCK:
+        item = PROFILE_RUNTIME_CACHE.get(key)
+        if not item:
+            return None
+        expires_at, value = item
+        if expires_at <= now:
+            PROFILE_RUNTIME_CACHE.pop(key, None)
+            return None
+        return value
+
+
+def _cache_set(key, value, ttl):
+    if ttl <= 0:
+        return value
+    with PROFILE_RUNTIME_CACHE_LOCK:
+        PROFILE_RUNTIME_CACHE[key] = (time.time() + ttl, value)
+    return value
 
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
@@ -3287,13 +3312,20 @@ def user_profile_lite(login):
     login = str(login or "").strip()
     if not login:
         return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    cache_key = ("profile-lite", login)
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        response = jsonify(cached)
+        response.headers["Cache-Control"] = "public, max-age=30"
+        response.headers["X-CodeBug-Cache"] = "hit"
+        return response
     try:
         public_profile = db.reference(f"publicProfiles/{login}").get() or {}
         if isinstance(public_profile, dict) and public_profile:
             stats = public_profile.get("stats") if isinstance(public_profile.get("stats"), dict) else {}
             profile_style = public_profile.get("profileStyle") if isinstance(public_profile.get("profileStyle"), dict) else {}
             raw_sub = public_profile.get("subscription") if isinstance(public_profile.get("subscription"), dict) else {}
-            return jsonify({
+            payload = {
                 "login": public_profile.get("login") or login,
                 "avatarUrl": public_profile.get("avatarUrl") or "",
                 "coverUrl": public_profile.get("coverUrl") or "",
@@ -3307,7 +3339,12 @@ def user_profile_lite(login):
                     "exp": stats.get("exp", 0),
                     "rating": stats.get("rating", 0)
                 }
-            })
+            }
+            _cache_set(cache_key, payload, PROFILE_LITE_CACHE_TTL)
+            response = jsonify(payload)
+            response.headers["Cache-Control"] = "public, max-age=30"
+            response.headers["X-CodeBug-Cache"] = "miss"
+            return response
 
         user_ref = db.reference(f"users/{login}")
         profile_style = user_ref.child("profileStyle").get() or {}
@@ -3322,7 +3359,7 @@ def user_profile_lite(login):
         login_value = user_ref.child("login").get()
         if not login_value:
             return _api_error("not_found", 404, "NOT_FOUND")
-        return jsonify({
+        payload = {
             "login": login_value or login,
             "avatarUrl": user_ref.child("avatarUrl").get() or "",
             "coverUrl": user_ref.child("coverUrl").get() or "",
@@ -3336,7 +3373,12 @@ def user_profile_lite(login):
                 "exp": stats.get("exp", 0),
                 "rating": stats.get("rating", 0)
             }
-        })
+        }
+        _cache_set(cache_key, payload, PROFILE_LITE_CACHE_TTL)
+        response = jsonify(payload)
+        response.headers["Cache-Control"] = "public, max-age=30"
+        response.headers["X-CodeBug-Cache"] = "miss"
+        return response
     except Exception as e:
         return _server_error("profile_lite_failed", "PROFILE_LITE_FAILED", exc=e)
 
@@ -3631,6 +3673,13 @@ def recommendations():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
     if not _is_pro_plus_active(login):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
+    cache_key = ("recommendations", login)
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        response = jsonify(cached)
+        response.headers["Cache-Control"] = "private, max-age=120"
+        response.headers["X-CodeBug-Cache"] = "hit"
+        return response
     if not sync_tasks_repo():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
     solved = _normalize_solved_map((db.reference(f"users/{login}/stats/solved").get() if FIREBASE_READY else {}) or {})
@@ -3666,10 +3715,15 @@ def recommendations():
         diff_score = 5 - abs(_difficulty_rank(task_meta.get("difficulty")) - target_rank)
         candidates.append((tag_score * 3 + diff_score, task_meta))
     candidates.sort(key=lambda x: (x[0], -int(x[1].get("id") or 0)), reverse=True)
-    return jsonify({
+    payload = {
         "ok": True,
         "items": [c[1] for c in candidates[:25]]
-    })
+    }
+    _cache_set(cache_key, payload, RECOMMENDATIONS_CACHE_TTL)
+    response = jsonify(payload)
+    response.headers["Cache-Control"] = "private, max-age=120"
+    response.headers["X-CodeBug-Cache"] = "miss"
+    return response
 
 
 @app.route("/contests/create", methods=["POST"])

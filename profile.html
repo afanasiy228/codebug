@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль — CodeBug</title>
     <link rel="icon" type="image/png" href="/logo.png?v=2">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -29,7 +28,7 @@
         body {
             margin: 0;
             color: var(--ink);
-            font-family: "IBM Plex Sans", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background:
                 radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
                 radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
@@ -61,7 +60,7 @@
         }
         
         .logo {
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.4px;
@@ -197,7 +196,7 @@
         .username {
             font-size: clamp(38px, 4.2vw, 58px);
             font-weight: 700;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: #f2f6fb;
             margin-bottom: 0;
             line-height: 0.98;
@@ -337,7 +336,7 @@
         .osu-stat-value {
             font-size: 24px;
             line-height: 1;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             font-weight: 700;
             color: #edf6fc;
             text-align: right;
@@ -411,7 +410,7 @@
 
         .osu-meta-value {
             font-size: 24px;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: #edf6fc;
             font-weight: 700;
         }
@@ -421,7 +420,7 @@
             font-weight: 600;
             margin: 14px 22px 8px;
             color: #e4edf5;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
         
         .avatar-block {
@@ -583,7 +582,7 @@
             margin: 0 0 12px;
             font-size: 18px;
             font-weight: 700;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: #e6eff7;
         }
 
@@ -746,7 +745,7 @@
         .admin-panel h3 {
             margin: 0 0 12px;
             font-size: 20px;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         .admin-actions {
@@ -802,7 +801,7 @@
             background: rgba(18, 18, 18, .7);
             font-weight: 700;
             font-size: 20px;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
         .choice-list {
             display: grid;
@@ -838,7 +837,7 @@
         .choice-btn .sample {
             font-size: 42px;
             font-weight: 800;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             line-height: 1;
             white-space: nowrap;
             overflow: hidden;
@@ -926,7 +925,7 @@
             margin: 0 0 8px;
             color: #FFFFFF;
             font-size: 24px;
-            font-family: "Space Grotesk", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         .cover-grid {
@@ -1975,7 +1974,13 @@
 
             const applyProfileData = (data) => {
                 if (!data || typeof data !== "object") return;
-            const stats = data.stats || {};
+            const rawStats = data.stats || {};
+            const stats = {
+                ...rawStats,
+                cnt: Number(rawStats.cnt ?? rawStats.solved ?? 0),
+                exp: Number(rawStats.exp || 0),
+                rating: Number(rawStats.rating || 0)
+            };
             const sub = data.subscription || null;
             const rawProfileStyle = (data.profileStyle && typeof data.profileStyle === "object") ? data.profileStyle : {};
             const profileStyle = {
@@ -2097,7 +2102,6 @@
                 }
                 const coverPanel = document.getElementById("profileCoverPanel");
                 if (coverPanel) coverPanel.title = "";
-                setupViewedFriendButton();
             } else {
                 const changeCoverBtn = document.getElementById("changeCoverBtn");
                 const avatarEditBtn = document.getElementById("avatarEditBtn");
@@ -2118,84 +2122,46 @@
             }
             };
 
-            // 1) Start full profile in background immediately.
-            let liteData = null;
-            let fullApplied = false;
-            const loadLightProfileFromDb = async () => {
-                try {
-                    const publicProfile = await dbRead("publicProfiles/" + viewedUser, { retries: 2, sdkTimeoutMs: 450, restTimeoutMs: 2200 });
-                    if (publicProfile && typeof publicProfile === "object") {
-                        fullApplied = true;
-                        applyProfileData(publicProfile);
-                        return publicProfile;
-                    }
-
-                    const [
-                        login,
-                        avatarUrl,
-                        coverUrl,
-                        stats,
-                        subscription,
-                        coverId
-                    ] = await Promise.all([
-                        dbRead("users/" + viewedUser + "/login", { retries: 1 }),
-                        dbRead("users/" + viewedUser + "/avatarUrl", { retries: 1 }),
-                        dbRead("users/" + viewedUser + "/coverUrl", { retries: 1 }),
-                        dbRead("users/" + viewedUser + "/stats", { retries: 1 }),
-                        dbRead("users/" + viewedUser + "/subscription", { retries: 1 }),
-                        dbRead("users/" + viewedUser + "/profileStyle/coverId", { retries: 1 })
-                    ]);
-
-                    if (login) {
-                        const light = {
-                            login,
-                            avatarUrl: avatarUrl || "",
-                            coverUrl: coverUrl || "",
-                            stats: {
-                                cnt: Number(stats?.cnt || 0),
-                                exp: Number(stats?.exp || 0),
-                                rating: Number(stats?.rating || 0)
-                            },
-                            subscription: subscription || null,
-                            profileStyle: {
-                                coverId: coverId || DEFAULT_COVER_ID,
-                                coverUrl: coverUrl || ""
-                            }
-                        };
-                        fullApplied = true;
-                        applyProfileData(light);
-                        return light;
-                    }
-                } catch (e) {
-                    console.warn("light profile load failed", e);
-                }
-                return liteData && typeof liteData === "object" ? liteData : null;
-            };
-            const fullDataPromise = loadLightProfileFromDb();
-
-            // 2) Fast first paint via lightweight endpoint.
+            let renderedProfile = null;
             try {
-                const liteRes = await withTimeout(
-                    fetch(`${base}/users/${encodeURIComponent(viewedUser)}/profile-lite`, { cache: "no-store" }),
-                    700,
-                    "profile_lite_timeout"
-                );
-                if (liteRes && liteRes.ok) {
-                    liteData = await liteRes.json();
-                    if (!fullApplied) applyProfileData(liteData);
-                } else if (liteRes && liteRes.status !== 404) {
-                    console.warn("profile-lite http status", liteRes.status);
+                renderedProfile = await dbRead("publicProfiles/" + viewedUser, {
+                    retries: 2,
+                    forceRest: true,
+                    sdkTimeoutMs: 650,
+                    restTimeoutMs: 1600
+                });
+                if (renderedProfile && typeof renderedProfile === "object") {
+                    applyProfileData(renderedProfile);
                 }
             } catch (e) {
-                console.warn("profile-lite load failed", e);
+                console.warn("public profile load failed", e);
             }
 
-            // 3) Heavy blocks run async after initial render.
-            setTimeout(async () => {
-                const dataForRank = await fullDataPromise;
-                loadRankPlaces(dataForRank).catch((e) => console.warn("loadRankPlaces failed", e));
-                loadProPlusAnalytics().catch((e) => console.warn("loadProPlusAnalytics failed", e));
-            }, 0);
+            if (!renderedProfile || typeof renderedProfile !== "object") {
+                try {
+                    const liteRes = await withTimeout(
+                        fetch(`${base}/users/${encodeURIComponent(viewedUser)}/profile-lite`, { cache: "force-cache" }),
+                        900,
+                        "profile_lite_timeout"
+                    );
+                    if (liteRes && liteRes.ok) {
+                        renderedProfile = await liteRes.json();
+                        applyProfileData(renderedProfile);
+                    } else if (liteRes && liteRes.status !== 404) {
+                        console.warn("profile-lite http status", liteRes.status);
+                    }
+                } catch (e) {
+                    console.warn("profile-lite load failed", e);
+                }
+            }
+
+            runAfterProfilePaint("loadRankPlaces", () => loadRankPlaces(renderedProfile));
+            runAfterProfilePaint("loadLastActivity", loadLastActivity);
+            runAfterProfilePaint("loadAnalytics", loadAnalytics);
+            runAfterProfilePaint("loadProPlusAnalytics", loadProPlusAnalytics);
+            runAfterProfilePaint("setupViewedFriendButton", setupViewedFriendButton);
+            runAfterProfilePaint("loadFriends", loadFriends);
+            runAfterProfilePaint("startPresence", startPresence);
 
         }
 
@@ -2415,9 +2381,13 @@
             const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
             try {
                 const auth = typeof getAuth === "function" ? getAuth() : null;
-                const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+                if (!auth?.currentUser) {
+                    card.style.display = "none";
+                    return;
+                }
+                const token = await auth.currentUser.getIdToken();
                 const res = await fetch(`${base}/profile/extended-stats/${encodeURIComponent(currentUser)}`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 if (!res.ok) throw new Error("stats fetch failed");
                 const payload = await res.json();
@@ -2438,7 +2408,7 @@
                 }
 
                 const recRes = await fetch(`${base}/recommendations`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 if (recRes.ok) {
                     const recPayload = await recRes.json().catch(() => ({}));
@@ -2592,10 +2562,16 @@
                 .catch((err) => console.warn(taskName + " failed", err));
         }
 
+        function runAfterProfilePaint(taskName, fn) {
+            const runner = () => runSafe(taskName, fn);
+            if (typeof requestIdleCallback === "function") {
+                requestIdleCallback(runner, { timeout: 1600 });
+            } else {
+                setTimeout(runner, 350);
+            }
+        }
+
         runSafe("loadProfile", loadProfile);
-        runSafe("loadLastActivity", loadLastActivity);
-        runSafe("loadAnalytics", loadAnalytics);
-        runSafe("startPresence", startPresence);
 
         const coverCustomFileInput = document.getElementById("coverCustomFile");
         if (coverCustomFileInput) {
@@ -2745,9 +2721,6 @@
                 list.appendChild(card);
             }
         }
-
-        loadFriends();
-
         /* ============================
            CHANGE AVATAR
         ============================ */

@@ -296,6 +296,15 @@ function buildCodeBugBrandHtml(text) {
     return `<span class="brand-code">Code</span><span class="brand-bug">Bug</span>${suffixHtml}`;
 }
 
+function runLowPriority(task) {
+    if (typeof task !== "function") return;
+    if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(() => task(), { timeout: 1800 });
+    } else {
+        setTimeout(task, 600);
+    }
+}
+
 function updateNavbar() {
     const nav = document.getElementById("nav-links");
     if (!nav) return;
@@ -320,7 +329,6 @@ function updateNavbar() {
 
     const accountLinks = user
         ? `
-           <a href="submissions.html">Посылки</a>
            <a href="profile.html" class="nav-profile">${user}</a>`
         : `<a href="auth.html">Войти / Регистрация</a>`;
 
@@ -336,8 +344,8 @@ function updateNavbar() {
     `;
 
     bindMobileNav(nav);
-    startKeepAlive();
-    applyProBrandingToNavbar(user).catch(() => {});
+    runLowPriority(startKeepAlive);
+    runLowPriority(() => applyProBrandingToNavbar(user).catch(() => {}));
 }
 
 async function getUserSubscription(login) {
