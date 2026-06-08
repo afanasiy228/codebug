@@ -1212,6 +1212,38 @@ async function uploadImage(file, type) {
     return data.secure_url;
 }
 
+function getOptimizedCloudinaryUrl(url, transformation) {
+    const raw = String(url || "").trim();
+    if (!raw || !transformation) return raw;
+
+    let parsed;
+    try {
+        parsed = new URL(raw, window.location.origin);
+    } catch (_) {
+        return raw;
+    }
+
+    if (!/res\.cloudinary\.com$/i.test(parsed.hostname)) return raw;
+    const marker = "/image/upload/";
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex < 0) return raw;
+
+    const before = parsed.pathname.slice(0, markerIndex + marker.length);
+    const after = parsed.pathname.slice(markerIndex + marker.length);
+    if (!after || after.startsWith(transformation + "/")) return raw;
+
+    parsed.pathname = before + transformation + "/" + after;
+    return parsed.toString();
+}
+
+function getOptimizedAvatarUrl(url) {
+    return getOptimizedCloudinaryUrl(url, "f_auto,q_auto,c_fill,w_256,h_256");
+}
+
+function getOptimizedCoverUrl(url) {
+    return getOptimizedCloudinaryUrl(url, "f_auto,q_auto,c_limit,w_1600");
+}
+
 async function saveAvatarUrl(login, avatarUrl) {
     const updatedAt = Date.now();
     return db.ref().update({
@@ -1359,6 +1391,8 @@ window.getUser = getUser;
 window.getUid = getUid;
 if (!window.db && db) window.db = db;
 window.uploadImage = uploadImage;
+window.getOptimizedAvatarUrl = getOptimizedAvatarUrl;
+window.getOptimizedCoverUrl = getOptimizedCoverUrl;
 window.saveAvatarUrl = saveAvatarUrl;
 window.saveCoverUrl = saveCoverUrl;
 window.saveCompetitionLogoUrl = saveCompetitionLogoUrl;

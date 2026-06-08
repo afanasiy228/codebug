@@ -1526,7 +1526,8 @@
             const canUseCustom = (subLevel !== "free");
 
             if (custom && (/^https?:\/\//i.test(custom) || custom.startsWith("/")) && canUseCustom) {
-                coverEl.style.backgroundImage = `url("${custom}")`;
+                const coverUrl = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom) : custom;
+                coverEl.style.backgroundImage = `url("${coverUrl}")`;
             } else {
                 coverEl.style.backgroundImage = preset.bg;
             }
@@ -2064,7 +2065,8 @@
 
             // ---- AVATAR ----
             if (data.avatarUrl) {
-                document.getElementById("avatar").src = data.avatarUrl;
+                const avatarUrl = typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(data.avatarUrl) : data.avatarUrl;
+                document.getElementById("avatar").src = avatarUrl;
             } else {
                 const svg = `
                 <svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'>
@@ -2758,7 +2760,8 @@
                 const avatarUrl = await uploadImage(file, "avatar");
                 await saveAvatarUrl(currentUser, avatarUrl);
 
-                document.getElementById("avatar").src = avatarUrl;
+                document.getElementById("avatar").src =
+                    typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(avatarUrl) : avatarUrl;
                 document.getElementById("avatar-error").innerText = "";
 
                 alert("Аватар обновлён!");
