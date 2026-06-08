@@ -94,84 +94,288 @@ function ensureMobileNavStyles() {
     const style = document.createElement("style");
     style.id = "mobile-nav-style";
     style.textContent = `
-header, .top-nav {
+header.cb-site-header,
+.top-nav {
     background: rgba(5, 5, 5, 0.88) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
-    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32) !important;
+    backdrop-filter: blur(12px) !important;
 }
-header .logo, .top-nav .logo {
+.top-nav {
+    height: auto !important;
+    min-height: 72px !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+}
+header.cb-site-header,
+.top-nav .cb-site-header {
+    height: auto !important;
+    min-height: 72px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: 38px 34px;
+    align-items: center !important;
+    row-gap: 0;
+}
+header.cb-site-header {
+    padding: 0 max(18px, 4vw) !important;
+}
+.top-nav .cb-site-header {
+    width: min(1180px, 96vw) !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+}
+header.cb-site-header .logo,
+.top-nav .cb-site-header .logo {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    justify-self: start;
+    width: max-content;
     color: #FFFFFF !important;
+    font-size: 19px !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
 }
-header .brand-code, .top-nav .brand-code {
+header .brand-code,
+header .brand-bug,
+header .brand-suffix,
+.top-nav .brand-code,
+.top-nav .brand-bug,
+.top-nav .brand-suffix {
     color: #ffffff !important;
-}
-header .brand-bug, .top-nav .brand-bug {
-    color: #ffffff !important;
-}
-header .brand-suffix, .top-nav .brand-suffix {
-    color: #ffffff !important;
-}
-header nav a, .top-nav nav a {
-    color: #b0b0b0 !important;
-}
-header nav a:hover, .top-nav nav a:hover {
-    color: #FBBF24 !important;
 }
 #nav-links {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-    gap: 16px;
+    display: contents !important;
 }
 #nav-links .nav-shell {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 24px;
-    width: 100%;
-    position: relative;
-    z-index: 2002;
+    display: contents !important;
 }
 #nav-links .nav-links {
     display: flex;
     align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
 }
 #nav-links .nav-primary {
-    justify-content: flex-end;
+    grid-column: 1 / 4;
+    grid-row: 2;
+    justify-self: center;
+    justify-content: center;
+    gap: clamp(16px, 2.6vw, 30px);
+    min-width: 0;
+    padding-top: 1px;
+}
+#nav-links .nav-primary a,
+#nav-links .nav-drawer a {
+    position: relative;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #9CA3AF !important;
+    text-decoration: none !important;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+}
+#nav-links .nav-primary a {
+    padding: 9px 0 8px;
+}
+#nav-links .nav-primary a:hover,
+#nav-links .nav-primary a.active {
+    color: #FFFFFF !important;
+}
+#nav-links .nav-primary a.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    border-radius: 999px;
+    background: #F59E0B !important;
 }
 #nav-links .nav-account {
-    gap: 12px;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    justify-content: flex-end;
+    gap: 10px;
+    position: relative;
+    z-index: 2003;
 }
-#nav-links .nav-account .nav-profile {
-    padding: 6px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: #121212;
+#nav-links .nav-auth-link {
     color: #FFFFFF !important;
-    font-weight: 700;
+    text-decoration: none !important;
+    font-size: 14px;
+    font-weight: 650;
 }
-#nav-links .nav-account .nav-profile:hover {
-    color: #ffffff !important;
-    border-color: rgba(245, 158, 11, 0.55);
-    background: rgba(245, 158, 11, 0.15);
+#nav-links .nav-notification {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #A3A3A3;
+    cursor: pointer;
+}
+#nav-links .nav-notification:hover {
+    color: #FFFFFF;
+}
+#nav-links .nav-notification svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+}
+#nav-links .nav-notification-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #F59E0B;
+    box-shadow: 0 0 0 2px rgba(5, 5, 5, 0.92);
+    opacity: 0;
+}
+#nav-links .nav-notification.has-unread .nav-notification-dot {
+    opacity: 1;
+}
+#nav-links .nav-profile-wrap {
+    position: relative;
+}
+#nav-links .nav-profile {
+    display: inline-grid;
+    grid-template-columns: 28px minmax(0, auto) 10px;
+    align-items: center;
+    gap: 9px;
+    min-height: 34px;
+    padding: 2px 0;
+    border: 0;
+    background: transparent;
+    color: #FFFFFF !important;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+#nav-links .nav-profile:hover .nav-profile-name {
+    filter: brightness(1.12);
+}
+#nav-links .nav-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #171717;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #E5E7EB;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1;
+    text-transform: uppercase;
+}
+#nav-links .nav-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+#nav-links .nav-profile-text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+#nav-links .nav-profile-name {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.05;
+}
+#nav-links .nav-profile-tier {
+    color: #9CA3AF;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    line-height: 1;
+}
+#nav-links .nav-profile-tier.is-pro {
+    color: #FBBF24;
+}
+#nav-links .nav-caret {
+    color: #737373;
+    font-size: 10px;
+    transform: translateY(-1px);
+}
+#nav-links .nav-account-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    display: none;
+    min-width: 176px;
+    padding: 6px 0;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(10, 10, 10, 0.98);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+}
+#nav-links .nav-profile-wrap.menu-open .nav-account-menu {
+    display: block;
+}
+#nav-links .nav-account-menu a,
+#nav-links .nav-account-menu button {
+    display: block;
+    width: 100%;
+    margin: 0 !important;
+    padding: 9px 14px;
+    border: 0;
+    background: transparent;
+    color: #D4D4D4 !important;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 550;
+    line-height: 1.1;
+    text-align: left;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+#nav-links .nav-account-menu a:hover,
+#nav-links .nav-account-menu button:hover {
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.045);
+}
+#nav-links .nav-menu-separator {
+    height: 1px;
+    margin: 6px 0;
+    background: rgba(255, 255, 255, 0.08);
 }
 #nav-links .nav-burger {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
     display: none;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: #121212;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
     color: #FFFFFF;
     font-size: 20px;
     cursor: pointer;
     position: relative;
-    z-index: 2003;
+    z-index: 2004;
 }
 #nav-links .nav-drawer {
     display: none;
@@ -181,20 +385,21 @@ header nav a:hover, .top-nav nav a:hover {
     width: 280px;
     height: 100%;
     background: #0B0B0B;
-    padding: 80px 20px 24px;
+    padding: 80px 22px 24px;
     box-shadow: -20px 0 40px rgba(0, 0, 0, 0.45);
     z-index: 2002;
-    gap: 12px;
+    gap: 0;
     flex-direction: column;
     transition: right 0.25s ease;
     pointer-events: none;
 }
 #nav-links .nav-drawer a {
-    margin: 0;
     display: block;
-    padding: 10px 0;
+    padding: 11px 0;
+    color: #D4D4D4 !important;
+}
+#nav-links .nav-drawer a.active {
     color: #FFFFFF !important;
-    text-decoration: none;
 }
 #nav-overlay {
     position: fixed;
@@ -214,14 +419,37 @@ body.nav-open #nav-links .nav-drawer {
     pointer-events: auto;
 }
 @media (max-width: 900px) {
-    #nav-links .nav-links {
+    header.cb-site-header,
+    .top-nav .cb-site-header {
+        grid-template-rows: 50px;
+        min-height: 50px !important;
+    }
+    .top-nav {
+        min-height: 50px !important;
+    }
+    #nav-links .nav-primary {
         display: none;
+    }
+    #nav-links .nav-account {
+        margin-right: 42px;
     }
     #nav-links .nav-burger {
         display: inline-flex;
     }
     #nav-links .nav-drawer {
         display: flex;
+    }
+}
+@media (max-width: 560px) {
+    #nav-links .nav-profile-name {
+        max-width: 92px;
+    }
+    #nav-links .nav-account {
+        gap: 6px;
+        margin-right: 38px;
+    }
+    #nav-links .nav-notification {
+        width: 28px;
     }
 }
 `;
@@ -266,6 +494,52 @@ function bindMobileNav(nav) {
     closeMenu();
 }
 
+function bindAccountMenu(nav) {
+    const wrap = nav.querySelector(".nav-profile-wrap");
+    const button = nav.querySelector(".nav-profile");
+    const menu = nav.querySelector(".nav-account-menu");
+    if (!wrap || !button || !menu) return;
+
+    const closeMenu = () => {
+        wrap.classList.remove("menu-open");
+        button.setAttribute("aria-expanded", "false");
+    };
+
+    button.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const isOpen = wrap.classList.toggle("menu-open");
+        button.setAttribute("aria-expanded", String(isOpen));
+    };
+
+    menu.querySelectorAll("a, button").forEach((item) => {
+        item.addEventListener("click", closeMenu);
+    });
+
+    if (!window.__codebugAccountMenuBound) {
+        window.__codebugAccountMenuBound = true;
+        document.addEventListener("click", (event) => {
+            document.querySelectorAll("#nav-links .nav-profile-wrap.menu-open").forEach((openWrap) => {
+                if (!openWrap.contains(event.target)) {
+                    openWrap.classList.remove("menu-open");
+                    const openButton = openWrap.querySelector(".nav-profile");
+                    if (openButton) openButton.setAttribute("aria-expanded", "false");
+                }
+            });
+        });
+        document.addEventListener("keydown", (event) => {
+            if (event.key !== "Escape") return;
+            document.querySelectorAll("#nav-links .nav-profile-wrap.menu-open").forEach((openWrap) => {
+                openWrap.classList.remove("menu-open");
+                const openButton = openWrap.querySelector(".nav-profile");
+                if (openButton) openButton.setAttribute("aria-expanded", "false");
+            });
+        });
+    }
+
+    closeMenu();
+}
+
 /* ============================
    ADMIN ACCESS
 ============================ */
@@ -305,34 +579,126 @@ function runLowPriority(task) {
     }
 }
 
+const NAV_ITEMS = [
+    { href: "index.html", label: "Главное", aliases: ["", "index.html"] },
+    { href: "train.html", label: "Тренировка", aliases: ["train.html", "problem.html"] },
+    { href: "contests.html", label: "Соревнования", aliases: ["contests.html", "contest.html"] },
+    { href: "rating.html", label: "Рейтинг", aliases: ["rating.html"] },
+    { href: "submissions.html", label: "Посылки", aliases: ["submissions.html"] },
+    { href: "donate.html", label: "Подписка", aliases: ["donate.html"] },
+    { href: "faq.html", label: "Помощь", aliases: ["faq.html"] }
+];
+
+function getCurrentPageName() {
+    const file = window.location.pathname.split("/").pop() || "index.html";
+    return file === "/" ? "index.html" : file;
+}
+
+function getActiveNavHref() {
+    const page = getCurrentPageName();
+    const item = NAV_ITEMS.find((navItem) => navItem.aliases.includes(page));
+    return item ? item.href : "";
+}
+
+function buildNavLinksHtml() {
+    const activeHref = getActiveNavHref();
+    return NAV_ITEMS.map((item) => {
+        const active = item.href === activeHref ? " active" : "";
+        return `<a href="${item.href}" class="${active.trim()}">${item.label}</a>`;
+    }).join("");
+}
+
+function getProfileInitial(login) {
+    const clean = String(login || "U").trim();
+    return escapeInlineHtml(clean.slice(0, 1) || "U");
+}
+
+function normalizeSafeImageUrl(url) {
+    const raw = String(url || "").trim();
+    if (!raw) return "";
+    if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
+    return "";
+}
+
+function getSubscriptionLabel(level) {
+    if (level === "pro_plus") return "PRO+";
+    if (level === "pro") return "PRO";
+    return "FREE";
+}
+
+function buildBellIconHtml() {
+    return `
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 17H9m10-2.5c-.9-1-1.5-1.8-1.5-5A5.5 5.5 0 0 0 12 4a5.5 5.5 0 0 0-5.5 5.5c0 3.2-.6 4-1.5 5-.4.4-.1 1.1.5 1.1h13c.6 0 .9-.7.5-1.1Z" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 19a2 2 0 0 0 4 0" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+    `;
+}
+
+function buildAccountHtml(user) {
+    if (!user) {
+        return `<a class="nav-auth-link" href="auth.html">Войти / Регистрация</a>`;
+    }
+
+    const safeUser = escapeInlineHtml(user);
+    const initial = getProfileInitial(user);
+    return `
+        <button class="nav-notification" type="button" aria-label="Уведомления" title="Уведомления">
+            ${buildBellIconHtml()}
+            <span class="nav-notification-dot" aria-hidden="true"></span>
+        </button>
+        <div class="nav-profile-wrap">
+            <button class="nav-profile" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span class="nav-avatar" data-initial="${initial}">${initial}</span>
+                <span class="nav-profile-text">
+                    <span class="nav-profile-name">${safeUser}</span>
+                    <span class="nav-profile-tier">FREE</span>
+                </span>
+                <span class="nav-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="nav-account-menu" role="menu">
+                <a href="profile.html" role="menuitem">Профиль</a>
+                <a href="profile.html#settings" role="menuitem">Настройки</a>
+                <div class="nav-menu-separator" aria-hidden="true"></div>
+                <a href="donate.html" role="menuitem">Подписка PRO+</a>
+                <div class="nav-menu-separator" aria-hidden="true"></div>
+                <button type="button" role="menuitem" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+    `;
+}
+
+function buildDrawerAccountHtml(user) {
+    if (!user) return `<a href="auth.html">Войти / Регистрация</a>`;
+    return `
+        <a href="profile.html">Профиль</a>
+        <a href="profile.html#settings">Настройки</a>
+        <a href="donate.html">Подписка PRO+</a>
+        <a href="#" onclick="logout(); return false;">Выйти</a>
+    `;
+}
+
 function updateNavbar() {
     const nav = document.getElementById("nav-links");
     if (!nav) return;
 
+    const header = nav.closest("header");
+    const topNavInner = nav.closest(".top-nav-inner");
+    const shell = header || topNavInner;
+    if (shell) shell.classList.add("cb-site-header");
+
     const logos = document.querySelectorAll(".logo");
     logos.forEach((logo) => {
         if (logo.querySelector("a")) return;
-        const text = (logo.textContent || "CodeBug").trim() || "CodeBug";
-        logo.innerHTML = `<a href="index.html" style="color:inherit;text-decoration:none;">${buildCodeBugBrandHtml(text)}</a>`;
+        logo.innerHTML = `<a href="index.html" style="color:inherit;text-decoration:none;">${buildCodeBugBrandHtml("CodeBug")}</a>`;
     });
 
     const user = getUser();
     ensureMobileNavStyles();
 
-    const commonLinks = `
-        <a href="train.html">Тренировка</a>
-        <a href="contests.html">Соревнования</a>
-        <a href="rating.html">Рейтинг</a>
-        <a href="donate.html">Донат</a>
-        <a href="faq.html">Помощь</a>
-    `;
-
-    const accountLinks = user
-        ? `
-           <a href="profile.html" class="nav-profile">${user}</a>`
-        : `<a href="auth.html">Войти / Регистрация</a>`;
-
-    const drawerLinks = `${commonLinks}${accountLinks}`;
+    const commonLinks = buildNavLinksHtml();
+    const accountLinks = buildAccountHtml(user);
+    const drawerLinks = `${commonLinks}${buildDrawerAccountHtml(user)}`;
 
     nav.innerHTML = `
         <div class="nav-shell">
@@ -344,8 +710,10 @@ function updateNavbar() {
     `;
 
     bindMobileNav(nav);
+    bindAccountMenu(nav);
     runLowPriority(startKeepAlive);
     runLowPriority(() => applyProBrandingToNavbar(user).catch(() => {}));
+    runLowPriority(() => applyNavbarNotifications(user).catch(() => {}));
 }
 
 async function getUserSubscription(login) {
@@ -479,31 +847,80 @@ async function applyProBrandingToNavbar(login) {
     if (!login) return;
     const sub = await getUserSubscription(login);
     let exp = 0;
+    let avatarUrl = "";
     try {
-        const userSnap = await firebase.database().ref("users/" + login + "/stats/exp").get();
-        if (userSnap.exists()) exp = Number(userSnap.val() || 0);
+        const profileSnap = await firebase.database().ref("publicProfiles/" + login).get();
+        if (profileSnap.exists()) {
+            const profile = profileSnap.val() || {};
+            avatarUrl = normalizeSafeImageUrl(profile.avatarUrl || "");
+            exp = Number(profile?.stats?.exp || 0);
+        }
     } catch (_) {}
+    if (!avatarUrl) {
+        try {
+            const avatarSnap = await firebase.database().ref("users/" + login + "/avatarUrl").get();
+            if (avatarSnap.exists()) avatarUrl = normalizeSafeImageUrl(avatarSnap.val());
+        } catch (_) {}
+    }
+    if (!exp) {
+        try {
+            const userSnap = await firebase.database().ref("users/" + login + "/stats/exp").get();
+            if (userSnap.exists()) exp = Number(userSnap.val() || 0);
+        } catch (_) {}
+    }
+
     const level = getSubscriptionLevel(sub);
     const isPro = level !== "free";
     const nickColor = isPro ? getSubscriptionNickColor(sub) : getRankNickColorByExp(exp);
-    const navProfile = document.querySelector("#nav-links .nav-profile");
-    if (navProfile) {
-        navProfile.style.setProperty("color", isPro ? "#FBBF24" : "#FFFFFF", "important");
-        navProfile.style.fontWeight = "700";
-        if (isPro) {
-            const badge = level === "pro_plus" ? "PRO+" : "PRO";
-            if (!navProfile.textContent.includes("PRO")) {
-                navProfile.textContent = `${login} · ${badge}`;
-            }
+    const navProfileName = document.querySelector("#nav-links .nav-profile-name");
+    const navProfileTier = document.querySelector("#nav-links .nav-profile-tier");
+    const navAvatar = document.querySelector("#nav-links .nav-avatar");
+
+    if (navProfileName) {
+        navProfileName.innerHTML = buildStyledNickHtml(login, sub, nickColor);
+        navProfileName.style.fontWeight = "750";
+    }
+    if (navProfileTier) {
+        navProfileTier.textContent = getSubscriptionLabel(level);
+        navProfileTier.classList.toggle("is-pro", isPro);
+    }
+    if (navAvatar) {
+        if (avatarUrl) {
+            const optimized = typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(avatarUrl) : avatarUrl;
+            navAvatar.innerHTML = `<img src="${escapeInlineHtml(optimized)}" alt="">`;
         } else {
-            navProfile.textContent = login;
+            navAvatar.textContent = getProfileInitial(login);
         }
     }
-    if (!isPro) return;
-    const logos = document.querySelectorAll(".logo a");
-    logos.forEach((logo) => {
-        logo.innerHTML = buildCodeBugBrandHtml("CodeBug PRO");
+}
+
+function notificationValueHasUnread(value) {
+    if (!value) return false;
+    if (Array.isArray(value)) return value.some(notificationValueHasUnread);
+    if (typeof value !== "object") return false;
+    if (value.unread === true || value.read === false || value.seen === false) return true;
+    if (value.readAt === null || value.seenAt === null) return true;
+    return Object.values(value).some((item) => {
+        if (!item || typeof item !== "object") return false;
+        return item.unread === true || item.read === false || item.seen === false || item.readAt === null || item.seenAt === null;
     });
+}
+
+async function applyNavbarNotifications(login) {
+    const button = document.querySelector("#nav-links .nav-notification");
+    if (!button || !login || !window.firebase) return;
+    let hasUnread = false;
+    const paths = [`notifications/${login}`, `userNotifications/${login}`];
+    for (const path of paths) {
+        try {
+            const snap = await firebase.database().ref(path).limitToLast(20).get();
+            if (snap.exists() && notificationValueHasUnread(snap.val())) {
+                hasUnread = true;
+                break;
+            }
+        } catch (_) {}
+    }
+    button.classList.toggle("has-unread", hasUnread);
 }
 
 /* ============================
@@ -642,7 +1059,11 @@ window.__captchaReady = !!window.__captchaReady;
 
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
-    return firebase.auth();
+    try {
+        return firebase.auth();
+    } catch (_) {
+        return null;
+    }
 }
 
 function setUid(uid) {

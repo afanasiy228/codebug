@@ -1318,7 +1318,7 @@
 
     <script src="firebase.js?v=20260521-3"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20260528-3"></script>
+    <script src="auth.js?v=20260608-header"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -2042,9 +2042,18 @@
             }
             const navProfileEl = document.querySelector("#nav-links .nav-profile");
             if (navProfileEl && viewedUser === currentUser) {
-                navProfileEl.style.setProperty("color", isPro ? "#FBBF24" : "#FFFFFF", "important");
                 const navTier = level === "pro_plus" ? "PRO+" : "PRO";
-                navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
+                const navProfileNameEl = document.querySelector("#nav-links .nav-profile-name");
+                const navProfileTierEl = document.querySelector("#nav-links .nav-profile-tier");
+                if (navProfileNameEl) {
+                    navProfileNameEl.innerHTML = isPro ? buildStyledNickHtml(data.login, sub, "#FFFFFF") : escapeHtml(data.login);
+                } else {
+                    navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
+                }
+                if (navProfileTierEl) {
+                    navProfileTierEl.textContent = isPro ? navTier : "FREE";
+                    navProfileTierEl.classList.toggle("is-pro", isPro);
+                }
             }
             // ---- STATS ----
             const osuSolved = document.getElementById("osuSolvedCount");
@@ -2342,14 +2351,59 @@
             }
         }
 
-        async function setNickColor(color) {
-            const sub = currentSubscription || {};
-            const can = (typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false;
-            if (!can) return;
-            const headers = { "Content-Type": "application/json" };
+        async function getProfileActionAuthToken() {
+            if (typeof getFreshAuthToken === "function") {
+                const token = await getFreshAuthToken({ timeoutMs: 1800, forceRefresh: true });
+                if (token) return token;
+            }
             try {
                 const auth = typeof getAuth === "function" ? getAuth() : null;
-                if (auth && auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                if (auth && auth.currentUser) {
+                    const token = await auth.currentUser.getIdToken(true);
+                    if (token) {
+                        localStorage.setItem("idToken", token);
+                        return token;
+                    }
+                }
+            } catch (err) {
+                console.warn("profile action token refresh failed", err);
+            }
+            return localStorage.getItem("idToken") || "";
+        }
+
+        function applyNickThemeLocally(color) {
+            if (!currentSubscription || typeof currentSubscription !== "object") currentSubscription = {};
+            if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
+            currentSubscription.visuals.nickColor = color;
+            const usernameEl = document.getElementById("username");
+            if (usernameEl && typeof buildStyledNickHtml === "function") {
+                usernameEl.innerHTML = buildStyledNickHtml(currentProfileLogin || viewedUser || currentUser, currentSubscription, "#FBBF24");
+            }
+            renderProColorControls(currentSubscriptionLevel, color);
+        }
+
+        async function setNickColor(color) {
+            const sub = currentSubscription || {};
+            const can = currentSubscriptionLevel !== "free"
+                || ((typeof hasSubscriptionAtLeast === "function") ? hasSubscriptionAtLeast(sub, "pro") : false);
+            if (!can) {
+                alert("Цвет ника доступен только с активной PRO подпиской.");
+                return;
+            }
+            if (viewedUser !== currentUser) {
+                alert("Можно менять только свой ник.");
+                return;
+            }
+            const buttons = Array.from(document.querySelectorAll("#nickColorSwatches .choice-btn"));
+            buttons.forEach((btn) => { btn.disabled = true; });
+            const headers = { "Content-Type": "application/json" };
+            try {
+                const token = await getProfileActionAuthToken();
+                if (!token) {
+                    alert("Нужен повторный вход. Выйди и зайди снова, чтобы сменить цвет ника.");
+                    return;
+                }
+                headers.Authorization = `Bearer ${token}`;
                 const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
                 const res = await fetch(`${base}/profile/set-nick-color`, {
                     method: "POST",
@@ -2361,11 +2415,11 @@
                     alert(`Ошибка: ${payload.error || "set-color failed"}`);
                     return;
                 }
-                if (!currentSubscription.visuals || typeof currentSubscription.visuals !== "object") currentSubscription.visuals = {};
-                currentSubscription.visuals.nickColor = color;
-                await loadProfile();
+                applyNickThemeLocally(payload.color || color);
             } catch (_) {
                 alert("Сервер недоступен.");
+            } finally {
+                buttons.forEach((btn) => { btn.disabled = false; });
             }
         }
 
