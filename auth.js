@@ -96,24 +96,24 @@ function ensureMobileNavStyles() {
     style.textContent = `
 header.cb-site-header,
 .top-nav {
-    background: rgba(5, 5, 5, 0.88) !important;
+    background: #050608 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32) !important;
+    box-shadow: none !important;
     backdrop-filter: blur(12px) !important;
 }
 .top-nav {
     height: auto !important;
-    min-height: 72px !important;
+    min-height: 90px !important;
     align-items: stretch !important;
     padding: 0 !important;
 }
 header.cb-site-header,
 .top-nav .cb-site-header {
     height: auto !important;
-    min-height: 72px !important;
+    min-height: 90px !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    grid-template-rows: 38px 34px;
+    grid-template-rows: 48px 42px;
     align-items: center !important;
     row-gap: 0;
 }
@@ -160,9 +160,11 @@ header .brand-suffix,
     grid-row: 2;
     justify-self: center;
     justify-content: center;
-    gap: clamp(16px, 2.6vw, 30px);
+    gap: clamp(20px, 3vw, 36px);
     min-width: 0;
-    padding-top: 1px;
+    width: 100%;
+    height: 42px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 #nav-links .nav-primary a,
 #nav-links .nav-drawer a {
@@ -171,6 +173,7 @@ header .brand-suffix,
     border: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
+    box-shadow: none !important;
     color: #9CA3AF !important;
     text-decoration: none !important;
     font-size: 14px;
@@ -180,7 +183,10 @@ header .brand-suffix,
     white-space: nowrap;
 }
 #nav-links .nav-primary a {
-    padding: 9px 0 8px;
+    display: inline-flex;
+    align-items: center;
+    height: 42px;
+    padding: 0 0 1px;
 }
 #nav-links .nav-primary a:hover,
 #nav-links .nav-primary a.active {
@@ -192,7 +198,7 @@ header .brand-suffix,
     left: 0;
     right: 0;
     bottom: 0;
-    height: 1px;
+    height: 2px;
     border-radius: 999px;
     background: #F59E0B !important;
 }
@@ -218,14 +224,17 @@ header .brand-suffix,
     justify-content: center;
     width: 32px;
     height: 32px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: #A3A3A3;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #CBD5E1 !important;
     cursor: pointer;
 }
 #nav-links .nav-notification:hover {
-    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #FFFFFF !important;
 }
 #nav-links .nav-notification svg {
     width: 18px;
@@ -255,13 +264,19 @@ header .brand-suffix,
     align-items: center;
     gap: 9px;
     min-height: 34px;
-    padding: 2px 0;
-    border: 0;
-    background: transparent;
+    padding: 4px 6px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
     color: #FFFFFF !important;
     cursor: pointer;
     font: inherit;
     text-align: left;
+}
+#nav-links .nav-profile:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+    box-shadow: none !important;
 }
 #nav-links .nav-profile:hover .nav-profile-name {
     filter: brightness(1.12);
@@ -276,6 +291,7 @@ header .brand-suffix,
     overflow: hidden;
     background: #171717;
     border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: none !important;
     color: #E5E7EB;
     font-size: 12px;
     font-weight: 750;
@@ -326,8 +342,8 @@ header .brand-suffix,
     min-width: 176px;
     padding: 6px 0;
     border: 1px solid rgba(255, 255, 255, 0.10);
-    background: rgba(10, 10, 10, 0.98);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    background: #090B0F;
+    box-shadow: none;
     backdrop-filter: blur(12px);
 }
 #nav-links .nav-profile-wrap.menu-open .nav-account-menu {
@@ -339,9 +355,11 @@ header .brand-suffix,
     width: 100%;
     margin: 0 !important;
     padding: 9px 14px;
-    border: 0;
-    background: transparent;
-    color: #D4D4D4 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #CBD5E1 !important;
     font: inherit;
     font-size: 13px;
     font-weight: 550;
@@ -353,7 +371,15 @@ header .brand-suffix,
 #nav-links .nav-account-menu a:hover,
 #nav-links .nav-account-menu button:hover {
     color: #FFFFFF !important;
-    background: rgba(255, 255, 255, 0.045);
+    background: rgba(255, 255, 255, 0.04) !important;
+    box-shadow: none !important;
+}
+#nav-links .nav-account-menu .nav-menu-danger {
+    color: #EF4444 !important;
+}
+#nav-links .nav-account-menu .nav-menu-danger:hover {
+    color: #F87171 !important;
+    background: rgba(239, 68, 68, 0.08) !important;
 }
 #nav-links .nav-menu-separator {
     height: 1px;
@@ -369,9 +395,11 @@ header .brand-suffix,
     justify-content: center;
     width: 34px;
     height: 34px;
-    border: 0;
-    background: transparent;
-    color: #FFFFFF;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #FFFFFF !important;
     font-size: 20px;
     cursor: pointer;
     position: relative;
@@ -662,7 +690,7 @@ function buildAccountHtml(user) {
                 <div class="nav-menu-separator" aria-hidden="true"></div>
                 <a href="donate.html" role="menuitem">Подписка PRO+</a>
                 <div class="nav-menu-separator" aria-hidden="true"></div>
-                <button type="button" role="menuitem" onclick="logout()">Выйти</button>
+                <button class="nav-menu-danger" type="button" role="menuitem" onclick="logout()">Выйти</button>
             </div>
         </div>
     `;
