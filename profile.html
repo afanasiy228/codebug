@@ -1149,7 +1149,6 @@
                     <div class="name-line">
                         <div class="username editable-nick" id="username" title="Нажми, чтобы выбрать цвет ника">Загрузка...</div>
                         <div class="pro-badge" id="proBadge" style="display:none;">PRO</div>
-                        <button id="logoutIconBtn" class="logout-icon-btn" type="button" title="Выйти из аккаунта" aria-label="Выйти из аккаунта" style="display:none;">⎋</button>
                     </div>
                     <div class="rank-text" id="rank">Ранг загружается...</div>
                     <div class="subscription-line" id="subscriptionLine"></div>
@@ -2125,7 +2124,7 @@
                 if (changeCoverBtn) changeCoverBtn.style.display = "inline-block";
                 if (avatarEditBtn) avatarEditBtn.style.display = "inline-flex";
                 if (proStyleNickBtn) proStyleNickBtn.style.display = isPro ? "inline-flex" : "none";
-                if (logoutIconBtn) logoutIconBtn.style.display = "inline-flex";
+                if (logoutIconBtn) logoutIconBtn.style.display = "none";
                 renderCoverControls(level, profileStyle);
                 renderProColorControls(level, nickTheme || proNickColor || "#FBBF24");
             }
@@ -2146,22 +2145,20 @@
                 console.warn("public profile load failed", e);
             }
 
-            if (!renderedProfile || typeof renderedProfile !== "object") {
-                try {
-                    const liteRes = await withTimeout(
-                        fetch(`${base}/users/${encodeURIComponent(viewedUser)}/profile-lite`, { cache: "force-cache" }),
-                        900,
-                        "profile_lite_timeout"
-                    );
-                    if (liteRes && liteRes.ok) {
-                        renderedProfile = await liteRes.json();
-                        applyProfileData(renderedProfile);
-                    } else if (liteRes && liteRes.status !== 404) {
-                        console.warn("profile-lite http status", liteRes.status);
-                    }
-                } catch (e) {
-                    console.warn("profile-lite load failed", e);
+            try {
+                const liteRes = await withTimeout(
+                    fetch(`${base}/users/${encodeURIComponent(viewedUser)}/profile-lite`, { cache: "no-store" }),
+                    renderedProfile && typeof renderedProfile === "object" ? 1200 : 1800,
+                    "profile_lite_timeout"
+                );
+                if (liteRes && liteRes.ok) {
+                    renderedProfile = await liteRes.json();
+                    applyProfileData(renderedProfile);
+                } else if (liteRes && liteRes.status !== 404) {
+                    console.warn("profile-lite http status", liteRes.status);
                 }
+            } catch (e) {
+                console.warn("profile-lite load failed", e);
             }
 
             runAfterProfilePaint("loadRankPlaces", () => loadRankPlaces(renderedProfile));

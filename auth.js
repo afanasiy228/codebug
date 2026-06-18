@@ -688,8 +688,6 @@ function buildAccountHtml(user) {
                 <a href="profile.html" role="menuitem">Профиль</a>
                 <a href="profile.html#settings" role="menuitem">Настройки</a>
                 <div class="nav-menu-separator" aria-hidden="true"></div>
-                <a href="donate.html" role="menuitem">Подписка PRO+</a>
-                <div class="nav-menu-separator" aria-hidden="true"></div>
                 <button class="nav-menu-danger" type="button" role="menuitem" onclick="logout()">Выйти</button>
             </div>
         </div>
@@ -701,7 +699,6 @@ function buildDrawerAccountHtml(user) {
     return `
         <a href="profile.html">Профиль</a>
         <a href="profile.html#settings">Настройки</a>
-        <a href="donate.html">Подписка PRO+</a>
         <a href="#" onclick="logout(); return false;">Выйти</a>
     `;
 }
@@ -745,11 +742,25 @@ function updateNavbar() {
 }
 
 async function getUserSubscription(login) {
-    if (!login || !window.firebase) return null;
+    if (!login) return null;
     try {
-        const snap = await firebase.database().ref("users/" + login + "/subscription").get();
-        if (!snap.exists()) return null;
-        const val = snap.val() || {};
+        let val = null;
+        if (window.firebase) {
+            try {
+                const snap = await firebase.database().ref("users/" + login + "/subscription").get();
+                if (snap.exists()) val = snap.val() || {};
+            } catch (err) {
+                console.warn("subscription sdk read failed, using REST fallback", err);
+            }
+        }
+        if (!val || typeof val !== "object") {
+            const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+            const res = await fetch(`${base}/users/${encodeURIComponent(login)}/profile-lite`, { cache: "no-store" });
+            if (!res.ok) return null;
+            const payload = await res.json().catch(() => ({}));
+            val = payload.subscription || null;
+        }
+        if (!val || typeof val !== "object") return null;
         return {
             tier: String(val.tier || "").toLowerCase(),
             status: String(val.status || "").toLowerCase(),
@@ -761,7 +772,8 @@ async function getUserSubscription(login) {
             features: (val.features && typeof val.features === "object") ? val.features : {},
             visuals: (val.visuals && typeof val.visuals === "object") ? val.visuals : {}
         };
-    } catch (_) {
+    } catch (err) {
+        console.warn("getUserSubscription failed", err);
         return null;
     }
 }
@@ -1842,6 +1854,7 @@ window.getUserSubscription = getUserSubscription;
 window.isProSubscription = isProSubscription;
 window.getSubscriptionLevel = getSubscriptionLevel;
 window.hasSubscriptionAtLeast = hasSubscriptionAtLeast;
+window.getSubscriptionNickTheme = getSubscriptionNickTheme;
 window.getSubscriptionNickColor = getSubscriptionNickColor;
 
 window.getUser = getUser;

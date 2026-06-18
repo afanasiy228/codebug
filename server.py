@@ -75,6 +75,11 @@ def _cache_set(key, value, ttl):
         PROFILE_RUNTIME_CACHE[key] = (time.time() + ttl, value)
     return value
 
+
+def _cache_delete(key):
+    with PROFILE_RUNTIME_CACHE_LOCK:
+        PROFILE_RUNTIME_CACHE.pop(key, None)
+
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc/secrets/serviceAccountKey.json")
@@ -3324,7 +3329,9 @@ def user_profile_lite(login):
         if isinstance(public_profile, dict) and public_profile:
             stats = public_profile.get("stats") if isinstance(public_profile.get("stats"), dict) else {}
             profile_style = public_profile.get("profileStyle") if isinstance(public_profile.get("profileStyle"), dict) else {}
-            raw_sub = public_profile.get("subscription") if isinstance(public_profile.get("subscription"), dict) else {}
+            raw_sub = db.reference(f"users/{login}/subscription").get() or {}
+            if not isinstance(raw_sub, dict):
+                raw_sub = public_profile.get("subscription") if isinstance(public_profile.get("subscription"), dict) else {}
             payload = {
                 "login": public_profile.get("login") or login,
                 "avatarUrl": public_profile.get("avatarUrl") or "",
@@ -3410,10 +3417,16 @@ def profile_set_nick_color():
             current = {}
         visuals = current.get("visuals") if isinstance(current.get("visuals"), dict) else {}
         visuals["nickColor"] = color
-        ref.update({
-            "visuals": visuals,
-            "updatedAt": int(time.time() * 1000)
+        updated_at = int(time.time() * 1000)
+        db.reference("/").update({
+            f"users/{login}/subscription/visuals": visuals,
+            f"users/{login}/subscription/updatedAt": updated_at,
+            f"publicProfiles/{login}/subscription/visuals": visuals,
+            f"publicProfiles/{login}/subscription/updatedAt": updated_at,
+            f"ratingLeaderboard/{login}/subscription/visuals": visuals,
+            f"ratingLeaderboard/{login}/subscription/updatedAt": updated_at,
         })
+        _cache_delete(("profile-lite", login))
         return jsonify({"ok": True, "color": color})
     except Exception as e:
         return _server_error("set_nick_color_failed", "SET_NICK_COLOR_FAILED", exc=e)
