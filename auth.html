@@ -179,34 +179,49 @@
             padding-right: 46px;
         }
 
-        .password-toggle {
+        .password-wrap .password-toggle {
             position: absolute;
             right: 6px;
             top: 50%;
             transform: translateY(-50%);
-            width: 36px;
-            height: 36px;
-            border: 0;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px;
+            border: 0 !important;
             border-radius: 10px;
-            background: transparent;
-            box-shadow: none;
-            color: var(--muted);
-            margin: 0;
-            padding: 0;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: var(--muted) !important;
+            margin: 0 !important;
+            padding: 0 !important;
             cursor: pointer;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 20px 20px;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAR0lEQVR42mNgGAVDD9R0L/yPjsk2hFI1cIWkWk6SpFdC4390TJShuGwCGXDozn84xmYgVv2D30CqhyFNYpkm6ZAmOWUUkAQAmTqX/Ypms0QAAAAASUVORK5CYII=");
+            display: grid;
+            place-items: center;
         }
 
-        .password-toggle:hover {
-            background: rgba(245, 158, 11, 0.08);
-            color: var(--accent);
+        .password-wrap .password-toggle:hover {
+            background: rgba(245, 158, 11, 0.08) !important;
+            color: var(--accent) !important;
         }
 
-        .password-toggle.is-visible {
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAU0lEQVR42mOo6V74H4QZqAVgBo4aSjtDkflkW0aMZqINx+YyYtQTJUmRobg0kW0oMeFFSA3xYUGEoSR5m5ChJEUMSemU6HRIkxyFK6eMFii0MxQAUCTkG0TlBYQAAAAASUVORK5CYII=");
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+
+        .password-toggle .eye-off,
+        .password-toggle.is-visible .eye-on {
+            display: none;
+        }
+
+        .password-toggle.is-visible .eye-off {
+            display: block;
         }
         
         button {
@@ -374,7 +389,10 @@
             <input id="login-identity" type="text" placeholder="Логин или Email">
             <div class="password-wrap">
                 <input id="login-pass" type="password" placeholder="Пароль">
-                <button type="button" class="password-toggle" onclick="togglePassword('login-pass', this)" aria-label="Показать пароль"></button>
+                <button type="button" class="password-toggle" onclick="togglePassword('login-pass', this)" aria-label="Показать пароль" aria-pressed="false">
+                    <svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.1 12a10.9 10.9 0 0 1 19.8 0 10.9 10.9 0 0 1-19.8 0Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A10.8 10.8 0 0 1 22 12a10.7 10.7 0 0 1-2.3 3.3"></path><path d="M6.6 6.6A10.8 10.8 0 0 0 2 12a10.9 10.9 0 0 0 14.4 5.4"></path></svg>
+                </button>
             </div>
             <div class="helper-link" onclick="forgotPassword()">Забыли пароль?</div>
             <div id="login-error" class="error-msg"></div>
@@ -394,7 +412,10 @@
             <input id="reg-email" type="email" placeholder="Email">
             <div class="password-wrap">
                 <input id="reg-pass" type="password" placeholder="Пароль">
-                <button type="button" class="password-toggle" onclick="togglePassword('reg-pass', this)" aria-label="Показать пароль"></button>
+                <button type="button" class="password-toggle" onclick="togglePassword('reg-pass', this)" aria-label="Показать пароль" aria-pressed="false">
+                    <svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.1 12a10.9 10.9 0 0 1 19.8 0 10.9 10.9 0 0 1-19.8 0Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A10.8 10.8 0 0 1 22 12a10.7 10.7 0 0 1-2.3 3.3"></path><path d="M6.6 6.6A10.8 10.8 0 0 0 2 12a10.9 10.9 0 0 0 14.4 5.4"></path></svg>
+                </button>
             </div>
 
             <div id="turnstile-box" class="turnstile-wrap"></div>
@@ -480,6 +501,7 @@
                 const visible = nextType === "text";
                 buttonEl.classList.toggle("is-visible", visible);
                 buttonEl.setAttribute("aria-label", visible ? "Скрыть пароль" : "Показать пароль");
+                buttonEl.setAttribute("aria-pressed", String(visible));
             }
         }
     </script>

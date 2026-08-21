@@ -1394,17 +1394,27 @@ async function ensureUserProfile(login, userAuth) {
 
 async function loginUser(email, pass) {
     const auth = getAuth();
-    if (!auth) return { ok: false, error: "Firebase Auth не инициализирован" };
+    if (!auth) return { ok: false, error: "Сервис входа временно недоступен" };
 
     let cred;
     try {
         cred = await auth.signInWithEmailAndPassword(normalizeEmail(email), pass);
     } catch (err) {
         const code = err?.code || "";
-        if (code === "auth/user-not-found") return { ok: false, error: "Пользователь не найден" };
-        if (code === "auth/wrong-password") return { ok: false, error: "Неверный пароль" };
-        if (code === "auth/invalid-email") return { ok: false, error: "Некорректный email" };
-        return { ok: false, error: "Ошибка входа: " + code };
+        console.warn("Login failed", code || err);
+        if ([
+            "auth/user-not-found",
+            "auth/wrong-password",
+            "auth/invalid-email",
+            "auth/invalid-credential",
+            "auth/invalid-login-credentials"
+        ].includes(code)) {
+            return { ok: false, error: "Неправильный логин или пароль" };
+        }
+        if (code === "auth/too-many-requests") {
+            return { ok: false, error: "Слишком много попыток. Попробуй позже" };
+        }
+        return { ok: false, error: "Не удалось войти. Попробуй ещё раз" };
     }
 
     await cred.user.reload();
@@ -1437,12 +1447,25 @@ async function login() {
     const pass = document.getElementById("login-pass").value.trim();
 
     if (!identity) return showError("login-error", "Укажи логин или email");
-    if (pass.length < 6) return showError("login-error", "Пароль слишком короткий");
+    if (!pass) return showError("login-error", "Укажи пароль");
+    if (pass.length < 6) return showError("login-error", "Неправильный логин или пароль");
 
-    const email = await resolveEmailByIdentity(identity);
-    if (!email) return showError("login-error", "Пользователь не найден");
+    let email;
+    try {
+        email = await resolveEmailByIdentity(identity);
+    } catch (err) {
+        console.warn("Login identity lookup failed", err);
+        return showError("login-error", "Не удалось войти. Попробуй ещё раз");
+    }
+    if (!email) return showError("login-error", "Неправильный логин или пароль");
 
-    const result = await loginUser(email, pass);
+    let result;
+    try {
+        result = await loginUser(email, pass);
+    } catch (err) {
+        console.warn("Login request failed", err);
+        return showError("login-error", "Не удалось войти. Попробуй ещё раз");
+    }
     if (!result.ok) {
         if (result.needVerify && result.userAuth) {
             const pendingLogin = await resolveLoginByUidOrEmail(result.userAuth.uid, result.userAuth.email) || String(identity);
@@ -1458,7 +1481,13 @@ async function login() {
         return showError("login-error", result.error);
     }
 
-    const finalized = await finalizeVerifiedAccount(result.userAuth, null);
+    let finalized;
+    try {
+        finalized = await finalizeVerifiedAccount(result.userAuth, null);
+    } catch (err) {
+        console.warn("Login profile sync failed", err);
+        return showError("login-error", "Не удалось войти. Попробуй ещё раз");
+    }
     if (!finalized.ok) return showError("login-error", finalized.error);
 
     const next = new URLSearchParams(window.location.search).get("next");
