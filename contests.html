@@ -174,14 +174,8 @@
       margin-top: 38px;
     }
 
-    .left-column,
-    .right-column {
+    .left-column {
       min-width: 0;
-    }
-
-    .right-column {
-      display: grid;
-      gap: 44px;
     }
 
     .section {
@@ -308,10 +302,6 @@
       text-transform: uppercase;
     }
 
-    .type-badge.ranked {
-      color: var(--purple);
-    }
-
     .type-badge.sprint {
       color: var(--green);
     }
@@ -383,220 +373,6 @@
       color: var(--ink);
       font-size: 15px;
       margin-bottom: 4px;
-    }
-
-    .side-section-title {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 16px;
-    }
-
-    .side-section-title h2 {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 22px;
-      letter-spacing: -0.03em;
-    }
-
-    .side-section-title span,
-    .side-filter {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .calendar-head {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px 8px;
-    }
-
-    .calendar-day {
-      min-height: 34px;
-      border: 0;
-      border-radius: 50%;
-      background: transparent;
-      color: var(--muted-strong);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      position: relative;
-      font: inherit;
-      font-size: 13px;
-      transition: color 120ms ease, outline-color 120ms ease;
-    }
-
-    .calendar-day:hover {
-      color: var(--ink);
-      background: transparent;
-    }
-
-    .calendar-day.is-muted {
-      color: rgba(139, 150, 168, 0.32);
-      cursor: default;
-    }
-
-    .calendar-day.is-today {
-      outline: 1px solid var(--line-strong);
-    }
-
-    .calendar-day.is-selected {
-      outline: 1px solid var(--amber);
-      color: var(--ink);
-    }
-
-    .day-dots {
-      position: absolute;
-      left: 50%;
-      bottom: 2px;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 2px;
-    }
-
-    .day-dot {
-      width: 4px;
-      height: 4px;
-      border-radius: 999px;
-      background: var(--purple);
-    }
-
-    .day-dot.ranked {
-      background: var(--amber);
-    }
-
-    .day-dot.sprint {
-      background: var(--green);
-    }
-
-    .day-dot.other {
-      background: var(--purple);
-    }
-
-    .calendar-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-top: 16px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--purple);
-    }
-
-    .legend-dot.ranked {
-      background: var(--amber);
-    }
-
-    .legend-dot.sprint {
-      background: var(--green);
-    }
-
-    .date-filter {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .date-filter button {
-      appearance: none;
-      border: 0;
-      background: transparent;
-      color: var(--amber);
-      cursor: pointer;
-      padding: 0;
-      margin-left: 8px;
-      font: inherit;
-      font-weight: 800;
-    }
-
-    .rating-graph {
-      display: block;
-      width: 100%;
-      height: 148px;
-      overflow: visible;
-    }
-
-    .graph-grid {
-      stroke: rgba(255, 255, 255, 0.07);
-      stroke-dasharray: 4 8;
-    }
-
-    .graph-line {
-      fill: none;
-      stroke: var(--green);
-      stroke-width: 2;
-    }
-
-    .graph-dot {
-      fill: var(--bg);
-      stroke: var(--green);
-      stroke-width: 2;
-    }
-
-    .graph-empty {
-      fill: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .rating-growth {
-      color: var(--green);
-      font-weight: 800;
-    }
-
-    .results-list {
-      border-top: 1px solid var(--line);
-    }
-
-    .result-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 16px;
-      align-items: center;
-      min-height: 46px;
-      border-bottom: 1px solid var(--line);
-      color: var(--muted-strong);
-      font-size: 14px;
-    }
-
-    .result-row strong {
-      color: var(--ink);
-      font-weight: 800;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .result-row span:last-child {
-      color: var(--green);
-      font-weight: 800;
     }
 
     .modal {
@@ -1094,40 +870,36 @@
       align-items: center;
       justify-content: center;
       min-height: 40px;
-      border: 1px solid rgba(245, 158, 11, 0.72) !important;
-      border-radius: 8px;
-      background: var(--amber) !important;
-      color: #090A0C !important;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      color: var(--ink) !important;
       box-shadow: none !important;
-      padding: 0 16px;
+      padding: 0;
       font-size: 14px;
       font-weight: 800;
     }
 
     body.contests-page .create-trigger:hover {
-      background: #FBBF24 !important;
-      color: #08090A !important;
+      background: transparent !important;
+      color: var(--amber) !important;
     }
 
     body.contests-page .user-stats {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
+      display: flex;
       margin-top: 18px;
       padding: 0;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.018);
-      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
 
     body.contests-page .user-stat {
-      padding: 16px 18px;
-      border-right: 1px solid var(--line);
-    }
-
-    body.contests-page .user-stat:last-child {
-      border-right: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 0;
+      border: 0;
     }
 
     body.contests-page .user-stat strong {
@@ -1141,30 +913,16 @@
     }
 
     body.contests-page .layout {
-      grid-template-columns: minmax(0, 1.75fr) minmax(320px, 0.72fr);
-      gap: clamp(30px, 4vw, 58px);
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
       margin-top: 32px;
-    }
-
-    body.contests-page .right-column {
-      gap: 34px;
-    }
-
-    body.contests-page .right-column > section {
-      padding-bottom: 26px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    body.contests-page .right-column > section:last-child {
-      border-bottom: 0;
     }
 
     body.contests-page .section {
       margin-bottom: 34px;
     }
 
-    body.contests-page .section-title,
-    body.contests-page .side-section-title h2 {
+    body.contests-page .section-title {
       font-size: 19px;
       letter-spacing: -0.02em;
     }
@@ -1247,12 +1005,6 @@
       letter-spacing: 0.06em;
     }
 
-    body.contests-page .type-badge.ranked {
-      color: #F8C36A;
-      border-color: rgba(245, 158, 11, 0.22);
-      background: rgba(245, 158, 11, 0.06);
-    }
-
     body.contests-page .visibility-badge.private {
       color: #C4B5FD;
       border-color: rgba(167, 139, 250, 0.25);
@@ -1314,112 +1066,12 @@
       padding: 18px;
     }
 
-    body.contests-page .calendar-head {
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-
-    body.contests-page .calendar-grid {
-      gap: 4px;
-    }
-
-    body.contests-page .calendar-day {
-      min-height: 36px;
-      border: 1px solid transparent !important;
-      border-radius: 8px;
-      background: transparent !important;
-      color: var(--text-dim) !important;
-      box-shadow: none !important;
-      font-size: 13px;
-    }
-
-    body.contests-page .calendar-day:hover {
-      background: rgba(255, 255, 255, 0.04) !important;
-      color: var(--ink) !important;
-    }
-
-    body.contests-page .calendar-day.has-events {
-      color: var(--text-soft) !important;
-    }
-
-    body.contests-page .calendar-day.is-muted {
-      background: transparent !important;
-      color: rgba(125, 135, 148, 0.35) !important;
-    }
-
-    body.contests-page .calendar-day.is-today {
-      border-color: var(--line-strong) !important;
-      color: var(--ink) !important;
-      outline: 0;
-    }
-
-    body.contests-page .calendar-day.is-selected {
-      border-color: var(--amber-line) !important;
-      background: var(--amber-soft) !important;
-      color: var(--ink) !important;
-      outline: 0;
-    }
-
-    body.contests-page .day-dots {
-      bottom: 4px;
-    }
-
-    body.contests-page .calendar-legend {
-      gap: 12px;
-      margin-top: 14px;
-      font-size: 12px;
-    }
-
-    body.contests-page .date-filter button,
     body.contests-page .picker-nav,
     body.contests-page .modal-close,
     body.contests-page .file-action,
     body.contests-page .logo-remove,
     body.contests-page .modal-cancel {
       box-shadow: none !important;
-    }
-
-    body.contests-page .rating-graph-wrap {
-      position: relative;
-      min-height: 148px;
-    }
-
-    body.contests-page .rating-empty {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      border: 1px dashed var(--line-strong);
-      border-radius: 10px;
-      color: var(--text-dim);
-      font-size: 13px;
-      line-height: 1.45;
-      padding: 18px;
-    }
-
-    body.contests-page .rating-empty.is-visible {
-      display: flex;
-    }
-
-    body.contests-page .results-list {
-      display: grid;
-      gap: 8px;
-      border-top: 0;
-    }
-
-    body.contests-page .result-row {
-      min-height: 48px;
-      border: 1px solid var(--line) !important;
-      border-radius: 9px;
-      background: rgba(255, 255, 255, 0.018) !important;
-      box-shadow: none !important;
-      padding: 0 12px;
-    }
-
-    body.contests-page button.result-row {
-      color: var(--text-soft) !important;
     }
 
     body.contests-page .modal {
@@ -1648,11 +1300,7 @@
       }
 
       body.contests-page .user-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      body.contests-page .user-stat:nth-child(2n) {
-        border-right: 0;
+        display: flex;
       }
 
       body.contests-page .contest-data {
@@ -1688,23 +1336,11 @@
           <h1 class="page-title">Соревнования</h1>
           <button class="create-trigger" type="button" id="openCreateModal">+ Создать соревнование</button>
         </div>
-        <p class="page-subtitle">Участвуй в соревнованиях, проверяй навыки и поднимайся в рейтинге.</p>
+        <p class="page-subtitle">Участвуй в соревнованиях, решай задачи и борись за победу.</p>
       </div>
     </section>
 
     <section class="user-stats" aria-label="Статистика пользователя">
-      <div class="user-stat">
-        <strong id="statPassed">0</strong>
-        <span>пройдено</span>
-      </div>
-      <div class="user-stat">
-        <strong id="statRating">0</strong>
-        <span>текущий рейтинг</span>
-      </div>
-      <div class="user-stat">
-        <strong id="statCreated">0</strong>
-        <span>создано</span>
-      </div>
       <div class="user-stat">
         <strong id="statWins">0</strong>
         <span>побед</span>
@@ -1741,45 +1377,6 @@
         </section>
       </div>
 
-      <aside class="right-column" aria-label="Календарь и результаты">
-        <section>
-          <div class="side-section-title">
-            <h2>Календарь</h2>
-            <span id="calendarMonth">-</span>
-          </div>
-          <div class="calendar-head" aria-hidden="true">
-            <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-          </div>
-          <div class="calendar-grid" id="calendarGrid"></div>
-          <div class="calendar-legend">
-            <span class="legend-item"><i class="legend-dot ranked"></i>рейтинговые</span>
-            <span class="legend-item"><i class="legend-dot sprint"></i>спринты</span>
-            <span class="legend-item"><i class="legend-dot"></i>другие</span>
-          </div>
-          <div class="date-filter" id="dateFilterText" style="display:none;"></div>
-        </section>
-
-        <section>
-          <div class="side-section-title">
-            <h2>Динамика рейтинга</h2>
-            <span class="side-filter">за 30 дней <b class="rating-growth" id="ratingGrowth"></b></span>
-          </div>
-          <div class="rating-graph-wrap">
-            <svg class="rating-graph" viewBox="0 0 360 148" role="img" aria-label="График рейтинга">
-              <g id="ratingGraph"></g>
-            </svg>
-            <div class="rating-empty" id="ratingEmpty">После участия в нескольких соревнованиях здесь появится динамика рейтинга.</div>
-          </div>
-          <div class="date-filter" id="currentRatingText">Текущий рейтинг: 0</div>
-        </section>
-
-        <section>
-          <div class="side-section-title">
-            <h2>Последние результаты</h2>
-          </div>
-          <div class="results-list" id="latestResults"></div>
-        </section>
-      </aside>
     </section>
   </main>
 
@@ -1876,13 +1473,11 @@
     const state = {
       contests: [],
       visibleContests: [],
-      selectedDateKey: "",
       selectedCreateType: "",
       canCreatePrivate: false,
       canCreateGlobal: false,
       isAdmin: false,
       userStats: {},
-      ratingHistory: [],
       registrations: {},
       logoData: "",
       datePickers: {
@@ -1971,17 +1566,17 @@
       if (raw.includes("beginner") || raw.includes("нович")) return "beginner";
       if (raw.includes("final") || raw.includes("финал")) return "final";
       if (raw.includes("other") || raw.includes("друг")) return "other";
-      return "ranked";
+      return "open";
     }
 
     function kindLabel(kind) {
       return {
-        ranked: "РЕЙТИНГОВОЕ",
+        open: "ОТКРЫТОЕ",
         sprint: "СПРИНТ",
         beginner: "ДЛЯ НОВИЧКОВ",
         final: "ФИНАЛ",
         other: "ДРУГОЕ"
-      }[kind] || "РЕЙТИНГОВОЕ";
+      }[kind] || "ОТКРЫТОЕ";
     }
 
     function statusLabel(status) {
@@ -2004,6 +1599,21 @@
       const count = Number(contest.participantsCount || contest.registeredCount || 0);
       if (Number.isFinite(count) && count > 0) return `${count} участников`;
       return "участники: —";
+    }
+
+    function contestRewardsText(contest) {
+      const rewards = Array.isArray(contest.rewards) ? contest.rewards : [];
+      if (!rewards.length) return "";
+      const parts = rewards.slice(0, 3).map((reward) => {
+        const place = Number(reward.place || 0);
+        const exp = Number(reward.exp || 0);
+        const sub = reward.subscription || {};
+        const tier = String(sub.tier || "").toLowerCase() === "pro_plus" ? "PRO+" : String(sub.tier || "").toLowerCase() === "pro" ? "PRO" : "";
+        const days = Number(sub.days || 0);
+        const prize = [exp > 0 ? `${exp} опыта` : "", tier && days > 0 ? `${tier} на ${days} дней` : ""].filter(Boolean).join(" + ");
+        return place > 0 && prize ? `${place} место: ${prize}` : "";
+      }).filter(Boolean);
+      return parts.length ? `Призы: ${parts.join(" · ")}` : "";
     }
 
     function openContest(id) {
@@ -2079,6 +1689,7 @@
                 <span class="visibility-badge ${visibilityClass}">${visibility}</span>
               </div>
               <p class="contest-description">${escapeHtml(contestDescription(contest))}</p>
+              ${contestRewardsText(contest) ? `<p class="contest-description">${escapeHtml(contestRewardsText(contest))}</p>` : ""}
             </div>
           </div>
           <div class="contest-data">
@@ -2098,8 +1709,7 @@
     }
 
     function filterBySelectedDate(list) {
-      if (!state.selectedDateKey) return list;
-      return list.filter((contest) => dateKey(contest.start) === state.selectedDateKey || dateKey(contest.end) === state.selectedDateKey);
+      return list;
     }
 
     async function renderContests() {
@@ -2123,196 +1733,22 @@
       await renderList(ongoing, "ongoingList", "ongoingEmpty");
       await renderList(upcoming, "upcomingList", "upcomingEmpty");
       await renderList(finished, "finishedList", "finishedEmpty");
-      renderLatestResults(finished);
     }
 
     function renderUserStats() {
-      const solved = Number(state.userStats?.cnt || state.userStats?.solvedCount || 0);
-      const exp = Number(state.userStats?.exp || 0);
-      const created = user ? state.visibleContests.filter((contest) => String(contest.ownerLogin || "") === String(user || "")).length : 0;
       const wins = Number(state.userStats?.contestWins || state.userStats?.wins || 0);
-      document.getElementById("statPassed").textContent = formatNumber(solved);
-      document.getElementById("statRating").textContent = formatNumber(exp);
-      document.getElementById("statCreated").textContent = formatNumber(created);
       document.getElementById("statWins").textContent = formatNumber(wins);
-    }
-
-    function monthTitle(date) {
-      return date.toLocaleString("ru-RU", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
-    }
-
-    function renderCalendar(contests) {
-      const grid = document.getElementById("calendarGrid");
-      const title = document.getElementById("calendarMonth");
-      if (!grid || !title) return;
-      grid.innerHTML = "";
-      const now = new Date();
-      const first = new Date(now.getFullYear(), now.getMonth(), 1);
-      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const startOffset = (first.getDay() + 6) % 7;
-      const todayKey = dateKey(Date.now());
-      const eventMap = new Map();
-      contests.forEach((contest) => {
-        const key = dateKey(contest.start);
-        if (!key) return;
-        const arr = eventMap.get(key) || [];
-        arr.push(contestKind(contest));
-        eventMap.set(key, arr);
-      });
-
-      title.textContent = monthTitle(now);
-
-      for (let i = 0; i < startOffset; i += 1) {
-        const empty = document.createElement("span");
-        empty.className = "calendar-day is-muted";
-        empty.textContent = "";
-        grid.appendChild(empty);
-      }
-
-      for (let day = 1; day <= last.getDate(); day += 1) {
-        const current = new Date(now.getFullYear(), now.getMonth(), day);
-        const key = dateKey(current.getTime());
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "calendar-day";
-        if (key === todayKey) button.classList.add("is-today");
-        if (key === state.selectedDateKey) button.classList.add("is-selected");
-        button.textContent = String(day);
-        const kinds = (eventMap.get(key) || []).slice(0, 2);
-        if (kinds.length) {
-          button.classList.add("has-events");
-          const dots = document.createElement("span");
-          dots.className = "day-dots";
-          kinds.forEach((kind) => {
-            const dot = document.createElement("i");
-            dot.className = `day-dot ${kind === "sprint" ? "sprint" : kind === "ranked" ? "ranked" : "other"}`;
-            dots.appendChild(dot);
-          });
-          button.appendChild(dots);
-        }
-        button.addEventListener("click", () => {
-          state.selectedDateKey = state.selectedDateKey === key ? "" : key;
-          renderCalendar(state.visibleContests);
-          renderDateFilter();
-          renderContests();
-        });
-        grid.appendChild(button);
-      }
-    }
-
-    function renderDateFilter() {
-      const el = document.getElementById("dateFilterText");
-      if (!el) return;
-      if (!state.selectedDateKey) {
-        el.style.display = "none";
-        el.innerHTML = "";
-        return;
-      }
-      el.style.display = "block";
-      el.innerHTML = `Фильтр по дате: ${escapeHtml(state.selectedDateKey)} <button type="button">сбросить</button>`;
-      el.querySelector("button")?.addEventListener("click", () => {
-        state.selectedDateKey = "";
-        renderCalendar(state.visibleContests);
-        renderDateFilter();
-        renderContests();
-      });
-    }
-
-    function renderRatingGraph() {
-      const graph = document.getElementById("ratingGraph");
-      const growth = document.getElementById("ratingGrowth");
-      const currentText = document.getElementById("currentRatingText");
-      const empty = document.getElementById("ratingEmpty");
-      if (!graph) return;
-      graph.innerHTML = "";
-      const width = 360;
-      const height = 148;
-      const top = 16;
-      const bottom = 124;
-
-      for (let i = 0; i < 4; i += 1) {
-        const y = top + i * ((bottom - top) / 3);
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", "0");
-        line.setAttribute("x2", String(width));
-        line.setAttribute("y1", String(y));
-        line.setAttribute("y2", String(y));
-        line.setAttribute("class", "graph-grid");
-        graph.appendChild(line);
-      }
-
-      const points = Array.isArray(state.ratingHistory) ? state.ratingHistory.slice(-30) : [];
-      const values = points.map((p) => Number(p.value ?? p.rating ?? p.exp ?? 0)).filter(Number.isFinite);
-      const currentRating = values.length ? values[values.length - 1] : Number(state.userStats?.exp || 0);
-      if (values.length < 2) {
-        if (empty) empty.classList.add("is-visible");
-        if (growth) growth.textContent = "";
-        if (currentText) currentText.textContent = `Текущий рейтинг: ${formatNumber(currentRating || 0)}`;
-        return;
-      }
-      if (empty) empty.classList.remove("is-visible");
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const range = Math.max(1, max - min);
-      const coords = values.map((value, index) => {
-        const x = values.length === 1 ? 0 : index * (width / (values.length - 1));
-        const y = bottom - ((value - min) / range) * (bottom - top);
-        return [x, y];
-      });
-      const path = coords.map(([x, y], index) => `${index ? "L" : "M"} ${x.toFixed(2)} ${y.toFixed(2)}`).join(" ");
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      line.setAttribute("d", path);
-      line.setAttribute("class", "graph-line");
-      graph.appendChild(line);
-      coords.forEach(([x, y]) => {
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", String(x));
-        circle.setAttribute("cy", String(y));
-        circle.setAttribute("r", "3");
-        circle.setAttribute("class", "graph-dot");
-        graph.appendChild(circle);
-      });
-      const delta = values[values.length - 1] - values[0];
-      if (growth) growth.textContent = delta > 0 ? `+${formatNumber(delta)}` : delta < 0 ? String(delta) : "";
-      if (currentText) currentText.textContent = `Текущий рейтинг: ${formatNumber(values[values.length - 1] || 0)}`;
-    }
-
-    function renderLatestResults(finished) {
-      const container = document.getElementById("latestResults");
-      if (!container) return;
-      container.innerHTML = "";
-      const registeredFinished = finished.filter((contest) => state.registrations[String(contest.id || "")]).slice(0, 5);
-      if (!registeredFinished.length) {
-        const row = document.createElement("div");
-        row.className = "empty-state";
-        row.innerHTML = `<strong>Пока нет результатов</strong><br>Завершённые соревнования, в которых ты участвовал, появятся здесь.`;
-        container.appendChild(row);
-        return;
-      }
-      registeredFinished.forEach((contest) => {
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "result-row";
-        row.style.width = "100%";
-        row.style.textAlign = "left";
-        row.style.cursor = "pointer";
-        row.innerHTML = `<strong>${escapeHtml(contest.title || "Соревнование")}</strong><span>#—</span><span>результаты</span>`;
-        row.addEventListener("click", () => openContest(contest.id));
-        container.appendChild(row);
-      });
     }
 
     async function loadUserData() {
       if (!user) {
         renderUserStats();
-        renderRatingGraph();
         return;
       }
       try {
         const userSnap = await db.ref(`users/${user}`).get();
         const data = userSnap.exists() ? (userSnap.val() || {}) : {};
         state.userStats = data.stats || {};
-        state.ratingHistory = Array.isArray(data.ratingHistory) ? data.ratingHistory : [];
       } catch (err) {
         console.warn("contest user data load failed", err);
       }
@@ -2361,15 +1797,11 @@
         }
 
         renderUserStats();
-        renderCalendar(state.visibleContests);
-        renderDateFilter();
         await renderContests();
       } catch (err) {
         console.warn("contests load failed", err);
         state.visibleContests = [];
         renderUserStats();
-        renderCalendar([]);
-        renderDateFilter();
         await renderContests();
       }
     }
@@ -2700,7 +2132,7 @@
         setFieldError("title", "Укажи название соревнования.");
         hasErrors = true;
       }
-      if (!tasks.length) {
+      if (!tasks.length && !state.isAdmin) {
         setFieldError("tasks", "Укажи хотя бы одну задачу по ID.");
         hasErrors = true;
       }
@@ -2772,7 +2204,6 @@
     resolveCreateAccess();
     loadUserData().then(() => {
       renderUserStats();
-      renderRatingGraph();
     });
     loadContests();
   </script>

@@ -234,6 +234,7 @@
         <span id="contestStart">Старт: —</span>
         <span id="contestEnd">Финиш: —</span>
         <span id="contestAuthors">Авторы: —</span>
+        <span id="contestRewards" style="display:none;"></span>
       </div>
       <div class="contest-actions">
         <button id="registerBtn" onclick="registerForContest()">Зарегистрироваться</button>
@@ -336,6 +337,20 @@
       return "Завершен";
     }
 
+    function rewardsLabel(rewards) {
+      if (!Array.isArray(rewards) || !rewards.length) return "";
+      const items = rewards.slice(0, 3).map((reward) => {
+        const place = Number(reward?.place || 0);
+        const exp = Number(reward?.exp || 0);
+        const sub = reward?.subscription || {};
+        const tier = String(sub.tier || "").toLowerCase() === "pro_plus" ? "PRO+" : String(sub.tier || "").toLowerCase() === "pro" ? "PRO" : "";
+        const days = Number(sub.days || 0);
+        const prize = [exp > 0 ? `${exp} опыта` : "", tier && days > 0 ? `${tier} на ${days} дней` : ""].filter(Boolean).join(" + ");
+        return place > 0 && prize ? `${place} место: ${prize}` : "";
+      }).filter(Boolean);
+      return items.join(" · ");
+    }
+
     function openTab(tab) {
       const tasksPanel = document.getElementById("tasksPanel");
       const tablePanel = document.getElementById("tablePanel");
@@ -411,6 +426,12 @@
       document.getElementById("contestStart").innerText = `Старт: ${formatUtc(contestData.start)}`;
       document.getElementById("contestEnd").innerText = `Финиш: ${formatUtc(contestData.end)}`;
       document.getElementById("contestAuthors").innerHTML = `Авторы: ${renderAuthorLinks(contestData.authors)}`;
+      const rewards = document.getElementById("contestRewards");
+      const rewardsText = rewardsLabel(contestData.rewards);
+      if (rewards) {
+        rewards.textContent = rewardsText ? `Призы: ${rewardsText}` : "";
+        rewards.style.display = rewardsText ? "inline" : "none";
+      }
 
       const hint = document.getElementById("contestHint");
       if (contestStatus === "upcoming") {
@@ -436,8 +457,8 @@
       const tasksEmpty = document.getElementById("tasksEmpty");
       tasksList.innerHTML = "";
 
-      if (!contestData || !contestData.tasks) {
-        tasksEmpty.textContent = "Задачи недоступны.";
+      if (!contestData || !Array.isArray(contestData.tasks) || !contestData.tasks.length) {
+        tasksEmpty.textContent = "Задачи появятся позже.";
         tasksEmpty.style.display = "block";
         return;
       }
@@ -505,14 +526,14 @@
       }
       empty.style.display = "none";
 
-      const regs = Object.values(regsSnap.val());
-      const regUsers = regs.map(r => r.login);
-      const usersSnap = await db.ref("ratingLeaderboard").get();
+      const regs = regsSnap.val() || {};
+      const regUsers = Object.entries(regs).map(([key, value]) => String((value && value.login) || key)).filter(Boolean);
+      const usersSnap = await db.ref("publicProfiles").get();
       if (usersSnap.exists()) {
         const usersData = usersSnap.val() || {};
         for (const login of regUsers) {
           contestUserSubCache[String(login)] = (usersData[login] && usersData[login].subscription) || {};
-          contestUserExpCache[String(login)] = Number(usersData[login]?.exp || 0);
+          contestUserExpCache[String(login)] = Number(usersData[login]?.stats?.exp || 0);
         }
       }
 

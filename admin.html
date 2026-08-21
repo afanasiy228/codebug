@@ -786,6 +786,14 @@
         <div class="admin-actions">
           <button type="button" onclick="createContest()">Создать соревнование</button>
         </div>
+        <p class="admin-note">Одноразовый сброс удалит все текущие соревнования и регистрации, затем создаст FOI на 26–27 сентября 2026.</p>
+        <div class="admin-actions">
+          <button type="button" onclick="resetContestsToFoi()">Очистить и создать FOI</button>
+        </div>
+        <input id="finalizeContestId" class="admin-input" type="text" placeholder="ID завершённого соревнования">
+        <div class="admin-actions">
+          <button type="button" onclick="finalizeContest()">Подвести итоги и выдать призы</button>
+        </div>
       </div>
 
       </div>
@@ -2269,8 +2277,8 @@
       const startRaw = document.getElementById("contestStart").value.trim();
       const endRaw = document.getElementById("contestEnd").value.trim();
 
-      if (!title || !tasksRaw || !startRaw || !endRaw) {
-        setAdminLog("Заполни название, задачи и время.");
+      if (!title || !startRaw || !endRaw) {
+        setAdminLog("Заполни название и время.");
         return;
       }
 
@@ -2291,11 +2299,6 @@
         .map(item => Number(item))
         .filter(item => !Number.isNaN(item));
 
-      if (!tasks.length) {
-        setAdminLog("Список задач пустой.");
-        return;
-      }
-
       const authors = authorsRaw
         ? authorsRaw.split(",").map(item => item.trim()).filter(Boolean)
         : [user];
@@ -2313,6 +2316,53 @@
       const ref = db.ref("contests").push();
       await ref.set(payload);
       setAdminLog(`Соревнование создано: ${ref.key}`);
+    }
+
+    async function resetContestsToFoi() {
+      if (!confirm("Удалить все соревнования и регистрации, затем создать FOI?")) return;
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      setAdminLog("Очищаю соревнования и создаю FOI...");
+      try {
+        const response = await fetch(`${base}/admin/contests/reset-foi`, {
+          method: "POST",
+          headers: await adminRequestHeaders(),
+          body: "{}"
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setAdminLog(`Ошибка сброса: ${payload.code || payload.error || response.status}`);
+          return;
+        }
+        document.getElementById("finalizeContestId").value = payload.id || "foi-2026";
+        setAdminLog(`Готово. Создано соревнование ${payload.id || "foi-2026"}.`);
+      } catch (err) {
+        setAdminLog(`Ошибка соединения: ${err?.message || err}`);
+      }
+    }
+
+    async function finalizeContest() {
+      const contestId = document.getElementById("finalizeContestId").value.trim();
+      if (!contestId) {
+        setAdminLog("Укажи ID соревнования.");
+        return;
+      }
+      if (!confirm(`Подвести итоги ${contestId} и выдать призы?`)) return;
+      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      try {
+        const response = await fetch(`${base}/admin/contests/finalize`, {
+          method: "POST",
+          headers: await adminRequestHeaders(),
+          body: JSON.stringify({ contestId })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setAdminLog(`Ошибка подведения итогов: ${payload.code || payload.error || response.status}`);
+          return;
+        }
+        setAdminLog(`Итоги сохранены. Участников: ${(payload.standings || []).length}, призов: ${(payload.awarded || []).length}.`);
+      } catch (err) {
+        setAdminLog(`Ошибка соединения: ${err?.message || err}`);
+      }
     }
 
     const base64Map = {};

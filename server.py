@@ -482,6 +482,93 @@ def _subscription_tier_label(login):
     return "free"
 
 
+def _apply_contest_reward(login, contest_id, place, reward):
+    """Apply a contest prize once, even if finalization is retried."""
+    now = _now_ms()
+    exp_reward = max(0, _to_int((reward or {}).get("exp")))
+    subscription_reward = (reward or {}).get("subscription")
+    if not isinstance(subscription_reward, dict):
+        subscription_reward = {}
+    reward_tier = str(subscription_reward.get("tier") or "").strip().lower()
+    if reward_tier not in {"pro", "pro_plus"}:
+        reward_tier = ""
+    reward_days = max(0, _to_int(subscription_reward.get("days")))
+    ledger_key = str(contest_id)
+
+    def update_user(current):
+        current = dict(current) if isinstance(current, dict) else {}
+        contest_rewards = current.get("contestRewards")
+        contest_rewards = dict(contest_rewards) if isinstance(contest_rewards, dict) else {}
+        if ledger_key in contest_rewards:
+            return current
+
+        stats = current.get("stats")
+        stats = dict(stats) if isinstance(stats, dict) else {}
+        stats["contestExp"] = max(0, _to_int(stats.get("contestExp"))) + exp_reward
+        stats["exp"] = max(0, _to_int(stats.get("exp"))) + exp_reward
+        if int(place) == 1:
+            stats["contestWins"] = max(0, _to_int(stats.get("contestWins"))) + 1
+        current["stats"] = stats
+
+        if reward_tier and reward_days:
+            subscription = current.get("subscription")
+            subscription = dict(subscription) if isinstance(subscription, dict) else {}
+            tier_rank = {"pro": 1, "pro_plus": 2, "creator_dev": 2}
+            current_tier = str(subscription.get("tier") or "").strip().lower()
+            next_tier = reward_tier if tier_rank.get(reward_tier, 0) > tier_rank.get(current_tier, 0) else current_tier
+            if next_tier == "creator_dev":
+                next_tier = "pro_plus"
+            is_infinite = subscription.get("infinite") is True or subscription.get("expiresAt") is None and subscription.get("status") == "active"
+            if is_infinite:
+                expires_at = None
+            else:
+                current_expiry = _to_int(subscription.get("expiresAt"))
+                base = current_expiry if current_expiry > now else now
+                expires_at = base + reward_days * 86_400_000
+            subscription.update({
+                "tier": next_tier or reward_tier,
+                "status": "active",
+                "activatedAt": subscription.get("activatedAt") or now,
+                "updatedAt": now,
+                "expiresAt": expires_at,
+                "infinite": is_infinite,
+                "graceUntil": None,
+                "paymentWarning": None,
+                "features": _subscription_features_for_tier(next_tier or reward_tier)
+            })
+            visuals = subscription.get("visuals")
+            visuals = dict(visuals) if isinstance(visuals, dict) else {}
+            visuals["seasonalEnabled"] = True
+            subscription["visuals"] = visuals
+            current["subscription"] = subscription
+
+        contest_rewards[ledger_key] = {
+            "place": int(place),
+            "exp": exp_reward,
+            "subscription": subscription_reward if reward_tier and reward_days else None,
+            "awardedAt": now
+        }
+        current["contestRewards"] = contest_rewards
+        current["updatedAt"] = now
+        return current
+
+    updated_user = db.reference(f"users/{login}").transaction(update_user)
+    if not isinstance(updated_user, dict):
+        return None
+    stats = updated_user.get("stats") if isinstance(updated_user.get("stats"), dict) else {}
+    subscription = updated_user.get("subscription") if isinstance(updated_user.get("subscription"), dict) else {}
+    db.reference("/").update({
+        f"publicProfiles/{login}/stats": stats,
+        f"publicProfiles/{login}/subscription": subscription,
+        f"publicProfiles/{login}/updatedAt": now,
+        f"ratingLeaderboard/{login}/exp": max(0, _to_int(stats.get("exp"))),
+        f"ratingLeaderboard/{login}/subscription": subscription,
+        f"ratingLeaderboard/{login}/updatedAt": now
+    })
+    _cache_delete(("profile-lite", login))
+    return updated_user
+
+
 def _submission_rate_limit_for_tier(tier):
     if tier in {"pro", "pro_plus"}:
         return SUBMIT_RATE_PRO
@@ -2820,11 +2907,12 @@ def _mark_task_solved_for_user(login, task):
         before_exp = int(current.get("exp") or 0)
         solved_map = _normalize_solved_map(current.get("solved"))
         already_solved = bool(solved_map.get(task))
+        contest_exp = max(0, _to_int(current.get("contestExp")))
         trace["alreadySolved"] = already_solved
         trace["beforeCnt"] = before_cnt
         trace["beforeExp"] = before_exp
         solved_map[task] = True
-        exp = sum(
+        exp = contest_exp + sum(
             _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
             for task_id in solved_map
         )
@@ -2832,6 +2920,7 @@ def _mark_task_solved_for_user(login, task):
             "solved": solved_map,
             "cnt": len(solved_map),
             "exp": exp,
+            "contestExp": contest_exp,
         }
         print(
             "[XP TRACE][SERVER] stats recompute before write:",
@@ -3560,7 +3649,8 @@ def admin_rebuild_user_stats():
             solved_map = solved_by_user.get(login, {})
             stats["solved"] = solved_map
             stats["cnt"] = len(solved_map)
-            stats["exp"] = sum(
+            stats["contestExp"] = max(0, _to_int(stats.get("contestExp")))
+            stats["exp"] = stats["contestExp"] + sum(
                 _xp_for_difficulty(_task_difficulty_for_xp(task_id, task_difficulties))
                 for task_id in solved_map
             )
@@ -3739,6 +3829,144 @@ def recommendations():
     return response
 
 
+def _foi_contest_payload():
+    return {
+        "title": "FOI",
+        "description": "Подробности и задачи появятся позже.",
+        "authors": ["foxserg"],
+        "tasks": [],
+        "start": 1790416800000,
+        "end": 1790532000000,
+        "visibility": "public",
+        "kind": "open",
+        "ownerLogin": "foxserg",
+        "allowedUsers": [],
+        "participantsCount": 0,
+        "rewards": [
+            {"place": 1, "exp": 500, "subscription": {"tier": "pro_plus", "days": 30}},
+            {"place": 2, "exp": 300, "subscription": {"tier": "pro", "days": 30}},
+            {"place": 3, "exp": 150}
+        ],
+        "createdAt": _now_ms()
+    }
+
+
+@app.route("/admin/contests/reset-foi", methods=["POST"])
+def admin_contests_reset_foi():
+    if not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    try:
+        payload = _foi_contest_payload()
+        db.reference("contests").set({"foi-2026": payload})
+        db.reference("contest_regs").set({})
+        return jsonify({"ok": True, "id": "foi-2026", "contest": payload})
+    except Exception as e:
+        return _server_error("contest_reset_failed", "CONTEST_RESET_FAILED", exc=e)
+
+
+def _contest_standings(contest_id, contest):
+    registrations = db.reference(f"contest_regs/{contest_id}").get() or {}
+    if not isinstance(registrations, dict):
+        registrations = {}
+    logins = []
+    for key, value in registrations.items():
+        login = str((value.get("login") if isinstance(value, dict) else "") or key).strip()
+        if login and login not in logins:
+            logins.append(login)
+
+    tasks = [int(task) for task in (contest.get("tasks") or []) if str(task).isdigit()]
+    start = _to_int(contest.get("start"))
+    end = _to_int(contest.get("end"))
+    attempts = {login: {task: {"wrong": 0, "ok": None} for task in tasks} for login in logins}
+    submissions = db.reference("submissions/global").get() or {}
+    submissions = submissions.values() if isinstance(submissions, dict) else submissions if isinstance(submissions, list) else []
+    pending_verdicts = {"", "QUEUE", "QUEUED", "TESTING", "RUNNING", "PENDING"}
+
+    for submission in submissions:
+        if not isinstance(submission, dict) or str(submission.get("contestId") or "") != str(contest_id):
+            continue
+        login = str(submission.get("login") or "").strip()
+        task = _to_int(submission.get("task"), -1)
+        submitted_at = _to_int(submission.get("date"))
+        if login not in attempts or task not in attempts[login] or submitted_at < start or submitted_at > end:
+            continue
+        entry = attempts[login][task]
+        if entry["ok"] is not None:
+            continue
+        verdict = str(submission.get("verdict") or submission.get("status") or "").strip().upper()
+        if verdict == "OK":
+            entry["ok"] = max(0, (submitted_at - start) // 60_000)
+        elif verdict not in pending_verdicts:
+            entry["wrong"] += 1
+
+    standings = []
+    for login in logins:
+        solved = 0
+        penalty = 0
+        for entry in attempts[login].values():
+            if entry["ok"] is None:
+                continue
+            solved += 1
+            penalty += entry["ok"] + entry["wrong"] * 20
+        standings.append({"login": login, "solved": solved, "penalty": penalty})
+    standings.sort(key=lambda row: (-row["solved"], row["penalty"], row["login"].lower()))
+    for index, row in enumerate(standings, start=1):
+        row["place"] = index
+    return standings
+
+
+@app.route("/admin/contests/finalize", methods=["POST"])
+def admin_contests_finalize():
+    if not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    data = request.get_json(silent=True) or {}
+    contest_id = str(data.get("contestId") or "").strip()
+    if not contest_id:
+        return _api_error("contest_id_required", 400, "CONTEST_ID_REQUIRED")
+    try:
+        contest_ref = db.reference(f"contests/{contest_id}")
+        contest = contest_ref.get() or {}
+        if not isinstance(contest, dict) or not contest:
+            return _api_error("contest_not_found", 404, "CONTEST_NOT_FOUND")
+        if _to_int(contest.get("end")) > _now_ms():
+            return _api_error("contest_not_finished", 409, "CONTEST_NOT_FINISHED")
+        if not contest.get("tasks"):
+            return _api_error("contest_has_no_tasks", 409, "CONTEST_HAS_NO_TASKS")
+
+        standings = _contest_standings(contest_id, contest)
+        rewards = contest.get("rewards") if isinstance(contest.get("rewards"), list) else []
+        rewards_by_place = {max(0, _to_int(item.get("place"))): item for item in rewards if isinstance(item, dict)}
+        awarded = []
+        for row in standings:
+            if row["solved"] <= 0:
+                continue
+            reward = rewards_by_place.get(row["place"], {})
+            if row["place"] != 1 and not reward:
+                continue
+            _apply_contest_reward(row["login"], contest_id, row["place"], reward)
+            awarded.append({"login": row["login"], "place": row["place"], "reward": reward})
+
+        finalized_at = _now_ms()
+        contest_ref.update({
+            "results": standings,
+            "finalizedAt": contest.get("finalizedAt") or finalized_at,
+            "updatedAt": finalized_at
+        })
+        return jsonify({"ok": True, "contestId": contest_id, "standings": standings, "awarded": awarded})
+    except Exception as e:
+        return _server_error("contest_finalize_failed", "CONTEST_FINALIZE_FAILED", exc=e)
+
+
 @app.route("/contests/create", methods=["POST"])
 def contests_create():
     login, auth_error = _require_user_login()
@@ -3755,8 +3983,10 @@ def contests_create():
     data = request.get_json(silent=True) or {}
     title = str(data.get("title") or "").strip()
     tasks = data.get("tasks") or []
-    if not title or not isinstance(tasks, list) or not tasks:
+    if not title or not isinstance(tasks, list):
         return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    if not tasks and not is_admin:
+        return _api_error("tasks_required", 400, "TASKS_REQUIRED")
     description = str(data.get("description") or "").strip()[:1000]
     logo = str(data.get("logo") or "").strip()
     if logo:
@@ -3823,9 +4053,17 @@ def contest_register():
         allowed = contest.get("allowedUsers") or []
         if login not in [str(x).strip() for x in allowed]:
             return _api_error("forbidden", 403, "FORBIDDEN")
-    db.reference(f"contest_regs/{contest_id}/{login}").set({
+    registration_ref = db.reference(f"contest_regs/{contest_id}/{login}")
+    was_registered = bool(registration_ref.get())
+    registration_ref.set({
+        "login": login,
         "registeredAt": int(time.time() * 1000)
     })
+    if not was_registered:
+        try:
+            db.reference(f"contests/{contest_id}/participantsCount").transaction(lambda value: max(0, _to_int(value)) + 1)
+        except Exception as e:
+            print("contest participants count update failed:", e)
     _append_activity(login, "contest_register", {"contestId": contest_id})
     return jsonify({"ok": True})
 

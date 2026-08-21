@@ -144,7 +144,12 @@ def main() -> int:
             stats = {}
         stats["solved"] = solved_map
         stats["cnt"] = len(solved_map)
-        stats["exp"] = sum(
+        try:
+            contest_exp = max(0, int(stats.get("contestExp") or 0))
+        except (TypeError, ValueError):
+            contest_exp = 0
+        stats["contestExp"] = contest_exp
+        stats["exp"] = contest_exp + sum(
             xp_for_difficulty(task_difficulty_for_xp(task_id, task_difficulties))
             for task_id in solved_map
         )
