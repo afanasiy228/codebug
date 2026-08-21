@@ -81,9 +81,8 @@
         /* --- РЕЙТИНГ --- */
         
         .rating-container {
-            max-width: 980px;
+            width: min(1480px, calc(100% - 48px));
             margin: 40px auto;
-            padding: 0 20px;
         }
         
         .rating-head {
@@ -112,14 +111,75 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .rating-sub {
-            color: #9eb0bf;
+        .rating-guide {
+            display: grid;
+            grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+            gap: 36px;
+            align-items: end;
+            padding: 18px 2px 26px;
+        }
+
+        .experience-copy {
             margin: 0;
+            color: #c1cbd3;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+
+        .experience-copy strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #f4f6f8;
+            font-size: 17px;
+        }
+
+        .rank-scale-label {
+            margin: 0 0 10px;
+            color: #8fa0ad;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .rating-guide > div {
+            min-width: 0;
+        }
+
+        .rank-scale {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 16px 0;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(245, 158, 11, 0.35) transparent;
+        }
+
+        .rank-step {
+            min-width: 112px;
+            padding: 10px 12px 0 0;
+            border-top: 2px solid var(--rank-color);
+        }
+
+        .rank-step-name {
+            display: block;
+            min-height: 34px;
+            color: var(--rank-color);
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        .rank-step-exp {
+            display: block;
+            margin-top: 5px;
+            color: #778894;
+            font-size: 11px;
         }
 
         .rating-grid-head {
             display: grid;
-            grid-template-columns: 68px minmax(0, 1fr) 120px 120px;
+            grid-template-columns: 84px minmax(0, 1fr) 160px 150px;
             align-items: end;
             gap: 8px;
             padding: 0 12px 8px;
@@ -139,7 +199,7 @@
         .rating-row {
             position: relative;
             display: grid;
-            grid-template-columns: 68px minmax(0, 1fr) 120px 120px;
+            grid-template-columns: 84px minmax(0, 1fr) 160px 150px;
             align-items: center;
             gap: 8px;
             min-height: 74px;
@@ -308,6 +368,21 @@
                 padding: 0 20px;
             }
 
+            .rating-container {
+                width: min(100% - 28px, 1480px);
+                margin-top: 28px;
+            }
+
+            .rating-guide {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .rank-scale {
+                grid-template-columns: repeat(10, minmax(112px, 1fr));
+                gap: 0;
+            }
+
             .rating-grid-head {
                 display: none;
             }
@@ -346,8 +421,17 @@
         <div class="rating-head">
             <div class="rating-badge">Топ CodeBug</div>
             <h1>Рейтинг пользователей</h1>
-            <p class="rating-sub">Чем больше исправленных багов, тем выше ты поднимаешься в таблице.</p>
         </div>
+        <section class="rating-guide" aria-label="Как устроены опыт и ранги">
+            <p class="experience-copy">
+                <strong>Как получить опыт</strong>
+                Решай задачи и занимай призовые места в соревнованиях. С ростом опыта повышается ранг, а ник без подписки становится темнее.
+            </p>
+            <div>
+                <p class="rank-scale-label">Ранги и цвет ника</p>
+                <div id="rank-scale" class="rank-scale"></div>
+            </div>
+        </section>
         <div class="rating-grid-head">
             <div>#</div>
             <div>Пользователь</div>
@@ -373,17 +457,36 @@
         /* ======================
               РАНГИ
         ====================== */
+        const RANK_LEVELS = [
+            { minExp: 0, name: "Новичок" },
+            { minExp: 10, name: "Мистер WA1" },
+            { minExp: 50, name: "Знает как отлавливать CE" },
+            { minExp: 100, name: "Бывалый" },
+            { minExp: 200, name: "Найдет ошибку в тени" },
+            { minExp: 300, name: "Повелитель RE" },
+            { minExp: 500, name: "Охотник за TL" },
+            { minExp: 800, name: "Оптимизатор ML" },
+            { minExp: 1200, name: "Code Wizard" },
+            { minExp: 2000, name: "Легенда CodeBug" }
+        ];
+
         function getRank(exp) {
-            if (exp < 10) return "Новичок";
-            if (exp < 50) return "Мистер WA1";
-            if (exp < 100) return "Знает как отлавливать CE";
-            if (exp < 200) return "Бывалый";
-            if (exp < 300) return "Найдет ошибку в тени";
-            if (exp < 500) return "Повелитель RE";
-            if (exp < 800) return "Охотник за TL";
-            if (exp < 1200) return "Оптимизатор ML";
-            if (exp < 2000) return "Code Wizard";
-            return "Легенда CodeBug";
+            const value = Number(exp || 0);
+            return [...RANK_LEVELS].reverse().find((rank) => value >= rank.minExp)?.name || RANK_LEVELS[0].name;
+        }
+
+        function renderRankScale() {
+            const scale = document.getElementById("rank-scale");
+            if (!scale) return;
+            scale.innerHTML = RANK_LEVELS.map((rank) => {
+                const color = typeof getRankNickColorByExp === "function"
+                    ? getRankNickColorByExp(rank.minExp)
+                    : "#FFFFFF";
+                return `<div class="rank-step" style="--rank-color:${color}">
+                    <span class="rank-step-name">${escapeHtml(rank.name)}</span>
+                    <span class="rank-step-exp">от ${rank.minExp} EXP</span>
+                </div>`;
+            }).join("");
         }
 
         function escapeHtml(value) {
@@ -500,6 +603,7 @@
             });
         }
 
+        renderRankScale();
         loadRating();
     </script>
 

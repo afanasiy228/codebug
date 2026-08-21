@@ -795,7 +795,10 @@ function getSubscriptionLevel(sub) {
 }
 
 function getRankNickColorByExp(exp) {
-    return "#FFFFFF";
+    const maxExp = 2000;
+    const progress = Math.max(0, Math.min(1, Number(exp || 0) / maxExp));
+    const lightness = Math.round(72 - progress * 36);
+    return `hsl(145 58% ${lightness}%)`;
 }
 
 function hasSubscriptionAtLeast(sub, minLevel) {
