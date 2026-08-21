@@ -1336,7 +1336,6 @@
           <h1 class="page-title">Соревнования</h1>
           <button class="create-trigger" type="button" id="openCreateModal">+ Создать соревнование</button>
         </div>
-        <p class="page-subtitle">Участвуй в соревнованиях, решай задачи и борись за победу.</p>
       </div>
     </section>
 
@@ -1584,7 +1583,7 @@
     }
 
     function contestDescription(contest) {
-      return String(contest.description || contest.subtitle || "Соревнование CodeBug по задачам на внимательность к коду.").trim();
+      return String(contest.description || contest.subtitle || "").trim();
     }
 
     function contestLogoHtml(contest) {
@@ -1688,7 +1687,7 @@
                 <span class="type-badge ${kind}">${kindLabel(kind)}</span>
                 <span class="visibility-badge ${visibilityClass}">${visibility}</span>
               </div>
-              <p class="contest-description">${escapeHtml(contestDescription(contest))}</p>
+              ${contestDescription(contest) ? `<p class="contest-description">${escapeHtml(contestDescription(contest))}</p>` : ""}
               ${contestRewardsText(contest) ? `<p class="contest-description">${escapeHtml(contestRewardsText(contest))}</p>` : ""}
             </div>
           </div>
