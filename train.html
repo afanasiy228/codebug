@@ -919,16 +919,6 @@
                     </select>
                     <select id="difficultyFilter" class="compact-select">
                         <option value="">Все сложности</option>
-                        <option value="tutorial">Учебная</option>
-                        <option value="easy">Лёгкая</option>
-                        <option value="casual">Casual</option>
-                        <option value="normal">Нормальная</option>
-                        <option value="hard">Сложная</option>
-                        <option value="insane">Безумная</option>
-                        <option value="extreme">Экстремальная</option>
-                        <option value="ultra">Ультра</option>
-                        <option value="impossible">Невозможная</option>
-                        <option value="tourist">Турист</option>
                     </select>
                 </div>
                 <div class="filter-actions">
@@ -1222,6 +1212,32 @@
             return map[diff] || { label: diffRaw || "—", level: 3, color: "#F59E0B" };
         }
 
+        function syncDifficultyFilter() {
+            const select = document.getElementById("difficultyFilter");
+            if (!select) return;
+
+            const currentValue = select.value;
+            const source = isAdmin ? problems : visibleProblems;
+            const order = Object.keys(XP_BY_DIFFICULTY);
+            const difficulties = [...new Set(source
+                .map((problem) => String(problem.difficulty || "").trim().toLowerCase())
+                .filter(Boolean))]
+                .sort((a, b) => {
+                    const aIndex = order.indexOf(a);
+                    const bIndex = order.indexOf(b);
+                    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b, "ru");
+                    if (aIndex === -1) return 1;
+                    if (bIndex === -1) return -1;
+                    return aIndex - bIndex;
+                });
+
+            select.replaceChildren(new Option("Все сложности", ""));
+            difficulties.forEach((difficulty) => {
+                select.add(new Option(difficultyMeta(difficulty).label, difficulty));
+            });
+            select.value = difficulties.includes(currentValue) ? currentValue : "";
+        }
+
         function taskTypeLabel(typeRaw) {
             const type = String(typeRaw || "standard").trim().toLowerCase().replace(/[_\s]+/g, "-");
             const map = {
@@ -1454,6 +1470,7 @@
             hiddenMap = await loadHiddenMap();
             isAdmin = (typeof checkAdminAccess === "function") ? await checkAdminAccess() : false;
             visibleProblems = problems.filter((p) => !hiddenMap[p.id]);
+            syncDifficultyFilter();
 
             await loadUserMetrics();
             renderTopMetrics();
