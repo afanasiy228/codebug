@@ -270,6 +270,7 @@
             position: relative;
             overflow: hidden;
             padding: clamp(58px, 5vw, 82px) 0 0;
+            scroll-margin-top: 90px;
             background: linear-gradient(180deg, #060606 0%, #060708 58%, #050607 100%);
             border-top: 1px solid rgba(255, 255, 255, 0.035);
         }
@@ -279,7 +280,8 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(circle at 50% 10%, rgba(245, 158, 11, 0.025), transparent 34%),
+                radial-gradient(circle at 73% 18%, rgba(245, 158, 11, 0.045), transparent 42%),
+                radial-gradient(circle at 12% 76%, rgba(245, 158, 11, 0.018), transparent 32%),
                 linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 20%, transparent 80%, rgba(0, 0, 0, 0.16));
             pointer-events: none;
         }
@@ -289,15 +291,15 @@
             inset: 0;
             z-index: 0;
             overflow: hidden;
-            opacity: .14;
+            opacity: .3;
             pointer-events: none;
-            -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 28%, transparent 70%, #000 100%);
-            mask-image: linear-gradient(90deg, #000 0%, transparent 28%, transparent 70%, #000 100%);
+            -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, .32) 28%, rgba(0, 0, 0, .16) 52%, rgba(0, 0, 0, .3) 72%, #000 100%);
+            mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, .32) 28%, rgba(0, 0, 0, .16) 52%, rgba(0, 0, 0, .3) 72%, #000 100%);
         }
 
         .about-code-fog .layer {
             top: 2vh;
-            opacity: .2;
+            opacity: .34;
             filter: blur(.35px);
         }
 
@@ -314,14 +316,10 @@
         }
 
         .about-head {
-            max-width: 950px;
+            max-width: none;
         }
 
-        .about-kicker,
-        .about-title,
-        .metric-copy,
-        .stage-heading,
-        .stage-date {
+        .about-title {
             font-family: "Pixelify Sans", var(--mono);
         }
 
@@ -329,6 +327,7 @@
             display: block;
             margin-bottom: 14px;
             color: #8d8d8d;
+            font-family: var(--mono);
             font-size: 15px;
             line-height: 1;
             letter-spacing: .08em;
@@ -363,6 +362,7 @@
         .about-metrics {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
+            max-width: 1180px;
             margin: clamp(30px, 3vw, 44px) 0 0;
             padding: 0;
             list-style: none;
@@ -374,7 +374,7 @@
             align-items: center;
             gap: 15px;
             min-width: 0;
-            padding: 0 clamp(18px, 2.5vw, 42px);
+            padding: 0 clamp(18px, 1.6vw, 28px);
         }
 
         .about-metric:first-child {
@@ -411,19 +411,21 @@
             display: flex;
             flex-direction: column;
             color: #dededb;
-            font-size: clamp(17px, 1.25vw, 21px);
-            line-height: 1.24;
+            font-family: inherit;
+            font-size: clamp(16px, 1.1vw, 19px);
+            line-height: 1.3;
         }
 
         .metric-copy span:last-child {
             margin-top: 3px;
             color: #b8b8b6;
+            white-space: nowrap;
         }
 
         .roadmap {
             position: relative;
-            height: 550px;
-            margin-top: clamp(40px, 4vw, 60px);
+            height: 450px;
+            margin-top: clamp(80px, 5.5vw, 104px);
         }
 
         .route-map {
@@ -461,22 +463,22 @@
 
         .roadmap-step {
             position: absolute;
-            width: clamp(180px, 15vw, 245px);
+            width: clamp(210px, 16vw, 255px);
             color: #bebeba;
         }
 
-        .roadmap-step:nth-child(1) { left: 1%; top: 100px; }
-        .roadmap-step:nth-child(2) { left: 18%; top: 315px; }
-        .roadmap-step:nth-child(3) { left: 34%; top: 70px; }
-        .roadmap-step:nth-child(4) { left: 52%; top: 115px; }
-        .roadmap-step:nth-child(5) { left: 67%; top: 360px; }
-        .roadmap-step:nth-child(6) { left: 82%; top: 250px; }
+        .roadmap-step:nth-child(1) { left: 1%; top: 30px; }
+        .roadmap-step:nth-child(2) { left: 18%; top: 205px; }
+        .roadmap-step:nth-child(3) { left: 35%; top: 0; }
+        .roadmap-step:nth-child(4) { left: 53%; top: 115px; }
+        .roadmap-step:nth-child(5) { left: 63%; top: 250px; width: clamp(220px, 15vw, 240px); }
+        .roadmap-step:nth-child(6) { left: 82%; top: 145px; }
         .roadmap-step:nth-child(7) { left: 85%; top: 0; }
 
         .roadmap-marker {
             position: absolute;
             left: -22px;
-            top: 72px;
+            top: 51px;
             width: 14px;
             height: 14px;
             border: 2px solid var(--accent);
@@ -487,16 +489,19 @@
         }
 
         .stage-icon {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 20px;
-            transition: color .2s ease, border-color .2s ease;
+            width: 38px;
+            height: 38px;
+            margin-bottom: 13px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            transition: color .2s ease;
         }
 
         .stage-icon svg {
-            width: 26px;
-            height: 26px;
-            stroke-width: 1.45;
+            width: 29px;
+            height: 29px;
+            stroke-width: 1.35;
         }
 
         .stage-icon-question {
@@ -508,9 +513,10 @@
         .stage-heading {
             margin: 0;
             color: #efefec;
-            font-size: clamp(17px, 1.18vw, 21px);
-            font-weight: 500;
-            line-height: 1.18;
+            font-family: inherit;
+            font-size: clamp(16px, 1.05vw, 19px);
+            font-weight: 600;
+            line-height: 1.28;
             transition: color .2s ease;
         }
 
@@ -522,16 +528,17 @@
         .stage-description {
             margin: 12px 0 0;
             color: #b4b4b1;
-            font-family: var(--mono);
-            font-size: clamp(13px, .95vw, 16px);
-            line-height: 1.55;
+            font-family: inherit;
+            font-size: clamp(14px, .9vw, 16px);
+            line-height: 1.48;
         }
 
         .stage-date {
             display: block;
             margin-top: 15px;
             color: #777775;
-            font-size: clamp(14px, 1vw, 17px);
+            font-family: inherit;
+            font-size: clamp(13px, .85vw, 15px);
             line-height: 1.2;
         }
 
@@ -549,7 +556,6 @@
         .roadmap-step:hover .stage-icon,
         .roadmap-step:focus-within .stage-icon {
             color: #fff;
-            border-color: rgba(245, 158, 11, .5);
         }
 
         .about-links {
@@ -642,6 +648,7 @@
             }
             .about-roadmap {
                 padding-top: 74px;
+                scroll-margin-top: 50px;
             }
             .about-code-fog {
                 opacity: .09;
@@ -682,6 +689,9 @@
             }
             .metric-copy {
                 font-size: 15px;
+            }
+            .metric-copy span:last-child {
+                white-space: normal;
             }
             .roadmap {
                 height: auto;
@@ -841,7 +851,7 @@
                     </li>
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="code-xml"></i></span>
-                        <span class="metric-copy"><span>Поддержка</span><span>C++, Python и K</span></span>
+                        <span class="metric-copy"><span>Поддержка</span><span>C++ и Python</span></span>
                     </li>
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="rocket"></i></span>
@@ -850,9 +860,14 @@
                 </ul>
             </div>
             <section class="roadmap" aria-label="Карта развития проекта">
-                <svg class="route-map" viewBox="0 0 1400 600" preserveAspectRatio="none" aria-hidden="true">
-                    <path class="route-line" d="M 0 185 C 115 170, 185 176, 226 270 S 260 460, 365 425 S 375 180, 475 155 S 600 245, 705 205 S 790 440, 915 470 S 1060 365, 1135 350 S 1085 92, 1190 78"></path>
-                    <path class="route-arrow" d="M1181 72l13 6-12 8 3-7z"></path>
+                <svg class="route-map" viewBox="0 0 1400 450" preserveAspectRatio="none" aria-hidden="true">
+                    <path class="route-line" d="M0 88 C-16 110 -18 140 -18 170 Q-18 196 8 196 H80 C165 196 178 256 237 263"></path>
+                    <path class="route-line" d="M237 263 Q220 270 220 292 V365 Q220 390 245 390 H495 Q520 390 520 365 V205 Q520 180 495 180 H465 Q440 180 440 155 V85 Q440 58 465 58 H475"></path>
+                    <path class="route-line" d="M475 58 C438 77 430 125 430 155 Q430 180 455 180 H700 Q727 180 727 173"></path>
+                    <path class="route-line" d="M727 173 C705 195 700 240 700 270 Q700 300 730 300 H820 Q850 300 867 308"></path>
+                    <path class="route-line" d="M867 308 C840 330 840 400 865 425 Q880 440 910 440 H1085 Q1115 440 1115 410 V250 Q1115 220 1133 203"></path>
+                    <path class="route-line" d="M1133 203 C1100 180 1095 120 1125 90 C1145 72 1155 62 1175 58"></path>
+                    <path class="route-arrow" d="M1166 52l13 6-12 8 3-7z"></path>
                 </svg>
                 <ol class="roadmap-list">
                     <li class="roadmap-step">
