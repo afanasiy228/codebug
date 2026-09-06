@@ -319,7 +319,7 @@
             max-width: none;
         }
 
-        .about-title {
+        .about-title-brand {
             font-family: "Pixelify Sans", var(--mono);
         }
 
@@ -343,12 +343,17 @@
         }
 
         .about-title-accent {
+            font-family: inherit;
+            font-size: .9em;
+            font-weight: 600;
             color: var(--accent-hover);
         }
 
         .about-lead {
             margin: 22px 0 0;
-            max-width: 760px;
+            max-width: none;
+            /* Keep the roadmap's vertical position when the lead fits one line. */
+            min-height: 2.96em;
             color: #c5c5c3;
             font-size: clamp(18px, 1.4vw, 23px);
             line-height: 1.48;
@@ -402,8 +407,8 @@
         }
 
         .metric-icon svg {
-            width: 25px;
-            height: 25px;
+            width: 32px;
+            height: 32px;
             stroke-width: 1.5;
         }
 
@@ -442,15 +447,58 @@
             stroke-width: 2;
             stroke-dasharray: 7 10;
             stroke-linecap: round;
-            transition: stroke .24s ease;
         }
+
+        .route-line:nth-child(2) { stroke-dasharray: 9 12 4 12; }
+        .route-line:nth-child(3) { stroke-dasharray: 5 10 7 10 5 22; }
+        .route-line:nth-child(5) { stroke-dasharray: 10 12 3 12; }
+        .route-line:nth-child(6) { stroke-dasharray: 5 11; }
+
+        .route-waypoint {
+            fill: #060708;
+            stroke: #b5b2a9;
+            stroke-width: 1.2;
+            opacity: .38;
+        }
+
+        .route-details {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            user-select: none;
+            color: #a9a9a4;
+            font: 13px/1.4 var(--mono);
+        }
+
+        .route-detail {
+            position: absolute;
+            opacity: .085;
+        }
+
+        .route-detail svg {
+            width: 22px;
+            height: 22px;
+            stroke-width: 1;
+        }
+
+        .route-detail-braces { left: 13%; top: 74px; font-size: 19px; }
+        .route-detail-code { left: 27%; top: 130px; font-size: 11px; opacity: .06; }
+        .route-detail-hash { left: 43%; top: 250px; font-size: 17px; }
+        .route-detail-bug { left: 57%; top: 38px; }
+        .route-detail-terminal { left: 77%; top: 365px; }
+        .route-detail-angle { left: 93%; top: 337px; font-size: 17px; }
+        .route-detail-cross { left: 9%; top: 314px; }
+        .route-detail-dot { left: 73%; top: 115px; }
+
+        /* Faint Lucide outlines sit beside three stage icons, never under text. */
+        .route-detail-outline { opacity: .065; }
+        .route-detail-outline svg { width: 48px; height: 48px; stroke-width: .8; }
+        .route-detail-outline-one { left: 4.5%; top: 13px; transform: rotate(-12deg); }
+        .route-detail-outline-three { left: 38.5%; top: -16px; transform: rotate(10deg); }
+        .route-detail-outline-six { left: 86%; top: 127px; transform: rotate(-9deg); }
 
         .route-arrow {
             fill: rgba(245, 158, 11, .72);
-        }
-
-        .roadmap:hover .route-line {
-            stroke: rgba(205, 199, 184, .63);
         }
 
         .roadmap-list {
@@ -485,7 +533,6 @@
             border-radius: 50%;
             background: #060708;
             box-shadow: 0 0 0 4px #060708;
-            transition: background-color .2s ease, box-shadow .2s ease;
         }
 
         .stage-icon {
@@ -495,7 +542,6 @@
             border: 0;
             border-radius: 0;
             background: transparent;
-            transition: color .2s ease;
         }
 
         .stage-icon svg {
@@ -517,7 +563,6 @@
             font-size: clamp(16px, 1.05vw, 19px);
             font-weight: 600;
             line-height: 1.28;
-            transition: color .2s ease;
         }
 
         .stage-number {
@@ -540,22 +585,6 @@
             font-family: inherit;
             font-size: clamp(13px, .85vw, 15px);
             line-height: 1.2;
-        }
-
-        .roadmap-step:hover .roadmap-marker,
-        .roadmap-step:focus-within .roadmap-marker {
-            background: var(--accent);
-            box-shadow: 0 0 0 4px #060708, 0 0 12px rgba(245, 158, 11, .22);
-        }
-
-        .roadmap-step:hover .stage-heading,
-        .roadmap-step:focus-within .stage-heading {
-            color: var(--accent-hover);
-        }
-
-        .roadmap-step:hover .stage-icon,
-        .roadmap-step:focus-within .stage-icon {
-            color: #fff;
         }
 
         .about-links {
@@ -663,6 +692,7 @@
             }
             .about-lead {
                 margin-top: 18px;
+                min-height: 0;
                 font-size: 17px;
             }
             .about-metrics {
@@ -684,8 +714,8 @@
                 height: 40px;
             }
             .metric-icon svg {
-                width: 21px;
-                height: 21px;
+                width: 28px;
+                height: 28px;
             }
             .metric-copy {
                 font-size: 15px;
@@ -698,7 +728,8 @@
                 margin-top: 62px;
                 padding-bottom: 58px;
             }
-            .route-map {
+            .route-map,
+            .route-details {
                 display: none;
             }
             .roadmap-list {
@@ -838,8 +869,8 @@
         <div class="about-shell">
             <div class="about-head">
                 <span class="about-kicker">О ПРОЕКТЕ</span>
-                <h2 class="about-title">CodeBug — <span class="about-title-accent">школьный проект.</span></h2>
-                <p class="about-lead">Мы создаём платформу для задач и турниров,<br>которая <strong>развивает</strong> наших пользователей.</p>
+                <h2 class="about-title"><span class="about-title-brand">CodeBug</span> <span class="about-title-accent">— школьный проект.</span></h2>
+                <p class="about-lead">Мы создаём платформу для задач и турниров, которая <strong>развивает</strong> наших пользователей.</p>
                 <ul class="about-metrics" aria-label="Показатели платформы">
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="terminal"></i></span>
@@ -868,7 +899,23 @@
                     <path class="route-line" d="M867 308 C840 330 840 400 865 425 Q880 440 910 440 H1085 Q1115 440 1115 410 V250 Q1115 220 1133 203"></path>
                     <path class="route-line" d="M1133 203 C1100 180 1095 120 1125 90 C1145 72 1155 62 1175 58"></path>
                     <path class="route-arrow" d="M1166 52l13 6-12 8 3-7z"></path>
+                    <circle class="route-waypoint" cx="80" cy="196" r="3"></circle>
+                    <circle class="route-waypoint" cx="375" cy="390" r="3.5"></circle>
+                    <circle class="route-waypoint" cx="990" cy="440" r="3"></circle>
                 </svg>
+                <div class="route-details" aria-hidden="true">
+                    <span class="route-detail route-detail-braces">{ }</span>
+                    <span class="route-detail route-detail-code">if (tests.pass())<br>  return solution;</span>
+                    <span class="route-detail route-detail-hash">#</span>
+                    <span class="route-detail route-detail-bug"><i data-lucide="bug"></i></span>
+                    <span class="route-detail route-detail-terminal"><i data-lucide="terminal"></i></span>
+                    <span class="route-detail route-detail-angle">&lt;&gt;</span>
+                    <span class="route-detail route-detail-cross">+</span>
+                    <span class="route-detail route-detail-dot">·</span>
+                    <span class="route-detail route-detail-outline route-detail-outline-one"><i data-lucide="layers-2"></i></span>
+                    <span class="route-detail route-detail-outline route-detail-outline-three"><i data-lucide="hexagon"></i></span>
+                    <span class="route-detail route-detail-outline route-detail-outline-six"><i data-lucide="box"></i></span>
+                </div>
                 <ol class="roadmap-list">
                     <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
