@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="/logo.png?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
     <style>
          :root {
@@ -319,10 +319,6 @@
             max-width: none;
         }
 
-        .about-title-brand {
-            font-family: "Pixelify Sans", var(--mono);
-        }
-
         .about-kicker {
             display: block;
             margin-bottom: 14px;
@@ -336,17 +332,18 @@
         .about-title {
             margin: 0;
             color: #f1f1ef;
-            font-size: clamp(38px, 4vw, 64px);
+            font-family: "Lora", Georgia, serif;
+            font-size: clamp(38px, 3.5vw, 56px);
             font-weight: 500;
-            line-height: 1.02;
+            line-height: 1.22;
             letter-spacing: -.025em;
         }
 
         .about-title-accent {
             font-family: inherit;
-            font-size: .9em;
-            font-weight: 600;
-            color: var(--accent-hover);
+            font-size: inherit;
+            font-weight: inherit;
+            color: color-mix(in srgb, var(--accent) 65%, var(--muted));
         }
 
         .about-lead {
@@ -375,7 +372,7 @@
 
         .about-metric {
             display: grid;
-            grid-template-columns: 48px minmax(0, 1fr);
+            grid-template-columns: 50px minmax(0, 1fr);
             align-items: center;
             gap: 15px;
             min-width: 0;
@@ -402,14 +399,14 @@
         }
 
         .metric-icon {
-            width: 48px;
-            height: 48px;
+            width: 50px;
+            height: 50px;
         }
 
         .metric-icon svg {
             width: 32px;
             height: 32px;
-            stroke-width: 1.5;
+            stroke-width: 1.7;
         }
 
         .metric-copy {
@@ -433,6 +430,17 @@
             margin-top: clamp(80px, 5.5vw, 104px);
         }
 
+        .roadmap::before {
+            content: "";
+            position: absolute;
+            inset: -28px 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 110px 80px at 36% 7%, rgba(211, 200, 177, .026), transparent),
+                radial-gradient(ellipse 120px 90px at 63% 66%, rgba(245, 158, 11, .022), transparent),
+                radial-gradient(ellipse 110px 90px at 83% 40%, rgba(211, 200, 177, .024), transparent);
+        }
+
         .route-map {
             position: absolute;
             inset: 0;
@@ -443,16 +451,19 @@
 
         .route-line {
             fill: none;
-            stroke: rgba(186, 181, 168, .5);
-            stroke-width: 2;
-            stroke-dasharray: 7 10;
+            stroke: rgba(186, 181, 168, .38);
+            stroke-width: 1.4;
+            stroke-dasharray: 7 12 2 12;
             stroke-linecap: round;
         }
 
-        .route-line:nth-child(2) { stroke-dasharray: 9 12 4 12; }
-        .route-line:nth-child(3) { stroke-dasharray: 5 10 7 10 5 22; }
-        .route-line:nth-child(5) { stroke-dasharray: 10 12 3 12; }
-        .route-line:nth-child(6) { stroke-dasharray: 5 11; }
+        .route-line:nth-child(2) { stroke-dasharray: 12 15; }
+        .route-line:nth-child(3) { stroke-dasharray: 3 12 15 12; }
+        .route-line:nth-child(4) { stroke-dasharray: 6 11; }
+        .route-line:nth-child(5) { stroke-dasharray: 14 13 3 13; }
+        .route-line:nth-child(6) { stroke-dasharray: 5 12 2 12; }
+
+        .route-dots { fill: #a5a095; opacity: .36; }
 
         .route-waypoint {
             fill: #060708;
@@ -482,13 +493,19 @@
         }
 
         .route-detail-braces { left: 13%; top: 74px; font-size: 19px; }
-        .route-detail-code { left: 27%; top: 130px; font-size: 11px; opacity: .06; }
+        .route-detail-code { left: 20%; top: 100px; font-size: 11px; opacity: .07; }
         .route-detail-hash { left: 43%; top: 250px; font-size: 17px; }
-        .route-detail-bug { left: 57%; top: 38px; }
+        .route-detail-bug { left: 57%; top: 38px; opacity: .13; }
         .route-detail-terminal { left: 77%; top: 365px; }
         .route-detail-angle { left: 93%; top: 337px; font-size: 17px; }
         .route-detail-cross { left: 9%; top: 314px; }
         .route-detail-dot { left: 73%; top: 115px; }
+        .route-detail-flag { left: 8%; top: 410px; opacity: .12; }
+        .route-detail-spark { left: 48%; top: 315px; opacity: .12; }
+        .route-detail-spark svg { width: 12px; height: 12px; }
+        .route-detail-return { left: 67%; top: 24px; font-size: 11px; opacity: .055; }
+        .route-detail-cross-two { left: 96%; top: 235px; font-size: 10px; opacity: .1; }
+        .route-detail-braces-two { left: 39%; top: 423px; font-size: 12px; opacity: .065; }
 
         /* Faint Lucide outlines sit beside three stage icons, never under text. */
         .route-detail-outline { opacity: .065; }
@@ -498,7 +515,11 @@
         .route-detail-outline-six { left: 86%; top: 127px; transform: rotate(-9deg); }
 
         .route-arrow {
-            fill: rgba(245, 158, 11, .72);
+            fill: none;
+            stroke: rgba(190, 164, 119, .5);
+            stroke-width: 1.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .roadmap-list {
@@ -517,9 +538,9 @@
 
         .roadmap-step:nth-child(1) { left: 1%; top: 30px; }
         .roadmap-step:nth-child(2) { left: 18%; top: 205px; }
-        .roadmap-step:nth-child(3) { left: 35%; top: 0; }
+        .roadmap-step:nth-child(3) { left: 35%; top: 0; width: calc(18% - 24px); }
         .roadmap-step:nth-child(4) { left: 53%; top: 115px; }
-        .roadmap-step:nth-child(5) { left: 63%; top: 250px; width: clamp(220px, 15vw, 240px); }
+        .roadmap-step:nth-child(5) { left: 63%; top: 250px; width: calc(19% - 40px); }
         .roadmap-step:nth-child(6) { left: 82%; top: 145px; }
         .roadmap-step:nth-child(7) { left: 85%; top: 0; }
 
@@ -545,13 +566,14 @@
         }
 
         .stage-icon svg {
-            width: 29px;
-            height: 29px;
-            stroke-width: 1.35;
+            width: 32px;
+            height: 32px;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45));
         }
 
         .stage-icon-question {
-            font-family: "Pixelify Sans", var(--mono);
+            font-family: var(--mono);
             font-size: 32px;
             line-height: 1;
         }
@@ -892,16 +914,21 @@
             </div>
             <section class="roadmap" aria-label="Карта развития проекта">
                 <svg class="route-map" viewBox="0 0 1400 450" preserveAspectRatio="none" aria-hidden="true">
-                    <path class="route-line" d="M0 88 C-16 110 -18 140 -18 170 Q-18 196 8 196 H80 C165 196 178 256 237 263"></path>
-                    <path class="route-line" d="M237 263 Q220 270 220 292 V365 Q220 390 245 390 H495 Q520 390 520 365 V205 Q520 180 495 180 H465 Q440 180 440 155 V85 Q440 58 465 58 H475"></path>
-                    <path class="route-line" d="M475 58 C438 77 430 125 430 155 Q430 180 455 180 H700 Q727 180 727 173"></path>
-                    <path class="route-line" d="M727 173 C705 195 700 240 700 270 Q700 300 730 300 H820 Q850 300 867 308"></path>
-                    <path class="route-line" d="M867 308 C840 330 840 400 865 425 Q880 440 910 440 H1085 Q1115 440 1115 410 V250 Q1115 220 1133 203"></path>
-                    <path class="route-line" d="M1133 203 C1100 180 1095 120 1125 90 C1145 72 1155 62 1175 58"></path>
-                    <path class="route-arrow" d="M1166 52l13 6-12 8 3-7z"></path>
-                    <circle class="route-waypoint" cx="80" cy="196" r="3"></circle>
-                    <circle class="route-waypoint" cx="375" cy="390" r="3.5"></circle>
-                    <circle class="route-waypoint" cx="990" cy="440" r="3"></circle>
+                    <path class="route-line" d="M0 88 C-34 112 -47 190 5 194 C36 198 56 184 83 194 M108 205 C155 222 180 258 237 263"></path>
+                    <path class="route-line" d="M237 263 C214 280 192 330 211 372 C214 416 414 443 498 394 M517 371 C550 324 528 247 520 206 C517 181 448 196 441 159 C430 112 449 77 475 58"></path>
+                    <path class="route-line" d="M475 58 C442 24 463 -32 532 -22 C588 -14 682 -21 718 25 M731 48 C742 85 731 125 736 158 C739 170 735 173 727 173"></path>
+                    <path class="route-line" d="M727 173 C696 198 685 275 718 295 C754 319 786 293 811 297 M832 299 C847 301 858 306 867 308"></path>
+                    <path class="route-line" d="M867 308 C841 332 830 409 863 431 C908 450 1050 450 1098 423 M1114 400 C1140 351 1136 315 1131 272 C1129 247 1120 216 1133 203"></path>
+                    <path class="route-line" d="M1133 203 C1107 180 1092 151 1108 116 M1117 98 C1130 80 1153 67 1175 58"></path>
+                    <path class="route-arrow" d="M501 398 l8 -10 -12 2 M718 23 l7 9 -11 -2 M1166 55 l9 3 -5 7"></path>
+                    <g class="route-dots">
+                        <circle cx="91" cy="197" r="1.2"></circle><circle cx="100" cy="201" r="1.2"></circle>
+                        <circle cx="817" cy="298" r="1"></circle><circle cx="824" cy="298.5" r="1"></circle>
+                        <circle cx="1111" cy="110" r="1.1"></circle><circle cx="1114" cy="104" r="1.1"></circle>
+                    </g>
+                    <circle class="route-waypoint" cx="5" cy="194" r="2.6"></circle>
+                    <circle class="route-waypoint" cx="520" cy="206" r="3"></circle>
+                    <circle class="route-waypoint" cx="863" cy="431" r="2.6"></circle>
                 </svg>
                 <div class="route-details" aria-hidden="true">
                     <span class="route-detail route-detail-braces">{ }</span>
@@ -912,6 +939,11 @@
                     <span class="route-detail route-detail-angle">&lt;&gt;</span>
                     <span class="route-detail route-detail-cross">+</span>
                     <span class="route-detail route-detail-dot">·</span>
+                    <span class="route-detail route-detail-flag"><i data-lucide="flag"></i></span>
+                    <span class="route-detail route-detail-spark"><i data-lucide="sparkle"></i></span>
+                    <span class="route-detail route-detail-return">return 0;</span>
+                    <span class="route-detail route-detail-cross-two">+</span>
+                    <span class="route-detail route-detail-braces-two">{ }</span>
                     <span class="route-detail route-detail-outline route-detail-outline-one"><i data-lucide="layers-2"></i></span>
                     <span class="route-detail route-detail-outline route-detail-outline-three"><i data-lucide="hexagon"></i></span>
                     <span class="route-detail route-detail-outline route-detail-outline-six"><i data-lucide="box"></i></span>
@@ -964,7 +996,7 @@
                     </li>
                     <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <span class="stage-icon" aria-hidden="true"><i data-lucide="star"></i></span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="rocket"></i></span>
                         <div class="stage-body">
                             <h3 class="stage-heading"><span class="stage-number">6.</span>Новые горизонты</h3>
                             <p class="stage-description">Больше задач, лучше система, шире возможности</p>
