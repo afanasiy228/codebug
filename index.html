@@ -265,6 +265,61 @@
             color: #ffffff;
             background: rgba(245, 158, 11, 0.25);
         }
+
+        .hero-scroll-indicator {
+            position: absolute;
+            left: 50%;
+            bottom: clamp(24px, 3vh, 32px);
+            z-index: 4;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: rgba(236, 236, 232, .52);
+            font: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1;
+            letter-spacing: .16em;
+            cursor: pointer;
+            opacity: 1;
+            transform: translateX(-50%);
+            transition:
+                opacity .8s cubic-bezier(.22, 1, .36, 1),
+                transform .8s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .hero-scroll-indicator.is-hidden {
+            opacity: 0;
+            transform: translate(-50%, 10px);
+        }
+
+        .hero-scroll-indicator:focus-visible {
+            color: rgba(255, 255, 255, .78);
+            outline: 1px solid rgba(245, 158, 11, .42);
+            outline-offset: 7px;
+        }
+
+        .hero-scroll-chevron {
+            display: inline-flex;
+            color: rgba(244, 244, 240, .72);
+            animation: hero-scroll-cue 2.2s ease-in-out infinite;
+        }
+
+        .hero-scroll-chevron svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.6;
+        }
+
+        @keyframes hero-scroll-cue {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(4px); }
+        }
         
         .about-roadmap {
             position: relative;
@@ -697,6 +752,14 @@
             .subtitle {
                 font-size: 21px;
             }
+            .hero-scroll-indicator {
+                bottom: 22px;
+                font-size: 11px;
+            }
+            .hero-scroll-chevron svg {
+                width: 18px;
+                height: 18px;
+            }
             .about-roadmap {
                 padding-top: 74px;
                 scroll-margin-top: 50px;
@@ -855,6 +918,15 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
+            .hero-scroll-indicator {
+                transition: opacity .2s linear;
+            }
+            .hero-scroll-indicator.is-hidden {
+                transform: translateX(-50%);
+            }
+            .hero-scroll-chevron {
+                animation: none;
+            }
             .route-line,
             .roadmap-marker,
             .stage-heading,
@@ -884,6 +956,10 @@
                 <a class="cta" href="train.html">К тренировке</a>
             </div>
         </div>
+        <button class="hero-scroll-indicator" id="heroScrollIndicator" type="button" aria-label="Перейти к разделу «О проекте»">
+            <span>О ПРОЕКТЕ</span>
+            <span class="hero-scroll-chevron" aria-hidden="true"><i data-lucide="chevron-down"></i></span>
+        </button>
     </section>
 
     <section class="screen about-roadmap" id="aboutCodeBug">
@@ -1240,9 +1316,56 @@ return 0; }`;
             scheduleDrift();
         }
 
+        function initHeroScrollIndicator() {
+            const indicator = document.getElementById("heroScrollIndicator");
+            const aboutSection = document.getElementById("aboutCodeBug");
+            if (!indicator || !aboutSection) return;
+
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+            let scrollFrame = 0;
+            let hiddenTimer = 0;
+
+            function setIndicatorVisibility() {
+                const shouldHide = window.scrollY > 12;
+                const isHidden = indicator.classList.contains("is-hidden");
+
+                if (shouldHide !== isHidden) {
+                    indicator.classList.toggle("is-hidden", shouldHide);
+                    window.clearTimeout(hiddenTimer);
+
+                    if (shouldHide) {
+                        hiddenTimer = window.setTimeout(() => {
+                            if (!indicator.classList.contains("is-hidden")) return;
+                            indicator.style.pointerEvents = "none";
+                            indicator.tabIndex = -1;
+                        }, reducedMotion.matches ? 200 : 800);
+                    } else {
+                        indicator.style.pointerEvents = "";
+                        indicator.tabIndex = 0;
+                    }
+                }
+
+                scrollFrame = 0;
+            }
+
+            window.addEventListener("scroll", () => {
+                if (!scrollFrame) scrollFrame = window.requestAnimationFrame(setIndicatorVisibility);
+            }, { passive: true });
+
+            indicator.addEventListener("click", () => {
+                aboutSection.scrollIntoView({
+                    behavior: reducedMotion.matches ? "auto" : "smooth",
+                    block: "start"
+                });
+            });
+
+            setIndicatorVisibility();
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             updateNavbar();
             initCodeEffect();
+            initHeroScrollIndicator();
             if (window.lucide) window.lucide.createIcons();
         });
     </script>
