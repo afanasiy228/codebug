@@ -51,7 +51,6 @@ def generate_outputs(task):
             )
             print(f"{num}.out generated")
 
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python3 gen_tests.py <task_number>")
