@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeBug</title>
     <link rel="icon" type="image/png" href="/logo.png?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
     <style>
          :root {
             --bg: #050505;
@@ -265,79 +269,112 @@
         .about-roadmap {
             position: relative;
             overflow: hidden;
-            padding: 56px 0 52px;
-            display: grid;
-            align-content: start;
-            background:
-                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
-                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
-                linear-gradient(180deg, rgba(5, 5, 5, 0.98), rgba(11, 11, 11, 0.98));
+            padding: clamp(58px, 5vw, 82px) 0 0;
+            background: linear-gradient(180deg, #060606 0%, #060708 58%, #050607 100%);
+            border-top: 1px solid rgba(255, 255, 255, 0.035);
         }
 
-        .about-roadmap::before {
-            content: "for (int i = 0; i < n; ++i) {\\A  if (a[i] != expected[i]) fix(i);\\A}\\A while (tests--) {\\A  debug(solution);\\A  submit(answer);\\A}";
+        .about-roadmap::after {
+            content: "";
             position: absolute;
-            top: 22px;
-            right: 2vw;
-            width: min(820px, 48vw);
-            font-family: var(--mono);
-            font-size: 14px;
-            line-height: 1.6;
-            color: rgba(159, 178, 190, 0.09);
-            white-space: pre;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 10%, rgba(245, 158, 11, 0.025), transparent 34%),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 20%, transparent 80%, rgba(0, 0, 0, 0.16));
             pointer-events: none;
+        }
+
+        .about-code-fog {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            opacity: .14;
+            pointer-events: none;
+            -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 28%, transparent 70%, #000 100%);
+            mask-image: linear-gradient(90deg, #000 0%, transparent 28%, transparent 70%, #000 100%);
+        }
+
+        .about-code-fog .layer {
+            top: 2vh;
+            opacity: .2;
+            filter: blur(.35px);
+        }
+
+        .about-code-fog .code-row {
+            min-height: 19px;
+            color: rgba(148, 168, 184, .34);
         }
 
         .about-shell {
             position: relative;
-            z-index: 1;
-            width: auto;
-            margin-left: clamp(24px, 7vw, 120px);
-            margin-right: clamp(24px, 7vw, 120px);
-            display: grid;
-            gap: 26px;
+            z-index: 2;
+            width: min(86vw, 1500px);
+            margin: 0 auto;
+        }
+
+        .about-head {
+            max-width: 950px;
+        }
+
+        .about-kicker,
+        .about-title,
+        .metric-copy,
+        .stage-heading,
+        .stage-date {
+            font-family: "Pixelify Sans", var(--mono);
         }
 
         .about-kicker {
             display: block;
-            margin-bottom: 12px;
-            font-family: var(--mono);
+            margin-bottom: 14px;
+            color: #8d8d8d;
             font-size: 15px;
-            font-weight: 700;
-            line-height: 1.2;
+            line-height: 1;
+            letter-spacing: .08em;
+        }
+
+        .about-title {
+            margin: 0;
+            color: #f1f1ef;
+            font-size: clamp(38px, 4vw, 64px);
+            font-weight: 500;
+            line-height: 1.02;
+            letter-spacing: -.025em;
+        }
+
+        .about-title-accent {
             color: var(--accent-hover);
-            text-transform: uppercase;
-            letter-spacing: 0;
         }
 
         .about-lead {
-            margin: 0;
-            color: #d2d9e0;
-            font-size: clamp(19px, 1.45vw, 25px);
-            line-height: 1.38;
-            max-width: 840px;
+            margin: 22px 0 0;
+            max-width: 760px;
+            color: #c5c5c3;
+            font-size: clamp(18px, 1.4vw, 23px);
+            line-height: 1.48;
+        }
+
+        .about-lead strong {
+            color: var(--accent-hover);
+            font-weight: 500;
         }
 
         .about-metrics {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0;
-            margin-top: 22px;
+            margin: clamp(30px, 3vw, 44px) 0 0;
             padding: 0;
             list-style: none;
         }
 
         .about-metric {
             display: grid;
-            grid-template-columns: 44px minmax(0, 1fr);
+            grid-template-columns: 48px minmax(0, 1fr);
             align-items: center;
-            gap: 18px;
+            gap: 15px;
             min-width: 0;
-            padding: 0 34px;
-            color: #cbd5df;
-            font-size: clamp(18px, 1.28vw, 23px);
-            font-weight: 600;
-            line-height: 1.25;
+            padding: 0 clamp(18px, 2.5vw, 42px);
         }
 
         .about-metric:first-child {
@@ -345,230 +382,236 @@
         }
 
         .about-metric + .about-metric {
-            border-left: 1px solid rgba(148, 163, 184, 0.18);
+            border-left: 1px solid rgba(255, 255, 255, .075);
         }
 
-        .metric-icon {
+        .metric-icon,
+        .stage-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 38px;
-            height: 38px;
-            color: var(--accent);
+            color: #e5e5e2;
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 8px;
+            background: rgba(8, 9, 9, .42);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
         }
 
         .metric-icon svg {
-            width: 38px;
-            height: 38px;
-            display: block;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.05;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            width: 25px;
+            height: 25px;
+            stroke-width: 1.5;
+        }
+
+        .metric-copy {
+            display: flex;
+            flex-direction: column;
+            color: #dededb;
+            font-size: clamp(17px, 1.25vw, 21px);
+            line-height: 1.24;
+        }
+
+        .metric-copy span:last-child {
+            margin-top: 3px;
+            color: #b8b8b6;
         }
 
         .roadmap {
-            margin-top: 8px;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: #121212;
-            padding: 26px 32px 24px;
+            position: relative;
+            height: 550px;
+            margin-top: clamp(40px, 4vw, 60px);
         }
 
-        .roadmap h3,
-        .about-links h3 {
-            margin: 0;
-            color: #e0e8f0;
-            font-size: clamp(23px, 1.75vw, 32px);
-            line-height: 1.2;
+        .route-map {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .route-line {
+            fill: none;
+            stroke: rgba(186, 181, 168, .5);
+            stroke-width: 2;
+            stroke-dasharray: 7 10;
+            stroke-linecap: round;
+            transition: stroke .24s ease;
+        }
+
+        .route-arrow {
+            fill: rgba(245, 158, 11, .72);
+        }
+
+        .roadmap:hover .route-line {
+            stroke: rgba(205, 199, 184, .63);
         }
 
         .roadmap-list {
-            list-style: none;
-            margin: 20px 0 0;
-            padding: 0 0 0 68px;
-            position: relative;
-            display: grid;
-        }
-
-        .roadmap-list::before {
-            content: "";
             position: absolute;
-            left: 17px;
-            top: 16px;
-            bottom: 17px;
-            width: 2px;
-            background: rgba(89, 104, 120, 0.38);
+            inset: 0;
+            margin: 0;
+            padding: 0;
+            list-style: none;
         }
 
         .roadmap-step {
-            position: relative;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center;
-            min-height: 56px;
-            gap: 24px;
-            border-bottom: 1px solid var(--line);
+            position: absolute;
+            width: clamp(180px, 15vw, 245px);
+            color: #bebeba;
         }
 
-        .roadmap-step:last-child {
-            border-bottom: none;
-        }
+        .roadmap-step:nth-child(1) { left: 1%; top: 100px; }
+        .roadmap-step:nth-child(2) { left: 18%; top: 315px; }
+        .roadmap-step:nth-child(3) { left: 34%; top: 70px; }
+        .roadmap-step:nth-child(4) { left: 52%; top: 115px; }
+        .roadmap-step:nth-child(5) { left: 67%; top: 360px; }
+        .roadmap-step:nth-child(6) { left: 82%; top: 250px; }
+        .roadmap-step:nth-child(7) { left: 85%; top: 0; }
 
         .roadmap-marker {
             position: absolute;
-            left: -68px;
-            top: 50%;
-            width: 38px;
-            height: 38px;
-            border-radius: 999px;
-            border: 2px solid rgba(102, 119, 141, 0.86);
-            background: #07101a;
-            transform: translateY(-50%);
-            color: #8391a4;
+            left: -22px;
+            top: 72px;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            background: #060708;
+            box-shadow: 0 0 0 4px #060708;
+            transition: background-color .2s ease, box-shadow .2s ease;
         }
 
-        .roadmap-step.done .roadmap-marker {
-            border-color: var(--success);
-            background: var(--success-soft);
-            color: var(--success);
+        .stage-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 20px;
+            transition: color .2s ease, border-color .2s ease;
         }
 
-        .roadmap-step.done .roadmap-marker::before {
-            content: "";
-            position: absolute;
-            left: 10px;
-            top: 8px;
-            width: 12px;
-            height: 7px;
-            border-left: 2px solid currentColor;
-            border-bottom: 2px solid currentColor;
-            transform: rotate(-45deg);
+        .stage-icon svg {
+            width: 26px;
+            height: 26px;
+            stroke-width: 1.45;
         }
 
-        .roadmap-step.active .roadmap-marker {
-            border-color: var(--accent);
-            background: rgba(245, 158, 11, 0.15);
+        .stage-icon-question {
+            font-family: "Pixelify Sans", var(--mono);
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .stage-heading {
+            margin: 0;
+            color: #efefec;
+            font-size: clamp(17px, 1.18vw, 21px);
+            font-weight: 500;
+            line-height: 1.18;
+            transition: color .2s ease;
+        }
+
+        .stage-number {
+            margin-right: 7px;
+            color: #bcbcb8;
+        }
+
+        .stage-description {
+            margin: 12px 0 0;
+            color: #b4b4b1;
+            font-family: var(--mono);
+            font-size: clamp(13px, .95vw, 16px);
+            line-height: 1.55;
+        }
+
+        .stage-date {
+            display: block;
+            margin-top: 15px;
+            color: #777775;
+            font-size: clamp(14px, 1vw, 17px);
+            line-height: 1.2;
+        }
+
+        .roadmap-step:hover .roadmap-marker,
+        .roadmap-step:focus-within .roadmap-marker {
+            background: var(--accent);
+            box-shadow: 0 0 0 4px #060708, 0 0 12px rgba(245, 158, 11, .22);
+        }
+
+        .roadmap-step:hover .stage-heading,
+        .roadmap-step:focus-within .stage-heading {
             color: var(--accent-hover);
         }
 
-        .roadmap-step.active .roadmap-marker::before,
-        .roadmap-step.active .roadmap-marker::after {
-            content: "";
-            position: absolute;
-            bottom: 9px;
-            width: 3px;
-            border-radius: 999px;
-            background: currentColor;
-        }
-
-        .roadmap-step.active .roadmap-marker::before {
-            left: 11px;
-            height: 9px;
-        }
-
-        .roadmap-step.active .roadmap-marker::after {
-            left: 18px;
-            height: 15px;
-        }
-
-        .roadmap-step.todo .roadmap-marker {
-            border-color: #5f7188;
-            color: #7f8da1;
-        }
-
-        .roadmap-step.todo .roadmap-marker::before {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 8px;
-            height: 8px;
-            border-radius: 999px;
-            background: currentColor;
-            transform: translate(-50%, -50%);
-        }
-
-        .roadmap-title {
-            margin: 0;
-            color: #c3ced9;
-            font-size: clamp(16px, 1.12vw, 21px);
-            line-height: 1.35;
-            font-weight: 500;
-        }
-
-        .roadmap-date {
-            color: #8594a8;
-            font-size: clamp(14px, 0.98vw, 18px);
-            line-height: 1.25;
-            white-space: nowrap;
+        .roadmap-step:hover .stage-icon,
+        .roadmap-step:focus-within .stage-icon {
+            color: #fff;
+            border-color: rgba(245, 158, 11, .5);
         }
 
         .about-links {
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: #121212;
-            padding: 24px 32px;
+            position: relative;
+            z-index: 2;
+            border-top: 1px solid rgba(255, 255, 255, .075);
+            padding: 30px 7vw 34px;
         }
 
         .about-links-grid {
+            width: min(86vw, 1500px);
+            margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 26px;
+            gap: clamp(24px, 5vw, 90px);
         }
 
         .about-link {
             display: grid;
             grid-template-columns: 34px minmax(0, 1fr);
-            gap: 18px;
-            align-items: start;
+            gap: 17px;
+            align-items: center;
+            min-width: 0;
+            color: #d3d3d0;
             text-decoration: none;
-            color: #c9d7e4;
-            transition: color .15s linear;
+            transition: color .18s ease;
         }
 
         .about-link:hover {
-            color: #e5eff8;
+            color: var(--accent-hover);
         }
 
         .contact-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            margin-top: 0;
-            color: var(--accent);
+            color: currentColor;
         }
 
         .contact-icon svg {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
+            stroke-width: 1.4;
+        }
+
+        .about-link .label,
+        .about-link .value {
             display: block;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.05;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            font-family: var(--mono);
+            line-height: 1.25;
         }
 
         .about-link .label {
-            display: block;
-            font-size: clamp(16px, 1.15vw, 22px);
-            font-weight: 700;
-            line-height: 1.2;
-            color: #dbe3eb;
-            margin-bottom: 5px;
+            color: #dededb;
+            font-size: 15px;
         }
 
         .about-link .value {
-            display: block;
-            color: var(--accent-hover);
-            font-size: clamp(15px, 1.05vw, 20px);
-            font-weight: 500;
-            line-height: 1.22;
-            word-break: break-word;
+            margin-top: 5px;
+            overflow-wrap: anywhere;
+            color: #858582;
+            font-size: 14px;
         }
         
         @media (max-width: 760px) {
@@ -598,81 +641,163 @@
                 font-size: 21px;
             }
             .about-roadmap {
-                padding: 70px 18px 48px;
+                padding-top: 74px;
             }
-            .about-roadmap::before {
-                display: none;
+            .about-code-fog {
+                opacity: .09;
+                -webkit-mask-image: linear-gradient(90deg, #000, transparent 35%, transparent 65%, #000);
+                mask-image: linear-gradient(90deg, #000, transparent 35%, transparent 65%, #000);
             }
             .about-shell {
-                width: min(560px, 92vw);
-                margin: 0 auto;
-                gap: 30px;
+                width: calc(100vw - 36px);
             }
-            .about-kicker {
-                font-size: 13px;
+            .about-title {
+                font-size: clamp(34px, 10vw, 46px);
             }
             .about-lead {
+                margin-top: 18px;
                 font-size: 17px;
             }
             .about-metrics {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 18px 0;
-            }
-            .about-metric:nth-child(2n + 1) {
-                padding-left: 0;
-                border-left: none;
+                gap: 22px 0;
+                margin-top: 34px;
             }
             .about-metric {
-                grid-template-columns: 36px minmax(0, 1fr);
-                gap: 14px;
-                font-size: 15px;
-                padding-right: 16px;
+                grid-template-columns: 40px minmax(0, 1fr);
+                gap: 11px;
+                padding: 0 12px;
             }
-            .metric-icon,
+            .about-metric:nth-child(odd) {
+                padding-left: 0;
+                border-left: 0;
+            }
+            .metric-icon {
+                width: 40px;
+                height: 40px;
+            }
             .metric-icon svg {
-                width: 32px;
-                height: 32px;
+                width: 21px;
+                height: 21px;
             }
-            .roadmap,
-            .about-links {
-                padding: 24px 20px;
+            .metric-copy {
+                font-size: 15px;
+            }
+            .roadmap {
+                height: auto;
+                margin-top: 62px;
+                padding-bottom: 58px;
+            }
+            .route-map {
+                display: none;
             }
             .roadmap-list {
-                padding-left: 52px;
+                position: relative;
+                display: grid;
+                gap: 40px;
             }
             .roadmap-list::before {
-                left: 15px;
+                content: "";
+                position: absolute;
+                left: 17px;
+                top: 69px;
+                bottom: 74px;
+                border-left: 2px dashed rgba(186, 181, 168, .4);
             }
-            .roadmap-step {
-                grid-template-columns: 1fr;
-                gap: 5px;
-                min-height: 68px;
-                align-items: center;
+            .roadmap-step,
+            .roadmap-step:nth-child(n) {
+                position: relative;
+                left: auto;
+                top: auto;
+                width: 100%;
+                min-height: 120px;
+                display: grid;
+                grid-template-columns: 48px minmax(0, 1fr);
+                column-gap: 24px;
+                align-items: start;
+                padding-left: 42px;
             }
             .roadmap-marker {
-                left: -52px;
-                width: 32px;
-                height: 32px;
+                left: 11px;
+                top: 62px;
+                width: 14px;
+                height: 14px;
             }
-            .roadmap-title {
-                font-size: 16px;
+            .stage-icon {
+                width: 48px;
+                height: 48px;
+                margin: 38px 0 0;
+                grid-column: 1;
+                grid-row: 1;
             }
-            .roadmap-date {
-                font-size: 13px;
+            .stage-body {
+                grid-column: 2;
+                padding-top: 39px;
+            }
+            .stage-heading {
+                font-size: 19px;
+            }
+            .stage-description {
+                margin-top: 9px;
+                font-size: 14px;
+                line-height: 1.48;
+            }
+            .stage-date {
+                margin-top: 11px;
+                font-size: 15px;
+            }
+            .about-links {
+                padding: 28px 18px 32px;
             }
             .about-links-grid {
+                width: 100%;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 18px;
+                gap: 25px 18px;
             }
         }
 
         @media (max-width: 520px) {
+            .about-metrics {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+            .about-metric,
+            .about-metric:nth-child(n) {
+                padding: 0;
+                border-left: 0;
+            }
+            .roadmap-step,
+            .roadmap-step:nth-child(n) {
+                grid-template-columns: 42px minmax(0, 1fr);
+                column-gap: 17px;
+                padding-left: 34px;
+            }
+            .roadmap-list::before {
+                left: 15px;
+            }
+            .roadmap-marker {
+                left: 9px;
+            }
+            .stage-icon {
+                width: 42px;
+                height: 42px;
+            }
+            .stage-icon svg {
+                width: 23px;
+                height: 23px;
+            }
             .about-links-grid {
                 grid-template-columns: 1fr;
             }
-            .about-link .label,
-            .about-link .value {
-                font-size: 16px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .route-line,
+            .roadmap-marker,
+            .stage-heading,
+            .stage-icon,
+            .about-link {
+                transition: none;
             }
         }
     </style>
@@ -699,147 +824,135 @@
     </section>
 
     <section class="screen about-roadmap" id="aboutCodeBug">
+        <div class="about-code-fog" id="aboutCodeFog" aria-hidden="true"></div>
         <div class="about-shell">
             <div class="about-head">
-                <span class="about-kicker">О платформе</span>
-                <p class="about-lead">Тренируй навык поиска ошибок в реальном коде. Открывай задачу, находи баг и отправляй исправление на проверку.</p>
+                <span class="about-kicker">О ПРОЕКТЕ</span>
+                <h2 class="about-title">CodeBug — <span class="about-title-accent">школьный проект.</span></h2>
+                <p class="about-lead">Мы создаём платформу для задач и турниров,<br>которая <strong>развивает</strong> наших пользователей.</p>
                 <ul class="about-metrics" aria-label="Показатели платформы">
                     <li class="about-metric">
-                        <span class="metric-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 5.5h6a3 3 0 0 1 3 3V20a3 3 0 0 0-3-3H5z"></path>
-                                <path d="M19 5.5h-5a3 3 0 0 0-3 3"></path>
-                                <path d="M19 5.5V17h-5a3 3 0 0 0-3 3"></path>
-                            </svg>
-                        </span>
-                        <span>39 задач в базе</span>
+                        <span class="metric-icon" aria-hidden="true"><i data-lucide="terminal"></i></span>
+                        <span class="metric-copy"><span>≈100</span><span>задач</span></span>
                     </li>
                     <li class="about-metric">
-                        <span class="metric-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 19c4.5-.7 8-4.2 8.7-8.7L15 5l4 4-5.3 1.3"></path>
-                                <path d="M9 15l-4 4"></path>
-                                <path d="M7 12l-2 2"></path>
-                            </svg>
-                        </span>
-                        <span>286 отправленных решений</span>
+                        <span class="metric-icon" aria-hidden="true"><i data-lucide="braces"></i></span>
+                        <span class="metric-copy"><span>1000+</span><span>решений</span></span>
                     </li>
                     <li class="about-metric">
-                        <span class="metric-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M8 8l-4 4 4 4"></path>
-                                <path d="M16 8l4 4-4 4"></path>
-                                <path d="M14 5l-4 14"></path>
-                            </svg>
-                        </span>
-                        <span>C++ и Python</span>
+                        <span class="metric-icon" aria-hidden="true"><i data-lucide="code-xml"></i></span>
+                        <span class="metric-copy"><span>Поддержка</span><span>C++, Python и K</span></span>
                     </li>
                     <li class="about-metric">
-                        <span class="metric-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M19 8a7 7 0 0 0-12-3l-2 2"></path>
-                                <path d="M5 5v4h4"></path>
-                                <path d="M5 16a7 7 0 0 0 12 3l2-2"></path>
-                                <path d="M19 19v-4h-4"></path>
-                            </svg>
-                        </span>
-                        <span>База задач пополняется</span>
+                        <span class="metric-icon" aria-hidden="true"><i data-lucide="rocket"></i></span>
+                        <span class="metric-copy"><span>Проект</span><span>развивается</span></span>
                     </li>
                 </ul>
             </div>
-            <section class="roadmap" aria-label="Дорожная карта проекта">
-                <h3>Дорожная карта</h3>
+            <section class="roadmap" aria-label="Карта развития проекта">
+                <svg class="route-map" viewBox="0 0 1400 600" preserveAspectRatio="none" aria-hidden="true">
+                    <path class="route-line" d="M 0 185 C 115 170, 185 176, 226 270 S 260 460, 365 425 S 375 180, 475 155 S 600 245, 705 205 S 790 440, 915 470 S 1060 365, 1135 350 S 1085 92, 1190 78"></path>
+                    <path class="route-arrow" d="M1181 72l13 6-12 8 3-7z"></path>
+                </svg>
                 <ol class="roadmap-list">
-                    <li class="roadmap-step done">
+                    <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Платформа и система проверки решений</p>
-                        <span class="roadmap-date">Апрель 2025</span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="flag"></i></span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">1.</span>Старт</h3>
+                            <p class="stage-description">База и первые задачи</p>
+                            <time class="stage-date" datetime="2025-10">Октябрь 2025</time>
+                        </div>
                     </li>
-                    <li class="roadmap-step done">
+                    <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Профили пользователей и рейтинг</p>
-                        <span class="roadmap-date">Май 2025</span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="users-round"></i></span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">2.</span>Пользователи</h3>
+                            <p class="stage-description">Профили, достижения и личный рейтинг</p>
+                            <time class="stage-date" datetime="2025-12">Декабрь 2025</time>
+                        </div>
                     </li>
-                    <li class="roadmap-step active">
+                    <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Соревнования и события</p>
-                        <span class="roadmap-date">Июнь 2025</span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="trophy"></i></span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">3.</span>Соревнования</h3>
+                            <p class="stage-description">Контесты и события, сезонные рейтинги</p>
+                            <time class="stage-date" datetime="2026-05">Май 2026</time>
+                        </div>
                     </li>
-                    <li class="roadmap-step todo">
+                    <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Достижения и бейджи</p>
-                        <span class="roadmap-date">Июль 2025</span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="crown"></i></span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">4.</span>Рейтинг и подписки</h3>
+                            <p class="stage-description">Система рейтинга, подписки и кастомизация</p>
+                            <time class="stage-date" datetime="2026-08">Август 2026</time>
+                        </div>
                     </li>
-                    <li class="roadmap-step todo">
+                    <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Командные турниры</p>
-                        <span class="roadmap-date">Август 2025</span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="megaphone"></i></span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">5.</span>Развитие и реклама</h3>
+                            <p class="stage-description">Партнёрства, продвижение и рост сообщества</p>
+                            <time class="stage-date" datetime="2026-10">Октябрь 2026</time>
+                        </div>
                     </li>
-                    <li class="roadmap-step todo">
+                    <li class="roadmap-step">
                         <span class="roadmap-marker" aria-hidden="true"></span>
-                        <p class="roadmap-title">Пополнение базы задач</p>
-                        <span class="roadmap-date">Постоянно</span>
+                        <span class="stage-icon" aria-hidden="true"><i data-lucide="star"></i></span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">6.</span>Новые горизонты</h3>
+                            <p class="stage-description">Больше задач, лучше система, шире возможности</p>
+                            <time class="stage-date" datetime="2026-12">Декабрь 2026</time>
+                        </div>
+                    </li>
+                    <li class="roadmap-step">
+                        <span class="roadmap-marker" aria-hidden="true"></span>
+                        <span class="stage-icon stage-icon-question" aria-hidden="true">?</span>
+                        <div class="stage-body">
+                            <h3 class="stage-heading"><span class="stage-number">7.</span>Что дальше?</h3>
+                            <p class="stage-description">Следующая глава пишется вместе с вами</p>
+                        </div>
                     </li>
                 </ol>
             </section>
 
-            <section class="about-links" aria-label="Ссылки CodeBug">
+        </div>
+        <footer class="about-links" aria-label="Ссылки CodeBug">
                 <div class="about-links-grid">
                     <a class="about-link" href="https://codebug.online" target="_blank" rel="noopener noreferrer">
-                        <span class="contact-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="9"></circle>
-                                <path d="M3 12h18"></path>
-                                <path d="M12 3a14 14 0 0 1 0 18"></path>
-                                <path d="M12 3a14 14 0 0 0 0 18"></path>
-                            </svg>
-                        </span>
+                        <span class="contact-icon" aria-hidden="true"><i data-lucide="globe-2"></i></span>
                         <span>
                             <span class="label">Сайт</span>
                             <span class="value">codebug.online</span>
                         </span>
                     </a>
                     <a class="about-link" href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">
-                        <span class="contact-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M21 4L3 11l7 3"></path>
-                                <path d="M21 4l-5 16-6-6"></path>
-                                <path d="M10 14l4-4"></path>
-                            </svg>
-                        </span>
+                        <span class="contact-icon" aria-hidden="true"><i data-lucide="send"></i></span>
                         <span>
                             <span class="label">Telegram</span>
                             <span class="value">@codebug_official</span>
                         </span>
                     </a>
                     <a class="about-link" href="https://t.me/codebug_reviews" target="_blank" rel="noopener noreferrer">
-                        <span class="contact-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M21 4L3 11l7 3"></path>
-                                <path d="M21 4l-5 16-6-6"></path>
-                                <path d="M10 14l4-4"></path>
-                            </svg>
-                        </span>
+                        <span class="contact-icon" aria-hidden="true"><i data-lucide="message-circle"></i></span>
                         <span>
                             <span class="label">Отзывы</span>
                             <span class="value">@codebug_reviews</span>
                         </span>
                     </a>
                     <a class="about-link" href="mailto:support@codebug.online">
-                        <span class="contact-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M4 6h16v12H4z"></path>
-                                <path d="M4 7l8 6 8-6"></path>
-                            </svg>
-                        </span>
+                        <span class="contact-icon" aria-hidden="true"><i data-lucide="mail"></i></span>
                         <span>
                             <span class="label">Поддержка</span>
                             <span class="value">support@codebug.online</span>
                         </span>
                     </a>
                 </div>
-            </section>
-        </div>
+        </footer>
     </section>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -852,6 +965,7 @@
         async function initCodeEffect() {
             const hero = document.getElementById("heroScreen");
             const fog = document.getElementById("codeFog");
+            const aboutFog = document.getElementById("aboutCodeFog");
             if (!hero || !fog) return;
 
             let source = "";
@@ -912,6 +1026,11 @@ return 0; }`;
                     });
                 }
                 fog.appendChild(block);
+            }
+
+            if (aboutFog) {
+                const aboutLayer = fog.firstElementChild && fog.firstElementChild.cloneNode(true);
+                if (aboutLayer) aboutFog.replaceChildren(aboutLayer);
             }
 
             const baseText = rows.map(r => r.txt.textContent);
@@ -1030,6 +1149,7 @@ return 0; }`;
         document.addEventListener("DOMContentLoaded", () => {
             updateNavbar();
             initCodeEffect();
+            if (window.lucide) window.lucide.createIcons();
         });
     </script>
 </body>
