@@ -669,6 +669,37 @@ def _rate_limit_global(route_key, limit, per_seconds):
     return _rate_limit(route_key, "__global__", limit, per_seconds)
 
 
+_SECRET_ENV_PATTERN = re.compile(
+    r"SECRET|PASSWORD|PASSWD|CREDENTIAL|PRIVATE_KEY|SERVICE_ACCOUNT|_TOKEN|API_KEY|ADMIN_KEY",
+    re.IGNORECASE,
+)
+_SECRET_ENV_NAMES = {
+    "FIREBASE_SERVICE_ACCOUNT",
+    "FIREBASE_SERVICE_ACCOUNT_FILE",
+    "ADMIN_API_KEY",
+    "RECAPTCHA_SECRET_KEY",
+    "PLATEGA_MERCHANT_ID",
+    "PLATEGA_SECRET",
+    "TASKS_REPO_KEY_FILE",
+    "REDIS_URL",
+}
+
+
+def _scrubbed_env():
+    """os.environ with secret-bearing variables removed.
+
+    judge.py runs untrusted submissions. In Docker mode the container gets no `-e`
+    at all, so this is defence in depth - but with ALLOW_UNSAFE_RUNNER=1 the child
+    inherits this environment directly, and it would otherwise contain the Firebase
+    service-account JSON and the payment credentials.
+    """
+    return {
+        key: value
+        for key, value in os.environ.items()
+        if key not in _SECRET_ENV_NAMES and not _SECRET_ENV_PATTERN.search(key)
+    }
+
+
 def _git_env():
     return {
         **os.environ,
@@ -980,7 +1011,7 @@ def _run_submission_job(job):
                 f.write(code)
 
             judge_env = {
-                **os.environ,
+                **_scrubbed_env(),
                 "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
                 "JUDGE_SOURCE": source_name,
                 "JUDGE_BINARY": "sol",

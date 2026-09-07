@@ -68,6 +68,9 @@ def test_no_tracked_json_is_a_user_database_dump():
 
 
 def test_no_tracked_file_contains_a_private_key_header():
+    # Assembled at runtime so this file does not match its own detector.
+    begin = b"-----" + b"BEGIN"
+    key_tail = b"PRIVATE" + b" KEY" + b"-----"
     offenders = []
     for rel in tracked_files():
         full = os.path.join(REPO_ROOT, rel)
@@ -78,7 +81,7 @@ def test_no_tracked_file_contains_a_private_key_header():
                 blob = fh.read()
         except OSError:
             continue
-        if b"-----BEGIN" in blob and b"PRIVATE KEY-----" in blob:
+        if begin in blob and key_tail in blob:
             offenders.append(rel)
     assert offenders == [], f"Private key material is tracked in: {offenders}"
 

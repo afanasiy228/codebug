@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import sys
 import glob
@@ -78,14 +79,74 @@ def copy_task_file(task_path, relpath, dest_relpath=None):
         return None
     dest = os.path.abspath(dest_relpath or relpath)
     os.makedirs(os.path.dirname(dest), exist_ok=True)
+    _unlink_quietly(dest)
     shutil.copyfile(src, dest)
     return os.path.relpath(dest, os.getcwd())
 
 
+_PROTECTED_DIR = None
+
+
+def protected_dir():
+    """A judge-owned directory that is NOT bind-mounted into the sandbox."""
+    global _PROTECTED_DIR
+    if _PROTECTED_DIR is None:
+        _PROTECTED_DIR = tempfile.mkdtemp(prefix="codebug_judge_")
+    return _PROTECTED_DIR
+
+
+def safe_test_token(value):
+    """Reduce a task-supplied test name to a filename-safe, shell-safe token."""
+    token = re.sub(r"[^A-Za-z0-9_.-]", "_", str(value or "test"))
+    token = token.lstrip(".") or "test"
+    return token[:64]
+
+
+def _unlink_quietly(path):
+    """Remove a directory entry. On a symlink this removes the link, never its target."""
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
 def write_text(path, content):
     os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    # The working directory is bind-mounted read-write into the sandbox, so a
+    # submission can plant a symlink at a name the judge is about to write
+    # (checker_output.txt and friends have fixed, predictable names). Unlink first,
+    # then refuse to follow a symlink on open, so this write can never be redirected
+    # to an arbitrary file on the judge host.
+    _unlink_quietly(path)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(content)
+
+
+def stash_judge_binary(name):
+    """Keep a pristine copy of a judge-owned binary outside the writable mount."""
+    src = os.path.abspath(name)
+    if not os.path.isfile(src):
+        return None
+    dest = os.path.join(protected_dir(), os.path.basename(name))
+    shutil.copyfile(src, dest)
+    shutil.copymode(src, dest)
+    return dest
+
+
+def restore_judge_binary(name):
+    """Re-place a judge-owned binary from the pristine copy before each use.
+
+    Without this, a solution can overwrite ./checker_bin on the first test with a
+    binary that always exits 0 and forge OK on every subsequent test.
+    """
+    stashed = os.path.join(protected_dir(), os.path.basename(name))
+    if not os.path.isfile(stashed):
+        return
+    target = os.path.abspath(name)
+    _unlink_quietly(target)
+    shutil.copyfile(stashed, target)
+    shutil.copymode(stashed, target)
 
 
 def read_text(path):
@@ -189,6 +250,7 @@ def compile_checker(task_path, checker_cfg, log):
         if not str(res.stderr).endswith("\n"):
             log.write("\n")
         return False
+    stash_judge_binary(checker_bin)
     return checker_bin
 
 
@@ -196,6 +258,8 @@ def compare_with_checker(checker_bin, inp_file, answer_file, program_output):
     local_in = "checker_input.txt"
     local_answer = "checker_answer.txt"
     local_out = "checker_output.txt"
+    # User code has already run in this directory and may have replaced the checker.
+    restore_judge_binary(checker_bin)
     write_text(local_in, read_text(inp_file))
     write_text(local_answer, read_text(answer_file))
     write_text(local_out, program_output)
@@ -272,14 +336,19 @@ def compile_interactor(task_path, problem, log):
         if not str(res.stderr).endswith("\n"):
             log.write("\n")
         return False
+    stash_judge_binary("interactor_bin")
     return "interactor_bin"
 
 
 def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
     started = time.monotonic()
-    local_in = f"interactive_{test_name}.in"
-    local_answer = f"interactive_{test_name}.ans"
-    protocol = f"protocol_{test_name}.log"
+    # test_name comes from problem.json in the external tasks repo and is interpolated
+    # into both a filename and an `sh -c` script below, so it must be a plain token.
+    safe_name = safe_test_token(test_name)
+    local_in = f"interactive_{safe_name}.in"
+    local_answer = f"interactive_{safe_name}.ans"
+    protocol = f"protocol_{safe_name}.log"
+    restore_judge_binary(interactor_bin)
     write_text(local_in, read_text(inp_file))
     write_text(local_answer, read_text(out_file))
     script = (
@@ -318,7 +387,7 @@ def run_interactive_test(inp_file, out_file, interactor_bin, test_name, log):
     if res.stderr:
         protocol_text += ("\n" if protocol_text else "") + res.stderr
     if protocol_text:
-        log.write(f"Protocol log {test_name}:\n{protocol_text}\n")
+        log.write(f"Protocol log {safe_name}:\n{protocol_text}\n")
     if res.timeout:
         return {"verdict": "TL", "time_ms": res.duration_ms, "memory_mb": res.memory_mb}
     if getattr(res, "memory_exceeded", False) or res.returncode == 137:
@@ -334,13 +403,24 @@ def run_test(inp_file, out_file, checker_bin=None, problem=None, interactor_bin=
     return run_standard_test(inp_file, out_file, checker_bin)
 
 
+def contained_task_path(task_path, relpath):
+    """Resolve relpath inside task_path, or return None if it escapes."""
+    if not relpath:
+        return None
+    base = os.path.realpath(task_path)
+    target = os.path.realpath(os.path.join(base, relpath))
+    if target != base and not target.startswith(base + os.sep):
+        return None
+    return target
+
+
 def discover_tests(task_path, problem):
     if problem:
         tests = []
         for item in problem.get("tests") or []:
-            inp = os.path.join(task_path, item.get("input", ""))
-            out = os.path.join(task_path, item.get("answer", ""))
-            if os.path.isfile(inp) and os.path.isfile(out):
+            inp = contained_task_path(task_path, item.get("input", ""))
+            out = contained_task_path(task_path, item.get("answer", ""))
+            if inp and out and os.path.isfile(inp) and os.path.isfile(out):
                 tests.append({
                     "name": item.get("name") or os.path.basename(inp),
                     "input": inp,
