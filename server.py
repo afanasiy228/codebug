@@ -39,15 +39,26 @@ def _cors_origins():
 
 CORS(app, resources={r"/*": {"origins": _cors_origins()}}, supports_credentials=False)
 
+# Flask buffers the whole body before any handler runs, so per-field size checks are
+# not a substitute for this. The Polygon importer takes the largest legitimate upload.
+MAX_REQUEST_BYTES = int(os.getenv("MAX_REQUEST_BYTES", str(24 * 1024 * 1024)))
+app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
+
 JUDGE_SCRIPT = "judge.py"
 TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "git@github.com:afanasiy228/taskscodebug.git")
 TASKS_REPO_DIR = os.getenv("TASKS_REPO_DIR", ".tasks_repo")
 TASKS_REPO_KEY_FILE = os.getenv("TASKS_REPO_KEY_FILE", "/etc/secrets/codebug_tasks_deploy")
 TASKS_SYNC_TTL = int(os.getenv("TASKS_SYNC_TTL", "300"))
+TASKS_REPO_KNOWN_HOSTS = os.getenv("TASKS_REPO_KNOWN_HOSTS", os.path.expanduser("~/.ssh/known_hosts"))
+TASKS_REPO_HOST_KEY_POLICY = os.getenv("TASKS_REPO_HOST_KEY_POLICY", "accept-new")
 TASKS_COMMIT_NAME = os.getenv("TASKS_COMMIT_NAME", "CodeBug Admin")
 TASKS_COMMIT_EMAIL = os.getenv("TASKS_COMMIT_EMAIL", "admin@codebug.local")
 LAST_TASKS_SYNC = 0.0
 MAX_GENERATED_TESTS = int(os.getenv("MAX_GENERATED_TESTS", "200"))
+# Compressed size is not a bound on extracted size, so cap the decompressed total.
+MAX_ZIP_ENTRIES = int(os.getenv("MAX_ZIP_ENTRIES", "5000"))
+MAX_ZIP_ENTRY_BYTES = int(os.getenv("MAX_ZIP_ENTRY_BYTES", str(64 * 1024 * 1024)))
+MAX_ZIP_TOTAL_BYTES = int(os.getenv("MAX_ZIP_TOTAL_BYTES", str(512 * 1024 * 1024)))
 JUDGE_PROCESS_TIMEOUT = int(os.getenv("JUDGE_PROCESS_TIMEOUT", "120"))
 SUPPORTED_LANGUAGES = {"cpp", "python"}
 PROFILE_LITE_CACHE_TTL = int(os.getenv("PROFILE_LITE_CACHE_TTL", "30"))
@@ -243,9 +254,24 @@ def _server_error(error, code, exc=None, status=500):
     return _api_error(error, status=status, code=code)
 
 
+# How many proxies sit in front of this app (Render adds one). Only the hops the
+# proxies appended can be trusted; everything to the left is client-supplied.
+TRUST_PROXY_HOPS = int(os.getenv("TRUST_PROXY_HOPS", "1"))
+
+
 def _request_ip():
+    """Client IP, taking only the hop our own proxy appended.
+
+    Reading the leftmost X-Forwarded-For entry let any caller spoof their address
+    with a single header and defeat every IP-keyed rate limit.
+    """
     forwarded_for = request.headers.get("X-Forwarded-For", "")
-    return (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr) or "unknown"
+    if forwarded_for and TRUST_PROXY_HOPS > 0:
+        hops = [part.strip() for part in forwarded_for.split(",") if part.strip()]
+        if hops:
+            index = max(0, len(hops) - TRUST_PROXY_HOPS)
+            return hops[index] or request.remote_addr or "unknown"
+    return request.remote_addr or "unknown"
 
 
 def _allowed_origins():
@@ -276,6 +302,11 @@ def _soft_check_request_origin(user_login=None):
 @app.before_request
 def _before_write_request_soft_checks():
     _soft_check_request_origin()
+
+
+@app.errorhandler(413)
+def _handle_payload_too_large(_error):
+    return _api_error("payload_too_large", 413, "PAYLOAD_TOO_LARGE")
 
 
 def _is_admin_request():
@@ -750,9 +781,14 @@ def _scrubbed_env():
 def _git_env():
     return {
         **os.environ,
+        # accept-new pins the host key on first use instead of accepting a
+        # different key silently on every connection (StrictHostKeyChecking=no).
+        # Set TASKS_REPO_KNOWN_HOSTS to a pinned file to make this strict.
         "GIT_SSH_COMMAND": (
             f"ssh -i {TASKS_REPO_KEY_FILE} "
-            "-o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+            "-o IdentitiesOnly=yes "
+            f"-o StrictHostKeyChecking={TASKS_REPO_HOST_KEY_POLICY} "
+            f"-o UserKnownHostsFile={TASKS_REPO_KNOWN_HOSTS}"
         )
     }
 
@@ -2310,6 +2346,9 @@ def auth_verify_captcha():
     if request.method == "OPTIONS":
         return ("", 204)
 
+    if not _rate_limit("verify_captcha", _request_ip(), limit=30, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+
     data = request.get_json(silent=True) or {}
     token = str(data.get("token", "")).strip()
     forwarded_for = request.headers.get("X-Forwarded-For", "")
@@ -2471,10 +2510,23 @@ def tasks_create():
 def _safe_extract_zip(archive, dest_dir):
     with zipfile.ZipFile(archive) as zf:
         dest_abs = os.path.abspath(dest_dir)
-        for info in zf.infolist():
+        infos = zf.infolist()
+        if len(infos) > MAX_ZIP_ENTRIES:
+            raise ValueError("zip_too_many_entries")
+        total = 0
+        for info in infos:
             target = os.path.abspath(os.path.join(dest_abs, info.filename))
             if target != dest_abs and not target.startswith(dest_abs + os.sep):
                 raise ValueError("unsafe_zip_path")
+            # Refuse symlink entries: extracting one lets a later entry (or the
+            # judge) write through it to an arbitrary path.
+            if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                raise ValueError("unsafe_zip_symlink")
+            if info.file_size > MAX_ZIP_ENTRY_BYTES:
+                raise ValueError("zip_entry_too_large")
+            total += info.file_size
+            if total > MAX_ZIP_TOTAL_BYTES:
+                raise ValueError("zip_too_large")
         zf.extractall(dest_abs)
 
 
@@ -3105,6 +3157,40 @@ def _is_valid_firebase_path_part(value):
     return not bool(re.search(r"[.#$/\[\]]", part))
 
 
+COVER_URL_ALLOWED_HOSTS = {
+    host.strip().lower()
+    for host in os.getenv(
+        "COVER_URL_ALLOWED_HOSTS",
+        "res.cloudinary.com,codebug.online,www.codebug.online",
+    ).split(",")
+    if host.strip()
+}
+
+
+def _is_allowed_cover_url(url):
+    """Cover images may only come from hosts we control or already trust.
+
+    Any external URL here becomes a beacon that reports every profile viewer to a
+    third party, and it is rendered into a CSS url() on the rating page.
+    """
+    value = str(url or "").strip()
+    if not value:
+        return False
+    if value.startswith("/"):
+        # Site-relative, but not protocol-relative ("//evil.example/x.png").
+        return not value.startswith("//")
+    if not value.startswith("https://"):
+        return False
+    try:
+        host = urllib.parse.urlparse(value).hostname or ""
+    except ValueError:
+        return False
+    host = host.lower()
+    return host in COVER_URL_ALLOWED_HOSTS or any(
+        host.endswith("." + allowed) for allowed in COVER_URL_ALLOWED_HOSTS
+    )
+
+
 def _is_valid_login_name(login):
     if not isinstance(login, str):
         return False
@@ -3543,13 +3629,16 @@ def payment_subscription_status():
     return jsonify({"ok": True, "login": login, "subscription": _get_user_subscription(login)})
 
 
-@app.route("/users/<path:login>/profile-lite", methods=["GET"])
+@app.route("/users/<login>/profile-lite", methods=["GET"])
 def user_profile_lite(login):
+    # Was <path:login>, which allowed "/" and let an unauthenticated caller steer
+    # db.reference("publicProfiles/{login}") and db.reference("users/{login}") into
+    # arbitrary subtrees.
+    login = str(login or "").strip()
+    if not _is_valid_login_name(login):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
     if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
-    login = str(login or "").strip()
-    if not login:
-        return _api_error("invalid_login", 400, "INVALID_LOGIN")
     cache_key = ("profile-lite", login)
     cached = _cache_get(cache_key)
     if cached is not None:
@@ -3607,7 +3696,9 @@ def user_profile_lite(login):
                 "coverId": profile_style.get("coverId"),
                 "coverUrl": user_ref.child("coverUrl").get() or ""
             },
-            "subscription": _normalize_subscription(login, raw_sub, write_back=True),
+            # write_back=False: this endpoint is unauthenticated, and a public GET
+            # must never trigger a database write.
+            "subscription": _normalize_subscription(login, raw_sub, write_back=False),
             "stats": {
                 "cnt": stats.get("cnt", 0),
                 "exp": stats.get("exp", 0),
@@ -3628,6 +3719,8 @@ def profile_set_nick_color():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("set_nick_color", login, limit=60, per_seconds=3600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not _is_pro_active(login):
         return _api_error("pro_required", 403, "PRO_REQUIRED")
     global FIREBASE_READY
@@ -3691,7 +3784,7 @@ def profile_set_cover():
     if cover_url:
         if not _is_pro_active(login):
             return _api_error("pro_required", 403, "PRO_REQUIRED")
-        if not (cover_url.startswith("https://") or cover_url.startswith("http://") or cover_url.startswith("/")):
+        if not _is_allowed_cover_url(cover_url):
             return _api_error("invalid_cover_url", 400, "INVALID_COVER_URL")
 
     try:
@@ -3854,8 +3947,16 @@ def profile_extended_stats(login):
     requester, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    target = str(login or "").strip()
+    if not _is_valid_login_name(target):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    # This exposes another user's full activity feed, so it is owner-or-admin only.
+    if target != requester and not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
     if not _is_pro_plus_active(requester):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
+    if not _rate_limit("extended_stats", requester, limit=30, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -3865,7 +3966,6 @@ def profile_extended_stats(login):
         submissions = db.reference("submissions/global").get() or {}
     except Exception as e:
         return _server_error("stats_load_failed", "STATS_LOAD_FAILED", exc=e)
-    target = str(login or "").strip()
     now_ms = int(time.time() * 1000)
     day_ms = 24 * 60 * 60 * 1000
     verdicts = {}
@@ -3913,6 +4013,9 @@ def recommendations():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    # Scans all of submissions/global, so it must not be callable in a tight loop.
+    if not _rate_limit("recommendations", login, limit=20, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -3999,6 +4102,13 @@ def _foi_contest_payload():
 def admin_contests_reset_foi():
     if not _is_admin_request():
         return _api_error("forbidden", 403, "FORBIDDEN")
+    # This wipes every contest and every registration; require the same explicit
+    # confirmation token that /admin/purge-users uses.
+    data = request.get_json(silent=True) or {}
+    if str(data.get("confirm") or "") != "RESET_ALL_CONTESTS":
+        return _api_error("confirmation_required", 400, "CONFIRMATION_REQUIRED")
+    if not _rate_limit("admin_reset_foi", "admin", limit=3, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -4068,6 +4178,8 @@ def _contest_standings(contest_id, contest):
 def admin_contests_finalize():
     if not _is_admin_request():
         return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("admin_finalize", "admin", limit=20, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -4116,6 +4228,8 @@ def contests_create():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("contests_create", login, limit=10, per_seconds=600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     is_admin = _is_admin_request()
     if not is_admin and not _is_pro_plus_active(login):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
@@ -4181,6 +4295,8 @@ def contest_register():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("contest_register", login, limit=30, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
