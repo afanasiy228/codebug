@@ -1633,6 +1633,9 @@
       const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const auth = typeof getAuth === "function" ? getAuth() : null;
       const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      // Fail closed: without a token this is an unauthenticated call to a
+      // privileged endpoint, which the server rejects with an opaque 401.
+      if (!token) throw new Error("Не удалось получить токен авторизации. Войдите заново.");
       const res = await fetch(`${base}/contest/register`, {
         method: "POST",
         headers: {
@@ -2158,6 +2161,9 @@
       const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const auth = typeof getAuth === "function" ? getAuth() : null;
       const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      // Fail closed: without a token this is an unauthenticated call to a
+      // privileged endpoint, which the server rejects with an opaque 401.
+      if (!token) throw new Error("Не удалось получить токен авторизации. Войдите заново.");
       const resp = await fetch(`${base}/contests/create`, {
         method: "POST",
         headers: {

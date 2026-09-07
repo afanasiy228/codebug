@@ -428,7 +428,7 @@
                 </a>
             </td>
 
-            <td class="${cls}">${verdictLabel}</td>
+            <td class="${cls}">${escapeHtml(verdictLabel)}</td>
 
             <td>${s.date ? new Date(s.date).toLocaleString() : "—"}</td>
         `;

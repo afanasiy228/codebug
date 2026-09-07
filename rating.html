@@ -517,6 +517,9 @@
             const canUseCustom = level !== "free";
             if (canUseCustom && (/^https?:\/\//i.test(custom) || custom.startsWith("/"))) {
                 const coverUrl = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom) : custom;
+                // A quote, backslash, parenthesis or newline in a user-supplied cover URL
+                // would otherwise break out of the CSS url("...") string.
+                if (/["'\\()\s]/.test(coverUrl)) return "";
                 return `url("${coverUrl}")`;
             }
             const coverIdRaw = String(profileStyle.coverId || "").trim().toLowerCase();

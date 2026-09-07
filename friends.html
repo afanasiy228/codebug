@@ -184,12 +184,24 @@
       for (const row of rows) {
         const card = document.createElement("div");
         card.className = "friend-card";
-        card.innerHTML = `
-          <a class="friend-link" href="profile.html?user=${encodeURIComponent(row.login)}">
-            <div class="friend-name">${row.login}</div>
-            <div class="friend-meta">Рейтинг: ${row.rating}</div>
-          </a>
-        `;
+
+        // Built as DOM nodes rather than an innerHTML template: row.login is a raw
+        // Realtime Database key, and RTDB keys may legally contain < > and quotes.
+        const link = document.createElement("a");
+        link.className = "friend-link";
+        link.href = "profile.html?user=" + encodeURIComponent(row.login);
+
+        const name = document.createElement("div");
+        name.className = "friend-name";
+        name.textContent = row.login;
+
+        const meta = document.createElement("div");
+        meta.className = "friend-meta";
+        meta.textContent = "Рейтинг: " + row.rating;
+
+        link.appendChild(name);
+        link.appendChild(meta);
+        card.appendChild(link);
         list.appendChild(card);
       }
     }
