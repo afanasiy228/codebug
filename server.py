@@ -753,25 +753,22 @@ def _validate_submit_payload(data):
         return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     task_raw = data.get("task")
     code = data.get("code")
-    user_raw = data.get("user")
     lang = _validate_language(data.get("language"))
     if not _is_nonempty_string(code):
         return None, _api_error("code_required", 400, "CODE_REQUIRED")
-    if not _is_nonempty_string(user_raw):
-        return None, _api_error("user_required", 400, "USER_REQUIRED")
     if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
         return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
     try:
         task_id = int(str(task_raw).strip())
     except (TypeError, ValueError):
         return None, _api_error("invalid_task", 400, "INVALID_TASK")
-    user_login = str(user_raw).strip()
     if lang is None:
         lang = "cpp"
+    # data["user"] is still accepted from older clients but deliberately ignored:
+    # the submitter is resolved server-side from the verified Firebase ID token.
     return {
         "task_id": task_id,
         "code": code,
-        "user_login": user_login,
         "language": lang,
         "contest_id": data.get("contestId")
     }, None
@@ -2137,27 +2134,17 @@ def submit():
     data = request.get_json(silent=True) or {}
     print("JSON RAW:", data)
 
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+
     payload, payload_error = _validate_submit_payload(data)
     if payload_error:
         return payload_error
 
     task = str(payload["task_id"])
     code = payload["code"]
-    login = payload["user_login"]
     contest_id = payload["contest_id"]
-    auth_header = request.headers.get("Authorization", "")
-    token_login = None
-    if auth_header.startswith("Bearer "):
-        token = auth_header.removeprefix("Bearer ").strip()
-        if token:
-            token_login = _resolve_login_from_token(token)
-            if token_login and token_login != login:
-                print(
-                    f"[submit] login override by token: payload_user={login} -> token_user={token_login}"
-                )
-                login = token_login
-    # Temporary rollback: take login directly from payload (legacy behavior).
-    # Auth token is not required for /submit in this mode.
     tier = _subscription_tier_label(login)
     has_priority = tier in {"pro", "pro_plus"}
     _ensure_tasks_sync_worker()
