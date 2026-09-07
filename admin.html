@@ -859,6 +859,13 @@
       } catch (err) {
         console.warn("Admin token unavailable", err);
       }
+      // Fail closed. Previously a slow auth state or any error simply dropped the
+      // header and the privileged request went out unauthenticated; the server
+      // rejects it, but the caller could not tell an auth problem from a real
+      // failure. Refuse to send the request instead.
+      if (!headers.Authorization) {
+        throw new Error("Не удалось получить токен авторизации. Войдите заново.");
+      }
       return headers;
     }
 

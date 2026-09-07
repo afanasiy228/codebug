@@ -19,6 +19,42 @@ function getDb() {
 
 
 /* ============================
+   POST-LOGIN REDIRECT TARGET
+============================ */
+/**
+ * Resolve the ?next= parameter to a safe destination.
+ *
+ * The raw value used to be assigned straight to location.href, which made
+ * auth.html?next=https://evil.example/ an open redirect fired the instant a user
+ * logged in, and auth.html?next=javascript:... script execution in this origin
+ * while a fresh ID token sits in localStorage. Only same-origin relative paths
+ * are accepted; anything else falls back to the home page.
+ */
+function safeNextTarget(rawNext, fallback) {
+    const home = fallback || "index.html";
+    const value = String(rawNext == null ? "" : rawNext).trim();
+    if (!value) return home;
+    // Reject anything with a scheme (javascript:, data:, https:), a protocol-relative
+    // prefix, a backslash (which some browsers normalise to "/"), or a control char.
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return home;
+    if (value.startsWith("//") || value.startsWith("\\")) return home;
+    if (/[\u0000-\u001f\u007f]/.test(value)) return home;
+    // Resolve the way the browser would, then confirm it stayed on this origin.
+    try {
+        const resolved = new URL(value, window.location.href);
+        if (resolved.origin !== window.location.origin) return home;
+    } catch (_) {
+        return home;
+    }
+    // Safe: hand back the caller's own relative form, unchanged.
+    return value;
+}
+
+if (typeof window !== "undefined") {
+    window.safeNextTarget = safeNextTarget;
+}
+
+/* ============================
    USER SESSION
 ============================ */
 function setUser(login) {
@@ -1494,7 +1530,7 @@ async function login() {
     if (!finalized.ok) return showError("login-error", finalized.error);
 
     const next = new URLSearchParams(window.location.search).get("next");
-    window.location.href = next || "index.html";
+    window.location.href = safeNextTarget(next);
 }
 
 async function forgotPassword() {
@@ -1598,7 +1634,7 @@ async function resendVerificationFromForm() {
         const finalized = await finalizeVerifiedAccount(userAuth, pending.login);
         if (!finalized.ok) return showError("verify-error", finalized.error);
         const next = new URLSearchParams(window.location.search).get("next");
-        window.location.href = next || "index.html";
+        window.location.href = safeNextTarget(next);
         return;
     }
 
@@ -1649,7 +1685,7 @@ async function checkVerificationStatus() {
     const finalized = await finalizeVerifiedAccount(userAuth, pending.login);
     if (!finalized.ok) return showError("verify-error", finalized.error);
     const next = new URLSearchParams(window.location.search).get("next");
-    window.location.href = next || "index.html";
+    window.location.href = safeNextTarget(next);
 }
 
 async function cancelPendingRegistration() {
@@ -1825,7 +1861,7 @@ async function syncSessionFromAuth() {
 
     if (isAuthPage()) {
         const next = new URLSearchParams(window.location.search).get("next");
-        window.location.href = next || "index.html";
+        window.location.href = safeNextTarget(next);
     }
 }
 

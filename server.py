@@ -12,6 +12,7 @@ from flask_cors import CORS
 import time
 import urllib.parse
 import urllib.request
+import hmac
 import html
 import traceback
 
@@ -38,15 +39,26 @@ def _cors_origins():
 
 CORS(app, resources={r"/*": {"origins": _cors_origins()}}, supports_credentials=False)
 
+# Flask buffers the whole body before any handler runs, so per-field size checks are
+# not a substitute for this. The Polygon importer takes the largest legitimate upload.
+MAX_REQUEST_BYTES = int(os.getenv("MAX_REQUEST_BYTES", str(24 * 1024 * 1024)))
+app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
+
 JUDGE_SCRIPT = "judge.py"
 TASKS_REPO_URL = os.getenv("TASKS_REPO_URL", "git@github.com:afanasiy228/taskscodebug.git")
 TASKS_REPO_DIR = os.getenv("TASKS_REPO_DIR", ".tasks_repo")
 TASKS_REPO_KEY_FILE = os.getenv("TASKS_REPO_KEY_FILE", "/etc/secrets/codebug_tasks_deploy")
 TASKS_SYNC_TTL = int(os.getenv("TASKS_SYNC_TTL", "300"))
+TASKS_REPO_KNOWN_HOSTS = os.getenv("TASKS_REPO_KNOWN_HOSTS", os.path.expanduser("~/.ssh/known_hosts"))
+TASKS_REPO_HOST_KEY_POLICY = os.getenv("TASKS_REPO_HOST_KEY_POLICY", "accept-new")
 TASKS_COMMIT_NAME = os.getenv("TASKS_COMMIT_NAME", "CodeBug Admin")
 TASKS_COMMIT_EMAIL = os.getenv("TASKS_COMMIT_EMAIL", "admin@codebug.local")
 LAST_TASKS_SYNC = 0.0
 MAX_GENERATED_TESTS = int(os.getenv("MAX_GENERATED_TESTS", "200"))
+# Compressed size is not a bound on extracted size, so cap the decompressed total.
+MAX_ZIP_ENTRIES = int(os.getenv("MAX_ZIP_ENTRIES", "5000"))
+MAX_ZIP_ENTRY_BYTES = int(os.getenv("MAX_ZIP_ENTRY_BYTES", str(64 * 1024 * 1024)))
+MAX_ZIP_TOTAL_BYTES = int(os.getenv("MAX_ZIP_TOTAL_BYTES", str(512 * 1024 * 1024)))
 JUDGE_PROCESS_TIMEOUT = int(os.getenv("JUDGE_PROCESS_TIMEOUT", "120"))
 SUPPORTED_LANGUAGES = {"cpp", "python"}
 PROFILE_LITE_CACHE_TTL = int(os.getenv("PROFILE_LITE_CACHE_TTL", "30"))
@@ -215,6 +227,17 @@ DEFAULT_PROFILE_COVER_ID = "cover_1"
 MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))
 SUBSCRIPTION_PERIOD_DAYS = int(os.getenv("SUBSCRIPTION_PERIOD_DAYS", "30"))
 SUBSCRIPTION_GRACE_DAYS = int(os.getenv("SUBSCRIPTION_GRACE_DAYS", "10"))
+# Every subscription the server grants carries a "source". A paid tier that has no
+# source and was last touched after this cutoff was written by a client - which the
+# Realtime Database rules currently still permit, because a .write granted on
+# users/$login cascades over the admin-only rule on users/$login/subscription.
+# Set SUBSCRIPTION_SOURCE_CUTOFF_MS to the deploy time so pre-existing grants (which
+# predate the marker) are never flagged. Enforcement is opt-in: turn it on only once
+# the audit log is clean, or admin grants made from admin.html will stop counting.
+SUBSCRIPTION_SOURCE_CUTOFF_MS = int(os.getenv("SUBSCRIPTION_SOURCE_CUTOFF_MS", "0"))
+SUBSCRIPTION_REQUIRE_SOURCE = os.getenv("SUBSCRIPTION_REQUIRE_SOURCE", "0") == "1"
+SUBSCRIPTION_TRUSTED_SOURCES = {"payment", "contest", "admin"}
+PAID_TIERS = {"pro", "pro_plus", "creator_dev"}
 
 
 def _api_error(error, status=400, code=None):
@@ -231,9 +254,24 @@ def _server_error(error, code, exc=None, status=500):
     return _api_error(error, status=status, code=code)
 
 
+# How many proxies sit in front of this app (Render adds one). Only the hops the
+# proxies appended can be trusted; everything to the left is client-supplied.
+TRUST_PROXY_HOPS = int(os.getenv("TRUST_PROXY_HOPS", "1"))
+
+
 def _request_ip():
+    """Client IP, taking only the hop our own proxy appended.
+
+    Reading the leftmost X-Forwarded-For entry let any caller spoof their address
+    with a single header and defeat every IP-keyed rate limit.
+    """
     forwarded_for = request.headers.get("X-Forwarded-For", "")
-    return (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr) or "unknown"
+    if forwarded_for and TRUST_PROXY_HOPS > 0:
+        hops = [part.strip() for part in forwarded_for.split(",") if part.strip()]
+        if hops:
+            index = max(0, len(hops) - TRUST_PROXY_HOPS)
+            return hops[index] or request.remote_addr or "unknown"
+    return request.remote_addr or "unknown"
 
 
 def _allowed_origins():
@@ -264,6 +302,38 @@ def _soft_check_request_origin(user_login=None):
 @app.before_request
 def _before_write_request_soft_checks():
     _soft_check_request_origin()
+
+
+@app.errorhandler(413)
+def _handle_payload_too_large(_error):
+    return _api_error("payload_too_large", 413, "PAYLOAD_TOO_LARGE")
+
+
+# Responses that carry per-user data must never be stored by a shared cache. The
+# public, cacheable endpoints set their own Cache-Control and are left alone.
+_PUBLIC_CACHEABLE_PATHS = ("/ping", "/public-config", "/tasks/")
+
+
+@app.after_request
+def _apply_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    # This is a JSON API; nothing here should ever be framed.
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    )
+    if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    path = request.path or ""
+    is_public = path in {"/", "/ping", "/public-config"} or path.startswith("/tasks/")
+    if not is_public and "Cache-Control" not in response.headers:
+        response.headers["Cache-Control"] = "private, no-store"
+    return response
 
 
 def _is_admin_request():
@@ -379,6 +449,37 @@ def _platega_amount_for_price(price):
         return price
 
 
+def _subscription_is_server_backed(raw):
+    """True when this subscription carries evidence the server itself granted it."""
+    if not isinstance(raw, dict):
+        return True
+    tier = str(raw.get("tier") or "").strip().lower()
+    if tier not in PAID_TIERS:
+        return True
+    if str(raw.get("source") or "").strip().lower() in SUBSCRIPTION_TRUSTED_SOURCES:
+        return True
+    # Paid subscriptions created before the source marker existed are legitimate.
+    if _to_int(raw.get("updatedAt")) <= SUBSCRIPTION_SOURCE_CUTOFF_MS:
+        return True
+    # A payment record is equally good evidence.
+    return bool(raw.get("lastPaymentTransactionId"))
+
+
+def _audit_subscription_source(login, raw):
+    """Log (and optionally reject) a paid tier the server never granted."""
+    if _subscription_is_server_backed(raw):
+        return True
+    cache_key = ("sub-audit", login)
+    if _cache_get(cache_key) is None:
+        _cache_set(cache_key, True, 300)
+        print(
+            f"[security][subscription] unbacked paid tier login={login} "
+            f"tier={raw.get('tier')} status={raw.get('status')} "
+            f"updatedAt={raw.get('updatedAt')} enforced={SUBSCRIPTION_REQUIRE_SOURCE}"
+        )
+    return not SUBSCRIPTION_REQUIRE_SOURCE
+
+
 def _normalize_subscription(login, raw, write_back=False):
     if not isinstance(raw, dict):
         raw = {}
@@ -441,6 +542,9 @@ def _get_user_subscription(login):
         raw = db.reference(f"users/{login}/subscription").get() or {}
         if not isinstance(raw, dict):
             return {}
+        if not _audit_subscription_source(login, raw):
+            # Enforcing: a client-written paid tier does not grant server-side rights.
+            return _normalize_subscription(login, {}, write_back=False)
         return _normalize_subscription(login, raw, write_back=True)
     except Exception as e:
         print("subscription read failed:", e)
@@ -531,6 +635,7 @@ def _apply_contest_reward(login, contest_id, place, reward):
                 "activatedAt": subscription.get("activatedAt") or now,
                 "updatedAt": now,
                 "expiresAt": expires_at,
+                "source": "contest",
                 "infinite": is_infinite,
                 "graceUntil": None,
                 "paymentWarning": None,
@@ -669,12 +774,48 @@ def _rate_limit_global(route_key, limit, per_seconds):
     return _rate_limit(route_key, "__global__", limit, per_seconds)
 
 
+_SECRET_ENV_PATTERN = re.compile(
+    r"SECRET|PASSWORD|PASSWD|CREDENTIAL|PRIVATE_KEY|SERVICE_ACCOUNT|_TOKEN|API_KEY|ADMIN_KEY",
+    re.IGNORECASE,
+)
+_SECRET_ENV_NAMES = {
+    "FIREBASE_SERVICE_ACCOUNT",
+    "FIREBASE_SERVICE_ACCOUNT_FILE",
+    "ADMIN_API_KEY",
+    "RECAPTCHA_SECRET_KEY",
+    "PLATEGA_MERCHANT_ID",
+    "PLATEGA_SECRET",
+    "TASKS_REPO_KEY_FILE",
+    "REDIS_URL",
+}
+
+
+def _scrubbed_env():
+    """os.environ with secret-bearing variables removed.
+
+    judge.py runs untrusted submissions. In Docker mode the container gets no `-e`
+    at all, so this is defence in depth - but with ALLOW_UNSAFE_RUNNER=1 the child
+    inherits this environment directly, and it would otherwise contain the Firebase
+    service-account JSON and the payment credentials.
+    """
+    return {
+        key: value
+        for key, value in os.environ.items()
+        if key not in _SECRET_ENV_NAMES and not _SECRET_ENV_PATTERN.search(key)
+    }
+
+
 def _git_env():
     return {
         **os.environ,
+        # accept-new pins the host key on first use instead of accepting a
+        # different key silently on every connection (StrictHostKeyChecking=no).
+        # Set TASKS_REPO_KNOWN_HOSTS to a pinned file to make this strict.
         "GIT_SSH_COMMAND": (
             f"ssh -i {TASKS_REPO_KEY_FILE} "
-            "-o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+            "-o IdentitiesOnly=yes "
+            f"-o StrictHostKeyChecking={TASKS_REPO_HOST_KEY_POLICY} "
+            f"-o UserKnownHostsFile={TASKS_REPO_KNOWN_HOSTS}"
         )
     }
 
@@ -753,25 +894,22 @@ def _validate_submit_payload(data):
         return None, _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     task_raw = data.get("task")
     code = data.get("code")
-    user_raw = data.get("user")
     lang = _validate_language(data.get("language"))
     if not _is_nonempty_string(code):
         return None, _api_error("code_required", 400, "CODE_REQUIRED")
-    if not _is_nonempty_string(user_raw):
-        return None, _api_error("user_required", 400, "USER_REQUIRED")
     if len(code.encode("utf-8", errors="replace")) > MAX_CODE_SIZE_BYTES:
         return None, _api_error("code_too_large", 400, "CODE_TOO_LARGE")
     try:
         task_id = int(str(task_raw).strip())
     except (TypeError, ValueError):
         return None, _api_error("invalid_task", 400, "INVALID_TASK")
-    user_login = str(user_raw).strip()
     if lang is None:
         lang = "cpp"
+    # data["user"] is still accepted from older clients but deliberately ignored:
+    # the submitter is resolved server-side from the verified Firebase ID token.
     return {
         "task_id": task_id,
         "code": code,
-        "user_login": user_login,
         "language": lang,
         "contest_id": data.get("contestId")
     }, None
@@ -983,7 +1121,7 @@ def _run_submission_job(job):
                 f.write(code)
 
             judge_env = {
-                **os.environ,
+                **_scrubbed_env(),
                 "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
                 "JUDGE_SOURCE": source_name,
                 "JUDGE_BINARY": "sol",
@@ -2137,27 +2275,17 @@ def submit():
     data = request.get_json(silent=True) or {}
     print("JSON RAW:", data)
 
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+
     payload, payload_error = _validate_submit_payload(data)
     if payload_error:
         return payload_error
 
     task = str(payload["task_id"])
     code = payload["code"]
-    login = payload["user_login"]
     contest_id = payload["contest_id"]
-    auth_header = request.headers.get("Authorization", "")
-    token_login = None
-    if auth_header.startswith("Bearer "):
-        token = auth_header.removeprefix("Bearer ").strip()
-        if token:
-            token_login = _resolve_login_from_token(token)
-            if token_login and token_login != login:
-                print(
-                    f"[submit] login override by token: payload_user={login} -> token_user={token_login}"
-                )
-                login = token_login
-    # Temporary rollback: take login directly from payload (legacy behavior).
-    # Auth token is not required for /submit in this mode.
     tier = _subscription_tier_label(login)
     has_priority = tier in {"pro", "pro_plus"}
     _ensure_tasks_sync_worker()
@@ -2244,6 +2372,9 @@ def submit():
 def auth_verify_captcha():
     if request.method == "OPTIONS":
         return ("", 204)
+
+    if not _rate_limit("verify_captcha", _request_ip(), limit=30, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
 
     data = request.get_json(silent=True) or {}
     token = str(data.get("token", "")).strip()
@@ -2406,10 +2537,23 @@ def tasks_create():
 def _safe_extract_zip(archive, dest_dir):
     with zipfile.ZipFile(archive) as zf:
         dest_abs = os.path.abspath(dest_dir)
-        for info in zf.infolist():
+        infos = zf.infolist()
+        if len(infos) > MAX_ZIP_ENTRIES:
+            raise ValueError("zip_too_many_entries")
+        total = 0
+        for info in infos:
             target = os.path.abspath(os.path.join(dest_abs, info.filename))
             if target != dest_abs and not target.startswith(dest_abs + os.sep):
                 raise ValueError("unsafe_zip_path")
+            # Refuse symlink entries: extracting one lets a later entry (or the
+            # judge) write through it to an arbitrary path.
+            if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                raise ValueError("unsafe_zip_symlink")
+            if info.file_size > MAX_ZIP_ENTRY_BYTES:
+                raise ValueError("zip_entry_too_large")
+            total += info.file_size
+            if total > MAX_ZIP_TOTAL_BYTES:
+                raise ValueError("zip_too_large")
         zf.extractall(dest_abs)
 
 
@@ -3040,6 +3184,40 @@ def _is_valid_firebase_path_part(value):
     return not bool(re.search(r"[.#$/\[\]]", part))
 
 
+COVER_URL_ALLOWED_HOSTS = {
+    host.strip().lower()
+    for host in os.getenv(
+        "COVER_URL_ALLOWED_HOSTS",
+        "res.cloudinary.com,codebug.online,www.codebug.online",
+    ).split(",")
+    if host.strip()
+}
+
+
+def _is_allowed_cover_url(url):
+    """Cover images may only come from hosts we control or already trust.
+
+    Any external URL here becomes a beacon that reports every profile viewer to a
+    third party, and it is rendered into a CSS url() on the rating page.
+    """
+    value = str(url or "").strip()
+    if not value:
+        return False
+    if value.startswith("/"):
+        # Site-relative, but not protocol-relative ("//evil.example/x.png").
+        return not value.startswith("//")
+    if not value.startswith("https://"):
+        return False
+    try:
+        host = urllib.parse.urlparse(value).hostname or ""
+    except ValueError:
+        return False
+    host = host.lower()
+    return host in COVER_URL_ALLOWED_HOSTS or any(
+        host.endswith("." + allowed) for allowed in COVER_URL_ALLOWED_HOSTS
+    )
+
+
 def _is_valid_login_name(login):
     if not isinstance(login, str):
         return False
@@ -3167,6 +3345,47 @@ def _platega_request(path, method="GET", payload=None, timeout=20):
         raise RuntimeError(f"Platega HTTP {e.code}: {body[:1000]}") from e
 
 
+def _payment_matches_expected(payment, data):
+    """Compare the callback's amount and currency against what we recorded on create.
+
+    A provider that omits these fields cannot be checked; anything it does send must
+    agree with the transaction we created.
+    """
+    expected_amount = payment.get("amount")
+    got_amount = data.get("amount")
+    if got_amount is not None and expected_amount is not None:
+        try:
+            if abs(float(got_amount) - float(expected_amount)) > 0.01:
+                return False
+        except (TypeError, ValueError):
+            return False
+    expected_currency = str(payment.get("currency") or "").strip().upper()
+    got_currency = str(data.get("currency") or "").strip().upper()
+    if got_currency and expected_currency and got_currency != expected_currency:
+        return False
+    return True
+
+
+def _claim_payment_confirmation(pay_ref):
+    """Record this transaction as confirmed, atomically, exactly once.
+
+    Returns True only for the callback that actually performed the transition, so a
+    provider retry (or a replayed webhook) cannot stack another subscription period.
+    """
+    claimed = {"first": False}
+
+    def _txn(current):
+        current = dict(current) if isinstance(current, dict) else {}
+        if current.get("confirmedAt"):
+            return current
+        current["confirmedAt"] = _now_ms()
+        claimed["first"] = True
+        return current
+
+    pay_ref.transaction(_txn)
+    return claimed["first"]
+
+
 def _activate_paid_subscription(login, tier, transaction_id, amount=None):
     now = _now_ms()
     period_ms = SUBSCRIPTION_PERIOD_DAYS * 86_400_000
@@ -3190,6 +3409,7 @@ def _activate_paid_subscription(login, tier, transaction_id, amount=None):
         "lastPaymentAt": now,
         "lastPaymentTransactionId": transaction_id,
         "lastPaymentAmount": amount,
+        "source": "payment",
         "visuals": current.get("visuals") if isinstance(current.get("visuals"), dict) else {"seasonalEnabled": True},
         "features": _subscription_features_for_tier(tier)
     }
@@ -3247,6 +3467,8 @@ def platega_create_payment():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("payments_create", login, limit=10, per_seconds=600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
     if not PLATEGA_MERCHANT_ID or not PLATEGA_SECRET:
@@ -3344,9 +3566,16 @@ def platega_create_payment():
 def platega_callback():
     merchant_id = request.headers.get("X-MerchantId", "")
     secret = request.headers.get("X-Secret", "")
-    if not PLATEGA_MERCHANT_ID or not PLATEGA_SECRET or merchant_id != PLATEGA_MERCHANT_ID or secret != PLATEGA_SECRET:
+    if (
+        not PLATEGA_MERCHANT_ID
+        or not PLATEGA_SECRET
+        or not hmac.compare_digest(merchant_id, PLATEGA_MERCHANT_ID)
+        or not hmac.compare_digest(secret, PLATEGA_SECRET)
+    ):
         print("[payments][platega] callback auth failed", {"merchant": merchant_id})
         return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("payments_callback", _request_ip(), limit=240, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
 
@@ -3355,37 +3584,65 @@ def platega_callback():
     status = str(data.get("status") or "").strip().upper()
     if not transaction_id or not status:
         return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    # The id is interpolated into a Firebase path below.
+    if not _is_valid_firebase_path_part(transaction_id):
+        return _api_error("invalid_transaction_id", 400, "INVALID_TRANSACTION_ID")
 
     try:
         pay_ref = db.reference(f"subscriptions/payments/{transaction_id}")
         payment = pay_ref.get() or {}
         if not isinstance(payment, dict) or not payment:
-            print("[payments][platega] callback for unknown transaction:", transaction_id, data)
+            print("[payments][platega] callback for unknown transaction:", transaction_id)
             return _api_error("payment_not_found", 404, "PAYMENT_NOT_FOUND")
         login = str(payment.get("login") or "").strip()
         tier = str(payment.get("tier") or "pro").strip().lower()
+        prior_status = str(payment.get("status") or "").strip().upper()
+
+        if status == "CONFIRMED":
+            # Never re-activate a payment the provider already reversed.
+            if prior_status in {"CANCELED", "CHARGEBACKED"}:
+                print(
+                    "[payments][platega] refused CONFIRMED after",
+                    prior_status, transaction_id,
+                )
+                return _api_error("payment_already_reversed", 409, "PAYMENT_ALREADY_REVERSED")
+            # The amount and currency must match what we recorded when creating it.
+            if not _payment_matches_expected(payment, data):
+                print(
+                    "[payments][platega] amount/currency mismatch for", transaction_id,
+                    "expected", payment.get("amount"), payment.get("currency"),
+                )
+                return _api_error("payment_amount_mismatch", 400, "PAYMENT_AMOUNT_MISMATCH")
+
         amount = data.get("amount", payment.get("amount"))
         now = _now_ms()
-        pay_ref.update({
-            "status": status,
-            "callback": data,
-            "updatedAt": now,
-            "confirmedAt": now if status == "CONFIRMED" else payment.get("confirmedAt")
-        })
+
+        subscription = None
+        if status == "CONFIRMED":
+            # Claim first: only the callback that wins the transition may grant a
+            # period, so provider retries and replays are no-ops.
+            first_confirmation = _claim_payment_confirmation(pay_ref)
+            pay_ref.update({"status": status, "callback": data, "updatedAt": now})
+            if first_confirmation:
+                subscription = _activate_paid_subscription(login, tier, transaction_id, amount)
+                print("[payments][platega] subscription activated", login, tier, transaction_id)
+            else:
+                subscription = _get_user_subscription(login)
+                print("[payments][platega] duplicate CONFIRMED ignored", transaction_id)
+        else:
+            pay_ref.update({"status": status, "callback": data, "updatedAt": now})
+            if status in {"CANCELED", "CHARGEBACKED"}:
+                subscription = _mark_paid_subscription_problem(login, tier, transaction_id, status)
+                print("[payments][platega] subscription payment problem", login, tier, status, transaction_id)
+            else:
+                subscription = _get_user_subscription(login)
+
         db.reference(f"subscriptions/requests/{transaction_id}").update({
             "status": "approved" if status == "CONFIRMED" else status.lower(),
             "callbackStatus": status,
             "updatedAt": now,
             "resolvedAt": now if status in {"CONFIRMED", "CANCELED", "CHARGEBACKED"} else None
         })
-        if status == "CONFIRMED":
-            subscription = _activate_paid_subscription(login, tier, transaction_id, amount)
-            print("[payments][platega] subscription activated", login, tier, transaction_id)
-        elif status in {"CANCELED", "CHARGEBACKED"}:
-            subscription = _mark_paid_subscription_problem(login, tier, transaction_id, status)
-            print("[payments][platega] subscription payment problem", login, tier, status, transaction_id)
-        else:
-            subscription = _get_user_subscription(login)
         return jsonify({"ok": True, "status": status, "subscription": subscription})
     except Exception as e:
         return _server_error("payment_callback_failed", "PAYMENT_CALLBACK_FAILED", exc=e)
@@ -3399,13 +3656,16 @@ def payment_subscription_status():
     return jsonify({"ok": True, "login": login, "subscription": _get_user_subscription(login)})
 
 
-@app.route("/users/<path:login>/profile-lite", methods=["GET"])
+@app.route("/users/<login>/profile-lite", methods=["GET"])
 def user_profile_lite(login):
+    # Was <path:login>, which allowed "/" and let an unauthenticated caller steer
+    # db.reference("publicProfiles/{login}") and db.reference("users/{login}") into
+    # arbitrary subtrees.
+    login = str(login or "").strip()
+    if not _is_valid_login_name(login):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
     if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
-    login = str(login or "").strip()
-    if not login:
-        return _api_error("invalid_login", 400, "INVALID_LOGIN")
     cache_key = ("profile-lite", login)
     cached = _cache_get(cache_key)
     if cached is not None:
@@ -3463,7 +3723,9 @@ def user_profile_lite(login):
                 "coverId": profile_style.get("coverId"),
                 "coverUrl": user_ref.child("coverUrl").get() or ""
             },
-            "subscription": _normalize_subscription(login, raw_sub, write_back=True),
+            # write_back=False: this endpoint is unauthenticated, and a public GET
+            # must never trigger a database write.
+            "subscription": _normalize_subscription(login, raw_sub, write_back=False),
             "stats": {
                 "cnt": stats.get("cnt", 0),
                 "exp": stats.get("exp", 0),
@@ -3484,6 +3746,8 @@ def profile_set_nick_color():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("set_nick_color", login, limit=60, per_seconds=3600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not _is_pro_active(login):
         return _api_error("pro_required", 403, "PRO_REQUIRED")
     global FIREBASE_READY
@@ -3547,7 +3811,7 @@ def profile_set_cover():
     if cover_url:
         if not _is_pro_active(login):
             return _api_error("pro_required", 403, "PRO_REQUIRED")
-        if not (cover_url.startswith("https://") or cover_url.startswith("http://") or cover_url.startswith("/")):
+        if not _is_allowed_cover_url(cover_url):
             return _api_error("invalid_cover_url", 400, "INVALID_COVER_URL")
 
     try:
@@ -3710,8 +3974,16 @@ def profile_extended_stats(login):
     requester, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    target = str(login or "").strip()
+    if not _is_valid_login_name(target):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    # This exposes another user's full activity feed, so it is owner-or-admin only.
+    if target != requester and not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
     if not _is_pro_plus_active(requester):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
+    if not _rate_limit("extended_stats", requester, limit=30, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -3721,7 +3993,6 @@ def profile_extended_stats(login):
         submissions = db.reference("submissions/global").get() or {}
     except Exception as e:
         return _server_error("stats_load_failed", "STATS_LOAD_FAILED", exc=e)
-    target = str(login or "").strip()
     now_ms = int(time.time() * 1000)
     day_ms = 24 * 60 * 60 * 1000
     verdicts = {}
@@ -3769,6 +4040,9 @@ def recommendations():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    # Scans all of submissions/global, so it must not be callable in a tight loop.
+    if not _rate_limit("recommendations", login, limit=20, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -3855,6 +4129,13 @@ def _foi_contest_payload():
 def admin_contests_reset_foi():
     if not _is_admin_request():
         return _api_error("forbidden", 403, "FORBIDDEN")
+    # This wipes every contest and every registration; require the same explicit
+    # confirmation token that /admin/purge-users uses.
+    data = request.get_json(silent=True) or {}
+    if str(data.get("confirm") or "") != "RESET_ALL_CONTESTS":
+        return _api_error("confirmation_required", 400, "CONFIRMATION_REQUIRED")
+    if not _rate_limit("admin_reset_foi", "admin", limit=3, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -3924,6 +4205,8 @@ def _contest_standings(contest_id, contest):
 def admin_contests_finalize():
     if not _is_admin_request():
         return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("admin_finalize", "admin", limit=20, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()
@@ -3972,6 +4255,8 @@ def contests_create():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("contests_create", login, limit=10, per_seconds=600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     is_admin = _is_admin_request()
     if not is_admin and not _is_pro_plus_active(login):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
@@ -4037,6 +4322,8 @@ def contest_register():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("contest_register", login, limit=30, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     global FIREBASE_READY
     if not FIREBASE_READY:
         FIREBASE_READY = init_firebase()

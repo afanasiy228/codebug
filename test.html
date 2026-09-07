@@ -408,6 +408,11 @@ if __name__ == "__main__":
             } catch (err) {
                 console.warn("fetchJson auth token error:", err);
             }
+            // Fail closed: /run-single and /editor/* all require a verified token,
+            // so sending the request without one just produces an opaque 401.
+            if (!headers.Authorization) {
+                return { ok: false, data: { error: "auth_required", code: "AUTH_REQUIRED" } };
+            }
             const res = await fetch(`${base}${url}`, {
                 method: "POST",
                 headers,

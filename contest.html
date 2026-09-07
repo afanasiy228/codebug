@@ -3,6 +3,29 @@
 
 <head>
   <meta charset="UTF-8">
+    <!--
+      Content-Security-Policy. GitHub Pages cannot send headers, so it is declared
+      here. The host list is the set these pages actually load; 'unsafe-inline' is
+      required because the page logic lives in inline <script> blocks, so the value
+      of this policy is that it pins WHICH hosts may serve scripts and WHERE data
+      may be sent - not inline-script suppression.
+
+      frame-ancestors is deliberately absent: browsers ignore it in a <meta> tag.
+      Clickjacking protection for this static site needs an HTTP header at the CDN.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data: blob: https:;
+        connect-src 'self' https://codebug.onrender.com http://localhost:7777 http://127.0.0.1:7777 https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app https://www.google.com https://api.cloudinary.com;
+        frame-src https://www.google.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self'
+    ">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Соревнование — CodeBug</title>
   <link rel="icon" type="image/png" href="/logo.png?v=2">
@@ -373,6 +396,9 @@
       const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const auth = typeof getAuth === "function" ? getAuth() : null;
       const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+      // Fail closed: without a token this is an unauthenticated call to a
+      // privileged endpoint, which the server rejects with an opaque 401.
+      if (!token) throw new Error("Не удалось получить токен авторизации. Войдите заново.");
       const res = await fetch(`${base}/contest/register`, {
         method: "POST",
         headers: {

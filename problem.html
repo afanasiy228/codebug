@@ -599,7 +599,7 @@
 
             tr.innerHTML = `
         <td>${idx}</td>
-        <td style="color:${color}; font-weight:600;">${sub.status}</td>
+        <td style="color:${color}; font-weight:600;">${escapeHtml(sub.status)}</td>
         <td>${date}</td>
         <td>—</td>
     `;
@@ -1193,10 +1193,10 @@
         <tr>
             <td>${i--}</td>
             <td style="color:${verdictColor}; font-weight:600;">
-                ${verdictLabel}
+                ${escapeHtml(verdictLabel)}
             </td>
             <td>${score}</td>
-            <td>${passedGroups}</td>
+            <td>${escapeHtml(passedGroups)}</td>
             <td>${timeMs}</td>
             <td>${memoryMb}</td>
             <td>${new Date(s.date).toLocaleTimeString()}</td>

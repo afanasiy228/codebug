@@ -4,6 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+      Content-Security-Policy. GitHub Pages cannot send headers, so it is declared
+      here. The host list is the set this page actually loads; 'unsafe-inline' is
+      required because the page's own logic lives in inline <script> blocks, so the
+      value of this policy is that it pins WHICH hosts may serve scripts and WHERE
+      data may be sent - not inline-script suppression.
+
+      frame-ancestors is deliberately absent: browsers ignore it in a <meta> tag and
+      warn in the console. Clickjacking protection for this static site has to come
+      from an HTTP header at the CDN (see the audit report's manual actions).
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com data:;
+        img-src 'self' data: blob: https:;
+        connect-src 'self' https://codebug.onrender.com http://localhost:7777 http://127.0.0.1:7777 https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app https://www.google.com https://api.cloudinary.com;
+        frame-src https://www.google.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self'
+    ">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>CodeBug — Авторизация</title>
     <link rel="icon" type="image/png" href="/logo.png?v=2">
 
