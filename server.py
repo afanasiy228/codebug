@@ -12,6 +12,7 @@ from flask_cors import CORS
 import time
 import urllib.parse
 import urllib.request
+import hmac
 import html
 import traceback
 
@@ -3231,6 +3232,47 @@ def _platega_request(path, method="GET", payload=None, timeout=20):
         raise RuntimeError(f"Platega HTTP {e.code}: {body[:1000]}") from e
 
 
+def _payment_matches_expected(payment, data):
+    """Compare the callback's amount and currency against what we recorded on create.
+
+    A provider that omits these fields cannot be checked; anything it does send must
+    agree with the transaction we created.
+    """
+    expected_amount = payment.get("amount")
+    got_amount = data.get("amount")
+    if got_amount is not None and expected_amount is not None:
+        try:
+            if abs(float(got_amount) - float(expected_amount)) > 0.01:
+                return False
+        except (TypeError, ValueError):
+            return False
+    expected_currency = str(payment.get("currency") or "").strip().upper()
+    got_currency = str(data.get("currency") or "").strip().upper()
+    if got_currency and expected_currency and got_currency != expected_currency:
+        return False
+    return True
+
+
+def _claim_payment_confirmation(pay_ref):
+    """Record this transaction as confirmed, atomically, exactly once.
+
+    Returns True only for the callback that actually performed the transition, so a
+    provider retry (or a replayed webhook) cannot stack another subscription period.
+    """
+    claimed = {"first": False}
+
+    def _txn(current):
+        current = dict(current) if isinstance(current, dict) else {}
+        if current.get("confirmedAt"):
+            return current
+        current["confirmedAt"] = _now_ms()
+        claimed["first"] = True
+        return current
+
+    pay_ref.transaction(_txn)
+    return claimed["first"]
+
+
 def _activate_paid_subscription(login, tier, transaction_id, amount=None):
     now = _now_ms()
     period_ms = SUBSCRIPTION_PERIOD_DAYS * 86_400_000
@@ -3312,6 +3354,8 @@ def platega_create_payment():
     login, auth_error = _require_user_login()
     if auth_error:
         return auth_error
+    if not _rate_limit("payments_create", login, limit=10, per_seconds=600):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
     if not PLATEGA_MERCHANT_ID or not PLATEGA_SECRET:
@@ -3409,9 +3453,16 @@ def platega_create_payment():
 def platega_callback():
     merchant_id = request.headers.get("X-MerchantId", "")
     secret = request.headers.get("X-Secret", "")
-    if not PLATEGA_MERCHANT_ID or not PLATEGA_SECRET or merchant_id != PLATEGA_MERCHANT_ID or secret != PLATEGA_SECRET:
+    if (
+        not PLATEGA_MERCHANT_ID
+        or not PLATEGA_SECRET
+        or not hmac.compare_digest(merchant_id, PLATEGA_MERCHANT_ID)
+        or not hmac.compare_digest(secret, PLATEGA_SECRET)
+    ):
         print("[payments][platega] callback auth failed", {"merchant": merchant_id})
         return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("payments_callback", _request_ip(), limit=240, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if not _ensure_firebase_ready():
         return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
 
@@ -3420,37 +3471,65 @@ def platega_callback():
     status = str(data.get("status") or "").strip().upper()
     if not transaction_id or not status:
         return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    # The id is interpolated into a Firebase path below.
+    if not _is_valid_firebase_path_part(transaction_id):
+        return _api_error("invalid_transaction_id", 400, "INVALID_TRANSACTION_ID")
 
     try:
         pay_ref = db.reference(f"subscriptions/payments/{transaction_id}")
         payment = pay_ref.get() or {}
         if not isinstance(payment, dict) or not payment:
-            print("[payments][platega] callback for unknown transaction:", transaction_id, data)
+            print("[payments][platega] callback for unknown transaction:", transaction_id)
             return _api_error("payment_not_found", 404, "PAYMENT_NOT_FOUND")
         login = str(payment.get("login") or "").strip()
         tier = str(payment.get("tier") or "pro").strip().lower()
+        prior_status = str(payment.get("status") or "").strip().upper()
+
+        if status == "CONFIRMED":
+            # Never re-activate a payment the provider already reversed.
+            if prior_status in {"CANCELED", "CHARGEBACKED"}:
+                print(
+                    "[payments][platega] refused CONFIRMED after",
+                    prior_status, transaction_id,
+                )
+                return _api_error("payment_already_reversed", 409, "PAYMENT_ALREADY_REVERSED")
+            # The amount and currency must match what we recorded when creating it.
+            if not _payment_matches_expected(payment, data):
+                print(
+                    "[payments][platega] amount/currency mismatch for", transaction_id,
+                    "expected", payment.get("amount"), payment.get("currency"),
+                )
+                return _api_error("payment_amount_mismatch", 400, "PAYMENT_AMOUNT_MISMATCH")
+
         amount = data.get("amount", payment.get("amount"))
         now = _now_ms()
-        pay_ref.update({
-            "status": status,
-            "callback": data,
-            "updatedAt": now,
-            "confirmedAt": now if status == "CONFIRMED" else payment.get("confirmedAt")
-        })
+
+        subscription = None
+        if status == "CONFIRMED":
+            # Claim first: only the callback that wins the transition may grant a
+            # period, so provider retries and replays are no-ops.
+            first_confirmation = _claim_payment_confirmation(pay_ref)
+            pay_ref.update({"status": status, "callback": data, "updatedAt": now})
+            if first_confirmation:
+                subscription = _activate_paid_subscription(login, tier, transaction_id, amount)
+                print("[payments][platega] subscription activated", login, tier, transaction_id)
+            else:
+                subscription = _get_user_subscription(login)
+                print("[payments][platega] duplicate CONFIRMED ignored", transaction_id)
+        else:
+            pay_ref.update({"status": status, "callback": data, "updatedAt": now})
+            if status in {"CANCELED", "CHARGEBACKED"}:
+                subscription = _mark_paid_subscription_problem(login, tier, transaction_id, status)
+                print("[payments][platega] subscription payment problem", login, tier, status, transaction_id)
+            else:
+                subscription = _get_user_subscription(login)
+
         db.reference(f"subscriptions/requests/{transaction_id}").update({
             "status": "approved" if status == "CONFIRMED" else status.lower(),
             "callbackStatus": status,
             "updatedAt": now,
             "resolvedAt": now if status in {"CONFIRMED", "CANCELED", "CHARGEBACKED"} else None
         })
-        if status == "CONFIRMED":
-            subscription = _activate_paid_subscription(login, tier, transaction_id, amount)
-            print("[payments][platega] subscription activated", login, tier, transaction_id)
-        elif status in {"CANCELED", "CHARGEBACKED"}:
-            subscription = _mark_paid_subscription_problem(login, tier, transaction_id, status)
-            print("[payments][platega] subscription payment problem", login, tier, status, transaction_id)
-        else:
-            subscription = _get_user_subscription(login)
         return jsonify({"ok": True, "status": status, "subscription": subscription})
     except Exception as e:
         return _server_error("payment_callback_failed", "PAYMENT_CALLBACK_FAILED", exc=e)
