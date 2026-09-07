@@ -11,8 +11,11 @@ from pathlib import Path
 TASKS_GIT_DIR = Path(".tasks_repo")
 REF = "FETCH_HEAD"
 OUT_DIR = Path(".tasks_repo_clean")
-REPORT_PATH = Path("cleanup_report.json")
-STATE_PATH = Path(".cleanup_state.json")
+# Reports and state live in the git-ignored work dir. The repository root is the
+# GitHub Pages document root, so anything written there is published on the site.
+WORK_DIR = Path(os.getenv("CODEBUG_WORK_DIR", ".codebug_work"))
+REPORT_PATH = WORK_DIR / "cleanup_report.json"
+STATE_PATH = WORK_DIR / "cleanup_state.json"
 
 SSH_CMD = "ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o IPQoS=throughput -o Compression=no -o StrictHostKeyChecking=accept-new"
 
@@ -362,6 +365,7 @@ def main():
         "removedTasks": removed,
         "keptTasks": kept_report
     }
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if STATE_PATH.exists():
         STATE_PATH.unlink()

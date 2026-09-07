@@ -88,7 +88,11 @@ def load_task_difficulties(repo_dir: str) -> Dict[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Rebuild users stats in Firebase backup from submissions.")
-    parser.add_argument("--input", default="firebasebackup.json", help="Path to Firebase backup JSON")
+    parser.add_argument(
+        "--input",
+        default=".codebug_work/firebasebackup.json",
+        help="Path to Firebase backup JSON (keep it out of the repo root: that is the published web root)",
+    )
     parser.add_argument("--tasks-dir", default=".tasks_repo", help="Tasks repo dir for difficulty lookup")
     args = parser.parse_args()
 

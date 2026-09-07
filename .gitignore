@@ -3,8 +3,25 @@ codebug_tasks_deploy.pub
 .DS_Store
 tasks/
 .tasks_repo/
+.tasks_repo_clean/
 .codebug_work/
 backups/
+
+# Secrets and credentials - never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+serviceAccountKey.json
+*service-account*.json
+
+# Database dumps and exports - these contain real user emails and Firebase UIDs
+firebasebackup*.json
+cleanup_report.json
+.cleanup_state.json
+*-dump.json
 
 # Python caches and local environments
 __pycache__/
