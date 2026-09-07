@@ -551,6 +551,79 @@ def _get_user_subscription(login):
         return {}
 
 
+def _admin_subscription_payload(current, tier, action, days=0):
+    """Build a server-backed subscription value for an authenticated admin action."""
+    current = dict(current) if isinstance(current, dict) else {}
+    now = _now_ms()
+    tier = str(tier or current.get("tier") or "pro").strip().lower()
+    if tier not in PAID_TIERS:
+        raise ValueError("invalid_tier")
+
+    visuals = current.get("visuals")
+    if not isinstance(visuals, dict):
+        visuals = {"seasonalEnabled": True}
+
+    if action == "disable":
+        return {
+            **current,
+            "tier": tier,
+            "status": "disabled",
+            "updatedAt": now,
+            "disabledAt": now,
+            "expiresAt": 0,
+            "infinite": False,
+            "graceUntil": None,
+            "paymentWarning": None,
+            "source": "admin",
+            "visuals": visuals,
+            "features": {"earlyAccess": False},
+        }
+
+    if action == "infinite":
+        expires_at = None
+    elif action == "activate":
+        expires_at = now + SUBSCRIPTION_PERIOD_DAYS * 86_400_000
+    elif action == "add_days":
+        base = _to_int(current.get("expiresAt"))
+        if current.get("infinite") is True or base < now:
+            base = now
+        expires_at = max(0, base + int(days) * 86_400_000)
+        if expires_at <= now:
+            return _admin_subscription_payload(current, tier, "disable")
+    else:
+        raise ValueError("invalid_action")
+
+    return {
+        **current,
+        "tier": tier,
+        "status": "active",
+        "activatedAt": current.get("activatedAt") or now,
+        "updatedAt": now,
+        "expiresAt": expires_at,
+        "infinite": expires_at is None,
+        "graceUntil": None,
+        "paymentWarning": None,
+        "failedPaymentAt": None,
+        "disabledAt": None,
+        "source": "admin",
+        "visuals": visuals,
+        "features": _subscription_features_for_tier(tier),
+    }
+
+
+def _public_subscription_value(login, raw):
+    """Return the non-sensitive subscription projection used by public profiles."""
+    normalized = _normalize_subscription(login, raw, write_back=False)
+    return {
+        key: normalized.get(key)
+        for key in (
+            "tier", "status", "updatedAt", "activatedAt", "expiresAt",
+            "graceUntil", "daysLeft", "graceDaysLeft", "nicknameChangedAt",
+            "visuals", "features",
+        )
+    }
+
+
 def _is_pro_active(login):
     return _is_active_tier(login, "pro")
 
@@ -2927,6 +3000,94 @@ def editor_ai_complete():
         status = 503 if error == "ai_completion_not_configured" else 502
         return _api_error("ai_completion_failed", status, error.upper())
     return jsonify({"ok": True, "completion": completion})
+
+
+@app.route("/admin/subscriptions/update", methods=["POST"])
+def admin_update_subscription():
+    if not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _rate_limit("admin_update_subscription", "admin", limit=60, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+
+    data = request.get_json(silent=True) or {}
+    action = str(data.get("action") or "").strip().lower()
+    request_id = str(data.get("requestId") or "").strip()
+    resolution = str(data.get("resolution") or "").strip().lower()
+
+    if request_id:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", request_id):
+            return _api_error("invalid_request_id", 400, "INVALID_REQUEST_ID")
+        if resolution not in {"approve", "reject"}:
+            return _api_error("invalid_resolution", 400, "INVALID_RESOLUTION")
+        request_ref = db.reference(f"subscriptions/requests/{request_id}")
+        request_value = request_ref.get() or {}
+        if not isinstance(request_value, dict):
+            return _api_error("request_not_found", 404, "REQUEST_NOT_FOUND")
+        login = str(request_value.get("login") or "").strip()
+        action = "activate" if resolution == "approve" else "disable"
+        tier = str(data.get("tier") or request_value.get("tier") or "pro").strip().lower()
+    else:
+        request_ref = None
+        login = str(data.get("login") or "").strip()
+        tier = str(data.get("tier") or "pro").strip().lower()
+
+    if not _is_valid_login_name(login):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    if tier not in PAID_TIERS:
+        return _api_error("invalid_tier", 400, "INVALID_TIER")
+    if action not in {"activate", "add_days", "infinite", "disable"}:
+        return _api_error("invalid_action", 400, "INVALID_ACTION")
+
+    days = 0
+    if action == "add_days":
+        raw_days = data.get("days")
+        if isinstance(raw_days, bool):
+            return _api_error("invalid_days", 400, "INVALID_DAYS")
+        try:
+            days = int(raw_days)
+        except (TypeError, ValueError):
+            return _api_error("invalid_days", 400, "INVALID_DAYS")
+        if days == 0 or abs(days) > 3650:
+            return _api_error("invalid_days", 400, "INVALID_DAYS")
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not _ensure_firebase_ready():
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+
+    user_ref = db.reference(f"users/{login}")
+    if not isinstance(user_ref.get(), dict):
+        return _api_error("user_not_found", 404, "USER_NOT_FOUND")
+
+    subscription_ref = user_ref.child("subscription")
+    result = {"value": None}
+
+    def _update(current):
+        value = _admin_subscription_payload(current, tier, action, days)
+        result["value"] = value
+        return value
+
+    try:
+        subscription_ref.transaction(_update)
+        value = result["value"] or subscription_ref.get() or {}
+        public_value = _public_subscription_value(login, value)
+        db.reference(f"publicProfiles/{login}/subscription").set(public_value)
+        db.reference(f"ratingLeaderboard/{login}/subscription").set(public_value)
+        if request_ref is not None:
+            request_ref.update({
+                "status": "approved" if resolution == "approve" else "rejected",
+                "resolvedAt": _now_ms(),
+                "resolvedBy": "server_admin",
+            })
+        return jsonify({
+            "ok": True,
+            "login": login,
+            "action": action,
+            "subscription": _normalize_subscription(login, value, write_back=False),
+        })
+    except Exception as e:
+        return _server_error("subscription_update_failed", "SUBSCRIPTION_UPDATE_FAILED", exc=e)
 
 
 @app.route("/admin/purge-users", methods=["POST"])

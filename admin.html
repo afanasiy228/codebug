@@ -1945,72 +1945,45 @@
       setAdminLog(`Доступ снят: ${login}`);
     }
 
-    function subscriptionFeaturesForTier(tier) {
-      return {
-        earlyAccess: String(tier || "pro").toLowerCase() !== "pro"
-      };
-    }
-
-    function activeSubscriptionPayload(login, tier, expiresAt, extra = {}) {
-      const now = Date.now();
-      return {
-        tier: String(tier || "pro").toLowerCase(),
-        status: "active",
-        activatedAt: extra.activatedAt || now,
-        updatedAt: now,
-        expiresAt,
-        infinite: expiresAt === null,
-        graceUntil: null,
-        paymentWarning: null,
-        failedPaymentAt: null,
-        nicknameChangedAt: extra.nicknameChangedAt || null,
-        visuals: extra.visuals && typeof extra.visuals === "object" ? extra.visuals : { seasonalEnabled: true },
-        features: subscriptionFeaturesForTier(tier)
-      };
-    }
-
-    async function setSubscriptionStatus(login, tier, status) {
-      const now = Date.now();
-      if (status === "active") {
-        const snap = await db.ref("users/" + login + "/subscription").get();
-        const current = snap.exists() && typeof snap.val() === "object" ? snap.val() : {};
-        await db.ref("users/" + login + "/subscription").update(
-          activeSubscriptionPayload(login, tier, now + 30 * 24 * 60 * 60 * 1000, current)
-        );
-        setAdminLog(`Подписка ${login}: active +30 дней`);
-        return;
-      }
-      await db.ref("users/" + login + "/subscription").update({
-        tier: String(tier || "pro").toLowerCase(),
-        status: "disabled",
-        updatedAt: now,
-        disabledAt: now,
-        infinite: false,
-        paymentWarning: null,
-        features: { earlyAccess: false }
+    async function adminSubscriptionRequest(payload) {
+      const base = window.getTasksApiBase
+        ? window.getTasksApiBase()
+        : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+      const response = await fetch(`${base}/admin/subscriptions/update`, {
+        method: "POST",
+        headers: await adminRequestHeaders(),
+        body: JSON.stringify(payload || {})
       });
-      setAdminLog(`Подписка ${login}: disabled`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.code || data.error || `HTTP ${response.status}`);
+      }
+      return data;
     }
 
     async function adminResolveSubscriptionRequest(key, action) {
-      const reqRef = db.ref("subscriptions/requests/" + key);
-      const snap = await reqRef.get();
+      const snap = await db.ref("subscriptions/requests/" + key).get();
       if (!snap.exists()) return;
       const req = snap.val() || {};
       const login = String(req.login || "").trim();
       const tier = String(req.tier || "pro").trim();
       const tierSelect = document.getElementById(`req-tier-${key}`);
       const selectedTier = String(tierSelect?.value || tier || "pro").trim();
-      const payload = (req.payload && typeof req.payload === "object") ? req.payload : {};
       if (!login) return;
-      if (action === "activate") {
-        await db.ref("users/" + login + "/subscription").set(
-          activeSubscriptionPayload(login, selectedTier || payload.tier || tier || "pro", Date.now() + 30 * 24 * 60 * 60 * 1000, payload)
+      try {
+        await adminSubscriptionRequest({
+          requestId: key,
+          resolution: action === "activate" ? "approve" : "reject",
+          tier: selectedTier
+        });
+        setAdminLog(
+          action === "activate"
+            ? `Подписка ${login}: активирована на 30 дней.`
+            : `Заявка ${login}: отклонена.`
         );
-        await reqRef.update({ status: "approved", resolvedAt: Date.now() });
-      } else {
-        await setSubscriptionStatus(login, selectedTier, "disabled");
-        await reqRef.update({ status: "rejected", resolvedAt: Date.now() });
+      } catch (err) {
+        console.error(err);
+        setAdminLog(`Ошибка обработки заявки: ${err?.message || err}`);
       }
       await adminLoadSubscriptionRequests();
     }
@@ -2089,36 +2062,11 @@
         setAdminLog("Укажи ненулевое количество дней.");
         return;
       }
-      const now = Date.now();
-      const deltaMs = days * 24 * 60 * 60 * 1000;
       try {
-        const ref = db.ref("users/" + login + "/subscription");
-        const snap = await ref.get();
-        const current = snap.exists() && typeof snap.val() === "object" ? snap.val() : {};
-        let base = Number(current.expiresAt || 0);
-        if (current.infinite === true || current.expiresAt === null) {
-          base = now;
-        }
-        if (!Number.isFinite(base) || base < now) base = now;
-        const expiresAt = Math.max(0, base + deltaMs);
-        if (expiresAt <= now) {
-          await ref.update({
-            tier,
-            status: "disabled",
-            updatedAt: now,
-            disabledAt: now,
-            expiresAt,
-            infinite: false,
-            graceUntil: null,
-            paymentWarning: null,
-            features: { earlyAccess: false }
-          });
-          setAdminLog(`Подписка ${login}: срок уменьшен, подписка отключена.`);
-        } else {
-          await ref.update(activeSubscriptionPayload(login, tier, expiresAt, current));
-          const left = Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000));
-          setAdminLog(`Подписка ${login}: ${tier}, добавлено ${days} дн., осталось ${left} дн.`);
-        }
+        const data = await adminSubscriptionRequest({ login, tier, action: "add_days", days });
+        const left = data.subscription?.daysLeft;
+        const suffix = Number.isFinite(Number(left)) ? `, осталось ${left} дн.` : "";
+        setAdminLog(`Подписка ${login}: ${tier}, добавлено ${days} дн.${suffix}`);
       } catch (err) {
         console.error(err);
         setAdminLog(`Ошибка изменения срока подписки: ${err?.message || err}`);
@@ -2130,10 +2078,7 @@
       const tier = readQuickSubscriptionTier();
       if (!login || !tier) return;
       try {
-        const ref = db.ref("users/" + login + "/subscription");
-        const snap = await ref.get();
-        const current = snap.exists() && typeof snap.val() === "object" ? snap.val() : {};
-        await ref.update(activeSubscriptionPayload(login, tier, null, current));
+        await adminSubscriptionRequest({ login, tier, action: "infinite" });
         setAdminLog(`Подписка ${login}: ${tier}, бесконечность.`);
       } catch (err) {
         console.error(err);
@@ -2146,14 +2091,7 @@
       const tier = readQuickSubscriptionTier() || "pro";
       if (!login) return;
       try {
-        await setSubscriptionStatus(login, tier, "disabled");
-        await db.ref("users/" + login + "/subscription").update({
-          expiresAt: 0,
-          graceUntil: null,
-          infinite: false,
-          paymentWarning: null,
-          features: { earlyAccess: false }
-        });
+        await adminSubscriptionRequest({ login, tier, action: "disable" });
         setAdminLog(`Подписка ${login} убрана.`);
       } catch (err) {
         console.error(err);

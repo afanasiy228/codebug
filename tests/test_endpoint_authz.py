@@ -26,6 +26,7 @@ PRIVATE_ENDPOINTS = [
 ]
 
 ADMIN_ENDPOINTS = [
+    ("POST", "/admin/subscriptions/update", {"login": "someone", "tier": "pro", "action": "activate"}),
     ("POST", "/admin/purge-users", {"confirm": "DELETE_ALL_USERS"}),
     ("POST", "/admin/rebuild-user-stats", {}),
     ("POST", "/admin/contests/reset-foi", {"confirm": "RESET_ALL_CONTESTS"}),
