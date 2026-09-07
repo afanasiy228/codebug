@@ -62,6 +62,14 @@ class FakeRef:
 
     def update(self, value):
         self._store.writes.append(("update", "/".join(self._path), value))
+        if not self._path:
+            for path, item in (value or {}).items():
+                target = FakeRef(self._store, path)
+                if item is None:
+                    target.delete()
+                else:
+                    target.set(item)
+            return value
         parent = self._parent()
         current = parent.get(self._path[-1])
         if not isinstance(current, dict):
@@ -152,10 +160,12 @@ def srv(fake_db, monkeypatch):
     def fake_verify_id_token(token, *args, **kwargs):
         if token not in tokens:
             raise FakeAuthError("invalid token")
-        return {"uid": tokens[token]}
+        value = tokens[token]
+        return dict(value) if isinstance(value, dict) else {"uid": value}
 
     fake_auth = types.SimpleNamespace(
         verify_id_token=fake_verify_id_token,
+        create_custom_token=lambda uid: f"custom-{uid}".encode("utf-8"),
         list_users=lambda *a, **k: None,
         delete_user=lambda *a, **k: None,
     )
@@ -164,12 +174,18 @@ def srv(fake_db, monkeypatch):
     server_module.app.config["TESTING"] = True
     client = server_module.app.test_client()
 
-    def add_user(login, uid=None, admin=False):
+    def add_user(login, uid=None, admin=False, email=None, email_verified=True):
         uid = uid or f"uid-{login}"
         token = f"token-{login}"
-        tokens[token] = uid
+        email = email or f"{login}@codebug.test"
+        tokens[token] = {
+            "uid": uid,
+            "email": email,
+            "email_verified": bool(email_verified),
+        }
         fake_db.data.setdefault("userAuthMap", {})[uid] = login
-        fake_db.data.setdefault("users", {})[login] = {"login": login}
+        fake_db.data.setdefault("emailToLogin", {})[email.replace(".", ",")] = login
+        fake_db.data.setdefault("users", {})[login] = {"login": login, "id": uid, "email": email}
         if admin:
             fake_db.data.setdefault("admins", {})[login] = True
         return token

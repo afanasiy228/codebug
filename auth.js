@@ -1348,96 +1348,60 @@ async function resolveLoginByUidOrEmail(uid, email) {
         const mapSnap = await db.ref("userAuthMap/" + uid).get();
         if (mapSnap.exists()) return mapSnap.val();
     }
-    const e = normalizeEmail(email);
-    if (e) {
-        const emailSnap = await db.ref("emailToLogin/" + emailKey(e)).get();
-        if (emailSnap.exists()) return emailSnap.val();
-    }
     return null;
 }
 
 async function resolveEmailByIdentity(identity) {
     const raw = String(identity || "").trim();
-    if (!raw) return null;
-    if (raw.includes("@")) return normalizeEmail(raw);
-    const snap = await db.ref("users/" + raw + "/email").get();
-    if (!snap.exists()) return null;
-    return normalizeEmail(snap.val());
+    return raw.includes("@") ? normalizeEmail(raw) : null;
 }
 
 async function ensureUserProfile(login, userAuth) {
-    const now = Date.now();
-    const baseStats = {
-        exp: 0,
-        cnt: 0,
-        rating: 0,
-        solved: {}
-    };
-    const lightStats = {
-        exp: 0,
-        cnt: 0,
-        rating: 0
-    };
-    const idSnap = await db.ref("users/" + login + "/id").get();
-    if (!idSnap.exists()) {
-        await db.ref().update({
-            ["users/" + login]: {
-                login,
-                id: userAuth.uid,
-                email: normalizeEmail(userAuth.email),
-                emailVerified: !!userAuth.emailVerified,
-                created: now,
-                stats: baseStats,
-                avatarUrl: "",
-                coverUrl: "",
-                updatedAt: now
-            },
-            ["publicProfiles/" + login]: {
-                login,
-                avatarUrl: "",
-                coverUrl: "",
-                stats: lightStats,
-                profileStyle: { coverId: null },
-                subscription: null,
-                updatedAt: now
-            },
-            ["ratingLeaderboard/" + login]: {
-                login,
-                exp: 0,
-                cnt: 0,
-                rating: 0,
-                avatarUrl: "",
-                profileStyle: { coverId: null },
-                subscription: null,
-                updatedAt: now
-            }
-        });
-    } else {
-        await db.ref().update({
-            ["users/" + login + "/id"]: userAuth.uid,
-            ["users/" + login + "/email"]: normalizeEmail(userAuth.email),
-            ["users/" + login + "/emailVerified"]: !!userAuth.emailVerified,
-            ["users/" + login + "/updatedAt"]: now,
-            ["publicProfiles/" + login + "/login"]: login,
-            ["publicProfiles/" + login + "/updatedAt"]: now,
-            ["ratingLeaderboard/" + login + "/login"]: login,
-            ["ratingLeaderboard/" + login + "/updatedAt"]: now
-        });
+    const token = await userAuth.getIdToken();
+    const base = window.getTasksApiBase
+        ? window.getTasksApiBase()
+        : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+    const response = await fetch(`${base}/auth/finalize-profile`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ login })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.login) {
+        throw new Error(payload.code || payload.error || "PROFILE_FINALIZE_FAILED");
     }
-
-    await db.ref("userAuthMap/" + userAuth.uid).set(login);
-    if (userAuth.email) {
-        await db.ref("emailToLogin/" + emailKey(userAuth.email)).set(login);
-    }
+    return payload.login;
 }
 
-async function loginUser(email, pass) {
+async function loginUser(identity, pass) {
     const auth = getAuth();
     if (!auth) return { ok: false, error: "Сервис входа временно недоступен" };
 
     let cred;
     try {
-        cred = await auth.signInWithEmailAndPassword(normalizeEmail(email), pass);
+        const rawIdentity = String(identity || "").trim();
+        if (rawIdentity.includes("@")) {
+            cred = await auth.signInWithEmailAndPassword(normalizeEmail(rawIdentity), pass);
+        } else {
+            const base = window.getTasksApiBase
+                ? window.getTasksApiBase()
+                : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+            const response = await fetch(`${base}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ identity: rawIdentity, password: pass })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.customToken) {
+                const error = new Error("invalid credentials");
+                error.code = response.status === 429 ? "auth/too-many-requests" : "auth/invalid-credential";
+                throw error;
+            }
+            cred = await auth.signInWithCustomToken(payload.customToken);
+        }
     } catch (err) {
         const code = err?.code || "";
         console.warn("Login failed", code || err);
@@ -1489,18 +1453,9 @@ async function login() {
     if (!pass) return showError("login-error", "Укажи пароль");
     if (pass.length < 6) return showError("login-error", "Неправильный логин или пароль");
 
-    let email;
-    try {
-        email = await resolveEmailByIdentity(identity);
-    } catch (err) {
-        console.warn("Login identity lookup failed", err);
-        return showError("login-error", "Не удалось войти. Попробуй ещё раз");
-    }
-    if (!email) return showError("login-error", "Неправильный логин или пароль");
-
     let result;
     try {
-        result = await loginUser(email, pass);
+        result = await loginUser(identity, pass);
     } catch (err) {
         console.warn("Login request failed", err);
         return showError("login-error", "Не удалось войти. Попробуй ещё раз");
@@ -1508,13 +1463,13 @@ async function login() {
     if (!result.ok) {
         if (result.needVerify && result.userAuth) {
             const pendingLogin = await resolveLoginByUidOrEmail(result.userAuth.uid, result.userAuth.email) || String(identity);
-            setPendingRegistration({ login: pendingLogin, email });
+            setPendingRegistration({ login: pendingLogin, email: normalizeEmail(result.userAuth.email) });
             const sent = await sendVerificationWithCooldown(result.userAuth);
             if (!sent.ok) {
-                showVerifyScreen(email, `${result.error}. ${sent.error}`);
+                showVerifyScreen(normalizeEmail(result.userAuth.email), `${result.error}. ${sent.error}`);
                 return;
             }
-            showVerifyScreen(email, "Email не подтвержден. Отправили новую ссылку.");
+            showVerifyScreen(normalizeEmail(result.userAuth.email), "Email не подтвержден. Отправили новую ссылку.");
             return;
         }
         return showError("login-error", result.error);
@@ -1535,17 +1490,23 @@ async function login() {
 
 async function forgotPassword() {
     clearErrors();
-    const auth = getAuth();
-    if (!auth) return showError("login-error", "Firebase Auth не инициализирован");
-
     const identity = document.getElementById("login-identity").value.trim();
     if (!identity) return showError("login-error", "Укажи логин или email для восстановления");
 
-    const email = await resolveEmailByIdentity(identity);
-    if (!email) return showError("login-error", "Пользователь не найден");
-
     try {
-        await auth.sendPasswordResetEmail(normalizeEmail(email));
+        const base = window.getTasksApiBase
+            ? window.getTasksApiBase()
+            : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+        const response = await fetch(`${base}/auth/password-reset`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identity })
+        });
+        if (!response.ok) {
+            const error = new Error("password reset failed");
+            error.code = response.status === 429 ? "auth/too-many-requests" : "auth/service-unavailable";
+            throw error;
+        }
     } catch (err) {
         const code = err?.code || "";
         if (code === "auth/invalid-email") return showError("login-error", "Некорректный email");
@@ -1561,12 +1522,10 @@ async function registerUser(login, email, pass) {
     const auth = getAuth();
     if (!auth) return { ok: false, error: "Firebase Auth не инициализирован" };
 
-    const snap = await db.ref("users/" + login + "/id").get();
+    const snap = await db.ref("publicProfiles/" + login + "/login").get();
     if (snap.exists()) return { ok: false, error: "Логин уже занят" };
 
     const e = normalizeEmail(email);
-    const mailMapSnap = await db.ref("emailToLogin/" + emailKey(e)).get();
-    if (mailMapSnap.exists()) return { ok: false, error: "Этот email уже используется" };
 
     let cred;
     try {
@@ -1651,17 +1610,20 @@ async function finalizeVerifiedAccount(userAuth, fallbackLogin = null) {
         return { ok: false, error: "Логин не найден. Начни регистрацию заново." };
     }
 
-    const existingRef = db.ref("users/" + login + "/id");
-    const existingSnap = await existingRef.get();
-    if (existingSnap.exists() && existingSnap.val() !== userAuth.uid) {
-        return { ok: false, error: "Этот логин уже занят. Начни регистрацию заново." };
+    let finalizedLogin;
+    try {
+        finalizedLogin = await ensureUserProfile(login, userAuth);
+    } catch (err) {
+        const code = String(err?.message || "");
+        if (code === "LOGIN_TAKEN") {
+            return { ok: false, error: "Этот логин уже занят. Начни регистрацию заново." };
+        }
+        return { ok: false, error: "Не удалось синхронизировать профиль. Попробуй ещё раз." };
     }
-
-    await ensureUserProfile(login, userAuth);
     clearPendingRegistration();
-    setUser(login);
+    setUser(finalizedLogin);
     setUid(userAuth.uid);
-    return { ok: true, login };
+    return { ok: true, login: finalizedLogin };
 }
 
 async function checkVerificationStatus() {

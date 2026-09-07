@@ -3,9 +3,12 @@
   "private": true,
   "scripts": {
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test:firebase-rules": "XDG_CONFIG_HOME=.codebug_work/firebase-test-config firebase emulators:exec --config firebase.test.json --only database --project demo-codebug \"node --test tests/firebase-rules.test.mjs\""
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/test": "^1.58.2",
+    "firebase": "^12.18.0"
   }
 }

@@ -1340,7 +1340,7 @@
 
     <script src="firebase.js?v=20260521-3"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20260608-header"></script>
+    <script src="auth.js?v=20260907-auth-privacy"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -2713,7 +2713,7 @@
                 result.textContent = "Это ваш логин.";
                 return;
             }
-            const snap = await db.ref("users/" + login + "/id").get();
+            const snap = await db.ref("publicProfiles/" + login + "/login").get();
             if (!snap.exists()) {
                 result.textContent = "Пользователь не найден.";
                 return;

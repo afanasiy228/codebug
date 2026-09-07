@@ -138,6 +138,12 @@ function firebaseMockScript({ authenticated = false, plan = "free" } = {}) {
         }
         authUser = makeUser(); localStorage.setItem("e2e-authenticated", "1"); notify(); return { user: authUser };
       },
+      async signInWithCustomToken(token) {
+        if (token !== "e2e-custom-token") {
+          const error = new Error("invalid custom token"); error.code = "auth/invalid-custom-token"; throw error;
+        }
+        authUser = makeUser(); localStorage.setItem("e2e-authenticated", "1"); notify(); return { user: authUser };
+      },
       async createUserWithEmailAndPassword(email) {
         authUser = makeUser(email, false); notify(); return { user: authUser };
       },
@@ -168,6 +174,12 @@ function firebaseMockScript({ authenticated = false, plan = "free" } = {}) {
 async function mockExternalServices(page) {
   await page.route(/https:\/\/(www\.gstatic\.com\/firebasejs|www\.google\.com\/recaptcha|cdnjs\.cloudflare\.com\/ajax\/libs\/monaco-editor)\/.*/, (route) => route.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/auth/verify-captcha", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await page.route("**/auth/login", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, customToken: "e2e-custom-token", login: TEST_USER.login }) }));
+  await page.route("**/auth/password-reset", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await page.route("**/auth/finalize-profile", async (route) => {
+    const body = route.request().postDataJSON?.() || {};
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, login: body.login || TEST_USER.login }) });
+  });
   await page.route("**/submit", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ status: "OK", statusLabel: "OK", score: 100, timeMs: 12, memoryMb: 3.5, passedGroups: [1], firebaseSaved: true }) }));
   await page.route("**/contest/register", async (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.route("**/contests/create", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, contestId: "created-e2e" }) }));

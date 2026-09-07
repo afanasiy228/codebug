@@ -1,71 +1,130 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false,
+    ".read": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true",
+    ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true",
 
     "users": {
       "$login": {
-        ".read": true,
-        ".write": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
-
-        "subscription": {
-          ".read": true,
-          ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+        ".read": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+        "avatarUrl": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isString() && newData.val().length <= 2048"
         },
-
+        "coverUrl": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isString() && newData.val().length <= 2048"
+        },
+        "updatedAt": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        },
+        "presence": {
+          ".read": "auth != null && (root.child('userAuthMap').child(auth.uid).val() === $login || root.child('users').child(root.child('userAuthMap').child(auth.uid).val()).child('friends').child($login).exists())",
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.hasChildren(['online', 'lastSeen']) && newData.child('online').isBoolean() && newData.child('lastSeen').isNumber()"
+        },
+        "friends": {
+          ".read": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          "$friend": {
+            ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+            ".validate": "!newData.exists() || (newData.hasChildren(['addedAt']) && newData.child('addedAt').isNumber() && newData.child('addedAt').val() <= now + 60000)"
+          }
+        },
         "stats": {
-          ".read": true,
-          ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+          ".read": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login"
+        },
+        "subscription": {
+          ".read": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login"
+        },
+        "activityFeed": {
+          ".read": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login"
         }
+      }
+    },
+
+    "publicProfiles": {
+      ".read": true,
+      "$login": {
+        "avatarUrl": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isString() && newData.val().length <= 2048"
+        },
+        "coverUrl": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isString() && newData.val().length <= 2048"
+        },
+        "updatedAt": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      }
+    },
+
+    "ratingLeaderboard": {
+      ".read": true,
+      "$login": {
+        "avatarUrl": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isString() && newData.val().length <= 2048"
+        },
+        "updatedAt": {
+          ".write": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      }
+    },
+
+    "userAuthMap": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "emailToLogin": {
+      ".read": false,
+      ".write": false
+    },
+
+    "admins": {
+      "$login": {
+        ".read": "auth != null && root.child('userAuthMap').child(auth.uid).val() === $login"
       }
     },
 
     "submissions": {
-      ".read": true,
-      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
-    },
-
-    "admins": {
-      ".read": true,
-      ".write": false
-    },
-
-    "userAuthMap": {
-      ".read": true,
-      ".write": false
-    },
-
-    "emailToLogin": {
-      ".read": true,
-      ".write": false
+      "global": {
+        ".read": true
+      }
     },
 
     "tasksHidden": {
-      ".read": true,
-      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+      ".read": true
     },
 
     "contests": {
-      ".read": true,
-      ".write": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true"
+      ".read": true
     },
 
     "contest_regs": {
       "$contestId": {
-        "$login": {
-          ".read": "auth != null && ($login === root.child('userAuthMap').child(auth.uid).val() || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)",
-          ".write": "auth != null && ($login === root.child('userAuthMap').child(auth.uid).val() || root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true)"
-        }
+        ".read": true
       }
     },
 
     "subscriptions": {
-      "requests": {
-        "$reqId": {
-          ".read": "auth != null && root.child('admins').child(root.child('userAuthMap').child(auth.uid).val()).val() === true",
-          ".write": "auth != null"
-        }
+      ".read": false,
+      ".write": false
+    },
+
+    "taskSuggestions": {
+      "$requestId": {
+        ".write": "auth != null && !data.exists() && newData.child('author').val() === root.child('userAuthMap').child(auth.uid).val()",
+        ".validate": "newData.hasChildren(['title', 'statement', 'buggyCode', 'bugExplanation', 'author', 'createdAt', 'status']) && newData.child('title').isString() && newData.child('title').val().length <= 160 && newData.child('statement').isString() && newData.child('statement').val().length <= 20000 && newData.child('buggyCode').isString() && newData.child('buggyCode').val().length <= 50000 && newData.child('bugExplanation').isString() && newData.child('bugExplanation').val().length <= 10000 && newData.child('createdAt').isNumber() && newData.child('createdAt').val() <= now + 60000 && newData.child('status').val() === 'pending'"
       }
+    },
+
+    "site": {
+      ".read": true
     }
   }
 }

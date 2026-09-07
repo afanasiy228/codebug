@@ -35,6 +35,18 @@ test.describe("Авторизация", () => {
     await expect(page.locator("#screen-login")).toBeVisible();
   });
 
+  test("вход по логину не раскрывает email клиенту", async ({ page }) => {
+    await preparePage(page);
+    await page.goto("/auth.html");
+    await page.locator("#login-identity").fill(TEST_USER.login);
+    await page.locator("#login-pass").fill(TEST_USER.password);
+    const loginRequest = page.waitForRequest("**/auth/login");
+    await page.getByRole("button", { name: "Войти" }).click();
+    const request = await loginRequest;
+    expect(request.postDataJSON()).toEqual({ identity: TEST_USER.login, password: TEST_USER.password });
+    await expect(page.locator("#nav-links")).toContainText(TEST_USER.login);
+  });
+
   test("основная навигация ведёт на ожидаемые страницы", async ({ page }) => {
     await preparePage(page, { authenticated: true });
     await page.goto("/index.html");

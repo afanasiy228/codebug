@@ -7,6 +7,7 @@ import pytest
 
 # (method, path, json body) for every endpoint that must require a verified token.
 PRIVATE_ENDPOINTS = [
+    ("POST", "/auth/finalize-profile", {"login": "someone"}),
     ("POST", "/submit", {"task": 1, "code": "x"}),
     ("POST", "/run-single", {"code": "x", "input": ""}),
     ("POST", "/editor/diagnostics", {"code": "x"}),

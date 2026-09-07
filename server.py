@@ -12,6 +12,7 @@ from flask_cors import CORS
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 import hmac
 import html
 import traceback
@@ -407,6 +408,30 @@ def _require_user_login():
     if not login:
         return None, _api_error("invalid_token", status=401, code="INVALID_TOKEN")
     return login, None
+
+
+def _verified_identity_from_request(require_verified_email=False):
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None, _api_error("auth_required", status=401, code="AUTH_REQUIRED")
+    token = auth_header.removeprefix("Bearer ").strip()
+    if not token:
+        return None, _api_error("auth_required", status=401, code="AUTH_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return None, _api_error("firebase_not_ready", 503, "FIREBASE_NOT_READY")
+    try:
+        decoded = admin_auth.verify_id_token(token)
+    except Exception:
+        return None, _api_error("invalid_token", status=401, code="INVALID_TOKEN")
+    uid = str(decoded.get("uid") or "").strip()
+    if not uid:
+        return None, _api_error("invalid_token", status=401, code="INVALID_TOKEN")
+    if require_verified_email and decoded.get("email_verified") is not True:
+        return None, _api_error("email_not_verified", status=403, code="EMAIL_NOT_VERIFIED")
+    return decoded, None
 
 
 def _now_ms():
@@ -2441,6 +2466,234 @@ def submit():
     })
 
 
+def _normalize_auth_email(value):
+    email = str(value or "").strip().lower()
+    if len(email) > 254 or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+        return ""
+    return email
+
+
+def _firebase_identity_request(endpoint, payload):
+    if not PUBLIC_FIREBASE_WEB_API_KEY:
+        return None, "firebase_auth_not_configured"
+    url = (
+        "https://identitytoolkit.googleapis.com/v1/"
+        + str(endpoint).lstrip("/")
+        + "?key="
+        + urllib.parse.quote(PUBLIC_FIREBASE_WEB_API_KEY, safe="")
+    )
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            return json.loads(resp.read().decode("utf-8")), None
+    except urllib.error.HTTPError as exc:
+        try:
+            body = json.loads(exc.read().decode("utf-8"))
+            code = str((body.get("error") or {}).get("message") or "firebase_auth_rejected")
+        except Exception:
+            code = "firebase_auth_rejected"
+        return None, code.split(" : ", 1)[0]
+    except Exception:
+        return None, "firebase_auth_unavailable"
+
+
+def _login_for_identity(uid, email=""):
+    login = db.reference(f"userAuthMap/{uid}").get()
+    if login:
+        return str(login).strip()
+    email = _normalize_auth_email(email)
+    if email:
+        login = db.reference(f"emailToLogin/{email.replace('.', ',')}").get()
+        if login:
+            return str(login).strip()
+    return ""
+
+
+@app.route("/auth/login", methods=["POST"])
+def auth_login():
+    if not _rate_limit("auth_login", _request_ip(), limit=12, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    data = request.get_json(silent=True) or {}
+    identity = str(data.get("identity") or "").strip()
+    password = str(data.get("password") or "")
+    if not identity or not password or len(identity) > 254 or len(password) > 256:
+        return _api_error("invalid_credentials", 401, "INVALID_CREDENTIALS")
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 503, "FIREBASE_NOT_READY")
+
+    if "@" in identity:
+        email = _normalize_auth_email(identity)
+    elif _is_valid_login_name(identity):
+        email = _normalize_auth_email(db.reference(f"users/{identity}/email").get())
+    else:
+        email = ""
+    if not email:
+        return _api_error("invalid_credentials", 401, "INVALID_CREDENTIALS")
+
+    auth_result, auth_error = _firebase_identity_request(
+        "accounts:signInWithPassword",
+        {"email": email, "password": password, "returnSecureToken": True},
+    )
+    if auth_error:
+        if auth_error in {"firebase_auth_not_configured", "firebase_auth_unavailable"}:
+            return _api_error("auth_unavailable", 503, "AUTH_UNAVAILABLE")
+        return _api_error("invalid_credentials", 401, "INVALID_CREDENTIALS")
+
+    uid = str((auth_result or {}).get("localId") or "").strip()
+    login = _login_for_identity(uid, email)
+    if not uid or not _is_valid_login_name(login):
+        return _api_error("account_not_initialized", 409, "ACCOUNT_NOT_INITIALIZED")
+    try:
+        custom_token = admin_auth.create_custom_token(uid)
+        if isinstance(custom_token, bytes):
+            custom_token = custom_token.decode("utf-8")
+    except Exception as exc:
+        return _server_error("custom_token_failed", "CUSTOM_TOKEN_FAILED", exc=exc)
+    return jsonify({"ok": True, "customToken": custom_token, "login": login})
+
+
+@app.route("/auth/password-reset", methods=["POST"])
+def auth_password_reset():
+    if not _rate_limit("auth_password_reset", _request_ip(), limit=6, per_seconds=900):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    data = request.get_json(silent=True) or {}
+    identity = str(data.get("identity") or "").strip()
+    if not identity or len(identity) > 254:
+        return jsonify({"ok": True})
+
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 503, "FIREBASE_NOT_READY")
+    if "@" in identity:
+        email = _normalize_auth_email(identity)
+    elif _is_valid_login_name(identity):
+        email = _normalize_auth_email(db.reference(f"users/{identity}/email").get())
+    else:
+        email = ""
+    if not email:
+        return jsonify({"ok": True})
+
+    _, auth_error = _firebase_identity_request(
+        "accounts:sendOobCode",
+        {"requestType": "PASSWORD_RESET", "email": email},
+    )
+    if auth_error in {"firebase_auth_not_configured", "firebase_auth_unavailable"}:
+        return _api_error("auth_unavailable", 503, "AUTH_UNAVAILABLE")
+    # Do not reveal whether an email/login exists.
+    return jsonify({"ok": True})
+
+
+@app.route("/auth/finalize-profile", methods=["POST"])
+def auth_finalize_profile():
+    identity, auth_error = _verified_identity_from_request(require_verified_email=True)
+    if auth_error:
+        return auth_error
+    uid = str(identity.get("uid") or "").strip()
+    email = _normalize_auth_email(identity.get("email"))
+    if not email:
+        return _api_error("email_required", 400, "EMAIL_REQUIRED")
+    if not _rate_limit("auth_finalize_profile", uid, limit=10, per_seconds=300):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+
+    data = request.get_json(silent=True) or {}
+    requested_login = str(data.get("login") or "").strip()
+    mapped_login = _login_for_identity(uid, email)
+    login = mapped_login or requested_login
+    if not _is_valid_login_name(login):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+
+    now = _now_ms()
+    uid_mapping = db.reference(f"userAuthMap/{uid}").get()
+    if uid_mapping and str(uid_mapping).strip() != login:
+        return _api_error("identity_conflict", 409, "IDENTITY_CONFLICT")
+    email_key = email.replace(".", ",")
+    email_mapping = db.reference(f"emailToLogin/{email_key}").get()
+    if email_mapping and str(email_mapping).strip() != login:
+        return _api_error("email_taken", 409, "EMAIL_TAKEN")
+
+    class LoginTaken(Exception):
+        pass
+
+    def claim_login(current):
+        if current and not isinstance(current, dict):
+            raise LoginTaken()
+        value = dict(current) if isinstance(current, dict) else {}
+        existing_uid = str(value.get("id") or "").strip()
+        if existing_uid and existing_uid != uid:
+            raise LoginTaken()
+        value.update({
+            "login": login,
+            "id": uid,
+            "email": email,
+            "emailVerified": True,
+            "created": value.get("created") or now,
+            "avatarUrl": str(value.get("avatarUrl") or ""),
+            "coverUrl": str(value.get("coverUrl") or ""),
+            "updatedAt": now,
+        })
+        if not isinstance(value.get("stats"), dict):
+            value["stats"] = {"exp": 0, "cnt": 0, "rating": 0, "solved": {}}
+        return value
+
+    user_ref = db.reference(f"users/{login}")
+    try:
+        user_value = user_ref.transaction(claim_login)
+    except LoginTaken:
+        return _api_error("login_taken", 409, "LOGIN_TAKEN")
+    except Exception as exc:
+        return _server_error("profile_finalize_failed", "PROFILE_FINALIZE_FAILED", exc=exc)
+
+    public_ref = db.reference(f"publicProfiles/{login}")
+    public_value = public_ref.get() or {}
+    public_value = dict(public_value) if isinstance(public_value, dict) else {}
+    public_value.update({
+        "login": login,
+        "avatarUrl": user_value.get("avatarUrl", ""),
+        "coverUrl": user_value.get("coverUrl", ""),
+        "stats": {
+            "exp": max(0, _to_int(user_value["stats"].get("exp"))),
+            "cnt": max(0, _to_int(user_value["stats"].get("cnt"))),
+            "rating": max(0, _to_int(user_value["stats"].get("rating"))),
+        },
+        "profileStyle": public_value.get("profileStyle") if isinstance(public_value.get("profileStyle"), dict) else {"coverId": None},
+        "updatedAt": now,
+    })
+
+    leaderboard_ref = db.reference(f"ratingLeaderboard/{login}")
+    leaderboard_value = leaderboard_ref.get() or {}
+    leaderboard_value = dict(leaderboard_value) if isinstance(leaderboard_value, dict) else {}
+    leaderboard_value.update({
+        "login": login,
+        "exp": public_value["stats"]["exp"],
+        "cnt": public_value["stats"]["cnt"],
+        "rating": public_value["stats"]["rating"],
+        "avatarUrl": user_value.get("avatarUrl", ""),
+        "profileStyle": leaderboard_value.get("profileStyle") if isinstance(leaderboard_value.get("profileStyle"), dict) else {"coverId": None},
+        "updatedAt": now,
+    })
+    try:
+        db.reference("/").update({
+            f"publicProfiles/{login}": public_value,
+            f"ratingLeaderboard/{login}": leaderboard_value,
+            f"userAuthMap/{uid}": login,
+            f"emailToLogin/{email_key}": login,
+        })
+    except Exception as exc:
+        return _server_error("profile_finalize_failed", "PROFILE_FINALIZE_FAILED", exc=exc)
+    return jsonify({"ok": True, "login": login})
+
+
 @app.route("/auth/verify-captcha", methods=["POST", "OPTIONS"])
 def auth_verify_captcha():
     if request.method == "OPTIONS":
@@ -2451,10 +2704,7 @@ def auth_verify_captcha():
 
     data = request.get_json(silent=True) or {}
     token = str(data.get("token", "")).strip()
-    forwarded_for = request.headers.get("X-Forwarded-For", "")
-    remote_ip = (forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr)
-
-    ok, error_code = _verify_captcha_token(token, remote_ip=remote_ip)
+    ok, error_code = _verify_captcha_token(token, remote_ip=_request_ip())
     if not ok:
         status = 503 if error_code == "captcha_not_configured" else 400
         return jsonify({"ok": False, "error": error_code or "captcha_invalid"}), status
