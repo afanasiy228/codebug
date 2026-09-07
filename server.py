@@ -309,6 +309,33 @@ def _handle_payload_too_large(_error):
     return _api_error("payload_too_large", 413, "PAYLOAD_TOO_LARGE")
 
 
+# Responses that carry per-user data must never be stored by a shared cache. The
+# public, cacheable endpoints set their own Cache-Control and are left alone.
+_PUBLIC_CACHEABLE_PATHS = ("/ping", "/public-config", "/tasks/")
+
+
+@app.after_request
+def _apply_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    # This is a JSON API; nothing here should ever be framed.
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    )
+    if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    path = request.path or ""
+    is_public = path in {"/", "/ping", "/public-config"} or path.startswith("/tasks/")
+    if not is_public and "Cache-Control" not in response.headers:
+        response.headers["Cache-Control"] = "private, no-store"
+    return response
+
+
 def _is_admin_request():
     if ADMIN_API_KEY:
         header_key = request.headers.get("X-Admin-Key", "")
