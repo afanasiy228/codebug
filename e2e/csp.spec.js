@@ -35,9 +35,10 @@ for (const path of CSP_PAGES) {
     // The page must actually render, not just fail quietly behind a blocked script.
     await expect(page.locator("body")).toBeVisible();
     const csp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
-    expect(csp).toContain("https://codebug-47347-default-rtdb.europe-west1.firebasedatabase.app");
+    expect(csp).toContain("https://*.europe-west1.firebasedatabase.app");
     expect(csp).toContain("wss://*.firebasedatabase.app");
     expect(csp).toContain("wss://*.firebaseio.com");
+    expect(csp).toMatch(/frame-src[^;]*https:\/\/\*\.europe-west1\.firebasedatabase\.app/);
     expect(violations, `CSP violations on ${path}:\n${violations.join("\n")}`).toEqual([]);
   });
 }
