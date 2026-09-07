@@ -215,6 +215,17 @@ DEFAULT_PROFILE_COVER_ID = "cover_1"
 MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))
 SUBSCRIPTION_PERIOD_DAYS = int(os.getenv("SUBSCRIPTION_PERIOD_DAYS", "30"))
 SUBSCRIPTION_GRACE_DAYS = int(os.getenv("SUBSCRIPTION_GRACE_DAYS", "10"))
+# Every subscription the server grants carries a "source". A paid tier that has no
+# source and was last touched after this cutoff was written by a client - which the
+# Realtime Database rules currently still permit, because a .write granted on
+# users/$login cascades over the admin-only rule on users/$login/subscription.
+# Set SUBSCRIPTION_SOURCE_CUTOFF_MS to the deploy time so pre-existing grants (which
+# predate the marker) are never flagged. Enforcement is opt-in: turn it on only once
+# the audit log is clean, or admin grants made from admin.html will stop counting.
+SUBSCRIPTION_SOURCE_CUTOFF_MS = int(os.getenv("SUBSCRIPTION_SOURCE_CUTOFF_MS", "0"))
+SUBSCRIPTION_REQUIRE_SOURCE = os.getenv("SUBSCRIPTION_REQUIRE_SOURCE", "0") == "1"
+SUBSCRIPTION_TRUSTED_SOURCES = {"payment", "contest", "admin"}
+PAID_TIERS = {"pro", "pro_plus", "creator_dev"}
 
 
 def _api_error(error, status=400, code=None):
@@ -379,6 +390,37 @@ def _platega_amount_for_price(price):
         return price
 
 
+def _subscription_is_server_backed(raw):
+    """True when this subscription carries evidence the server itself granted it."""
+    if not isinstance(raw, dict):
+        return True
+    tier = str(raw.get("tier") or "").strip().lower()
+    if tier not in PAID_TIERS:
+        return True
+    if str(raw.get("source") or "").strip().lower() in SUBSCRIPTION_TRUSTED_SOURCES:
+        return True
+    # Paid subscriptions created before the source marker existed are legitimate.
+    if _to_int(raw.get("updatedAt")) <= SUBSCRIPTION_SOURCE_CUTOFF_MS:
+        return True
+    # A payment record is equally good evidence.
+    return bool(raw.get("lastPaymentTransactionId"))
+
+
+def _audit_subscription_source(login, raw):
+    """Log (and optionally reject) a paid tier the server never granted."""
+    if _subscription_is_server_backed(raw):
+        return True
+    cache_key = ("sub-audit", login)
+    if _cache_get(cache_key) is None:
+        _cache_set(cache_key, True, 300)
+        print(
+            f"[security][subscription] unbacked paid tier login={login} "
+            f"tier={raw.get('tier')} status={raw.get('status')} "
+            f"updatedAt={raw.get('updatedAt')} enforced={SUBSCRIPTION_REQUIRE_SOURCE}"
+        )
+    return not SUBSCRIPTION_REQUIRE_SOURCE
+
+
 def _normalize_subscription(login, raw, write_back=False):
     if not isinstance(raw, dict):
         raw = {}
@@ -441,6 +483,9 @@ def _get_user_subscription(login):
         raw = db.reference(f"users/{login}/subscription").get() or {}
         if not isinstance(raw, dict):
             return {}
+        if not _audit_subscription_source(login, raw):
+            # Enforcing: a client-written paid tier does not grant server-side rights.
+            return _normalize_subscription(login, {}, write_back=False)
         return _normalize_subscription(login, raw, write_back=True)
     except Exception as e:
         print("subscription read failed:", e)
@@ -531,6 +576,7 @@ def _apply_contest_reward(login, contest_id, place, reward):
                 "activatedAt": subscription.get("activatedAt") or now,
                 "updatedAt": now,
                 "expiresAt": expires_at,
+                "source": "contest",
                 "infinite": is_infinite,
                 "graceUntil": None,
                 "paymentWarning": None,
@@ -3208,6 +3254,7 @@ def _activate_paid_subscription(login, tier, transaction_id, amount=None):
         "lastPaymentAt": now,
         "lastPaymentTransactionId": transaction_id,
         "lastPaymentAmount": amount,
+        "source": "payment",
         "visuals": current.get("visuals") if isinstance(current.get("visuals"), dict) else {"seasonalEnabled": True},
         "features": _subscription_features_for_tier(tier)
     }
