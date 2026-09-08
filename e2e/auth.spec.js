@@ -78,4 +78,22 @@ test.describe("Авторизация", () => {
     await expect(page.locator("#nav-links .nav-avatar img")).toHaveAttribute("src", /logo\.png/);
     expect(await page.evaluate(() => window.__navbarTierHistory)).not.toContain("FREE");
   });
+
+  test("Firebase-сессия восстанавливает navbar без повторной финализации профиля", async ({ page }) => {
+    let finalizeRequests = 0;
+    page.on("request", (request) => {
+      if (request.url().includes("/auth/finalize-profile")) finalizeRequests += 1;
+    });
+    await preparePage(page, { authenticated: true, seedLocalSession: false });
+
+    await page.goto("/index.html");
+    await expect(page.locator("#nav-links .nav-profile-name")).toHaveText(TEST_USER.login);
+    await expect(page.locator("#nav-links .nav-auth-link")).toHaveCount(0);
+
+    await page.goto("/rating.html");
+    await expect(page.locator("#nav-links .nav-profile-name")).toHaveText(TEST_USER.login);
+    await page.goto("/contests.html");
+    await expect(page.locator("#nav-links .nav-profile-name")).toHaveText(TEST_USER.login);
+    expect(finalizeRequests).toBe(0);
+  });
 });

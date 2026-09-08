@@ -9,8 +9,8 @@ const TEST_USER = {
   token: "e2e-id-token"
 };
 
-function firebaseMockScript({ authenticated = false, plan = "free" } = {}) {
-  return ({ authenticated: initialAuthenticated, plan: initialPlan }) => {
+function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSession = true } = {}) {
+  return ({ authenticated: initialAuthenticated, plan: initialPlan, seedLocalSession: shouldSeedLocalSession }) => {
     const safeClone = (value) => JSON.parse(JSON.stringify(value));
     const getAt = (root, path) => String(path || "").split("/").filter(Boolean)
       .reduce((value, part) => (value && typeof value === "object" ? value[part] : undefined), root);
@@ -96,9 +96,11 @@ function firebaseMockScript({ authenticated = false, plan = "free" } = {}) {
     if (initialAuthenticated || localStorage.getItem("e2e-authenticated") === "1") {
       authUser = makeUser();
       localStorage.setItem("e2e-authenticated", "1");
-      localStorage.setItem("user", testUser.login);
-      localStorage.setItem("uid", testUser.uid);
-      localStorage.setItem("idToken", testUser.token);
+      if (shouldSeedLocalSession !== false) {
+        localStorage.setItem("user", testUser.login);
+        localStorage.setItem("uid", testUser.uid);
+        localStorage.setItem("idToken", testUser.token);
+      }
     }
 
     const makeSnapshot = (value) => ({

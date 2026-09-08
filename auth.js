@@ -1464,6 +1464,7 @@ async function loginUser(identity, pass) {
     if (!auth) return { ok: false, error: "Сервис входа временно недоступен" };
 
     let cred;
+    let loginHint = null;
     try {
         const rawIdentity = String(identity || "").trim();
         if (rawIdentity.includes("@")) {
@@ -1483,6 +1484,7 @@ async function loginUser(identity, pass) {
                 error.code = response.status === 429 ? "auth/too-many-requests" : "auth/invalid-credential";
                 throw error;
             }
+            loginHint = String(payload.login || rawIdentity).trim() || null;
             cred = await auth.signInWithCustomToken(payload.customToken);
         }
     } catch (err) {
@@ -1509,7 +1511,7 @@ async function loginUser(identity, pass) {
         return { ok: false, needVerify: true, userAuth, error: "Подтверди email перед входом" };
     }
 
-    return { ok: true, userAuth };
+    return { ok: true, userAuth, loginHint };
 }
 
 async function sendVerificationWithCooldown(userAuth) {
@@ -1560,7 +1562,7 @@ async function login() {
 
     let finalized;
     try {
-        finalized = await finalizeVerifiedAccount(result.userAuth, null);
+        finalized = await finalizeVerifiedAccount(result.userAuth, result.loginHint);
     } catch (err) {
         console.warn("Login profile sync failed", err);
         return showError("login-error", "Не удалось войти. Попробуй ещё раз");
@@ -1687,7 +1689,32 @@ async function resendVerificationFromForm() {
 
 async function finalizeVerifiedAccount(userAuth, fallbackLogin = null) {
     const pending = getPendingRegistration();
-    const loginFromMap = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+    const storedLogin = getUser();
+    const storedUid = getUid();
+    let loginFromMap = null;
+    try {
+        loginFromMap = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+    } catch (err) {
+        // A temporary RTDB/network failure must not turn a still-valid Firebase
+        // session into a guest session. The stored values are display hints only;
+        // protected API calls continue to use the verified Firebase ID token.
+        if (storedLogin && storedUid === userAuth.uid) {
+            return { ok: true, login: storedLogin, cached: true };
+        }
+        throw err;
+    }
+
+    if (loginFromMap) {
+        clearPendingRegistration();
+        setUser(loginFromMap);
+        setUid(userAuth.uid);
+        return { ok: true, login: loginFromMap };
+    }
+
+    if (!fallbackLogin && !(pending && pending.login) && storedLogin && storedUid === userAuth.uid) {
+        return { ok: true, login: storedLogin, cached: true };
+    }
+
     const login = loginFromMap || fallbackLogin || (pending && pending.login) || null;
     if (!login || login.startsWith("pending_")) {
         return { ok: false, error: "Логин не найден. Начни регистрацию заново." };
@@ -1876,6 +1903,7 @@ function enforcePendingVerificationGuard() {
 async function syncSessionFromAuth() {
     const auth = getAuth();
     if (!auth) return;
+    const previousLogin = getUser();
     const userAuth = auth.currentUser;
     if (!userAuth) {
         clearSession();
@@ -1894,7 +1922,8 @@ async function syncSessionFromAuth() {
     }
     const finalized = await finalizeVerifiedAccount(userAuth, null);
     if (!finalized.ok) {
-        clearSession();
+        // Firebase still considers this user authenticated. Keep the existing
+        // local display session and retry naturally on the next page/load.
         return;
     }
     try {
@@ -1902,6 +1931,11 @@ async function syncSessionFromAuth() {
         if (token) localStorage.setItem("idToken", token);
     } catch (e) {
         console.warn("syncSessionFromAuth token fetch failed", e);
+    }
+
+    const nav = document.getElementById("nav-links");
+    if (nav && (previousLogin !== finalized.login || nav.querySelector(".nav-auth-link"))) {
+        updateNavbar();
     }
 
     if (isAuthPage()) {
