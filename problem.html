@@ -143,6 +143,7 @@
         
         #editorArea {
             flex: 1;
+            min-height: 180px;
             overflow: hidden;
             padding: 18px 18px 0;
         }
@@ -186,6 +187,94 @@
             width: 14px;
             height: 14px;
             pointer-events: none;
+        }
+
+        .editor-feedback {
+            position: absolute;
+            top: 42px;
+            right: 12px;
+            z-index: 4;
+            color: #d9aa88;
+            background: #171411;
+            border-radius: 6px;
+            font-size: 12px;
+            padding: 5px 8px;
+            pointer-events: none;
+        }
+
+        .editor-feedback:empty { display: none; }
+
+        .right .btn,
+        .right .run-button {
+            background: #d6a079 !important;
+            color: #24180f !important;
+            box-shadow: none !important;
+        }
+
+        .right .btn:hover,
+        .right .run-button:hover { background: #e0af8b !important; }
+
+        .right .copy-code-btn,
+        .right .reset-code-btn {
+            background: #1c1916 !important;
+            color: #d7b295 !important;
+            border: 1px solid #393029 !important;
+            box-shadow: none !important;
+        }
+
+        .right button:disabled { opacity: 0.5; cursor: default; }
+
+        .custom-run {
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--stroke);
+            padding-bottom: 12px;
+        }
+
+        .custom-run summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            list-style: none;
+            color: #cfb39d;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 3px 0;
+        }
+
+        .custom-run summary::-webkit-details-marker { display: none; }
+        .custom-run summary::before { content: ">_"; font-family: monospace; color: #a78870; }
+        .custom-run summary::after { content: "+"; margin-left: auto; font-size: 18px; font-weight: 400; }
+        .custom-run[open] summary::after { content: "−"; }
+        .custom-run summary:focus-visible { outline: 2px solid #d6a079; outline-offset: 5px; }
+        .run-hint { margin: 10px 0 14px; font-size: 12px; color: #8f8983; }
+        .run-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .run-field { min-width: 0; }
+        .run-field label { display: block; font-size: 12px; color: #b9b3ad; margin-bottom: 7px; }
+        .run-field textarea,
+        .run-field pre {
+            display: block;
+            width: 100%;
+            height: 100px;
+            margin: 0;
+            padding: 10px 12px;
+            border: 1px solid #2d2824 !important;
+            border-radius: 9px;
+            background: #0e0d0c !important;
+            color: #ddd6cf !important;
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            resize: vertical;
+        }
+        .run-field textarea:focus { outline: 1px solid #9e795d; box-shadow: none !important; }
+        .run-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+        .run-button { padding: 8px 14px; border: 0; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .run-status { font-size: 12px; color: #a9a29a; }
+        .run-status[data-error="true"] { color: #df9e93; }
+        @media (max-width: 640px) {
+            .run-fields { grid-template-columns: 1fr; }
         }
 
         .reset-code-btn {
@@ -440,6 +529,12 @@
             body {
                 overflow: auto;
             }
+            .left.reveal,
+            .right.reveal {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
             .split-v {
                 flex-direction: column;
                 height: auto;
@@ -449,6 +544,15 @@
                 max-width: 100%;
                 border-right: none;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .right {
+                flex: none;
+                width: 100%;
+                overflow: visible;
+            }
+            #editorArea {
+                flex: none;
+                height: 430px;
             }
             .splitter-v,
             .splitter-h {
@@ -551,6 +655,7 @@
                         </svg>
                     </button>
                     <button type="button" class="reset-code-btn" onclick="resetEditorDraft()" title="Сбросить код к исходному шаблону">Сброс</button>
+                    <span id="editorFeedback" class="editor-feedback" role="status"></span>
                     <div id="editor" aria-label="Code editor"></div>
                 </div>
 
@@ -559,6 +664,24 @@
             <div class="splitter-h" id="hSplit"></div>
 
             <div id="testsPanel">
+                <details class="custom-run" id="customRun">
+                    <summary>Запуск на своих данных</summary>
+                    <p class="run-hint">Проверь код на своём примере. Запуск не влияет на баллы и посылки.</p>
+                    <div class="run-fields">
+                        <div class="run-field">
+                            <label for="customInput">Входные данные</label>
+                            <textarea id="customInput" placeholder="Введи данные для программы" spellcheck="false"></textarea>
+                        </div>
+                        <div class="run-field">
+                            <label id="customOutputLabel">Результат</label>
+                            <pre id="customOutput" tabindex="0" aria-labelledby="customOutputLabel">Здесь появится вывод программы</pre>
+                        </div>
+                    </div>
+                    <div class="run-actions">
+                        <button type="button" class="run-button" id="customRunButton" onclick="runCustomCode()">Запустить</button>
+                        <span id="customRunStatus" class="run-status" role="status"></span>
+                    </div>
+                </details>
                 <h3 class="panel-title">Посылки</h3>
 
                 <table>
@@ -931,7 +1054,7 @@
                     queueTimer = null;
                 }
                 console.error("🔥 Ошибка submitCode:", e);
-                updateSubmissionRow(pendingRow, "ERROR");
+                updateSubmissionRow(pendingRow, e && e.code === "AUTH_SESSION_EXPIRED" ? "Войди снова" : "ERROR");
             }
         }
 
@@ -952,9 +1075,73 @@
             } catch (e) {
                 console.warn("acquireSubmitToken failed:", e);
             }
-            if (!token) token = localStorage.getItem("idToken") || "";
+            if (!token && !forceRefresh) token = localStorage.getItem("idToken") || "";
             token = String(token || "").trim();
             return token;
+        }
+
+        async function runCustomCode() {
+            const button = document.getElementById("customRunButton");
+            if (button.disabled) return;
+            const status = document.getElementById("customRunStatus");
+            const output = document.getElementById("customOutput");
+            const code = editor.getValue();
+            status.dataset.error = "false";
+            if (!code.trim()) {
+                status.textContent = "Сначала добавь код в редактор";
+                return;
+            }
+            const payload = { code, input: document.getElementById("customInput").value, language: TASK_LANGUAGE };
+            button.disabled = true;
+            button.textContent = "Выполняется…";
+            output.textContent = "";
+            status.textContent = "Запускаем программу…";
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 90000);
+            try {
+                let token = await acquireSubmitToken();
+                if (!token) throw new Error("Войди в аккаунт, чтобы запустить код");
+                let response;
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    response = await fetch(getTasksApiBase() + "/run-single", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
+                    if (response.status !== 401 || attempt === 1) break;
+                    token = await acquireSubmitToken(true);
+                    if (!token) throw new Error("Сессия истекла. Войди в аккаунт снова");
+                }
+                if (!response.ok) {
+                    const messages = {
+                        401: "Сессия истекла. Войди в аккаунт снова",
+                        403: "Запуск недоступен для этого аккаунта",
+                        400: "Проверь код и размер входных данных",
+                        413: "Код или входные данные слишком большие",
+                        429: "Слишком много запусков. Подожди немного"
+                    };
+                    throw new Error(messages[response.status] || "Не удалось запустить код. Попробуй позже");
+                }
+                const result = await response.json();
+                const labels = { OK: "Готово", CE: "Ошибка компиляции", RE: "Ошибка выполнения", TL: "Лимит времени", ML: "Лимит памяти" };
+                if (!labels[result.status]) throw new Error("Сервер вернул неизвестный результат. Попробуй ещё раз");
+                const metrics = [];
+                if (Number.isFinite(result.timeMs)) metrics.push(`${Math.round(result.timeMs)} мс`);
+                if (Number.isFinite(result.memoryMb)) metrics.push(`${result.memoryMb.toFixed(1)} МБ`);
+                status.textContent = [labels[result.status], ...metrics].join(" · ");
+                status.dataset.error = String(result.status !== "OK");
+                output.textContent = [result.output, result.details].filter(Boolean).join("\n\n") || "Программа не вывела данные";
+            } catch (error) {
+                status.dataset.error = "true";
+                status.textContent = error.name === "AbortError"
+                    ? "Сервер долго не отвечает. Попробуй позже"
+                    : error instanceof TypeError ? "Нет связи с сервером. Попробуй ещё раз" : error.message;
+            } finally {
+                clearTimeout(timeout);
+                button.disabled = false;
+                button.textContent = "Запустить";
+            }
         }
 
         async function sendToJudge(taskId, code, submitUserLogin) {
@@ -976,6 +1163,11 @@
             let res;
             try {
                 let token = await acquireSubmitToken(false);
+                if (!token) {
+                    const error = new Error("Сессия истекла. Войди в аккаунт снова");
+                    error.code = "AUTH_SESSION_EXPIRED";
+                    throw error;
+                }
                 for (let attempt = 0; attempt < 2; attempt++) {
                     console.log("[sendToJudge] POST", SUBMIT_URL, "attempt=", attempt + 1);
                     const headers = {
@@ -990,13 +1182,21 @@
                         mode: "cors",
                         body: JSON.stringify(payload)
                     });
-                    if (!token || res.status !== 401 || attempt === 1) break;
+                    if (res.status !== 401 || attempt === 1) break;
                     console.warn("401 on submit, refreshing token and retrying once");
                     token = await acquireSubmitToken(true);
+                    if (!token) {
+                        localStorage.removeItem("idToken");
+                        const error = new Error("Сессия истекла. Войди в аккаунт снова");
+                        error.code = "AUTH_SESSION_EXPIRED";
+                        throw error;
+                    }
                 }
             } catch (e) {
                 console.error("❌ Ошибка fetch/token:", e);
-                throw new Error("Сервер не отвечает");
+                if (e && e.code === "AUTH_SESSION_EXPIRED") throw e;
+                if (e instanceof TypeError) throw new Error("Сервер не отвечает");
+                throw e;
             }
 
             console.log("Ответ RAW:", res);
@@ -1011,7 +1211,19 @@
 
             if (!res.ok && !data.status) {
                 console.error("❌ HTTP ошибка:", res.status);
-                throw new Error("HTTP " + res.status);
+                if (res.status === 401) {
+                    localStorage.removeItem("idToken");
+                    const error = new Error("Сессия истекла. Войди в аккаунт снова");
+                    error.code = "AUTH_SESSION_EXPIRED";
+                    throw error;
+                }
+                const errorMessages = {
+                    403: "Нет доступа к этой задаче",
+                    404: "Задача не найдена",
+                    429: "Слишком много отправок. Подожди немного",
+                    503: "Сервис проверки временно занят"
+                };
+                throw new Error(errorMessages[res.status] || "Не удалось отправить решение");
             }
 
             console.log("📦 JSON:", data);
@@ -1827,15 +2039,26 @@
 
         async function copyEditorCode(btn) {
             const text = editor.getValue ? editor.getValue() : "";
-            if (!text) return;
+            const feedback = document.getElementById("editorFeedback");
+            clearTimeout(copyEditorCode.feedbackTimer);
+            let copied = false;
             try {
                 await navigator.clipboard.writeText(text);
-                const old = btn.style.opacity;
-                btn.style.opacity = "0.55";
-                setTimeout(() => { btn.style.opacity = old || ""; }, 180);
-            } catch (e) {
-                console.warn("copy failed", e);
+                copied = true;
+            } catch (_) {
+                // Older browsers and restricted clipboard permissions still
+                // support copying a selected textarea during a user gesture.
+                const field = document.createElement("textarea");
+                field.value = text;
+                field.style.cssText = "position:fixed;top:0;left:-9999px;opacity:0";
+                document.body.appendChild(field);
+                field.select();
+                try { copied = document.execCommand("copy"); } catch (_) {}
+                field.remove();
+                btn.focus({ preventScroll: true });
             }
+            feedback.textContent = copied ? "Код скопирован" : "Выдели код и нажми Ctrl+C или ⌘C";
+            copyEditorCode.feedbackTimer = setTimeout(() => { feedback.textContent = ""; }, 3000);
         }
 
         function getMonacoRequire() {
@@ -1905,7 +2128,8 @@
                         rules: [],
                         colors: {
                             "editor.background": "#0B0B0B",
-                            "editor.lineHighlightBackground": "#112240",
+                            "editor.lineHighlightBackground": "#00000000",
+                            "editor.lineHighlightBorder": "#00000000",
                             "editorCursor.foreground": "#f0f6ff"
                         }
                     });
@@ -1920,7 +2144,9 @@
                         theme: "codebug-dark-problem",
                         automaticLayout: true,
                         minimap: { enabled: false },
+                        renderLineHighlight: "none",
                         fontSize: 14,
+                        padding: { top: 44, bottom: 12 },
                         lineHeight: 20,
                         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                         tabSize: 4,

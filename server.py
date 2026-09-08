@@ -389,10 +389,33 @@ def _resolve_login_from_token(token):
         uid = decoded.get("uid")
         if not uid:
             return None
-        login = db.reference(f"userAuthMap/{uid}").get()
+        login = str(db.reference(f"userAuthMap/{uid}").get() or "").strip()
+        if login:
+            return login
+
+        # Legacy accounts may predate userAuthMap but still have the server-owned
+        # emailToLogin entry. The email comes from the verified Firebase token,
+        # never from the request body. Restore the missing UID mapping once.
+        email = _normalize_auth_email(decoded.get("email"))
+        if not email:
+            return None
+        login = str(db.reference(f"emailToLogin/{email.replace('.', ',')}").get() or "").strip()
         if not login:
             return None
-        return str(login).strip() or None
+        user = db.reference(f"users/{login}").get() or {}
+        if not isinstance(user, dict):
+            return None
+        stored_uid = str(user.get("id") or "").strip()
+        stored_email = _normalize_auth_email(user.get("email"))
+        if stored_uid and stored_uid != uid:
+            return None
+        if stored_email and stored_email != email:
+            return None
+        try:
+            db.reference(f"userAuthMap/{uid}").set(login)
+        except Exception as exc:
+            print("Legacy userAuthMap repair failed:", type(exc).__name__)
+        return login
     except Exception:
         return None
 
@@ -3141,8 +3164,6 @@ def run_single():
     if auth_error:
         return auth_error
     tier = _subscription_tier_label(user_login)
-    if not _rate_limit("run_single", user_login, limit=_editor_rate_limit_for_tier(tier), per_seconds=60):
-        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {}, tier=tier)
     if payload_error:
         return payload_error

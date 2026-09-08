@@ -183,6 +183,7 @@ async function mockExternalServices(page, { plan = "free" } = {}) {
     await route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, login: body.login || TEST_USER.login }) });
   });
   await page.route("**/submit", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ status: "OK", statusLabel: "OK", score: 100, timeMs: 12, memoryMb: 3.5, passedGroups: [1], firebaseSaved: true }) }));
+  await page.route("**/run-single", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ status: "OK", output: "5\n", timeMs: 14, memoryMb: 3.2 }) }));
   await page.route("**/contest/register", async (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.route("**/contests/create", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, contestId: "created-e2e" }) }));
   await page.route("**/tasks/101/problem.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ title: "Сумма двух чисел", language: "cpp", difficulty: "easy", tags: ["math"], statement: { markdown: "statement.md" }, files: { code: "code.cpp" }, openTests: [{ name: "1", input: "tests/1.in", answer: "tests/1.out" }] }) }));

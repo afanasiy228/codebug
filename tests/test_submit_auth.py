@@ -95,3 +95,19 @@ def test_submit_works_without_user_field_in_body(srv):
     assert res.status_code == 200, res.get_json()
     queued = list(srv.module.SUBMIT_QUEUE) + list(srv.module.SUBMIT_QUEUE_PRO)
     assert queued[0]["login"] == "student"
+
+
+def test_submit_repairs_legacy_uid_mapping_from_verified_email(srv):
+    """A verified legacy account remains usable when only emailToLogin exists."""
+    token = srv.add_user("legacy")
+    uid = "uid-legacy"
+    del srv.db.data["userAuthMap"][uid]
+
+    res = srv.client.post(
+        "/submit",
+        json=_payload(user="ignored"),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert res.status_code == 200, res.get_json()
+    assert srv.db.data["userAuthMap"][uid] == "legacy"
