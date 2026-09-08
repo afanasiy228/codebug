@@ -55,4 +55,27 @@ test.describe("Авторизация", () => {
     await expect(page.locator('#nav-links a[href="rating.html"]').first()).toHaveText("Рейтинг");
     await expect(page.locator('#nav-links a[href="submissions.html"]').first()).toHaveText("Посылки");
   });
+
+  test("navbar сразу восстанавливает аватар и PRO+ из display-кэша", async ({ page }) => {
+    await preparePage(page, { authenticated: true, plan: "pro_plus" });
+    await page.goto("/index.html");
+
+    const tier = page.locator("#nav-links .nav-profile-tier");
+    await expect(tier).toHaveText("PRO+");
+    await expect(page.locator("#nav-links .nav-avatar img")).toHaveAttribute("src", /logo\.png/);
+    await expect.poll(async () => page.evaluate(() => !!localStorage.getItem("codebug.navbarIdentity.v1"))).toBe(true);
+
+    await page.addInitScript(() => {
+      window.__navbarTierHistory = [];
+      new MutationObserver(() => {
+        const value = document.querySelector("#nav-links .nav-profile-tier")?.textContent;
+        if (value && window.__navbarTierHistory.at(-1) !== value) window.__navbarTierHistory.push(value);
+      }).observe(document, { childList: true, subtree: true, characterData: true });
+    });
+
+    await page.reload();
+    await expect(tier).toHaveText("PRO+");
+    await expect(page.locator("#nav-links .nav-avatar img")).toHaveAttribute("src", /logo\.png/);
+    expect(await page.evaluate(() => window.__navbarTierHistory)).not.toContain("FREE");
+  });
 });

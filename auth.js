@@ -70,6 +70,8 @@ function getUser() {
 }
 
 function clearSession() {
+    const previousLogin = localStorage.getItem("user");
+    if (previousLogin) clearNavbarIdentityCache(previousLogin);
     localStorage.removeItem("user");
     localStorage.removeItem("uid");
     localStorage.removeItem("idToken");
@@ -690,6 +692,68 @@ function getSubscriptionLabel(level) {
     return "FREE";
 }
 
+const NAVBAR_IDENTITY_CACHE_KEY = "codebug.navbarIdentity.v1";
+const NAVBAR_IDENTITY_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function normalizeSubscriptionForUi(value) {
+    if (!value || typeof value !== "object") return null;
+    return {
+        tier: String(value.tier || "").toLowerCase(),
+        status: String(value.status || "").toLowerCase(),
+        expiresAt: value.expiresAt || null,
+        graceUntil: value.graceUntil || value.paymentGraceUntil || null,
+        daysLeft: value.daysLeft ?? null,
+        graceDaysLeft: value.graceDaysLeft ?? null,
+        paymentWarning: value.paymentWarning || null,
+        features: (value.features && typeof value.features === "object") ? value.features : {},
+        visuals: (value.visuals && typeof value.visuals === "object") ? value.visuals : {}
+    };
+}
+
+function readNavbarIdentityCache(login) {
+    try {
+        const cached = JSON.parse(localStorage.getItem(NAVBAR_IDENTITY_CACHE_KEY) || "null");
+        if (!cached || cached.login !== login) return null;
+        const savedAt = Number(cached.savedAt || 0);
+        if (!savedAt || Date.now() - savedAt > NAVBAR_IDENTITY_CACHE_MAX_AGE_MS) {
+            localStorage.removeItem(NAVBAR_IDENTITY_CACHE_KEY);
+            return null;
+        }
+        return {
+            subscription: normalizeSubscriptionForUi(cached.subscription),
+            exp: Number(cached.exp || 0),
+            avatarUrl: normalizeSafeImageUrl(cached.avatarUrl || "")
+        };
+    } catch (_) {
+        localStorage.removeItem(NAVBAR_IDENTITY_CACHE_KEY);
+        return null;
+    }
+}
+
+function writeNavbarIdentityCache(login, identity) {
+    if (!login || !identity || typeof identity !== "object") return;
+    try {
+        localStorage.setItem(NAVBAR_IDENTITY_CACHE_KEY, JSON.stringify({
+            login,
+            savedAt: Date.now(),
+            subscription: normalizeSubscriptionForUi(identity.subscription),
+            exp: Number(identity.exp || 0),
+            avatarUrl: normalizeSafeImageUrl(identity.avatarUrl || "")
+        }));
+    } catch (_) {}
+}
+
+function clearNavbarIdentityCache(login) {
+    try {
+        const cached = JSON.parse(localStorage.getItem(NAVBAR_IDENTITY_CACHE_KEY) || "null");
+        if (!login || !cached || cached.login === login) {
+            localStorage.removeItem(NAVBAR_IDENTITY_CACHE_KEY);
+        }
+    } catch (_) {
+        localStorage.removeItem(NAVBAR_IDENTITY_CACHE_KEY);
+    }
+}
+
 function buildBellIconHtml() {
     return `
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -770,6 +834,9 @@ function updateNavbar() {
         <div class="nav-drawer" aria-hidden="true">${drawerLinks}</div>
     `;
 
+    const cachedIdentity = readNavbarIdentityCache(user);
+    if (cachedIdentity) applyNavbarIdentity(user, cachedIdentity);
+
     bindMobileNav(nav);
     bindAccountMenu(nav);
     runLowPriority(startKeepAlive);
@@ -796,18 +863,7 @@ async function getUserSubscription(login) {
             const payload = await res.json().catch(() => ({}));
             val = payload.subscription || null;
         }
-        if (!val || typeof val !== "object") return null;
-        return {
-            tier: String(val.tier || "").toLowerCase(),
-            status: String(val.status || "").toLowerCase(),
-            expiresAt: val.expiresAt || null,
-            graceUntil: val.graceUntil || val.paymentGraceUntil || null,
-            daysLeft: val.daysLeft ?? null,
-            graceDaysLeft: val.graceDaysLeft ?? null,
-            paymentWarning: val.paymentWarning || null,
-            features: (val.features && typeof val.features === "object") ? val.features : {},
-            visuals: (val.visuals && typeof val.visuals === "object") ? val.visuals : {}
-        };
+        return normalizeSubscriptionForUi(val);
     } catch (err) {
         console.warn("getUserSubscription failed", err);
         return null;
@@ -924,15 +980,33 @@ function isProSubscription(sub) {
 
 async function applyProBrandingToNavbar(login) {
     if (!login) return;
-    const sub = await getUserSubscription(login);
+    const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
+    let sub = null;
     let exp = 0;
     let avatarUrl = "";
+    let hasFreshIdentity = false;
+
     try {
-        const profileSnap = await firebase.database().ref("publicProfiles/" + login).get();
-        if (profileSnap.exists()) {
-            const profile = profileSnap.val() || {};
+        const response = await fetch(`${base}/users/${encodeURIComponent(login)}/profile-lite`, { cache: "no-store" });
+        if (response.ok) {
+            const profile = await response.json();
+            sub = normalizeSubscriptionForUi(profile.subscription);
             avatarUrl = normalizeSafeImageUrl(profile.avatarUrl || "");
             exp = Number(profile?.stats?.exp || 0);
+            hasFreshIdentity = true;
+        }
+    } catch (_) {}
+
+    if (!hasFreshIdentity) sub = await getUserSubscription(login);
+    try {
+        if (!hasFreshIdentity) {
+            const profileSnap = await firebase.database().ref("publicProfiles/" + login).get();
+            if (profileSnap.exists()) {
+                const profile = profileSnap.val() || {};
+                avatarUrl = normalizeSafeImageUrl(profile.avatarUrl || "");
+                exp = Number(profile?.stats?.exp || 0);
+                hasFreshIdentity = true;
+            }
         }
     } catch (_) {}
     if (!avatarUrl) {
@@ -948,6 +1022,15 @@ async function applyProBrandingToNavbar(login) {
         } catch (_) {}
     }
 
+    applyNavbarIdentity(login, { subscription: sub, exp, avatarUrl });
+    if (hasFreshIdentity) writeNavbarIdentityCache(login, { subscription: sub, exp, avatarUrl });
+}
+
+function applyNavbarIdentity(login, identity) {
+    if (!login || !identity) return;
+    const sub = normalizeSubscriptionForUi(identity.subscription);
+    const exp = Number(identity.exp || 0);
+    const avatarUrl = normalizeSafeImageUrl(identity.avatarUrl || "");
     const level = getSubscriptionLevel(sub);
     const isPro = level !== "free";
     const nickColor = isPro ? getSubscriptionNickColor(sub) : getRankNickColorByExp(exp);

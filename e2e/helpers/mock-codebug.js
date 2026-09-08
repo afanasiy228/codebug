@@ -171,7 +171,7 @@ function firebaseMockScript({ authenticated = false, plan = "free" } = {}) {
   };
 }
 
-async function mockExternalServices(page) {
+async function mockExternalServices(page, { plan = "free" } = {}) {
   await page.route(/https:\/\/(www\.gstatic\.com\/firebasejs|www\.google\.com\/recaptcha|cdnjs\.cloudflare\.com\/ajax\/libs\/monaco-editor)\/.*/, (route) => route.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/auth/verify-captcha", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.route("**/auth/login", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, customToken: "e2e-custom-token", login: TEST_USER.login }) }));
@@ -190,7 +190,16 @@ async function mockExternalServices(page) {
   await page.route("**/tasks/101/tests/1.in", (route) => route.fulfill({ contentType: "text/plain", body: "1 2\n" }));
   await page.route("**/tasks/101/tests/1.out", (route) => route.fulfill({ contentType: "text/plain", body: "3\n" }));
   await page.route("**/tasks/list", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ id: 101, title: "Сумма двух чисел", difficulty: "easy", tags: ["math"] }]) }));
-  const profile = { login: TEST_USER.login, stats: { exp: 42, cnt: 1, rating: 17 }, profileStyle: { coverId: "cover_1" } };
+  const profileSubscription = plan === "pro_plus"
+    ? { tier: "pro_plus", status: "active", expiresAt: Date.now() + 86_400_000, visuals: { nickColor: "grad_ocean" } }
+    : null;
+  const profile = {
+    login: TEST_USER.login,
+    avatarUrl: "/logo.png",
+    subscription: profileSubscription,
+    stats: { exp: 42, cnt: 1, rating: 17 },
+    profileStyle: { coverId: "cover_1" }
+  };
   const submissions = {
     "e2e-submission": { login: TEST_USER.login, task: 101, verdict: "OK", date: Date.now() - 1_000 }
   };
@@ -208,7 +217,7 @@ async function mockExternalServices(page) {
 
 async function preparePage(page, options = {}) {
   await page.addInitScript(firebaseMockScript(options), options);
-  await mockExternalServices(page);
+  await mockExternalServices(page, options);
 }
 
 async function signInThroughUi(page) {
