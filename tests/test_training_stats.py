@@ -25,6 +25,7 @@ def test_rating_guide_only_keeps_the_rank_scale_heading():
     assert "РАНГИ И ЦВЕТ НИКА" in rating_page
     assert "Как получить опыт" not in rating_page
     assert "Решай задачи и занимай призовые места" not in rating_page
+    assert "grid-template-columns: repeat(10, minmax(112px, 1fr))" in rating_page
 
 
 def test_training_stats_returns_private_progress_for_owner(srv):
