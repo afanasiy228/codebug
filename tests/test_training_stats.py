@@ -16,6 +16,7 @@ def test_training_rank_progress_uses_the_real_rank_thresholds():
     assert training_steps == rating_steps[1:]
     assert "До следующего ранга" in training_page
     assert 'id="levelValue">0 / 10 опыта' in training_page
+    assert re.search(r"\.level-head\s*\{[^}]*white-space:\s*nowrap", training_page, re.S)
 
 
 def test_rating_guide_only_keeps_the_rank_scale_heading():

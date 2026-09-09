@@ -141,8 +141,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 22px;
+            gap: 14px;
             margin-bottom: 13px;
+            white-space: nowrap;
         }
 
         .level-title {
@@ -153,6 +154,7 @@
             font-size: 17px;
             letter-spacing: 0.02em;
             min-width: 0;
+            white-space: nowrap;
         }
 
         .level-title svg {
@@ -841,6 +843,17 @@
             }
             .metric-value { font-size: 20px; }
             .metric-label { font-size: 7px; }
+            .level-head { gap: 10px; }
+            .level-title {
+                gap: 8px;
+                font-size: 14px;
+            }
+            .level-title svg {
+                width: 34px;
+                height: 34px;
+                flex-basis: 34px;
+            }
+            .level-value { font-size: 15px; }
             .status-tabs { width: 100%; overflow-x: auto; }
             .status-tab { flex: 0 0 auto; }
             .task-right {
