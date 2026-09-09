@@ -158,37 +158,6 @@
             overflow: hidden;
         }
 
-        .copy-code-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 28px;
-            height: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.04);
-            color: rgba(230, 237, 243, 0.8);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 3;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-            padding: 0;
-        }
-
-        .copy-code-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.08);
-            color: rgba(230, 237, 243, 1);
-        }
-
-        .copy-code-btn svg {
-            width: 14px;
-            height: 14px;
-            pointer-events: none;
-        }
-
         .editor-feedback {
             position: absolute;
             top: 42px;
@@ -214,7 +183,6 @@
         .right .btn:hover,
         .right .run-button:hover { background: #e0af8b !important; }
 
-        .right .copy-code-btn,
         .right .reset-code-btn {
             background: #1c1916 !important;
             color: #d7b295 !important;
@@ -649,12 +617,6 @@
             <div id="editorArea">
                 <!-- обычный текстовый редактор -->
                 <div class="editor-wrap">
-                    <button type="button" class="copy-code-btn" onclick="copyEditorCode(this)" title="Скопировать код" aria-label="Скопировать код">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                    </button>
                     <button type="button" class="reset-code-btn" onclick="resetEditorDraft()" title="Сбросить код к исходному шаблону">Сброс</button>
                     <span id="editorFeedback" class="editor-feedback" role="status"></span>
                     <div id="editor" aria-label="Code editor"></div>
@@ -2038,29 +2000,41 @@
             return normalizeTaskLanguage(lang) === "python" ? "python" : "cpp";
         }
 
-        async function copyEditorCode(btn) {
-            const text = editor.getValue ? editor.getValue() : "";
+        function showEditorClipboardBlocked() {
             const feedback = document.getElementById("editorFeedback");
-            clearTimeout(copyEditorCode.feedbackTimer);
-            let copied = false;
-            try {
-                await navigator.clipboard.writeText(text);
-                copied = true;
-            } catch (_) {
-                // Older browsers and restricted clipboard permissions still
-                // support copying a selected textarea during a user gesture.
-                const field = document.createElement("textarea");
-                field.value = text;
-                field.style.cssText = "position:fixed;top:0;left:-9999px;opacity:0";
-                document.body.appendChild(field);
-                field.select();
-                try { copied = document.execCommand("copy"); } catch (_) {}
-                field.remove();
-                btn.focus({ preventScroll: true });
-            }
-            feedback.textContent = copied ? "Код скопирован" : "Выдели код и нажми Ctrl+C или ⌘C";
-            copyEditorCode.feedbackTimer = setTimeout(() => { feedback.textContent = ""; }, 3000);
+            if (!feedback) return;
+            clearTimeout(showEditorClipboardBlocked.timer);
+            feedback.textContent = "Буфер обмена отключён в редакторе";
+            showEditorClipboardBlocked.timer = setTimeout(() => { feedback.textContent = ""; }, 2200);
         }
+
+        function installEditorClipboardGuard(editorRoot) {
+            if (!editorRoot || editorRoot.dataset.clipboardGuard === "1") return;
+            editorRoot.dataset.clipboardGuard = "1";
+
+            const block = (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                showEditorClipboardBlocked();
+            };
+            ["copy", "cut", "paste", "contextmenu", "dragstart", "drop"].forEach((eventName) => {
+                editorRoot.addEventListener(eventName, block, true);
+            });
+            editorRoot.addEventListener("beforeinput", (event) => {
+                if (["insertFromPaste", "insertFromDrop", "deleteByCut"].includes(event.inputType)) block(event);
+            }, true);
+            editorRoot.addEventListener("keydown", (event) => {
+                const key = String(event.key || "").toLowerCase();
+                const modifierClipboard = (event.ctrlKey || event.metaKey) && ["c", "x", "v"].includes(key);
+                const legacyCopy = event.ctrlKey && key === "insert";
+                const legacyCut = event.shiftKey && key === "delete";
+                const legacyPaste = event.shiftKey && key === "insert";
+                const keyboardMenu = key === "contextmenu" || (event.shiftKey && key === "f10");
+                if (modifierClipboard || legacyCopy || legacyCut || legacyPaste || keyboardMenu) block(event);
+            }, true);
+        }
+
+        installEditorClipboardGuard(document.getElementById("editor"));
 
         function getMonacoRequire() {
             const candidates = [window.require, window.requirejs];
@@ -2154,6 +2128,8 @@
                         insertSpaces: true,
                         smoothScrolling: true,
                         scrollBeyondLastLine: false,
+                        contextmenu: false,
+                        dragAndDrop: false,
                         autoClosingBrackets: "languageDefined",
                         autoClosingQuotes: "languageDefined",
                         autoSurround: "languageDefined",

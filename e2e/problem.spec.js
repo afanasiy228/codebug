@@ -2,6 +2,64 @@ const { test } = require("@playwright/test");
 const { expect, preparePage, signInThroughUi } = require("./helpers/mock-codebug");
 
 test.describe("Задачи и посылки", () => {
+  test("редактор блокирует операции с буфером обмена", async ({ page }) => {
+    await preparePage(page, { authenticated: true });
+    await page.goto("/problem.html?id=101");
+
+    const blocked = await page.locator("#editor").evaluate((root) => {
+      const result = {};
+      for (const type of ["copy", "cut", "paste", "contextmenu", "dragstart", "drop"]) {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        root.dispatchEvent(event);
+        result[type] = event.defaultPrevented;
+      }
+      const shortcut = new KeyboardEvent("keydown", {
+        key: "v",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true
+      });
+      root.dispatchEvent(shortcut);
+      result.shortcut = shortcut.defaultPrevented;
+      const legacyCut = new KeyboardEvent("keydown", {
+        key: "Delete",
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true
+      });
+      root.dispatchEvent(legacyCut);
+      result.legacyCut = legacyCut.defaultPrevented;
+      const beforePaste = new InputEvent("beforeinput", {
+        inputType: "insertFromPaste",
+        bubbles: true,
+        cancelable: true
+      });
+      root.dispatchEvent(beforePaste);
+      result.beforePaste = beforePaste.defaultPrevented;
+      return result;
+    });
+
+    expect(blocked).toEqual({
+      copy: true,
+      cut: true,
+      paste: true,
+      contextmenu: true,
+      dragstart: true,
+      drop: true,
+      shortcut: true,
+      legacyCut: true,
+      beforePaste: true
+    });
+    await expect(page.locator("#editorFeedback")).toContainText("Буфер обмена отключён");
+
+    const regularFieldPaste = await page.locator("#customInput").evaluate((field) => {
+      const event = new Event("paste", { bubbles: true, cancelable: true });
+      field.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+    expect(regularFieldPaste).toBe(false);
+  });
+
   test("пользователь открывает задачу и получает вердикт", async ({ page }, testInfo) => {
     await preparePage(page);
     await signInThroughUi(page);
