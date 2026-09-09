@@ -1131,15 +1131,38 @@
 
         async function loadUserMetrics() {
             const login = getUser();
-            if (!login || !window.db) {
+            if (!login) {
                 userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0, todaySolved: 0, weekSolved: 0 };
                 solvedMap = {};
                 return;
             }
 
+            let stats = null;
             try {
-                const statsSnap = await withTimeout(window.db.ref(`users/${login}/stats`).get(), 2600);
-                const stats = statsSnap && statsSnap.exists() ? (statsSnap.val() || {}) : {};
+                const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+                const token = typeof window.getFreshAuthToken === "function"
+                    ? await window.getFreshAuthToken({ timeoutMs: 5000 })
+                    : "";
+                if (token) {
+                    const response = await withTimeout(fetch(`${base}/users/${encodeURIComponent(login)}/training-stats`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                        cache: "no-store",
+                    }), 6000);
+                    if (response.ok) {
+                        const payload = await response.json();
+                        stats = payload && payload.stats && typeof payload.stats === "object" ? payload.stats : null;
+                    }
+                }
+            } catch (e) {
+                console.warn("training stats API unavailable, trying Firebase", e);
+            }
+
+            try {
+                if (!stats) {
+                    if (!window.db) throw new Error("firebase_database_unavailable");
+                    const statsSnap = await withTimeout(window.db.ref(`users/${login}/stats`).get(), 2600);
+                    stats = statsSnap && statsSnap.exists() ? (statsSnap.val() || {}) : {};
+                }
                 solvedMap = (stats && typeof stats.solved === "object" && stats.solved) ? stats.solved : {};
                 const solvedCnt = Number(stats.cnt || Object.keys(solvedMap).length || 0);
                 const exp = Number(stats.exp || 0);
@@ -1152,6 +1175,7 @@
             }
 
             try {
+                if (!window.db) throw new Error("firebase_database_unavailable");
                 const subsSnap = await withTimeout(window.db.ref("submissions/global").get(), 3200);
                 const subsRaw = subsSnap && subsSnap.exists() ? (subsSnap.val() || {}) : {};
                 const rows = Array.isArray(subsRaw) ? subsRaw : Object.values(subsRaw);

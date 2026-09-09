@@ -207,6 +207,13 @@ async function mockExternalServices(page, { plan = "free" } = {}) {
     "e2e-submission": { login: TEST_USER.login, task: 101, verdict: "OK", date: Date.now() - 1_000 }
   };
   await page.route("**/users/e2e_user/profile-lite", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(profile) }));
+  await page.route("**/users/e2e_user/training-stats", (route) => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({
+      login: TEST_USER.login,
+      stats: { exp: 42, cnt: 3, rating: 17, solved: { "101": true } }
+    })
+  }));
   await page.route("https://e2e-db.test/**", (route) => {
     const path = new URL(route.request().url()).pathname;
     const body = path.includes("publicProfiles/e2e_user")

@@ -2,6 +2,14 @@ const { test } = require("@playwright/test");
 const { expect, preparePage } = require("./helpers/mock-codebug");
 
 test.describe("Профиль, соревнования и доступ", () => {
+  test("тренировка показывает опыт и решённые задачи через защищённый API", async ({ page }) => {
+    await preparePage(page, { authenticated: true });
+    await page.goto("/train.html");
+    await expect(page.locator("#metricSolved")).toHaveText("3");
+    await expect(page.locator("#metricExp")).toHaveText("42");
+    await expect(page.locator('.task-row[data-href="problem.html?id=101"] .solve-mark')).toHaveClass(/solved/);
+  });
+
   test("профиль показывает актуальную статистику", async ({ page }) => {
     await preparePage(page, { authenticated: true });
     await page.goto("/profile.html");

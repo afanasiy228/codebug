@@ -3519,6 +3519,22 @@ def _mark_task_solved_for_user(login, task):
         trace["afterCnt"] = int(final_stats.get("cnt") or 0)
         trace["afterExp"] = int(final_stats.get("exp") or 0)
         trace["hasTaskAfter"] = bool(final_solved.get(task))
+        now = _now_ms()
+        public_stats = {
+            "cnt": trace["afterCnt"],
+            "exp": trace["afterExp"],
+            "rating": max(0, _to_int(final_stats.get("rating"))),
+        }
+        db.reference("/").update({
+            f"publicProfiles/{login}/stats": public_stats,
+            f"publicProfiles/{login}/updatedAt": now,
+            f"ratingLeaderboard/{login}/login": login,
+            f"ratingLeaderboard/{login}/cnt": public_stats["cnt"],
+            f"ratingLeaderboard/{login}/exp": public_stats["exp"],
+            f"ratingLeaderboard/{login}/rating": public_stats["rating"],
+            f"ratingLeaderboard/{login}/updatedAt": now,
+        })
+        _cache_delete(("profile-lite", login))
         trace["ok"] = True
         print(
             "[XP TRACE][SERVER] stats committed:",
@@ -4171,6 +4187,36 @@ def user_profile_lite(login):
         return response
     except Exception as e:
         return _server_error("profile_lite_failed", "PROFILE_LITE_FAILED", exc=e)
+
+
+@app.route("/users/<login>/training-stats", methods=["GET"])
+def user_training_stats(login):
+    """Return the authenticated user's private progress for the training page."""
+    login = str(login or "").strip()
+    if not _is_valid_login_name(login):
+        return _api_error("invalid_login", 400, "INVALID_LOGIN")
+    requester, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    if requester != login:
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    if not _ensure_firebase_ready():
+        return _api_error("firebase_not_ready", 503, "FIREBASE_NOT_READY")
+    try:
+        stats = db.reference(f"users/{login}/stats").get() or {}
+        stats = stats if isinstance(stats, dict) else {}
+        solved = _normalize_solved_map(stats.get("solved"))
+        return jsonify({
+            "login": login,
+            "stats": {
+                "cnt": max(0, _to_int(stats.get("cnt") or len(solved))),
+                "exp": max(0, _to_int(stats.get("exp"))),
+                "rating": max(0, _to_int(stats.get("rating"))),
+                "solved": solved,
+            },
+        })
+    except Exception as exc:
+        return _server_error("training_stats_failed", "TRAINING_STATS_FAILED", exc=exc)
 
 
 @app.route("/profile/set-nick-color", methods=["POST"])
