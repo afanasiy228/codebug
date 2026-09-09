@@ -18,6 +18,14 @@ def test_training_rank_progress_uses_the_real_rank_thresholds():
     assert 'id="levelValue">0 / 10 опыта' in training_page
 
 
+def test_rating_guide_only_keeps_the_rank_scale_heading():
+    rating_page = (REPO_ROOT / "rating.html").read_text(encoding="utf-8")
+
+    assert "РАНГИ И ЦВЕТ НИКА" in rating_page
+    assert "Как получить опыт" not in rating_page
+    assert "Решай задачи и занимай призовые места" not in rating_page
+
+
 def test_training_stats_returns_private_progress_for_owner(srv):
     srv.add_user("student")
     srv.db.data["users"]["student"]["stats"] = {

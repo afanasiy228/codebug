@@ -135,25 +135,7 @@
         }
 
         .rating-guide {
-            display: grid;
-            grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-            gap: 36px;
-            align-items: end;
             padding: 18px 2px 26px;
-        }
-
-        .experience-copy {
-            margin: 0;
-            color: #c1cbd3;
-            font-size: 15px;
-            line-height: 1.55;
-        }
-
-        .experience-copy strong {
-            display: block;
-            margin-bottom: 4px;
-            color: #f4f6f8;
-            font-size: 17px;
         }
 
         .rank-scale-label {
@@ -163,10 +145,6 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-        }
-
-        .rating-guide > div {
-            min-width: 0;
         }
 
         .rank-scale {
@@ -396,11 +374,6 @@
                 margin-top: 28px;
             }
 
-            .rating-guide {
-                grid-template-columns: 1fr;
-                gap: 18px;
-            }
-
             .rank-scale {
                 grid-template-columns: repeat(10, minmax(112px, 1fr));
                 gap: 0;
@@ -446,14 +419,8 @@
             <h1>Рейтинг пользователей</h1>
         </div>
         <section class="rating-guide" aria-label="Как устроены опыт и ранги">
-            <p class="experience-copy">
-                <strong>Как получить опыт</strong>
-                Решай задачи и занимай призовые места в соревнованиях. С ростом опыта повышается ранг, а ник без подписки становится темнее.
-            </p>
-            <div>
-                <p class="rank-scale-label">Ранги и цвет ника</p>
-                <div id="rank-scale" class="rank-scale"></div>
-            </div>
+            <p class="rank-scale-label">РАНГИ И ЦВЕТ НИКА</p>
+            <div id="rank-scale" class="rank-scale"></div>
         </section>
         <div class="rating-grid-head">
             <div>#</div>
