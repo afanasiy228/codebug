@@ -917,9 +917,9 @@
                                 <path d="M4 16l6-6 4 4 6-6"></path>
                                 <path d="M16 8h4v4"></path>
                             </svg>
-                            До следующего уровня
+                            До следующего ранга
                         </div>
-                        <div class="level-value" id="levelValue">0 / 20 опыта</div>
+                        <div class="level-value" id="levelValue">0 / 10 опыта</div>
                     </div>
                     <div class="level-bar">
                         <div id="levelFill" class="level-fill"></div>
@@ -1026,7 +1026,8 @@
             tourist: 110
         };
 
-        const LEVEL_STEPS = [20, 50, 100, 180, 300, 450, 650, 900, 1200];
+        // Keep these thresholds in sync with the rank scale on rating/profile.
+        const LEVEL_STEPS = [10, 50, 100, 200, 300, 500, 800, 1200, 2000];
 
         function normalizeTag(tag) {
             const t = String(tag || "").trim();
