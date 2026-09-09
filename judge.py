@@ -23,6 +23,9 @@ def parse_time_limit(value, default=5.0):
 
 TIME_LIMIT_ENV = os.getenv("TIME_LIMIT")
 TIME_LIMIT = parse_time_limit(TIME_LIMIT_ENV, 5.0)  # лимит времени на один тест
+TRUSTED_TEST_INPUT_LIMIT_BYTES = int(
+    os.getenv("CODEBUG_TEST_INPUT_LIMIT_BYTES", str(32 * 1024 * 1024))
+)
 SOURCE = os.getenv("JUDGE_SOURCE", "sol.cpp")
 BINARY = os.getenv("JUDGE_BINARY", "sol")
 LOG_FILE = os.getenv("JUDGE_LOG_FILE", "log.txt")
@@ -289,6 +292,10 @@ def run_standard_test(inp_file, out_file, checker_bin=None):
             language=LANG,
             input_data=input_data,
             timeout=TIME_LIMIT,
+            # Tests come from the operator-controlled tasks repository.  They may
+            # legitimately be much larger than the public /runsingle input limit;
+            # silently truncating them changes correct solutions into WA/RE.
+            input_limit_bytes=TRUSTED_TEST_INPUT_LIMIT_BYTES,
         )
     except SandboxError:
         return {"verdict": "RE", "time_ms": int((time.monotonic() - started) * 1000), "memory_mb": None}

@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -18,6 +19,34 @@ sys.path.insert(0, REPO_ROOT)
 
 import judge  # noqa: E402
 from sandbox import docker_runner  # noqa: E402
+
+
+def test_standard_tests_are_not_truncated_at_the_public_input_limit(tmp_path, monkeypatch):
+    test_input = "7" * (docker_runner._INPUT_LIMIT_BYTES + 1)
+    input_path = tmp_path / "001"
+    answer_path = tmp_path / "001.a"
+    input_path.write_text(test_input, encoding="utf-8")
+    answer_path.write_text("OK\n", encoding="utf-8")
+    captured = {}
+
+    def fake_run_in_sandbox(*args, **kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(
+            timeout=False,
+            memory_exceeded=False,
+            returncode=0,
+            stdout="OK\n",
+            duration_ms=1,
+            memory_mb=1.0,
+        )
+
+    monkeypatch.setattr(judge, "run_in_sandbox", fake_run_in_sandbox)
+
+    result = judge.run_standard_test(str(input_path), str(answer_path))
+
+    assert result["verdict"] == "OK"
+    assert len(captured["input_data"]) == len(test_input)
+    assert captured["input_limit_bytes"] == judge.TRUSTED_TEST_INPUT_LIMIT_BYTES
 
 
 # --------------------------------------------------------------------------
@@ -211,6 +240,26 @@ def test_docker_command_names_the_container_and_passes_it_through(monkeypatch):
     assert captured["container_name"] == name
     assert "--security-opt=no-new-privileges" in cmd
     assert "--network=none" in cmd and "--cap-drop=ALL" in cmd
+
+
+def test_runner_allows_a_separate_trusted_input_limit(monkeypatch):
+    captured = {}
+
+    def fake_run_process(command, **kwargs):
+        captured.update(kwargs)
+        return 0, "", "", False, 1
+
+    monkeypatch.setattr(docker_runner, "_docker_available", lambda: True)
+    monkeypatch.setattr(docker_runner, "_run_process", fake_run_process)
+
+    docker_runner.run_in_sandbox(
+        ["./sol"],
+        workdir=".",
+        input_data="x",
+        input_limit_bytes=32 * 1024 * 1024,
+    )
+
+    assert captured["input_limit_bytes"] == 32 * 1024 * 1024
 
 
 def test_timeout_issues_a_docker_kill_for_that_container(monkeypatch):

@@ -226,14 +226,14 @@ def _watch_output_size(paths, budget, stop_event, on_exceeded):
 
 
 def _run_process(command, *, cwd=None, input_data=None, timeout=5, preexec_fn=None,
-                 container_name=None):
+                 container_name=None, input_limit_bytes=_INPUT_LIMIT_BYTES):
     import tempfile
 
     input_bytes = None
     if input_data is not None:
         input_bytes = str(input_data).encode("utf-8", errors="replace")
-        if len(input_bytes) > _INPUT_LIMIT_BYTES:
-            input_bytes = input_bytes[:_INPUT_LIMIT_BYTES]
+        if input_limit_bytes is not None and len(input_bytes) > input_limit_bytes:
+            input_bytes = input_bytes[:input_limit_bytes]
 
     with tempfile.TemporaryDirectory(prefix="codebug_proc_") as tmp:
         stdout_path = os.path.join(tmp, "stdout.txt")
@@ -311,6 +311,7 @@ def run_in_sandbox(
     memory="256m",
     cpus="1",
     pids_limit=64,
+    input_limit_bytes=_INPUT_LIMIT_BYTES,
 ):
     if _docker_available():
         # Do not wrap with `time` inside docker containers: many minimal images
@@ -350,6 +351,7 @@ def run_in_sandbox(
             input_data=input_data,
             timeout=timeout,
             container_name=container_name,
+            input_limit_bytes=input_limit_bytes,
         )
         stderr_clean, memory_mb_value = _extract_rss(stderr_text)
         if timed_out:
@@ -385,6 +387,7 @@ def run_in_sandbox(
         input_data=input_data,
         timeout=timeout,
         preexec_fn=_limit_child_resources(memory, timeout),
+        input_limit_bytes=input_limit_bytes,
     )
     stderr_clean, memory_mb_value = _extract_rss(stderr_text)
     if timed_out:

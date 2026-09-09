@@ -7,8 +7,10 @@ they are what actually proves the C++/Python verdicts are unchanged.
 
     ./.venv/bin/python -m pytest tests/test_sandbox_docker.py -v
 """
+import os
 import shutil
 import subprocess
+import tempfile
 
 import pytest
 
@@ -41,6 +43,25 @@ pytestmark = pytest.mark.skipif(
     not _docker_ready(), reason="Docker is not available on this machine"
 )
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@pytest.fixture
+def docker_shared_workdir():
+    """Use the repository tree, which Docker Desktop is allowed to bind mount.
+
+    macOS' pytest temp root lives below /private/var and may appear as an empty
+    directory inside Docker Desktop even though ordinary repository mounts work.
+    """
+    base = os.path.join(REPO_ROOT, ".codebug_work")
+    os.makedirs(base, exist_ok=True)
+    path = tempfile.mkdtemp(prefix="sandbox_test_", dir=base)
+    try:
+        from pathlib import Path
+        yield Path(path)
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
+
 
 def _running_codebug_containers():
     out = subprocess.run(
@@ -51,17 +72,17 @@ def _running_codebug_containers():
 
 
 @pytest.fixture
-def cpp_workdir(tmp_path):
+def cpp_workdir(docker_shared_workdir):
     if not _image_present("codebug-runner-cpp"):
         pytest.skip("codebug-runner-cpp image not built")
-    return tmp_path
+    return docker_shared_workdir
 
 
 @pytest.fixture
-def py_workdir(tmp_path):
+def py_workdir(docker_shared_workdir):
     if not _image_present("codebug-runner-python"):
         pytest.skip("codebug-runner-python image not built")
-    return tmp_path
+    return docker_shared_workdir
 
 
 def _compile_cpp(workdir, source):
