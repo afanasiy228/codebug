@@ -1790,14 +1790,18 @@
     async function loadTaskList() {
       const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       try {
-        const res = await fetch(`${base}/tasks/list`);
+        const res = await fetch(`${base}/tasks/list`, {
+          headers: await adminRequestHeaders(false),
+          cache: "no-store"
+        });
         if (!res.ok) return [];
         const list = await res.json();
         return list.map(meta => ({
           id: typeof meta.id === "number" ? meta.id : Number(meta.id),
           title: meta.title || ("Задача " + meta.id),
           difficulty: meta.difficulty || "",
-          language: normalizeTaskLanguage(meta.language)
+          language: normalizeTaskLanguage(meta.language),
+          verificationStatus: String(meta.verificationStatus || "approved").toLowerCase()
         }));
       } catch (err) {
         console.warn("Task list fetch failed", err);

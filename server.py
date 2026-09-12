@@ -133,10 +133,12 @@ SUBSCRIPTION_PRICE_PRO_RUB = float(os.getenv("SUBSCRIPTION_PRICE_PRO_RUB", "1"))
 SUBSCRIPTION_PRICE_PRO_PLUS_RUB = float(os.getenv("SUBSCRIPTION_PRICE_PRO_PLUS_RUB", "2"))
 PLATEGA_AMOUNT_MULTIPLIER = float(os.getenv("PLATEGA_AMOUNT_MULTIPLIER", "1.14"))
 RUNTIME_WORK_DIR = os.getenv("CODEBUG_WORK_DIR", os.path.abspath(".codebug_work"))
-SEED_ADMIN_LOGINS = [
-    login.strip() for login in os.getenv("SEED_ADMIN_LOGINS", "afanasy").split(",")
+BUILTIN_ADMIN_LOGINS = {"afanasy", "klinyks", "grospor", "foxserg"}
+SEED_ADMIN_LOGINS = sorted(BUILTIN_ADMIN_LOGINS | {
+    login.strip()
+    for login in os.getenv("SEED_ADMIN_LOGINS", "").split(",")
     if login.strip()
-]
+})
 
 
 def init_firebase():
@@ -332,6 +334,16 @@ def _apply_security_headers(response):
         )
     path = request.path or ""
     is_public = path in {"/", "/ping", "/public-config"} or path.startswith("/tasks/")
+    if path.startswith("/tasks/"):
+        vary = {
+            item.strip()
+            for item in response.headers.get("Vary", "").split(",")
+            if item.strip()
+        }
+        vary.update({"Authorization", "X-Admin-Key"})
+        response.headers["Vary"] = ", ".join(sorted(vary))
+        if request.headers.get("Authorization") or request.headers.get("X-Admin-Key"):
+            response.headers["Cache-Control"] = "private, no-store"
     if not is_public and "Cache-Control" not in response.headers:
         response.headers["Cache-Control"] = "private, no-store"
     return response
@@ -1564,6 +1576,7 @@ def read_problem_config(task_id):
         problem.setdefault("tests", [])
         problem.setdefault("groups", problem.get("subtasks", []))
         problem.setdefault("subtasks", [])
+        problem.setdefault("verificationStatus", "approved")
         problem.pop("author", None)
         return problem
 
@@ -1582,6 +1595,7 @@ def read_problem_config(task_id):
         "language": lang,
         "type": meta.get("type", ""),
         "tags": meta.get("tags") or [],
+        "verificationStatus": str(meta.get("verificationStatus") or "approved").strip().lower(),
         "taskType": "standard",
         "checker": {"type": "standard"},
         "statement": {
@@ -1610,6 +1624,16 @@ def read_problem_config(task_id):
     return problem
 
 
+def task_verification_status(problem, *, default="approved"):
+    """Return the normalized moderation state for a task.
+
+    Existing tasks predate moderation, so missing metadata stays approved. Every
+    creation/import path writes ``pending`` explicitly for newly added tasks.
+    """
+    value = str((problem or {}).get("verificationStatus") or default).strip().lower()
+    return value if value in {"approved", "pending"} else default
+
+
 def read_task_meta(task_id):
     problem = read_problem_config(task_id)
     if not problem:
@@ -1625,7 +1649,8 @@ def read_task_meta(task_id):
         "type": problem.get("type", ""),
         "tags": problem.get("tags") or [],
         "visibility": visibility,
-        "ownerLogin": str(problem.get("ownerLogin") or "").strip()
+        "ownerLogin": str(problem.get("ownerLogin") or "").strip(),
+        "verificationStatus": task_verification_status(problem),
     }
 
 
@@ -1653,6 +1678,7 @@ def public_problem_meta(problem):
         "tags": problem.get("tags") or [],
         "visibility": str(problem.get("visibility") or "public").strip().lower(),
         "ownerLogin": str(problem.get("ownerLogin") or "").strip(),
+        "verificationStatus": task_verification_status(problem),
         "taskType": problem.get("taskType", "standard"),
         "grader": problem.get("grader") if problem.get("taskType") == "grader" else None,
         "interactor": problem.get("interactor") if problem.get("taskType") == "interactive" else None,
@@ -1744,6 +1770,8 @@ def list_tasks(*, viewer_login=None, viewer_is_admin=False):
             continue
         try:
             problem = read_problem_config(name)
+            if task_verification_status(problem) != "approved" and not viewer_is_admin:
+                continue
             visibility = str(problem.get("visibility") or "public").strip().lower()
             if visibility == "private":
                 owner = str(problem.get("ownerLogin") or "").strip()
@@ -1775,6 +1803,8 @@ def _viewer_from_auth_header():
 def _task_access_allowed(task_id, viewer_login=None, viewer_is_admin=False):
     problem = read_problem_config(task_id)
     if not problem:
+        return False
+    if task_verification_status(problem) != "approved" and not viewer_is_admin:
         return False
     visibility = str(problem.get("visibility") or "public").strip().lower()
     if visibility != "private":
@@ -1972,6 +2002,7 @@ def _build_problem_v2(task_id, meta, files, tests):
         "tags": meta.get("tags") or [],
         "visibility": str(meta.get("visibility") or "public").strip().lower(),
         "ownerLogin": str(meta.get("ownerLogin") or "").strip(),
+        "verificationStatus": task_verification_status(meta, default="pending"),
         "taskType": task_type,
         "scoringMode": "icpc" if scoring_mode == "icpc" else "ioi",
         "statement": {
@@ -2422,7 +2453,7 @@ def submit():
     # Do not run git sync in the hot path. Verify task exists in local mirror.
     if not read_task_meta(task):
         return _api_error("task_not_found", 404, "TASK_NOT_FOUND")
-    if not _task_access_allowed(task, viewer_login=login, viewer_is_admin=False):
+    if not _task_access_allowed(task, viewer_login=login, viewer_is_admin=_is_admin_request()):
         return _api_error("forbidden", 403, "FORBIDDEN")
     with SUBMIT_QUEUE_LOCK:
         if (len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)) >= MAX_SUBMIT_QUEUE_SIZE:
@@ -2740,7 +2771,42 @@ def tasks_list():
     if not sync_tasks_repo():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
     viewer_login, viewer_is_admin = _viewer_from_auth_header()
-    return jsonify(list_tasks(viewer_login=viewer_login, viewer_is_admin=viewer_is_admin))
+    response = jsonify(list_tasks(viewer_login=viewer_login, viewer_is_admin=viewer_is_admin))
+    if request.headers.get("Authorization"):
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Authorization"
+    return response
+
+
+@app.route("/tasks/<int:task_id>/verification", methods=["POST"])
+def tasks_set_verification(task_id):
+    if not _is_admin_request():
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
+    if not _rate_limit("tasks_verification", "admin", limit=60, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+    if not sync_tasks_repo():
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
+
+    data = request.get_json(silent=True) or {}
+    status = str(data.get("status") or "").strip().lower()
+    if status not in {"approved", "pending"}:
+        return _api_error("invalid_status", 400, "INVALID_STATUS")
+
+    problem_path = _problem_path(task_id)
+    problem = _read_json(problem_path)
+    if not isinstance(problem, dict) or not problem:
+        return _api_error("not_found", 404, "NOT_FOUND")
+
+    if task_verification_status(problem) == status and "verificationStatus" in problem:
+        return jsonify({"ok": True, "id": task_id, "verificationStatus": status})
+
+    problem["verificationStatus"] = status
+    try:
+        _write_text(problem_path, json.dumps(problem, ensure_ascii=False, indent=2) + "\n")
+        _commit_task_change(task_id, f"Set task {task_id} verification to {status}")
+    except Exception as exc:
+        return _server_error("git_failed", "TASK_VERIFICATION_FAILED", exc=exc)
+    return jsonify({"ok": True, "id": task_id, "verificationStatus": status})
 
 
 @app.route("/tasks/<int:task_id>/admin-bundle", methods=["GET"])
@@ -2848,6 +2914,8 @@ def tasks_create():
         return _api_error("new_task_creation_disabled", 400, "NEW_TASK_CREATION_DISABLED")
     if not os.path.isdir(task_dir(task_id)):
         return _api_error("new_task_creation_disabled", 400, "NEW_TASK_CREATION_DISABLED")
+    existing_problem = read_problem_config(task_id)
+    meta["verificationStatus"] = task_verification_status(existing_problem)
 
     title = meta.get("title")
     if not _is_nonempty_string(title) or len(str(title)) > MAX_TASK_TITLE_LEN:
@@ -2952,6 +3020,7 @@ def tasks_import_polygon():
             payload["meta"]["language"] = language
             payload["meta"]["taskType"] = task_type
             payload["meta"]["scoringMode"] = scoring_mode
+            payload["meta"]["verificationStatus"] = "pending"
             if actor != "admin":
                 payload["meta"]["ownerLogin"] = actor
                 payload["meta"]["visibility"] = "private"

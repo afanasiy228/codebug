@@ -440,6 +440,36 @@
             border-top: 1px solid var(--line-soft);
         }
 
+        .task-section-heading {
+            margin: 28px 0 10px;
+            color: #aebfd0;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .pending-tasks {
+            margin-top: 34px;
+        }
+
+        .approve-task-btn {
+            border: 1px solid rgba(245, 158, 11, 0.45);
+            border-radius: 8px;
+            padding: 7px 12px;
+            color: #f4c780;
+            background: rgba(245, 158, 11, 0.08);
+            font: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .approve-task-btn:disabled {
+            cursor: wait;
+            opacity: 0.55;
+        }
+
         .task-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
@@ -977,8 +1007,14 @@
                 </div>
             </div>
 
+            <div id="approvedTasksHeading" class="task-section-heading" hidden>Подтверждённые задачи</div>
             <ul id="taskList" class="task-list"></ul>
             <div id="empty" class="empty" style="display:none;">Задачи не найдены.</div>
+            <section id="pendingTasksSection" class="pending-tasks" hidden>
+                <div class="task-section-heading">Неподтверждённые задачи</div>
+                <ul id="pendingTaskList" class="task-list"></ul>
+                <div id="pendingTasksEmpty" class="empty">Неподтверждённых задач нет.</div>
+            </section>
 
             <section class="suggest-wrap">
                 <button class="suggest-open" type="button" onclick="openSuggestModal()">Предложить задачу</button>
@@ -1081,7 +1117,13 @@
         async function loadProblems() {
             const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
             try {
-                const res = await fetch(`${base}/tasks/list`);
+                const token = typeof window.getFreshAuthToken === "function"
+                    ? await window.getFreshAuthToken({ timeoutMs: 5000 }).catch(() => "")
+                    : "";
+                const options = token
+                    ? { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+                    : { cache: "no-store" };
+                const res = await fetch(`${base}/tasks/list`, options);
                 if (!res.ok) return [];
                 const list = await res.json();
                 return list.map(meta => ({
@@ -1090,6 +1132,7 @@
                     difficulty: meta.difficulty || "",
                     language: meta.language || "cpp",
                     taskType: meta.taskType || "standard",
+                    verificationStatus: String(meta.verificationStatus || "approved").toLowerCase(),
                     tags: Array.isArray(meta.tags) ? meta.tags : [],
                     shortDescription: meta.shortDescription || meta.description || ""
                 }));
@@ -1363,7 +1406,7 @@
         }
 
         function filteredProblems() {
-            const baseList = isAdmin ? problems : visibleProblems;
+            const baseList = visibleProblems;
             const difficulty = document.getElementById("difficultyFilter").value;
             const language = document.getElementById("languageFilter").value;
             const query = document.getElementById("searchInput").value.trim().toLowerCase();
@@ -1426,6 +1469,90 @@
                     window.location.href = li.dataset.href;
                 });
                 list.appendChild(li);
+            });
+        }
+
+        async function approvePendingTask(task, button) {
+            if (!isAdmin || !task) return;
+            button.disabled = true;
+            button.textContent = "Подтверждаем…";
+            try {
+                const token = typeof window.getFreshAuthToken === "function"
+                    ? await window.getFreshAuthToken({ timeoutMs: 5000 })
+                    : "";
+                if (!token) throw new Error("auth_required");
+                const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+                const response = await fetch(`${base}/tasks/${task.id}/verification`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ status: "approved" })
+                });
+                if (!response.ok) throw new Error(`approve_${response.status}`);
+                task.verificationStatus = "approved";
+                visibleProblems = problems.filter((problem) =>
+                    problem.verificationStatus === "approved" && !hiddenMap[problem.id]
+                );
+                syncDifficultyFilter();
+                renderTaskList();
+                renderPendingTasks();
+            } catch (error) {
+                console.error("Task approval failed", error);
+                button.disabled = false;
+                button.textContent = "Подтвердить";
+                alert("Не удалось подтвердить задачу. Попробуй ещё раз.");
+            }
+        }
+
+        function renderPendingTasks() {
+            const section = document.getElementById("pendingTasksSection");
+            const approvedHeading = document.getElementById("approvedTasksHeading");
+            if (!section) return;
+            section.hidden = !isAdmin;
+            if (approvedHeading) approvedHeading.hidden = !isAdmin;
+            if (!isAdmin) return;
+
+            const list = document.getElementById("pendingTaskList");
+            const empty = document.getElementById("pendingTasksEmpty");
+            const pending = problems.filter((problem) => problem.verificationStatus === "pending");
+            list.replaceChildren();
+            empty.style.display = pending.length ? "none" : "block";
+
+            pending.forEach((problem) => {
+                const row = document.createElement("li");
+                row.className = "task-row";
+                row.dataset.href = `problem.html?id=${problem.id}`;
+
+                const left = document.createElement("div");
+                left.className = "task-left";
+                const copy = document.createElement("div");
+                copy.className = "task-copy";
+                const title = document.createElement("a");
+                title.className = "task-title";
+                title.href = row.dataset.href;
+                title.textContent = problem.title;
+                const details = document.createElement("div");
+                details.className = "task-tags";
+                details.textContent = `ID ${problem.id} · ${taskTypeLabel(problem.taskType)} · ${problem.language === "python" ? "Python" : "C++"}`;
+                copy.append(title, details);
+                left.appendChild(copy);
+
+                const approve = document.createElement("button");
+                approve.type = "button";
+                approve.className = "approve-task-btn";
+                approve.textContent = "Подтвердить";
+                approve.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    approvePendingTask(problem, approve);
+                });
+                row.addEventListener("click", (event) => {
+                    if (event.target.closest("a, button")) return;
+                    window.location.href = row.dataset.href;
+                });
+                row.append(left, approve);
+                list.appendChild(row);
             });
         }
 
@@ -1528,15 +1655,18 @@
         async function initTraining() {
             if (typeof updateNavbar === "function") updateNavbar();
 
+            isAdmin = (typeof checkAdminAccess === "function") ? await checkAdminAccess() : false;
             problems = await loadProblems();
             hiddenMap = await loadHiddenMap();
-            isAdmin = (typeof checkAdminAccess === "function") ? await checkAdminAccess() : false;
-            visibleProblems = problems.filter((p) => !hiddenMap[p.id]);
+            visibleProblems = problems.filter((p) =>
+                p.verificationStatus === "approved" && !hiddenMap[p.id]
+            );
             syncDifficultyFilter();
 
             await loadUserMetrics();
             renderTopMetrics();
             renderTaskList();
+            renderPendingTasks();
         }
 
         function bindFilters() {

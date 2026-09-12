@@ -1730,6 +1730,17 @@
             const hiddenMap = await loadHiddenMap();
             const isHidden = hiddenMap && hiddenMap[id];
             const isAdmin = await checkAdminAccess();
+            let taskRequestOptions = { cache: "no-store" };
+            if (isAdmin && typeof window.getFreshAuthToken === "function") {
+                const token = await window.getFreshAuthToken({ timeoutMs: 5000 }).catch(() => "");
+                if (token) {
+                    taskRequestOptions = {
+                        headers: { Authorization: `Bearer ${token}` },
+                        cache: "no-store"
+                    };
+                }
+            }
+            const taskFetch = (url) => fetch(url, taskRequestOptions);
             if (isHidden && !isAdmin) {
                 document.getElementById("taskTitle").innerText = "Задача скрыта";
                 document.getElementById("taskStatement").innerText = "Доступ к этой задаче есть только у администраторов.";
@@ -1749,7 +1760,7 @@
 
             let problemV2 = null;
             try {
-                const problemRes = await fetch(`${base}/tasks/${id}/problem.json`);
+                const problemRes = await taskFetch(`${base}/tasks/${id}/problem.json`);
                 if (problemRes.ok) {
                     problemV2 = await problemRes.json();
                 } else if (problemRes.status >= 500) {
@@ -1770,7 +1781,7 @@
                 let meta = problemV2;
                 if (!meta || !meta.title) {
                     const metaPath = `${base}/tasks/${id}/meta.json`;
-                    const res = await fetch(metaPath);
+                    const res = await taskFetch(metaPath);
                     if (!res.ok) {
                         if (res.status >= 500) {
                             let payload = null;
@@ -1818,7 +1829,7 @@
 
             if (statementHtmlPath) {
                 try {
-                    const res = await fetch(`${base}/tasks/${id}/${statementHtmlPath}`);
+                    const res = await taskFetch(`${base}/tasks/${id}/${statementHtmlPath}`);
                     if (!res.ok) throw new Error(`statement_html_${res.status}`);
                     const html = await res.text();
                     statementSections = splitStatementByLanguage(html);
@@ -1829,7 +1840,7 @@
                 }
             } else {
                 try {
-                    const res = await fetch(`${base}/tasks/${id}/${statementMarkdownPath}`);
+                    const res = await taskFetch(`${base}/tasks/${id}/${statementMarkdownPath}`);
                     if (!res.ok) throw new Error(`statement_${res.status}`);
 
                     const md = await res.text();
@@ -1849,7 +1860,7 @@
             if (helpFile) {
                 const helpPath = `${base}/tasks/${id}/${helpFile}`;
                 try {
-                    const res = await fetch(helpPath);
+                    const res = await taskFetch(helpPath);
                     if (!res.ok) throw new Error(`help_${res.status}`);
                     const md = await res.text();
                     if (md.trim()) {
@@ -1869,9 +1880,9 @@
             const codePath = `${base}/tasks/${id}/${v2CodeFile || codeFile}`;
 
             try {
-                const res = await fetch(codePath);
+                const res = await taskFetch(codePath);
                 if (!res.ok) {
-                    const fallbackRes = await fetch(`${base}/tasks/${id}/${fallbackCodeFile}`);
+                    const fallbackRes = await taskFetch(`${base}/tasks/${id}/${fallbackCodeFile}`);
                     if (!fallbackRes.ok) throw new Error(`code_${res.status}`);
                     const fallbackCode = await fallbackRes.text();
                     setEditorCodeFromTask(fallbackCode);
@@ -1911,10 +1922,10 @@
             if (openTests.length) {
                 for (const test of openTests.slice(0, 2)) {
                     try {
-                        const inpRes = await fetch(`${base}/tasks/${id}/${test.input}`);
+                        const inpRes = await taskFetch(`${base}/tasks/${id}/${test.input}`);
                         if (!inpRes.ok) throw new Error(`v2_in_${test.name}_${inpRes.status}`);
 
-                        const outRes = await fetch(`${base}/tasks/${id}/${test.answer}`);
+                        const outRes = await taskFetch(`${base}/tasks/${id}/${test.answer}`);
                         if (!outRes.ok) throw new Error(`v2_out_${test.name}_${outRes.status}`);
 
                         const inp = await inpRes.text();
@@ -1932,12 +1943,12 @@
                     const outPath = `${base}/tasks/${id}/tests/${i}.out`;
 
                     try {
-                        const inpRes = await fetch(inPath);
+                        const inpRes = await taskFetch(inPath);
                         if (!inpRes.ok) throw new Error(`in_${i}_${inpRes.status}`);
 
                         const inp = await inpRes.text();
 
-                        const outRes = await fetch(outPath);
+                        const outRes = await taskFetch(outPath);
                         if (!outRes.ok) throw new Error(`out_${i}_${outRes.status}`);
 
                         const out = await outRes.text();

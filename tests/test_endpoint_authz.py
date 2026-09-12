@@ -33,6 +33,7 @@ ADMIN_ENDPOINTS = [
     ("POST", "/admin/contests/reset-foi", {"confirm": "RESET_ALL_CONTESTS"}),
     ("POST", "/admin/contests/finalize", {"contestId": "c1"}),
     ("POST", "/tasks/delete", {"taskId": 1}),
+    ("POST", "/tasks/1/verification", {"status": "approved"}),
     ("GET", "/tasks/1/admin-bundle", None),
 ]
 
