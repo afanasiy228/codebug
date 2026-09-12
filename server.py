@@ -1667,6 +1667,12 @@ def public_problem_meta(problem):
     } for t in tests]
     checker = problem.get("checker") or {"type": "standard"}
     files = problem.get("files") or {}
+    statement = problem.get("statement") or {}
+    public_statement = {
+        key: statement.get(key)
+        for key in ("language", "html", "tex", "markdown", "hint", "assets")
+        if statement.get(key)
+    }
     return {
         "formatVersion": problem.get("formatVersion", problem.get("schemaVersion", 2)),
         "schemaVersion": problem.get("schemaVersion", 2),
@@ -1682,7 +1688,7 @@ def public_problem_meta(problem):
         "taskType": problem.get("taskType", "standard"),
         "grader": problem.get("grader") if problem.get("taskType") == "grader" else None,
         "interactor": problem.get("interactor") if problem.get("taskType") == "interactive" else None,
-        "statement": problem.get("statement") or {},
+        "statement": public_statement,
         "files": {
             "code": files.get("code")
         },
@@ -2845,6 +2851,7 @@ def tasks_admin_bundle(task_id):
             "statementTex": _task_text(task_id, statement.get("tex")),
             "statementHtml": _task_text(task_id, statement.get("html")),
             "help": _task_text(task_id, statement.get("hint")),
+            "editorial": _task_text(task_id, statement.get("editorial")),
             "code": _task_text(task_id, files.get("code")),
             "solution": _task_text(task_id, files.get("solution")),
             "generator": _task_text(task_id, files.get("generator")),
@@ -2855,6 +2862,25 @@ def tasks_admin_bundle(task_id):
             "interactor": _task_text(task_id, interactor.get("source")),
         },
         "tests": tests
+    })
+
+
+@app.route("/tasks/<int:task_id>/admin-review", methods=["GET"])
+def tasks_admin_review(task_id):
+    if not _is_admin_request():
+        return _api_error("admin_required", 403, "ADMIN_REQUIRED")
+    if not sync_tasks_repo():
+        return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
+
+    problem = read_problem_config(task_id)
+    if not problem:
+        return abort(404)
+
+    statement = problem.get("statement") or {}
+    files = problem.get("files") or {}
+    return jsonify({
+        "editorial": _task_text(task_id, statement.get("editorial")),
+        "solution": _task_text(task_id, files.get("solution")),
     })
 
 

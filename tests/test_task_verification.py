@@ -130,6 +130,69 @@ def test_admin_can_open_pending_task_assets_with_auth():
     assert "taskFetch(`${base}/tasks/${id}/problem.json`)" in page
 
 
+def test_admin_can_reveal_editorial_and_solution(srv, tmp_path, monkeypatch):
+    _write_problem(
+        tmp_path,
+        7,
+        verificationStatus="approved",
+        statement={"editorial": "statement/editorial.md"},
+        files={"solution": "solutions/main.cpp"},
+    )
+    task_dir = tmp_path / "7"
+    (task_dir / "statement").mkdir()
+    (task_dir / "solutions").mkdir()
+    (task_dir / "statement" / "editorial.md").write_text(
+        "# Idea\n\nThe missing invariant.", encoding="utf-8"
+    )
+    (task_dir / "solutions" / "main.cpp").write_text(
+        "int main() {}\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(srv.module, "TASKS_REPO_DIR", str(tmp_path))
+    token = srv.add_user("moderator", admin=True)
+
+    regular_response = srv.client.get("/tasks/7/admin-review")
+    response = srv.client.get(
+        "/tasks/7/admin-review",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert regular_response.status_code == 403
+    assert response.status_code == 200
+    review = response.get_json()
+    assert "missing invariant" in review["editorial"]
+    assert review["solution"] == "int main() {}\n"
+
+
+def test_editorial_is_not_exposed_as_a_public_task_file(srv, tmp_path, monkeypatch):
+    _write_problem(
+        tmp_path,
+        7,
+        verificationStatus="approved",
+        statement={"editorial": "statement/editorial.md"},
+    )
+    task_dir = tmp_path / "7"
+    (task_dir / "statement").mkdir()
+    (task_dir / "statement" / "editorial.md").write_text("secret", encoding="utf-8")
+    monkeypatch.setattr(srv.module, "TASKS_REPO_DIR", str(tmp_path))
+
+    meta_response = srv.client.get("/tasks/7/problem.json")
+    file_response = srv.client.get("/tasks/7/statement/editorial.md")
+
+    assert meta_response.status_code == 200
+    assert "editorial" not in meta_response.get_json()["statement"]
+    assert file_response.status_code == 404
+
+
+def test_problem_page_only_loads_review_materials_for_admins():
+    page = (REPO_ROOT / "problem.html").read_text(encoding="utf-8")
+
+    assert "if (isAdmin)" in page
+    assert "`${base}/tasks/${id}/admin-review`" in page
+    assert 'block.addEventListener("toggle"' in page
+    assert "Краткий разбор и где ошибка" in page
+    assert "Правильное решение" in page
+
+
 def test_admin_task_list_request_is_authenticated():
     page = (REPO_ROOT / "admin.html").read_text(encoding="utf-8")
 

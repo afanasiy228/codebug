@@ -339,6 +339,31 @@
             font-size: 16.5px;
             line-height: 1.45;
         }
+
+        .admin-review {
+            margin: 24px 0 8px;
+            padding: 16px;
+            border: 1px solid rgba(214, 160, 121, 0.35);
+            border-radius: 12px;
+            background: rgba(214, 160, 121, 0.06);
+        }
+
+        .admin-review[hidden] { display: none; }
+        .admin-review-title { margin: 0 0 10px; color: #d6a079; font-size: 15px; }
+        .admin-review details + details { margin-top: 8px; }
+        .admin-review summary { cursor: pointer; color: #cfb39d; font-weight: 600; }
+        .admin-review-content { margin-top: 12px; line-height: 1.5; }
+        .admin-review-code {
+            margin: 12px 0 0;
+            padding: 12px;
+            overflow: auto;
+            border: 1px solid var(--stroke);
+            border-radius: 8px;
+            background: #0e0d0c;
+            color: #ddd6cf;
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+            white-space: pre;
+        }
         
         .task-tags {
             display: flex;
@@ -608,6 +633,17 @@
             <div id="examples"></div>
             <h3 class="section-title" id="helpTitle">Пояснение</h3>
             <div id="taskHelp">загружаю Пояснение</div>
+            <section id="adminReview" class="admin-review" hidden>
+                <h3 class="admin-review-title">Материалы администратора</h3>
+                <details id="adminEditorialBlock">
+                    <summary>Краткий разбор и где ошибка</summary>
+                    <div id="adminEditorial" class="admin-review-content"></div>
+                </details>
+                <details id="adminSolutionBlock">
+                    <summary>Правильное решение</summary>
+                    <pre id="adminSolution" class="admin-review-code"></pre>
+                </details>
+            </section>
         </div>
 
         <div class="splitter-v" id="vSplit"></div>
@@ -1624,6 +1660,51 @@
             if (body) body.style.display = visible ? "" : "none";
         }
 
+        function renderAdminReview(review) {
+            const root = document.getElementById("adminReview");
+            const editorialRoot = document.getElementById("adminEditorial");
+            const solutionRoot = document.getElementById("adminSolution");
+            const editorial = String(review?.editorial || "").trim();
+            const solution = String(review?.solution || "").trim();
+
+            editorialRoot.innerHTML = editorial
+                ? renderMarkdown(editorial)
+                : "<p>Краткий разбор для этой задачи не добавлен.</p>";
+            solutionRoot.textContent = solution || "Правильное решение для этой задачи не добавлено.";
+
+            if (window.MathJax?.typesetPromise) {
+                MathJax.typesetPromise([root]).catch(console.warn);
+            }
+        }
+
+        function setupAdminReview(taskFetch, reviewUrl) {
+            const root = document.getElementById("adminReview");
+            const blocks = [
+                document.getElementById("adminEditorialBlock"),
+                document.getElementById("adminSolutionBlock")
+            ];
+            let reviewRequest = null;
+
+            const loadReview = async () => {
+                if (reviewRequest) return reviewRequest;
+                reviewRequest = taskFetch(reviewUrl)
+                    .then(async response => {
+                        if (!response.ok) throw new Error(`admin_review_${response.status}`);
+                        renderAdminReview(await response.json());
+                    })
+                    .catch(error => {
+                        reviewRequest = null;
+                        console.warn("[problem] admin review load failed", error);
+                    });
+                return reviewRequest;
+            };
+
+            blocks.forEach(block => block.addEventListener("toggle", () => {
+                if (block.open) loadReview();
+            }));
+            root.hidden = false;
+        }
+
         function showTaskNotFound(id) {
             const hasNumericId = /^\d+$/.test(String(id || ""));
             document.getElementById("taskTitle").innerText = hasNumericId
@@ -1871,6 +1952,10 @@
                     helpRoot.innerText = "";
                     setHelpVisible(false);
                 }
+            }
+
+            if (isAdmin) {
+                setupAdminReview(taskFetch, `${base}/tasks/${id}/admin-review`);
             }
 
 
