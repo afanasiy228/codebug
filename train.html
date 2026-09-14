@@ -453,19 +453,37 @@
             margin-top: 34px;
         }
 
-        .approve-task-btn {
-            border: 1px solid rgba(245, 158, 11, 0.45);
+        .task-admin-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .moderation-task-btn {
+            border: 1px solid rgba(122, 145, 164, 0.34) !important;
             border-radius: 8px;
             padding: 7px 12px;
-            color: #f4c780;
-            background: rgba(245, 158, 11, 0.08);
+            color: #c7d5e2 !important;
+            background: transparent !important;
+            box-shadow: none !important;
             font: inherit;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 650;
             cursor: pointer;
         }
 
-        .approve-task-btn:disabled {
+        .moderation-task-btn.confirm {
+            border-color: rgba(245, 158, 11, 0.45) !important;
+            color: #f4c780 !important;
+        }
+
+        .moderation-task-btn.delete {
+            color: #caa3a3 !important;
+        }
+
+        .moderation-task-btn:disabled {
             cursor: wait;
             opacity: 0.55;
         }
@@ -556,6 +574,11 @@
             color: #7f93a7;
             font-size: 12px;
             opacity: 0.9;
+        }
+
+        .task-right.with-admin-actions {
+            grid-template-columns: 132px 70px 92px auto;
+            margin-right: 0;
         }
 
         .difficulty-block {
@@ -842,6 +865,15 @@
                 margin-right: 0;
                 padding-left: 30px;
                 gap: 18px;
+            }
+
+            .task-right.with-admin-actions {
+                grid-template-columns: 132px 70px 92px;
+            }
+
+            .task-admin-actions {
+                grid-column: 1 / -1;
+                justify-content: flex-start;
             }
 
             .difficulty-block {
@@ -1422,14 +1454,7 @@
             });
         }
 
-        function renderTaskList() {
-            const list = document.getElementById("taskList");
-            const empty = document.getElementById("empty");
-            const rows = filteredProblems();
-            list.innerHTML = "";
-            empty.style.display = rows.length ? "none" : "block";
-
-            rows.forEach((p) => {
+        function createTaskRow(p) {
                 const solved = isTaskSolved(p.id);
                 const diff = difficultyMeta(p.difficulty);
                 const safeTitle = escapeHtml(p.title);
@@ -1450,7 +1475,7 @@
                             <div class="task-tags">${safeTags}</div>
                         </div>
                     </div>
-                    <div class="task-right">
+                    <div class="task-right ${isAdmin ? "with-admin-actions" : ""}">
                         <div class="difficulty-block" style="--diff-color: ${escapeHtml(diff.color)}">
                             <div class="difficulty-name">${escapeHtml(diff.label)}</div>
                             <div class="difficulty-scale">${buildDifficultyScale(diff)}</div>
@@ -1462,20 +1487,67 @@
                             </svg>
                             ${exp} опыта
                         </div>
+                        ${isAdmin ? '<div class="task-admin-actions"></div>' : ""}
                     </div>
                 `;
+                if (isAdmin) {
+                    const actions = li.querySelector(".task-admin-actions");
+                    const verification = document.createElement("button");
+                    verification.type = "button";
+                    verification.className = `moderation-task-btn ${p.verificationStatus === "pending" ? "confirm" : ""}`;
+                    verification.textContent = p.verificationStatus === "pending"
+                        ? "Подтвердить"
+                        : "Убрать подтверждение";
+                    verification.addEventListener("click", (event) => {
+                        event.stopPropagation();
+                        const status = p.verificationStatus === "pending" ? "approved" : "pending";
+                        setTaskVerification(p, status, verification);
+                    });
+
+                    const remove = document.createElement("button");
+                    remove.type = "button";
+                    remove.className = "moderation-task-btn delete";
+                    remove.textContent = "Удалить";
+                    remove.addEventListener("click", (event) => {
+                        event.stopPropagation();
+                        deleteTask(p, remove);
+                    });
+                    actions.append(verification, remove);
+                }
                 li.addEventListener("click", (e) => {
-                    if (e.target && (e.target.tagName === "A" || e.target.closest("a"))) return;
+                    if (e.target && e.target.closest("a, button")) return;
                     window.location.href = li.dataset.href;
                 });
+                return li;
+        }
+
+        function renderTaskList() {
+            const list = document.getElementById("taskList");
+            const empty = document.getElementById("empty");
+            const rows = filteredProblems();
+            list.innerHTML = "";
+            empty.style.display = rows.length ? "none" : "block";
+
+            rows.forEach((p) => {
+                const li = createTaskRow(p);
                 list.appendChild(li);
             });
         }
 
-        async function approvePendingTask(task, button) {
+        function refreshModeratedTasks() {
+            visibleProblems = problems.filter((problem) =>
+                problem.verificationStatus === "approved" && !hiddenMap[problem.id]
+            );
+            syncDifficultyFilter();
+            renderTaskList();
+            renderPendingTasks();
+        }
+
+        async function setTaskVerification(task, status, button) {
             if (!isAdmin || !task) return;
+            const originalLabel = button.textContent;
             button.disabled = true;
-            button.textContent = "Подтверждаем…";
+            button.textContent = status === "approved" ? "Подтверждаем…" : "Убираем…";
             try {
                 const token = typeof window.getFreshAuthToken === "function"
                     ? await window.getFreshAuthToken({ timeoutMs: 5000 })
@@ -1488,21 +1560,46 @@
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ status: "approved" })
+                    body: JSON.stringify({ status })
                 });
-                if (!response.ok) throw new Error(`approve_${response.status}`);
-                task.verificationStatus = "approved";
-                visibleProblems = problems.filter((problem) =>
-                    problem.verificationStatus === "approved" && !hiddenMap[problem.id]
-                );
-                syncDifficultyFilter();
-                renderTaskList();
-                renderPendingTasks();
+                if (!response.ok) throw new Error(`verification_${response.status}`);
+                task.verificationStatus = status;
+                refreshModeratedTasks();
             } catch (error) {
-                console.error("Task approval failed", error);
+                console.error("Task verification update failed", error);
                 button.disabled = false;
-                button.textContent = "Подтвердить";
-                alert("Не удалось подтвердить задачу. Попробуй ещё раз.");
+                button.textContent = originalLabel;
+                alert("Не удалось изменить подтверждение задачи. Попробуй ещё раз.");
+            }
+        }
+
+        async function deleteTask(task, button) {
+            if (!isAdmin || !task) return;
+            if (!confirm(`Удалить задачу «${task.title}»? Это действие нельзя отменить.`)) return;
+            button.disabled = true;
+            button.textContent = "Удаляем…";
+            try {
+                const token = typeof window.getFreshAuthToken === "function"
+                    ? await window.getFreshAuthToken({ timeoutMs: 5000 })
+                    : "";
+                if (!token) throw new Error("auth_required");
+                const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+                const response = await fetch(`${base}/tasks/delete`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ id: Number(task.id) })
+                });
+                if (!response.ok) throw new Error(`delete_${response.status}`);
+                problems = problems.filter((problem) => problem.id !== task.id);
+                refreshModeratedTasks();
+            } catch (error) {
+                console.error("Task deletion failed", error);
+                button.disabled = false;
+                button.textContent = "Удалить";
+                alert("Не удалось удалить задачу. Попробуй ещё раз.");
             }
         }
 
@@ -1521,37 +1618,7 @@
             empty.style.display = pending.length ? "none" : "block";
 
             pending.forEach((problem) => {
-                const row = document.createElement("li");
-                row.className = "task-row";
-                row.dataset.href = `problem.html?id=${problem.id}`;
-
-                const left = document.createElement("div");
-                left.className = "task-left";
-                const copy = document.createElement("div");
-                copy.className = "task-copy";
-                const title = document.createElement("a");
-                title.className = "task-title";
-                title.href = row.dataset.href;
-                title.textContent = problem.title;
-                const details = document.createElement("div");
-                details.className = "task-tags";
-                details.textContent = `ID ${problem.id} · ${taskTypeLabel(problem.taskType)} · ${problem.language === "python" ? "Python" : "C++"}`;
-                copy.append(title, details);
-                left.appendChild(copy);
-
-                const approve = document.createElement("button");
-                approve.type = "button";
-                approve.className = "approve-task-btn";
-                approve.textContent = "Подтвердить";
-                approve.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    approvePendingTask(problem, approve);
-                });
-                row.addEventListener("click", (event) => {
-                    if (event.target.closest("a, button")) return;
-                    window.location.href = row.dataset.href;
-                });
-                row.append(left, approve);
+                const row = createTaskRow(problem);
                 list.appendChild(row);
             });
         }

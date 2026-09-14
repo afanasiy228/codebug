@@ -3097,35 +3097,12 @@ def tasks_delete():
         return _api_error("not_found", 404, "NOT_FOUND")
 
     try:
-        subprocess.run(
-            ["rm", "-rf", task_path],
-            check=True
-        )
+        shutil.rmtree(task_path)
     except Exception as e:
         return _server_error("delete_failed", "TASK_DELETE_FAILED", exc=e)
 
-    _ensure_git_identity()
     try:
-        subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "add", "-A"],
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "commit", "-m", f"Delete task {task_id}"],
-            check=True,
-            capture_output=True,
-            text=True,
-            env=_git_env()
-        )
-        subprocess.run(
-            ["git", "-C", TASKS_REPO_DIR, "push"],
-            check=True,
-            capture_output=True,
-            text=True,
-            env=_git_env()
-        )
+        _commit_task_change(task_id, f"Delete task {task_id}")
     except Exception as e:
         return _server_error("git_failed", "TASK_DELETE_GIT_FAILED", exc=e)
 

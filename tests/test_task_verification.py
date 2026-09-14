@@ -97,6 +97,44 @@ def test_admin_can_approve_a_pending_task(srv, tmp_path, monkeypatch):
     assert commits and commits[0][0] == 2
 
 
+def test_admin_can_remove_task_approval(srv, tmp_path, monkeypatch):
+    problem_path = _write_problem(tmp_path, 2, verificationStatus="approved")
+    monkeypatch.setattr(srv.module, "TASKS_REPO_DIR", str(tmp_path))
+    monkeypatch.setattr(srv.module, "_commit_task_change", lambda *_args: None)
+    token = srv.add_user("moderator", admin=True)
+
+    response = srv.client.post(
+        "/tasks/2/verification",
+        json={"status": "pending"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200, response.get_json()
+    assert json.loads(problem_path.read_text(encoding="utf-8"))["verificationStatus"] == "pending"
+
+
+def test_admin_can_delete_task(srv, tmp_path, monkeypatch):
+    problem_path = _write_problem(tmp_path, 2, verificationStatus="pending")
+    monkeypatch.setattr(srv.module, "TASKS_REPO_DIR", str(tmp_path))
+    commits = []
+    monkeypatch.setattr(
+        srv.module,
+        "_commit_task_change",
+        lambda task_id, message: commits.append((task_id, message)),
+    )
+    token = srv.add_user("moderator", admin=True)
+
+    response = srv.client.post(
+        "/tasks/delete",
+        json={"id": 2},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200, response.get_json()
+    assert not problem_path.parent.exists()
+    assert commits == [(2, "Delete task 2")]
+
+
 def test_new_task_payload_defaults_to_pending(srv):
     problem = srv.module._build_problem_v2(
         68,
@@ -121,6 +159,9 @@ def test_training_page_separates_pending_tasks_and_sends_admin_auth():
     assert "Неподтверждённые задачи" in page
     assert "/verification`" in page
     assert "Authorization: `Bearer ${token}`" in page
+    assert "Убрать подтверждение" in page
+    assert 'remove.textContent = "Удалить"' in page
+    assert "createTaskRow(problem)" in page
 
 
 def test_admin_can_open_pending_task_assets_with_auth():
