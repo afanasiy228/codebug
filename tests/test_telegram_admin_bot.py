@@ -256,3 +256,36 @@ def test_webhook_rejects_wrong_secret_and_accepts_valid_one(srv, monkeypatch):
     assert rejected.status_code == 403
     assert accepted.status_code == 200
     assert handled == [{"update_id": 2}]
+
+
+def test_firebase_health_check_builds_a_valid_limited_query(srv, monkeypatch):
+    calls = []
+
+    class Query:
+        def limit_to_first(self, value):
+            calls.append(("limit", value))
+            return self
+
+        def get(self):
+            calls.append(("get", None))
+            return {"afanasy": True}
+
+    class Reference:
+        def order_by_key(self):
+            calls.append(("order_by_key", None))
+            return Query()
+
+    monkeypatch.setattr(srv.module, "_ensure_firebase_ready", lambda: True)
+    monkeypatch.setattr(
+        srv.module.db,
+        "reference",
+        lambda path: calls.append(("reference", path)) or Reference(),
+    )
+
+    assert srv.module._telegram_firebase_ok() is True
+    assert calls == [
+        ("reference", "admins"),
+        ("order_by_key", None),
+        ("limit", 1),
+        ("get", None),
+    ]

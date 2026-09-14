@@ -4997,7 +4997,9 @@ def _telegram_firebase_ok():
     if not _ensure_firebase_ready():
         return False
     try:
-        db.reference("admins").limit_to_first(1).get()
+        # Firebase Admin returns a Query only after choosing an ordering;
+        # limit_to_first() is not available directly on Reference.
+        db.reference("admins").order_by_key().limit_to_first(1).get()
         return True
     except Exception:
         return False
