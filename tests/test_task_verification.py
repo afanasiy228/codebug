@@ -164,6 +164,18 @@ def test_training_page_separates_pending_tasks_and_sends_admin_auth():
     assert "createTaskRow(problem)" in page
 
 
+def test_training_page_uses_lucide_instead_of_hand_drawn_svg_icons():
+    page = (REPO_ROOT / "train.html").read_text(encoding="utf-8")
+
+    assert "lucide@0.468.0" in page
+    assert "window.lucide.createIcons()" in page
+    assert "data-lucide=\"target\"" in page
+    assert "data-lucide=\"shuffle\"" in page
+    assert "data-lucide=\"search\"" in page
+    assert "<svg" not in page
+    assert "data:image/svg+xml" not in page
+
+
 def test_admin_can_open_pending_task_assets_with_auth():
     page = (REPO_ROOT / "problem.html").read_text(encoding="utf-8")
 
