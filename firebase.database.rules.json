@@ -93,7 +93,8 @@
 
     "submissions": {
       "global": {
-        ".read": true
+        ".read": true,
+        ".indexOn": ["date"]
       }
     },
 
@@ -113,7 +114,10 @@
 
     "subscriptions": {
       ".read": false,
-      ".write": false
+      ".write": false,
+      "payments": {
+        ".indexOn": ["updatedAt"]
+      }
     },
 
     "taskSuggestions": {

@@ -28,6 +28,7 @@ from firebase_admin import auth as admin_auth
 from polygon_importer import PolygonImportError, parse_polygon_package
 from sandbox import SandboxError, run_in_sandbox
 from statement_compiler import compile_latex_statement
+from telegram_admin_bot import TelegramAdminBot, TelegramBotConfig, TelegramMonitor
 
 app = Flask(__name__)
 
@@ -66,6 +67,9 @@ PROFILE_LITE_CACHE_TTL = int(os.getenv("PROFILE_LITE_CACHE_TTL", "30"))
 RECOMMENDATIONS_CACHE_TTL = int(os.getenv("RECOMMENDATIONS_CACHE_TTL", "120"))
 PROFILE_RUNTIME_CACHE = {}
 PROFILE_RUNTIME_CACHE_LOCK = threading.Lock()
+PROCESS_STARTED_AT = time.time()
+RUNTIME_EVENTS = deque(maxlen=200)
+RUNTIME_EVENTS_LOCK = threading.Lock()
 
 
 def _cache_get(key):
@@ -183,6 +187,9 @@ SUBMIT_QUEUE_PRO = deque()
 SUBMIT_QUEUE_LOCK = threading.Lock()
 SUBMIT_QUEUE_COND = threading.Condition(SUBMIT_QUEUE_LOCK)
 SUBMIT_WORKER_STARTED = False
+ACTIVE_SUBMISSIONS = 0
+ACTIVE_SUBMISSION_STARTED_AT = None
+QUEUE_WAIT_SAMPLES = deque(maxlen=200)
 TASKS_SYNC_WORKER_STARTED = False
 REQUEST_RATE_STATE = {}
 RATE_LOCK = threading.Lock()
@@ -250,11 +257,27 @@ def _api_error(error, status=400, code=None):
 
 
 def _server_error(error, code, exc=None, status=500):
+    _record_runtime_event("backend", code, error, severity="critical" if status >= 500 else "warning")
     print(f"[server-error] {error} code={code}")
     if exc is not None:
         print(exc)
         print(traceback.format_exc())
     return _api_error(error, status=status, code=code)
+
+
+def _record_runtime_event(kind, code, message, severity="error"):
+    """Keep a short, secret-free error history for the Telegram admin bot."""
+    event = {
+        "id": f"{int(time.time() * 1000)}-{len(RUNTIME_EVENTS)}",
+        "time": time.strftime("%H:%M:%S", time.localtime()),
+        "kind": str(kind or "backend")[:32],
+        "code": str(code or "error")[:80],
+        "message": re.sub(r"[\r\n\t]+", " ", str(message or ""))[:180],
+        "severity": str(severity or "error")[:16],
+    }
+    with RUNTIME_EVENTS_LOCK:
+        RUNTIME_EVENTS.append(event)
+    return event
 
 
 # How many proxies sit in front of this app (Render adds one). Only the hops the
@@ -289,7 +312,7 @@ def _soft_check_request_origin(user_login=None):
     if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
         return
     path = request.path or ""
-    if path in {"/ping", "/"}:
+    if path in {"/ping", "/", "/telegram/webhook"}:
         return
     origin = (request.headers.get("Origin") or "").strip()
     referer = (request.headers.get("Referer") or "").strip()
@@ -1435,6 +1458,7 @@ def _run_submission_job(job):
 
 
 def _submit_worker():
+    global ACTIVE_SUBMISSIONS, ACTIVE_SUBMISSION_STARTED_AT
     while True:
         with SUBMIT_QUEUE_COND:
             while not SUBMIT_QUEUE and not SUBMIT_QUEUE_PRO:
@@ -1443,10 +1467,20 @@ def _submit_worker():
                 job = SUBMIT_QUEUE_PRO.popleft()
             else:
                 job = SUBMIT_QUEUE.popleft()
+            queued_at = float(job.get("queued_at") or time.time())
+            QUEUE_WAIT_SAMPLES.append(max(0.0, time.time() - queued_at))
+            ACTIVE_SUBMISSIONS += 1
+            ACTIVE_SUBMISSION_STARTED_AT = time.time()
         try:
             _run_submission_job(job)
         except Exception as e:
             print("Submission worker fatal job error:", e)
+            _record_runtime_event("judge", "WORKER_JOB_FAILED", type(e).__name__, severity="critical")
+        finally:
+            with SUBMIT_QUEUE_LOCK:
+                ACTIVE_SUBMISSIONS = max(0, ACTIVE_SUBMISSIONS - 1)
+                if ACTIVE_SUBMISSIONS == 0:
+                    ACTIVE_SUBMISSION_STARTED_AT = None
 
 
 def _ensure_submit_worker():
@@ -2506,6 +2540,7 @@ def submit():
             "submission_id": submission_id,
             "login": login,
             "contestId": contest_id or None,
+            "queued_at": time.time(),
         }
         if has_priority:
             SUBMIT_QUEUE_PRO.append(job)
@@ -4902,6 +4937,269 @@ def contest_register():
         except Exception as e:
             print("contest participants count update failed:", e)
     _append_activity(login, "contest_register", {"contestId": contest_id})
+    return jsonify({"ok": True})
+
+
+def _telegram_queue_snapshot():
+    with SUBMIT_QUEUE_LOCK:
+        free_count = len(SUBMIT_QUEUE)
+        pro_count = len(SUBMIT_QUEUE_PRO)
+        worker_started = bool(SUBMIT_WORKER_STARTED)
+        active = int(ACTIVE_SUBMISSIONS)
+        active_started = ACTIVE_SUBMISSION_STARTED_AT
+        average_wait = sum(QUEUE_WAIT_SAMPLES) / len(QUEUE_WAIT_SAMPLES) if QUEUE_WAIT_SAMPLES else 0
+    return {
+        "free": free_count,
+        "pro": pro_count,
+        "total": free_count + pro_count,
+        "workerStarted": worker_started,
+        "limit": MAX_SUBMIT_QUEUE_SIZE,
+        "active": active,
+        "averageWaitSeconds": average_wait,
+        "oldestActiveSeconds": max(0, time.time() - active_started) if active_started else 0,
+    }
+
+
+def _telegram_tasks_snapshot():
+    approved = 0
+    pending = 0
+    pending_items = []
+    if os.path.isdir(TASKS_REPO_DIR):
+        for name in os.listdir(TASKS_REPO_DIR):
+            if not name.isdigit():
+                continue
+            problem = read_problem_config(name)
+            if not problem:
+                continue
+            if task_verification_status(problem) == "approved":
+                approved += 1
+            else:
+                pending += 1
+                pending_items.append({
+                    "id": int(name),
+                    "title": str(problem.get("title") or f"Задача {name}")[:100],
+                })
+    pending_items.sort(key=lambda item: item["id"])
+    return {
+        "approved": approved,
+        "pending": pending,
+        "total": approved + pending,
+        "pendingItems": pending_items,
+    }
+
+
+def _telegram_firebase_ok():
+    if not _ensure_firebase_ready():
+        return False
+    try:
+        db.reference("admins").limit_to_first(1).get()
+        return True
+    except Exception:
+        return False
+
+
+def _telegram_recent_collection(path, timestamp_field, hours):
+    if not _ensure_firebase_ready():
+        return {}
+    cutoff = _now_ms() - int(hours * 3600 * 1000)
+    try:
+        value = (
+            db.reference(path)
+            .order_by_child(timestamp_field)
+            .start_at(cutoff)
+            .get()
+            or {}
+        )
+        return value if isinstance(value, dict) else {}
+    except Exception as exc:
+        _record_runtime_event("firebase", "MONITOR_QUERY_FAILED", type(exc).__name__)
+        return {}
+
+
+def _telegram_snapshot(section, hours=24):
+    section = str(section or "status")
+    uptime = max(0, time.time() - PROCESS_STARTED_AT)
+    if section == "queue":
+        return _telegram_queue_snapshot()
+    if section == "tasks":
+        return _telegram_tasks_snapshot()
+    if section == "errors":
+        with RUNTIME_EVENTS_LOCK:
+            return {"errors": list(RUNTIME_EVENTS)}
+    if section == "submissions":
+        hours = min(168, max(1, int(hours or 24)))
+        records = _telegram_recent_collection("submissions/global", "date", hours)
+        verdicts = {}
+        timings = []
+        for record in records.values():
+            if not isinstance(record, dict):
+                continue
+            verdict = str(record.get("verdict") or record.get("status") or "UNKNOWN").upper()
+            verdicts[verdict] = verdicts.get(verdict, 0) + 1
+            try:
+                timing = float(record.get("timeMs"))
+                if timing >= 0:
+                    timings.append(timing)
+            except (TypeError, ValueError):
+                pass
+        return {
+            "hours": hours,
+            "total": sum(verdicts.values()),
+            "verdicts": verdicts,
+            "averageTimeMs": sum(timings) / len(timings) if timings else 0,
+        }
+    if section == "users":
+        try:
+            users = db.reference("users").get() if _ensure_firebase_ready() else {}
+        except Exception:
+            users = {}
+        users = users if isinstance(users, dict) else {}
+        cutoff = _now_ms() - 86400000
+        new_count = 0
+        for value in users.values():
+            if not isinstance(value, dict):
+                continue
+            created = value.get("createdAt") or value.get("registeredAt") or 0
+            try:
+                new_count += int(float(created)) >= cutoff
+            except (TypeError, ValueError):
+                pass
+        return {"total": len(users), "new24h": new_count}
+    if section == "payments":
+        records = _telegram_recent_collection("subscriptions/payments", "updatedAt", 24)
+        statuses = {}
+        problem_statuses = {"FAILED", "CANCELED", "CHARGEBACKED", "ERROR"}
+        for record in records.values():
+            if not isinstance(record, dict):
+                continue
+            status = str(record.get("status") or "UNKNOWN").upper()
+            statuses[status] = statuses.get(status, 0) + 1
+        return {
+            "total": sum(statuses.values()),
+            "statuses": statuses,
+            "problems": sum(count for status, count in statuses.items() if status in problem_statuses),
+        }
+    if section == "deploy":
+        def _git_value(*args):
+            try:
+                return subprocess.run(
+                    ["git", *args], capture_output=True, text=True, timeout=3, check=True
+                ).stdout.strip()
+            except Exception:
+                return "unknown"
+        return {
+            "commit": os.getenv("RENDER_GIT_COMMIT", "").strip()[:12] or _git_value("rev-parse", "--short", "HEAD"),
+            "branch": os.getenv("RENDER_GIT_BRANCH", "").strip() or _git_value("branch", "--show-current"),
+            "uptimeSeconds": uptime,
+        }
+
+    queue = _telegram_queue_snapshot()
+    tasks = _telegram_tasks_snapshot()
+    try:
+        disk = shutil.disk_usage(RUNTIME_WORK_DIR if os.path.isdir(RUNTIME_WORK_DIR) else ".")
+        disk_free_percent = (disk.free / disk.total * 100) if disk.total else 0
+    except Exception:
+        disk_free_percent = 0
+    backup_heartbeat = os.getenv("BACKUP_HEARTBEAT_FILE", "").strip()
+    backup_max_age = max(3600, int(os.getenv("BACKUP_MAX_AGE_SECONDS", "93600")))
+    backup_age = None
+    if backup_heartbeat:
+        try:
+            backup_age = max(0, time.time() - os.path.getmtime(backup_heartbeat))
+        except OSError:
+            backup_age = backup_max_age + 1
+    return {
+        "backend": True,
+        "firebase": _telegram_firebase_ok(),
+        "judgeWorker": bool(queue["workerStarted"] or queue["total"] == 0),
+        "queue": queue,
+        "tasks": tasks,
+        "diskFreePercent": disk_free_percent,
+        "uptimeSeconds": uptime,
+        "backup": {
+            "configured": bool(backup_heartbeat),
+            "fresh": backup_age is not None and backup_age <= backup_max_age,
+            "ageSeconds": backup_age,
+        },
+    }
+
+
+def _telegram_task(task_id):
+    problem = read_problem_config(task_id)
+    if not problem:
+        return None
+    return {
+        "id": int(task_id),
+        "title": str(problem.get("title") or f"Задача {task_id}")[:120],
+        "language": normalize_language(problem.get("language")),
+        "difficulty": str(problem.get("difficulty") or "—")[:40],
+        "verificationStatus": task_verification_status(problem),
+    }
+
+
+def _telegram_moderate_task(task_id, status, telegram_user_id):
+    if status not in {"approved", "pending"}:
+        raise ValueError("invalid_status")
+    if not sync_tasks_repo():
+        raise RuntimeError("tasks_sync_failed")
+    problem_path = _problem_path(task_id)
+    problem = _read_json(problem_path)
+    if not isinstance(problem, dict) or not problem:
+        raise LookupError("task_not_found")
+    problem["verificationStatus"] = status
+    _write_text(problem_path, json.dumps(problem, ensure_ascii=False, indent=2) + "\n")
+    _commit_task_change(task_id, f"Set task {task_id} verification to {status} via Telegram")
+    _record_runtime_event("telegram", "TASK_MODERATED", f"task={task_id} status={status}", severity="info")
+    if _ensure_firebase_ready():
+        try:
+            db.reference("adminAudit/telegram").push().set({
+                "action": "task_verification",
+                "taskId": int(task_id),
+                "status": status,
+                "telegramUserId": int(telegram_user_id),
+                "createdAt": _now_ms(),
+            })
+        except Exception as exc:
+            _record_runtime_event("firebase", "AUDIT_WRITE_FAILED", type(exc).__name__)
+    return {"id": int(task_id), "verificationStatus": status}
+
+
+TELEGRAM_BOT_CONFIG = TelegramBotConfig.from_env()
+TELEGRAM_ADMIN_BOT = (
+    TelegramAdminBot(
+        TELEGRAM_BOT_CONFIG,
+        _telegram_snapshot,
+        _telegram_task,
+        _telegram_moderate_task,
+    )
+    if TELEGRAM_BOT_CONFIG.enabled
+    else None
+)
+TELEGRAM_MONITOR = TelegramMonitor(TELEGRAM_ADMIN_BOT, _telegram_snapshot) if TELEGRAM_ADMIN_BOT else None
+TELEGRAM_MONITOR_ENABLED = os.getenv("TELEGRAM_MONITOR_ENABLED", "0") == "1"
+
+
+@app.before_request
+def _start_telegram_monitor_once():
+    if TELEGRAM_MONITOR_ENABLED and TELEGRAM_MONITOR is not None:
+        TELEGRAM_MONITOR.start()
+
+
+@app.route("/telegram/webhook", methods=["POST"])
+def telegram_webhook():
+    if TELEGRAM_ADMIN_BOT is None:
+        return _api_error("not_found", 404, "NOT_FOUND")
+    supplied_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not supplied_secret or not hmac.compare_digest(supplied_secret, TELEGRAM_BOT_CONFIG.webhook_secret):
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    update = request.get_json(silent=True)
+    if not isinstance(update, dict):
+        return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
+    try:
+        TELEGRAM_ADMIN_BOT.handle_update(update)
+    except Exception as exc:
+        _record_runtime_event("telegram", "UPDATE_FAILED", type(exc).__name__)
+        return _api_error("telegram_update_failed", 502, "TELEGRAM_UPDATE_FAILED")
     return jsonify({"ok": True})
 
 
