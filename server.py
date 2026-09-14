@@ -28,7 +28,12 @@ from firebase_admin import auth as admin_auth
 from polygon_importer import PolygonImportError, parse_polygon_package
 from sandbox import SandboxError, run_in_sandbox
 from statement_compiler import compile_latex_statement
-from telegram_admin_bot import TelegramAdminBot, TelegramBotConfig, TelegramMonitor
+from telegram_admin_bot import (
+    TelegramAdminBot,
+    TelegramBotConfig,
+    TelegramMonitor,
+    configure_telegram_webhook,
+)
 
 app = Flask(__name__)
 
@@ -5177,10 +5182,45 @@ TELEGRAM_ADMIN_BOT = (
 )
 TELEGRAM_MONITOR = TelegramMonitor(TELEGRAM_ADMIN_BOT, _telegram_snapshot) if TELEGRAM_ADMIN_BOT else None
 TELEGRAM_MONITOR_ENABLED = os.getenv("TELEGRAM_MONITOR_ENABLED", "0") == "1"
+TELEGRAM_WEBHOOK_SETUP_LOCK = threading.Lock()
+TELEGRAM_WEBHOOK_SETUP_RUNNING = False
+TELEGRAM_WEBHOOK_CONFIGURED = False
+TELEGRAM_WEBHOOK_LAST_ATTEMPT = 0.0
+
+
+def _configure_telegram_webhook_background():
+    global TELEGRAM_WEBHOOK_SETUP_RUNNING, TELEGRAM_WEBHOOK_CONFIGURED
+    try:
+        configure_telegram_webhook(TELEGRAM_BOT_CONFIG, PUBLIC_API_BASE)
+        TELEGRAM_WEBHOOK_CONFIGURED = True
+        _record_runtime_event("telegram", "WEBHOOK_CONFIGURED", "automatic setup complete", severity="info")
+    except Exception as exc:
+        _record_runtime_event("telegram", "WEBHOOK_SETUP_FAILED", type(exc).__name__)
+    finally:
+        with TELEGRAM_WEBHOOK_SETUP_LOCK:
+            TELEGRAM_WEBHOOK_SETUP_RUNNING = False
+
+
+def _schedule_telegram_webhook_setup():
+    global TELEGRAM_WEBHOOK_SETUP_RUNNING, TELEGRAM_WEBHOOK_LAST_ATTEMPT
+    if TELEGRAM_ADMIN_BOT is None or TELEGRAM_WEBHOOK_CONFIGURED:
+        return
+    now = time.monotonic()
+    with TELEGRAM_WEBHOOK_SETUP_LOCK:
+        if TELEGRAM_WEBHOOK_SETUP_RUNNING or now - TELEGRAM_WEBHOOK_LAST_ATTEMPT < 60:
+            return
+        TELEGRAM_WEBHOOK_SETUP_RUNNING = True
+        TELEGRAM_WEBHOOK_LAST_ATTEMPT = now
+    threading.Thread(
+        target=_configure_telegram_webhook_background,
+        daemon=True,
+        name="telegram-webhook-setup",
+    ).start()
 
 
 @app.before_request
-def _start_telegram_monitor_once():
+def _start_telegram_services_once():
+    _schedule_telegram_webhook_setup()
     if TELEGRAM_MONITOR_ENABLED and TELEGRAM_MONITOR is not None:
         TELEGRAM_MONITOR.start()
 

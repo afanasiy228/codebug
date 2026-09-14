@@ -1,7 +1,13 @@
 from dataclasses import replace
 
 import telegram_admin_bot as bot_module
-from telegram_admin_bot import TelegramAdminBot, TelegramBotConfig, TelegramMonitor
+from telegram_admin_bot import (
+    TELEGRAM_COMMANDS,
+    TelegramAdminBot,
+    TelegramBotConfig,
+    TelegramMonitor,
+    configure_telegram_webhook,
+)
 
 
 class FakeAPI:
@@ -31,6 +37,15 @@ class FailOnceAPI(FakeAPI):
             self.failed = True
             raise RuntimeError("temporary_failure")
         return super().send_message(chat_id, text, reply_markup, message_thread_id)
+
+
+class SetupAPI:
+    def __init__(self):
+        self.calls = []
+
+    def call(self, method, payload=None):
+        self.calls.append((method, payload or {}))
+        return {"username": "CodeBugAdminBot"} if method == "getMe" else True
 
 
 def config(**overrides):
@@ -101,6 +116,29 @@ def test_help_works_in_group_with_bot_username_suffix():
     assert "CodeBug Admin Bot" in api.messages[0]["text"]
     assert api.messages[0]["chat_id"] == -500
     assert api.messages[0]["thread_id"] == 7
+
+
+def test_configure_webhook_is_idempotent_and_sets_command_menu():
+    api = SetupAPI()
+
+    result = configure_telegram_webhook(config(), "https://codebug.onrender.com/", api=api)
+
+    assert result == {
+        "username": "CodeBugAdminBot",
+        "webhook_url": "https://codebug.onrender.com/telegram/webhook",
+    }
+    assert [method for method, _ in api.calls] == ["getMe", "setWebhook", "setMyCommands"]
+    assert api.calls[1][1]["secret_token"] == "safe_webhook_secret_123456"
+    assert api.calls[2][1]["commands"] == TELEGRAM_COMMANDS
+
+
+def test_configure_webhook_rejects_non_https_public_url():
+    try:
+        configure_telegram_webhook(config(), "http://localhost:7777", api=SetupAPI())
+    except ValueError as exc:
+        assert "HTTPS" in str(exc)
+    else:
+        raise AssertionError("insecure webhook URL was accepted")
 
 
 def test_status_is_restricted_by_user_and_group():

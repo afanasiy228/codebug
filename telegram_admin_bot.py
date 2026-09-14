@@ -15,11 +15,27 @@ import re
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 
 MAX_TELEGRAM_MESSAGE = 3900
 COMMAND_RE = re.compile(r"^/([a-z0-9_]{1,32})(?:@[A-Za-z0-9_]{3,64})?(?:\s+(.*))?$", re.I)
+TELEGRAM_COMMANDS = [
+    {"command": "status", "description": "Состояние CodeBug"},
+    {"command": "queue", "description": "Очередь judge"},
+    {"command": "errors", "description": "Последние ошибки"},
+    {"command": "submissions", "description": "Статистика решений"},
+    {"command": "users", "description": "Пользователи"},
+    {"command": "payments", "description": "Платежи"},
+    {"command": "tasks", "description": "Задачи на проверке"},
+    {"command": "task", "description": "Информация о задаче"},
+    {"command": "deploy", "description": "Текущий deploy"},
+    {"command": "mute", "description": "Отключить некритичные алерты"},
+    {"command": "unmute", "description": "Включить алерты"},
+    {"command": "settings", "description": "Настройки чата"},
+    {"command": "help", "description": "Справка"},
+]
 
 
 def _parse_int_set(raw):
@@ -126,6 +142,34 @@ class TelegramAPI:
             "text": str(text)[:180],
             "show_alert": bool(show_alert),
         })
+
+
+def configure_telegram_webhook(config, public_api, api=None):
+    """Idempotently configure Telegram without exposing the bot token."""
+    if not config.token:
+        raise ValueError("TELEGRAM_BOT_TOKEN is required")
+    if not config.admin_ids:
+        raise ValueError("TELEGRAM_ADMIN_IDS is required")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{16,256}", config.webhook_secret):
+        raise ValueError("TELEGRAM_WEBHOOK_SECRET must contain 16-256 safe characters")
+
+    public_api = str(public_api or "").rstrip("/")
+    parsed = urllib.parse.urlparse(public_api)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise ValueError("PUBLIC_API_BASE must use HTTPS")
+
+    telegram = api or TelegramAPI(config.token)
+    bot = telegram.call("getMe") or {}
+    webhook_url = f"{public_api}/telegram/webhook"
+    telegram.call("setWebhook", {
+        "url": webhook_url,
+        "secret_token": config.webhook_secret,
+        "allowed_updates": ["message", "edited_message", "callback_query"],
+        "drop_pending_updates": False,
+        "max_connections": 10,
+    })
+    telegram.call("setMyCommands", {"commands": TELEGRAM_COMMANDS})
+    return {"username": str(bot.get("username") or "bot"), "webhook_url": webhook_url}
 
 
 class TelegramAdminBot:
