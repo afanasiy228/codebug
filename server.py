@@ -1248,6 +1248,28 @@ def _parse_judge_log(log_text):
     }
 
 
+def _extract_compilation_diagnostics(log_text):
+    """Return a bounded, host-path-free compiler message for the submission owner."""
+    text = str(log_text or "")
+    marker = "Compilation Error\n"
+    if marker not in text or "Checker Compilation Error" in text or "Interactor Compilation Error" in text:
+        return ""
+    details = text.split(marker, 1)[1]
+    details = details.split("Final verdict:", 1)[0]
+    details = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", details)
+    # Compiler output may contain the ephemeral host/container directory. Keep
+    # the useful source filename and line/column, but never expose server paths.
+    details = re.sub(
+        r"(?:(?:/[A-Za-z0-9_.-]+)+/)(sol\.(?:cpp|py))",
+        r"\1",
+        details,
+    )
+    details = details.strip()
+    if not details:
+        details = "Компилятор не предоставил дополнительное описание ошибки."
+    return details[:16_000]
+
+
 def _run_submission_job(job):
     task = str(job["task"])
     code = str(job["code"])
@@ -1375,6 +1397,11 @@ def _run_submission_job(job):
         )
 
     if submission_id and FIREBASE_READY:
+        compilation_diagnostics = (
+            _extract_compilation_diagnostics(result_obj.get("log"))
+            if str(result_obj.get("rawVerdict") or "").upper() == "CE"
+            else ""
+        )
         updated = False
         for attempt in range(3):
             try:
@@ -1385,7 +1412,16 @@ def _run_submission_job(job):
                     "memoryMb": result_obj["memoryMb"],
                     "score": result_obj["score"],
                     "passedGroups": result_obj["passedGroups"],
+                    "diagnosticsAvailable": bool(compilation_diagnostics),
                 })
+                if compilation_diagnostics:
+                    db.reference(f"submissionDiagnostics/{submission_id}").set({
+                        "login": login,
+                        "task": int(task),
+                        "verdict": "CE",
+                        "details": compilation_diagnostics,
+                        "createdAt": _now_ms(),
+                    })
                 updated = True
                 print(
                     "[XP TRACE][SERVER] submission final status written:",
@@ -2563,6 +2599,37 @@ def submit():
         "firebaseSaved": firebase_saved,
         "priority": "pro" if has_priority else "free",
         "tier": tier
+    })
+
+
+@app.route("/submissions/<submission_id>/diagnostics", methods=["GET"])
+def submission_diagnostics(submission_id):
+    login, auth_error = _require_user_login()
+    if auth_error:
+        return auth_error
+    submission_id = str(submission_id or "").strip()
+    if not re.fullmatch(r"[-A-Za-z0-9_]{1,128}", submission_id):
+        return _api_error("invalid_submission_id", 400, "INVALID_SUBMISSION_ID")
+    if not _rate_limit("submission_diagnostics", login, limit=120, per_seconds=60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
+
+    submission = db.reference(f"submissions/global/{submission_id}").get()
+    if not isinstance(submission, dict):
+        return _api_error("submission_not_found", 404, "SUBMISSION_NOT_FOUND")
+    owner = str(submission.get("login") or submission.get("user") or "").strip()
+    is_admin = bool(db.reference(f"admins/{login}").get())
+    if owner != login and not is_admin:
+        return _api_error("forbidden", 403, "FORBIDDEN")
+
+    diagnostics = db.reference(f"submissionDiagnostics/{submission_id}").get()
+    if not isinstance(diagnostics, dict) or not str(diagnostics.get("details") or "").strip():
+        return _api_error("diagnostics_not_found", 404, "DIAGNOSTICS_NOT_FOUND")
+    if str(diagnostics.get("login") or "").strip() != owner:
+        return _api_error("diagnostics_owner_mismatch", 409, "DIAGNOSTICS_OWNER_MISMATCH")
+    return jsonify({
+        "submissionId": submission_id,
+        "verdict": "CE",
+        "details": str(diagnostics.get("details"))[:16_000],
     })
 
 

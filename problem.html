@@ -597,6 +597,7 @@
 <script src="firebase.js?v=20260521-3"></script>
 <!-- обязательно первой! -->
 <script src="auth.js?v=20260915-registration-fix"></script>
+<script src="submission-diagnostics.js?v=20260915-1"></script>
 <!-- использует db -->
 <script src="globalsubmissions.js"></script>
 <!-- использует db -->
@@ -1393,6 +1394,9 @@
                     verdict === "TESTING" ? "Тестируется" :
                     verdict === "ERROR" ? "Ошибка" :
                     verdict;
+                const verdictMarkup = window.compilationVerdictHtml
+                    ? window.compilationVerdictHtml(verdictLabel, s._id)
+                    : escapeHtml(verdictLabel);
                 const score = Number.isFinite(Number(s.score)) ? Math.round(Number(s.score)) : "—";
                 const passedGroups = Array.isArray(s.passedGroups) && s.passedGroups.length
                     ? s.passedGroups.join(",")
@@ -1404,7 +1408,7 @@
         <tr>
             <td>${i--}</td>
             <td style="color:${verdictColor}; font-weight:600;">
-                ${escapeHtml(verdictLabel)}
+                ${verdictMarkup}
             </td>
             <td>${score}</td>
             <td>${escapeHtml(passedGroups)}</td>

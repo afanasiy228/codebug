@@ -275,6 +275,7 @@
 
     <script src="firebase.js?v=20260521-3"></script>
     <script src="auth.js?v=20260915-registration-fix"></script>
+    <script src="submission-diagnostics.js?v=20260915-1"></script>
 
     <script>
         // ===== КЭШ ДЛЯ НАЗВАНИЙ ЗАДАЧ =====
@@ -361,7 +362,9 @@
                     return;
                 }
 
-                submissions = Object.values(snap.val()).filter(s => s && typeof s === "object");
+                submissions = Object.entries(snap.val() || {})
+                    .filter(([, s]) => s && typeof s === "object")
+                    .map(([id, s]) => ({ ...s, _id: id }));
                 const usersSnap = await firebase.database().ref("ratingLeaderboard").get();
                 if (usersSnap.exists()) {
                     const usersData = usersSnap.val() || {};
@@ -442,6 +445,9 @@
                     verdict === "TESTING" ? "Тестируется" :
                     verdict === "ERROR" ? "Ошибка" :
                     verdict;
+                const verdictMarkup = window.compilationVerdictHtml
+                    ? window.compilationVerdictHtml(verdictLabel, s._id)
+                    : escapeHtml(verdictLabel);
 
                 tr.innerHTML = `
             <td>${profileLink(s.login)}</td>
@@ -452,7 +458,7 @@
                 </a>
             </td>
 
-            <td class="${cls}">${escapeHtml(verdictLabel)}</td>
+            <td class="${cls}">${verdictMarkup}</td>
 
             <td>${s.date ? new Date(s.date).toLocaleString() : "—"}</td>
         `;

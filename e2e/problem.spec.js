@@ -78,6 +78,36 @@ test.describe("Задачи и посылки", () => {
     await expect(page.locator("#subs")).toContainText("OK");
   });
 
+  test("по нажатию на CE открывается ошибка компилятора", async ({ page }) => {
+    await preparePage(page, { authenticated: true });
+    await page.route("**/submissions/e2e-ce/diagnostics", (route) => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        submissionId: "e2e-ce",
+        verdict: "CE",
+        details: "sol.cpp:4:9: error: expected ';' before 'return'"
+      })
+    }));
+    await page.goto("/problem.html?id=101");
+    await page.evaluate(async () => {
+      window.__e2eStore.submissions.global["e2e-ce"] = {
+        login: "e2e_user",
+        task: 101,
+        verdict: "CE",
+        statusLabel: "CE",
+        date: Date.now()
+      };
+      await window.loadMySubsForThisProblem();
+    });
+
+    const verdict = page.getByRole("button", { name: "CE" });
+    await expect(verdict).toHaveAttribute("title", "Показать ошибку компиляции");
+    await verdict.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Ошибка компиляции" })).toBeVisible();
+    await expect(page.locator(".compilation-diagnostics-output")).toContainText("expected ';' before 'return'");
+  });
+
   test("пользователь запускает код на своих данных", async ({ page }, testInfo) => {
     await preparePage(page, { authenticated: true });
     await page.goto("/problem.html?id=101");
