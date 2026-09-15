@@ -516,6 +516,41 @@
         /* ======================
               ЗАГРУЗКА РЕЙТИНГА
         ====================== */
+        function subscriptionMirrorMayBeStale(subscription) {
+            if (!subscription || typeof subscription !== "object") return false;
+            const status = String(subscription.status || "").toLowerCase();
+            const expiresAt = Number(subscription.expiresAt || 0);
+            const graceUntil = Number(subscription.graceUntil || subscription.paymentGraceUntil || 0);
+            if (status === "active") {
+                return !!expiresAt && expiresAt < Date.now() && (!graceUntil || graceUntil < Date.now());
+            }
+            return status === "grace" && !!graceUntil && graceUntil < Date.now();
+        }
+
+        async function refreshStaleSubscriptionMirror(user) {
+            if (!subscriptionMirrorMayBeStale(user.subscription)) return;
+            const base = window.getTasksApiBase
+                ? window.getTasksApiBase()
+                : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4000);
+            try {
+                const response = await fetch(
+                    `${base}/users/${encodeURIComponent(user.login)}/profile-lite`,
+                    { cache: "no-store", signal: controller.signal }
+                );
+                if (!response.ok) return;
+                const profile = await response.json();
+                if (profile?.subscription && typeof profile.subscription === "object") {
+                    user.subscription = profile.subscription;
+                }
+            } catch (error) {
+                if (error?.name !== "AbortError") console.warn("rating subscription refresh failed", error);
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
         async function loadRating() {
             const snap = await firebase.database().ref("ratingLeaderboard").get();
             if (!snap.exists()) return;
@@ -537,6 +572,10 @@
                     profileStyle: u.profileStyle || null
                 });
             }
+
+            // Older grants could update users/$login without refreshing the public
+            // leaderboard mirror. Re-check only contradictory expired-looking rows.
+            await Promise.all(arr.map(refreshStaleSubscriptionMirror));
 
             // сортировка по опыту
             arr.sort((a, b) => b.exp - a.exp);

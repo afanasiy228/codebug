@@ -28,6 +28,14 @@ def test_rating_guide_only_keeps_the_rank_scale_heading():
     assert "grid-template-columns: repeat(10, minmax(112px, 1fr))" in rating_page
 
 
+def test_rating_refreshes_only_possibly_stale_subscription_mirrors():
+    rating_page = (REPO_ROOT / "rating.html").read_text(encoding="utf-8")
+
+    assert "subscriptionMirrorMayBeStale" in rating_page
+    assert "/profile-lite" in rating_page
+    assert "await Promise.all(arr.map(refreshStaleSubscriptionMirror))" in rating_page
+
+
 def test_training_stats_returns_private_progress_for_owner(srv):
     srv.add_user("student")
     srv.db.data["users"]["student"]["stats"] = {
