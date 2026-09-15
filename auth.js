@@ -1214,6 +1214,7 @@ function clearErrors() {
 var EMAIL_RETRY_COOLDOWN_MS = 60 * 1000;
 var lastVerificationSentAt = 0;
 var PENDING_REG_KEY = "pendingRegistration";
+let registrationRecoveryInProgress = false;
 var RECAPTCHA_PLACEHOLDER_KEY = "PASTE_RECAPTCHA_SITE_KEY_HERE";
 var captchaWidgetId = null;
 var captchaToken = "";
@@ -1440,7 +1441,13 @@ async function resolveEmailByIdentity(identity) {
 }
 
 async function ensureUserProfile(login, userAuth) {
-    const token = await userAuth.getIdToken();
+    // Email verification changes the claims in the ID token. `reload()` updates
+    // userAuth.emailVerified, but Firebase may still return the cached token
+    // issued before verification unless a refresh is forced. The backend checks
+    // the token claim, so using the stale token made fresh registrations fail
+    // with EMAIL_NOT_VERIFIED at the final profile-sync step.
+    const token = await userAuth.getIdToken(true);
+    if (token) localStorage.setItem("idToken", token);
     const base = window.getTasksApiBase
         ? window.getTasksApiBase()
         : (window.TASKS_API_BASE || "https://codebug.onrender.com");
@@ -1617,17 +1624,62 @@ async function registerUser(login, email, pass) {
         cred = await auth.createUserWithEmailAndPassword(e, pass);
     } catch (err) {
         const code = err?.code || "";
-        if (code === "auth/email-already-in-use") return { ok: false, error: "Этот email уже занят" };
+        if (code === "auth/email-already-in-use") {
+            // Older interrupted registrations can leave a Firebase Auth user
+            // without userAuthMap/users profile records. If the password proves
+            // ownership, let that user finish registration instead of trapping
+            // them forever behind "email already in use" / "login not found".
+            registrationRecoveryInProgress = true;
+            try {
+                cred = await auth.signInWithEmailAndPassword(e, pass);
+                const existingUser = cred.user;
+                await existingUser.reload();
+                const mappedLogin = await resolveLoginByUidOrEmail(existingUser.uid, existingUser.email);
+                if (mappedLogin) {
+                    await auth.signOut();
+                    return { ok: false, error: "Этот email уже занят. Войди в существующий аккаунт" };
+                }
+
+                setPendingRegistration({ login, email: e });
+                if (existingUser.emailVerified) {
+                    const finalized = await finalizeVerifiedAccount(existingUser, login);
+                    if (!finalized.ok) return finalized;
+                    return { ok: true, email: e, completed: true, login: finalized.login };
+                }
+
+                const resent = await sendVerificationWithCooldown(existingUser);
+                clearSession();
+                return resent.ok
+                    ? { ok: true, email: e, recovered: true }
+                    : { ok: false, email: e, needVerify: true, error: resent.error };
+            } catch (recoveryError) {
+                const recoveryCode = recoveryError?.code || "";
+                if (["auth/wrong-password", "auth/invalid-credential", "auth/invalid-login-credentials"].includes(recoveryCode)) {
+                    return { ok: false, error: "Этот email уже занят. Войди или восстанови пароль" };
+                }
+                if (recoveryCode === "auth/too-many-requests") {
+                    return { ok: false, error: "Слишком много попыток. Попробуй позже" };
+                }
+                return { ok: false, error: "Не удалось восстановить регистрацию. Попробуй войти" };
+            } finally {
+                registrationRecoveryInProgress = false;
+            }
+        }
         if (code === "auth/invalid-email") return { ok: false, error: "Некорректный email" };
         if (code === "auth/weak-password") return { ok: false, error: "Слабый пароль (минимум 6 символов)" };
         return { ok: false, error: "Ошибка регистрации: " + code };
     }
 
     const userAuth = cred.user;
-    const sent = await sendVerificationWithCooldown(userAuth);
-    if (!sent.ok) return { ok: false, error: sent.error };
-
+    // Persist the intended login before sending the email. If delivery fails or
+    // the page reloads, the already-created Auth account can still be completed.
     setPendingRegistration({ login, email: e });
+    const sent = await sendVerificationWithCooldown(userAuth);
+    if (!sent.ok) {
+        clearSession();
+        return { ok: false, email: e, needVerify: true, error: sent.error };
+    }
+
     clearSession();
     return { ok: true, email: e };
 }
@@ -1655,10 +1707,19 @@ async function register() {
     const result = await registerUser(login, email, pass);
     if (!result.ok) {
         resetTurnstileWidget();
+        if (result.needVerify) {
+            showVerifyScreen(result.email, result.error);
+            return;
+        }
         return showError("reg-error", result.error);
     }
 
     resetTurnstileWidget();
+    if (result.completed) {
+        const next = new URLSearchParams(window.location.search).get("next");
+        window.location.href = safeNextTarget(next);
+        return;
+    }
     showVerifyScreen(result.email, "Письмо отправлено. Подтверди email и нажми «Я подтвердил, проверить».");
 }
 
@@ -1727,6 +1788,15 @@ async function finalizeVerifiedAccount(userAuth, fallbackLogin = null) {
         const code = String(err?.message || "");
         if (code === "LOGIN_TAKEN") {
             return { ok: false, error: "Этот логин уже занят. Начни регистрацию заново." };
+        }
+        if (code === "EMAIL_NOT_VERIFIED") {
+            return { ok: false, error: "Email ещё не подтверждён. Открой ссылку из письма и попробуй снова." };
+        }
+        if (code === "EMAIL_TAKEN" || code === "IDENTITY_CONFLICT") {
+            return { ok: false, error: "Этот аккаунт уже связан с другим логином. Войди через форму входа." };
+        }
+        if (code === "RATE_LIMIT_EXCEEDED") {
+            return { ok: false, error: "Слишком много попыток. Подожди несколько минут." };
         }
         return { ok: false, error: "Не удалось синхронизировать профиль. Попробуй ещё раз." };
     }
@@ -1901,6 +1971,7 @@ function enforcePendingVerificationGuard() {
 }
 
 async function syncSessionFromAuth() {
+    if (registrationRecoveryInProgress) return;
     const auth = getAuth();
     if (!auth) return;
     const previousLogin = getUser();

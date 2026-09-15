@@ -21,6 +21,29 @@ test.describe("Авторизация", () => {
     await expect(page.locator("#verify-email-label")).toHaveText("fresh_user@codebug.test");
   });
 
+  test("старая незавершённая регистрация восстанавливает профиль", async ({ page }, testInfo) => {
+    await preparePage(page, { orphanedRegistration: true });
+    await page.goto("/auth.html");
+    await page.getByText("Нет аккаунта? Регистрация").click();
+    await page.locator("#reg-user").fill("recovered_user");
+    await page.locator("#reg-email").fill("orphan@codebug.test");
+    await page.locator("#reg-pass").fill(TEST_USER.password);
+    const finalizeRequestPromise = page.waitForRequest("**/auth/finalize-profile");
+    const submit = page.getByRole("button", { name: "Зарегистрироваться" });
+    if (testInfo.project.name === "mobile") {
+      await submit.focus();
+      await page.keyboard.press("Enter");
+    } else {
+      await submit.click();
+    }
+
+    const finalizeRequest = await finalizeRequestPromise;
+    expect(finalizeRequest.postDataJSON()).toEqual({ login: "recovered_user" });
+    expect(finalizeRequest.headers().authorization).toBe("Bearer e2e-refreshed-token");
+    await expect(page).toHaveURL(/index\.html$/);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("user"))).toBe("recovered_user");
+  });
+
   test("вход, выход и восстановление пароля", async ({ page }) => {
     await preparePage(page);
     await page.goto("/auth.html");

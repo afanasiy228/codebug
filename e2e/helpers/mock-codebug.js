@@ -9,8 +9,8 @@ const TEST_USER = {
   token: "e2e-id-token"
 };
 
-function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSession = true } = {}) {
-  return ({ authenticated: initialAuthenticated, plan: initialPlan, seedLocalSession: shouldSeedLocalSession }) => {
+function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSession = true, orphanedRegistration = false } = {}) {
+  return ({ authenticated: initialAuthenticated, plan: initialPlan, seedLocalSession: shouldSeedLocalSession, orphanedRegistration: shouldRecoverOrphan }) => {
     const safeClone = (value) => JSON.parse(JSON.stringify(value));
     const getAt = (root, path) => String(path || "").split("/").filter(Boolean)
       .reduce((value, part) => (value && typeof value === "object" ? value[part] : undefined), root);
@@ -84,19 +84,28 @@ function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSes
     let authUser = null;
     let listeners = [];
     const notify = () => listeners.forEach((listener) => Promise.resolve().then(() => listener(authUser)));
-    const makeUser = (email = testUser.email, verified = true) => ({
-      uid: testUser.uid,
+    window.__e2eTokenRefreshes = [];
+    const makeUser = (email = testUser.email, verified = true, uid = testUser.uid) => ({
+      uid,
       email,
       emailVerified: verified,
       async reload() { return this; },
-      async getIdToken() { return testUser.token; },
+      async getIdToken(forceRefresh = false) {
+        window.__e2eTokenRefreshes.push(Boolean(forceRefresh));
+        if (forceRefresh) localStorage.setItem("e2e-token-force-refreshed", "1");
+        return forceRefresh ? "e2e-refreshed-token" : testUser.token;
+      },
       async sendEmailVerification() { return undefined; },
       async delete() { authUser = null; localStorage.removeItem("e2e-authenticated"); notify(); }
     });
     if (initialAuthenticated || localStorage.getItem("e2e-authenticated") === "1") {
-      authUser = makeUser();
+      authUser = makeUser(
+        localStorage.getItem("e2e-auth-email") || testUser.email,
+        true,
+        localStorage.getItem("e2e-auth-uid") || testUser.uid
+      );
       localStorage.setItem("e2e-authenticated", "1");
-      if (shouldSeedLocalSession !== false) {
+      if (shouldSeedLocalSession !== false && authUser.uid === testUser.uid) {
         localStorage.setItem("user", testUser.login);
         localStorage.setItem("uid", testUser.uid);
         localStorage.setItem("idToken", testUser.token);
@@ -135,6 +144,14 @@ function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSes
       get currentUser() { return authUser; },
       onAuthStateChanged(callback) { listeners.push(callback); Promise.resolve().then(() => callback(authUser)); return () => { listeners = listeners.filter((item) => item !== callback); }; },
       async signInWithEmailAndPassword(email, password) {
+        if (shouldRecoverOrphan && String(email).toLowerCase() === "orphan@codebug.test" && password === testUser.password) {
+          authUser = makeUser(email, true, "e2e-orphan-uid");
+          localStorage.setItem("e2e-authenticated", "1");
+          localStorage.setItem("e2e-auth-email", String(email).toLowerCase());
+          localStorage.setItem("e2e-auth-uid", "e2e-orphan-uid");
+          notify();
+          return { user: authUser };
+        }
         if (String(email).toLowerCase() !== testUser.email || password !== testUser.password) {
           const error = new Error("invalid credentials"); error.code = "auth/invalid-credential"; throw error;
         }
@@ -147,12 +164,21 @@ function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSes
         authUser = makeUser(); localStorage.setItem("e2e-authenticated", "1"); notify(); return { user: authUser };
       },
       async createUserWithEmailAndPassword(email) {
+        if (shouldRecoverOrphan && String(email).toLowerCase() === "orphan@codebug.test") {
+          const error = new Error("email already in use"); error.code = "auth/email-already-in-use"; throw error;
+        }
         authUser = makeUser(email, false); notify(); return { user: authUser };
       },
       async sendPasswordResetEmail(email) {
         if (!email) { const error = new Error("invalid email"); error.code = "auth/invalid-email"; throw error; }
       },
-      async signOut() { authUser = null; localStorage.removeItem("e2e-authenticated"); notify(); }
+      async signOut() {
+        authUser = null;
+        localStorage.removeItem("e2e-authenticated");
+        localStorage.removeItem("e2e-auth-email");
+        localStorage.removeItem("e2e-auth-uid");
+        notify();
+      }
     });
     window.CODEBUG_PUBLIC_CONFIG = {
       recaptchaSiteKey: "e2e-captcha-key",
