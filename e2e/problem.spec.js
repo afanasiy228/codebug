@@ -102,9 +102,18 @@ test.describe("Задачи и посылки", () => {
 
     const verdict = page.getByRole("button", { name: "CE" });
     await expect(verdict).toHaveAttribute("title", "Показать ошибку компиляции");
+    await expect(verdict).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(verdict).toHaveCSS("color", "rgb(228, 123, 85)");
+    await expect(verdict).toHaveCSS("text-decoration-line", "underline");
+    await expect(page.getByRole("button", { name: "RU" })).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(page.getByRole("button", { name: "EN" })).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await verdict.focus();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("heading", { name: "Ошибка компиляции" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Подробности ошибки компиляции" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ошибка компиляции" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Закрыть" })).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(page.getByRole("button", { name: "Закрыть" })).toHaveCSS("border-top-width", "0px");
+    await expect(page.getByRole("button", { name: "Закрыть" })).toHaveCSS("outline-style", "none");
     await expect(page.locator(".compilation-diagnostics-output")).toContainText("expected ';' before 'return'");
   });
 

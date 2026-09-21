@@ -10,30 +10,34 @@
             .replace(/'/g, "&#039;");
     }
 
-    function ensureUi() {
-        let dialog = document.getElementById("compilationDiagnosticsDialog");
-        if (dialog) return dialog;
-
+    function ensureStyles() {
+        if (document.getElementById("compilationDiagnosticsStyles")) return;
         const style = document.createElement("style");
+        style.id = "compilationDiagnosticsStyles";
         style.textContent = `
             .ce-verdict-button {
                 appearance: none;
-                border: 0;
-                border-bottom: 1px dashed currentColor;
-                padding: 0 0 1px;
-                background: transparent;
-                color: inherit;
+                border: 0 !important;
+                padding: 0 0 2px;
+                background: transparent !important;
+                color: #E47B55 !important;
+                box-shadow: none !important;
                 font: inherit;
                 font-weight: inherit;
                 line-height: inherit;
+                text-decoration: underline;
+                text-decoration-color: rgba(228, 123, 85, 0.58);
+                text-decoration-thickness: 1px;
+                text-underline-offset: 3px;
                 cursor: pointer;
             }
             .ce-verdict-button:hover,
             .ce-verdict-button:focus-visible {
-                color: #F59E0B;
+                color: #EA8B66 !important;
+                text-decoration-color: currentColor;
             }
             .ce-verdict-button:focus-visible {
-                outline: 2px solid rgba(245, 158, 11, 0.45);
+                outline: 2px solid rgba(228, 123, 85, 0.38);
                 outline-offset: 4px;
                 border-radius: 2px;
             }
@@ -41,42 +45,37 @@
                 width: min(760px, calc(100vw - 32px));
                 max-height: min(680px, calc(100vh - 32px));
                 padding: 0;
-                border: 1px solid rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(184, 184, 184, 0.22);
                 border-radius: 16px;
                 color: #F5F5F5;
-                background: #101010;
-                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+                background: rgba(16, 16, 16, 0.98);
+                box-shadow: 0 24px 72px rgba(0, 0, 0, 0.55);
             }
             .compilation-diagnostics-dialog::backdrop {
                 background: rgba(0, 0, 0, 0.72);
                 backdrop-filter: blur(3px);
             }
-            .compilation-diagnostics-head {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 16px;
-                padding: 18px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            }
-            .compilation-diagnostics-title {
-                margin: 0;
-                font: 700 18px/1.3 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            }
             .compilation-diagnostics-close {
-                width: 34px;
-                height: 34px;
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                width: 28px;
+                height: 28px;
                 padding: 0;
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                border-radius: 9px;
-                color: #B0B0B0;
-                background: transparent;
-                font-size: 22px;
-                line-height: 1;
+                border: 0 !important;
+                border-radius: 0;
+                color: #969696 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                font: 300 24px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
                 cursor: pointer;
             }
-            .compilation-diagnostics-close:hover { color: #FFFFFF; }
-            .compilation-diagnostics-body { padding: 20px; }
+            .compilation-diagnostics-close:hover,
+            .compilation-diagnostics-close:focus-visible { color: #E3E3E3 !important; }
+            .compilation-diagnostics-close:focus-visible {
+                outline: none;
+            }
+            .compilation-diagnostics-body { padding: 48px 20px 20px; }
             .compilation-diagnostics-status {
                 margin: 0;
                 color: #B0B0B0;
@@ -93,22 +92,23 @@
                 user-select: text;
             }
             @media (max-width: 640px) {
-                .compilation-diagnostics-head,
-                .compilation-diagnostics-body { padding: 16px; }
-                .compilation-diagnostics-title { font-size: 16px; }
+                .compilation-diagnostics-body { padding: 44px 16px 16px; }
             }
         `;
         document.head.appendChild(style);
+    }
+
+    function ensureUi() {
+        ensureStyles();
+        let dialog = document.getElementById("compilationDiagnosticsDialog");
+        if (dialog) return dialog;
 
         dialog = document.createElement("dialog");
         dialog.id = "compilationDiagnosticsDialog";
         dialog.className = "compilation-diagnostics-dialog";
-        dialog.setAttribute("aria-labelledby", "compilationDiagnosticsTitle");
+        dialog.setAttribute("aria-label", "Подробности ошибки компиляции");
         dialog.innerHTML = `
-            <div class="compilation-diagnostics-head">
-                <h2 class="compilation-diagnostics-title" id="compilationDiagnosticsTitle">Ошибка компиляции</h2>
-                <button type="button" class="compilation-diagnostics-close" aria-label="Закрыть">×</button>
-            </div>
+            <button type="button" class="compilation-diagnostics-close" aria-label="Закрыть">×</button>
             <div class="compilation-diagnostics-body">
                 <p class="compilation-diagnostics-status">Загрузка…</p>
                 <pre class="compilation-diagnostics-output" hidden></pre>
@@ -181,6 +181,8 @@
         }
         return `<button type="button" class="ce-verdict-button" data-submission-id="${escapeHtml(id)}" title="Показать ошибку компиляции">${escapeHtml(text)}</button>`;
     }
+
+    ensureStyles();
 
     document.addEventListener("click", (event) => {
         const button = event.target.closest && event.target.closest(".ce-verdict-button");
