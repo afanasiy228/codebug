@@ -164,6 +164,20 @@ def test_training_page_separates_pending_tasks_and_sends_admin_auth():
     assert "createTaskRow(problem)" in page
 
 
+def test_training_page_shows_primary_task_kind_and_keeps_specific_tags_searchable():
+    page = (REPO_ROOT / "train.html").read_text(encoding="utf-8")
+
+    assert "function taskKindMeta(problem)" in page
+    assert "return { key: \"idea\", label: \"Идея\" }" in page
+    assert "return { key: \"algorithm\", label: \"Алгоритм\" }" in page
+    assert "return { key: \"implementation\", label: \"Реализация\" }" in page
+    assert "const safeKind = escapeHtml(kind.label)" in page
+    assert "<div class=\"task-tags kind-${escapeHtml(kind.key)}\">${safeKind}</div>" in page
+    assert "...rawTags" in page
+    assert "...normalizedTags" in page
+    assert "tags.slice(0, 2)" not in page
+
+
 def test_training_page_uses_lucide_instead_of_hand_drawn_svg_icons():
     page = (REPO_ROOT / "train.html").read_text(encoding="utf-8")
 

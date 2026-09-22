@@ -570,11 +570,39 @@
 
         .task-tags {
             margin-top: 4px;
-            color: #65798b;
-            font-size: 11.5px;
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 3px 9px 4px;
+            border: 1px solid var(--task-kind-border);
+            border-radius: 999px;
+            background: var(--task-kind-bg);
+            color: var(--task-kind-text);
+            font-size: 11px;
+            font-weight: 650;
+            letter-spacing: 0.025em;
+            line-height: 1.2;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .task-tags.kind-idea {
+            --task-kind-border: rgba(142, 167, 255, 0.3);
+            --task-kind-bg: rgba(142, 167, 255, 0.09);
+            --task-kind-text: #a9baff;
+        }
+
+        .task-tags.kind-algorithm {
+            --task-kind-border: rgba(217, 154, 50, 0.32);
+            --task-kind-bg: rgba(217, 154, 50, 0.1);
+            --task-kind-text: #dba752;
+        }
+
+        .task-tags.kind-implementation {
+            --task-kind-border: rgba(99, 199, 170, 0.3);
+            --task-kind-bg: rgba(99, 199, 170, 0.09);
+            --task-kind-text: #8bd8c0;
         }
 
         .task-right {
@@ -1388,10 +1416,34 @@
             return map[type] || "Стандартная";
         }
 
-        function taskTags(problem) {
-            const tags = Array.isArray(problem.tags) ? problem.tags.slice(0, 2).map(normalizeTag) : [];
-            const type = taskTypeLabel(problem.taskType);
-            return tags.length ? `${type} · ${tags.join(" · ")}` : type;
+        function taskKindMeta(problem) {
+            const rawTags = Array.isArray(problem.tags) ? problem.tags : [];
+            const tokens = [
+                problem.kind,
+                problem.category,
+                problem.mainTag,
+                problem.primaryTag,
+                problem.problemType,
+                ...rawTags
+            ]
+                .map(value => String(value || "").trim().toLowerCase())
+                .filter(Boolean);
+
+            const has = (...values) => tokens.some(token => values.includes(token));
+            if (has("idea", "идейная", "идея", "reasoning", "proof")) {
+                return { key: "idea", label: "Идея" };
+            }
+            if (has("implementation", "реализация", "impl", "coding")) {
+                return { key: "implementation", label: "Реализация" };
+            }
+            if (has("algorithm", "алгоритм", "algo", "алго")) {
+                return { key: "algorithm", label: "Алгоритм" };
+            }
+            return { key: "algorithm", label: "Алгоритм" };
+        }
+
+        function taskKindLabel(problem) {
+            return taskKindMeta(problem).label;
         }
 
         function taskSearchText(problem) {
@@ -1399,10 +1451,16 @@
             const normalizedTags = rawTags.map(normalizeTag);
             return [
                 problem.title,
+                taskKindLabel(problem),
                 taskTypeLabel(problem.taskType),
                 problem.taskType,
                 problem.difficulty,
                 problem.language,
+                problem.kind,
+                problem.category,
+                problem.mainTag,
+                problem.primaryTag,
+                problem.problemType,
                 ...rawTags,
                 ...normalizedTags
             ].map((value) => String(value || "").toLowerCase()).join(" ");
@@ -1455,7 +1513,8 @@
                 const solved = isTaskSolved(p.id);
                 const diff = difficultyMeta(p.difficulty);
                 const safeTitle = escapeHtml(p.title);
-                const safeTags = escapeHtml(taskTags(p));
+                const kind = taskKindMeta(p);
+                const safeKind = escapeHtml(kind.label);
                 const languageLabel = taskLanguageLabel(p.language);
                 const exp = taskExp(p);
 
@@ -1469,7 +1528,7 @@
                         </span>
                         <div class="task-copy">
                             <a class="task-title" href="problem.html?id=${p.id}">${safeTitle}</a>
-                            <div class="task-tags">${safeTags}</div>
+                            <div class="task-tags kind-${escapeHtml(kind.key)}">${safeKind}</div>
                         </div>
                     </div>
                     <div class="task-right ${isAdmin ? "with-admin-actions" : ""}">
