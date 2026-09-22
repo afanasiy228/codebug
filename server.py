@@ -2081,6 +2081,7 @@ def _build_problem_v2(task_id, meta, files, tests):
         "language": lang,
         "type": meta.get("type", ""),
         "tags": meta.get("tags") or [],
+        "mainTag": str(meta.get("mainTag") or "").strip(),
         "visibility": str(meta.get("visibility") or "public").strip().lower(),
         "ownerLogin": str(meta.get("ownerLogin") or "").strip(),
         "verificationStatus": task_verification_status(meta, default="pending"),

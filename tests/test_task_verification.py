@@ -138,12 +138,13 @@ def test_admin_can_delete_task(srv, tmp_path, monkeypatch):
 def test_new_task_payload_defaults_to_pending(srv):
     problem = srv.module._build_problem_v2(
         68,
-        {"id": 68, "title": "New", "language": "cpp"},
+        {"id": 68, "title": "New", "language": "cpp", "mainTag": "idea"},
         {},
         [],
     )
 
     assert problem["verificationStatus"] == "pending"
+    assert problem["mainTag"] == "idea"
 
 
 def test_default_seed_admins_include_the_moderation_team(srv):
@@ -176,6 +177,19 @@ def test_training_page_shows_primary_task_kind_and_keeps_specific_tags_searchabl
     assert "...rawTags" in page
     assert "...normalizedTags" in page
     assert "tags.slice(0, 2)" not in page
+
+
+def test_admin_page_can_edit_primary_task_kind():
+    page = (REPO_ROOT / "admin.html").read_text(encoding="utf-8")
+
+    assert 'id="taskMetaMainTag"' in page
+    assert 'id="editMetaMainTag"' in page
+    assert 'value="idea">Главный тег: Идея' in page
+    assert 'value="algorithm">Главный тег: Алгоритм' in page
+    assert 'value="implementation">Главный тег: Реализация' in page
+    assert 'const mainTag = document.getElementById("taskMetaMainTag").value || "algorithm"' in page
+    assert 'const mainTag = document.getElementById("editMetaMainTag").value || "algorithm"' in page
+    assert "problem.mainTag || \"algorithm\"" in page
 
 
 def test_training_page_uses_lucide_instead_of_hand_drawn_svg_icons():

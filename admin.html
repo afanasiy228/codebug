@@ -515,6 +515,11 @@
           </div>
         </div>
         <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <select id="taskMetaMainTag" class="admin-input">
+          <option value="algorithm">Главный тег: Алгоритм</option>
+          <option value="idea">Главный тег: Идея</option>
+          <option value="implementation">Главный тег: Реализация</option>
+        </select>
         <select id="taskMetaTaskType" class="admin-input">
           <option value="standard">standard</option>
           <option value="grader">grader</option>
@@ -642,6 +647,11 @@
           </div>
         </div>
         <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
+        <select id="editMetaMainTag" class="admin-input">
+          <option value="algorithm">Главный тег: Алгоритм</option>
+          <option value="idea">Главный тег: Идея</option>
+          <option value="implementation">Главный тег: Реализация</option>
+        </select>
         <select id="editMetaTaskType" class="admin-input">
           <option value="standard">standard</option>
           <option value="grader">grader</option>
@@ -1069,6 +1079,7 @@
       const type = document.getElementById("taskMetaType").value.trim();
       const language = (document.getElementById("taskMetaLanguage").value.trim() || "cpp");
       const taskType = document.getElementById("taskMetaTaskType").value || "standard";
+      const mainTag = document.getElementById("taskMetaMainTag").value || "algorithm";
       const tagsRaw = document.getElementById("taskMetaTags").value.trim();
       let groups = [];
 
@@ -1112,6 +1123,7 @@
         difficulty,
         language,
         taskType,
+        mainTag,
         type,
         tags,
         groups
@@ -1362,6 +1374,7 @@
           document.getElementById("editMetaTags").value = Array.isArray(problem.tags) ? problem.tags.join(", ") : "";
           document.getElementById("editGroupsJson").value = JSON.stringify(problem.groups || [], null, 2);
           document.getElementById("editMetaTaskType").value = problem.taskType || "standard";
+          document.getElementById("editMetaMainTag").value = problem.mainTag || "algorithm";
           window.editTaskGroups = Array.isArray(problem.groups) && problem.groups.length
             ? problem.groups.map(group => ({
                 id: Number(group.id),
@@ -1407,6 +1420,7 @@
         document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
         document.getElementById("editGroupsJson").value = "[]";
         document.getElementById("editMetaTaskType").value = "standard";
+        document.getElementById("editMetaMainTag").value = meta.mainTag || "algorithm";
         window.editTaskGroups = [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
         renderGroupEditor("edit");
         setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
@@ -1571,6 +1585,7 @@
       const type = document.getElementById("editMetaType").value.trim();
       const language = (document.getElementById("editMetaLanguage").value.trim() || "cpp");
       const taskType = document.getElementById("editMetaTaskType").value || "standard";
+      const mainTag = document.getElementById("editMetaMainTag").value || "algorithm";
       const tagsRaw = document.getElementById("editMetaTags").value.trim();
       const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
       let groups = [];
@@ -1607,6 +1622,7 @@
           difficulty,
           language,
           taskType,
+          mainTag,
           type,
           tags,
           groups
