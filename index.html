@@ -285,19 +285,20 @@
             top: 0;
         }
 
+        /* Inside the glass the fog is crisp, a touch brighter and warmer — a tint, not a spotlight. */
         .code-lens .layer {
-            opacity: 1;
+            opacity: .5;
             filter: none;
             will-change: auto;
         }
 
         .code-lens .code-row:not(.glow-white):not(.glow-red) {
-            color: var(--code-hover);
+            color: rgba(236, 222, 196, 0.62);
         }
 
         /* Guarded explicitly: glowing rows (.5) and .fade (.03) keep their own opacity inside the glass. */
         .code-lens .code-row:not(.glow-white):not(.glow-red):not(.fade) {
-            opacity: .32;
+            opacity: .26;
         }
 
         /* Trail: three echoes of the lit code lag behind the lens along the pointer's path and fade out,
@@ -319,14 +320,14 @@
         }
 
         .code-lens-echo .layer {
-            opacity: 1;
+            opacity: .5;
             filter: none;
             will-change: auto;
         }
 
         .code-lens-echo .code-row:not(.glow-white):not(.glow-red):not(.fade) {
-            color: var(--code-hover);
-            opacity: .26;
+            color: rgba(236, 222, 196, 0.62);
+            opacity: .22;
         }
 
         .code-lens-defs {
@@ -1486,7 +1487,7 @@ return 0; }`;
             // 100 px long, blurred with sigma = 28. Re-derive this (and the scale="-48.7" default in the markup)
             // whenever the strips or stdDeviation change.
             const MAP_SLOPE = 0.00685;
-            const DAMP = 0.74; // position retention per 60 Hz frame (k = 0.26 per stage)
+            const DAMP = 0.6; // position retention per 60 Hz frame (k = 0.4 per stage)
             const FRAME_MS = 16.667;
             const ECHO_WEIGHT = [0.45, 0.3, 0.18]; // opacity of each echo relative to the lens
             const warpNode = document.querySelector("#codeLensWarp feDisplacementMap");
@@ -1547,7 +1548,7 @@ return 0; }`;
             });
 
             // Motion: target (tx,ty) -> mid stage (mx,my) -> position (px,py). Two cascaded exponentials
-            // form a critically damped spring: no kinks, no overshoot, ~100 ms trail at pointer speed.
+            // form a critically damped spring: no kinks, no overshoot, ~60 ms trail at pointer speed.
             // The echoes (ex,ey) chase the lens and each other more slowly, so they spread out along the path.
             const S = {
                 tx: 0,
@@ -1612,9 +1613,9 @@ return 0; }`;
                 S.my = S.ty + r * emy;
                 const zT = S.on ? ZOOM : 1;
                 const oT = S.on ? 1 : 0;
-                S.z += (zT - S.z) * ease(S.on ? 0.085 : 0.1);
-                S.op += (oT - S.op) * ease(S.on ? 0.11 : 0.13);
-                const ke = ease(0.16);
+                S.z += (zT - S.z) * ease(S.on ? 0.22 : 0.18);
+                S.op += (oT - S.op) * ease(S.on ? 0.2 : 0.16);
+                const ke = ease(0.22);
                 let echoesLanded = true;
                 for (let k = 0; k < S.ex.length; k++) {
                     const qx = k ? S.ex[k - 1] : S.px;
@@ -1645,8 +1646,9 @@ return 0; }`;
                 const y = e.clientY - rect.top;
                 if (!isFinite(x) || !isFinite(y)) return;
                 if (!S.on) {
-                    // Fresh entry snaps under the pointer and swells from scale 1; re-entry mid-fade keeps gliding.
-                    if (S.op < 0.2) {
+                    // Fresh entry (or re-entry far from where the lens was left) snaps under the pointer and
+                    // swells from scale 1; re-entry nearby mid-fade keeps gliding.
+                    if (S.op < 0.2 || Math.hypot(x - S.px, y - S.py) > 200) {
                         S.mx = S.px = x;
                         S.my = S.py = y;
                         S.ex.fill(x);
