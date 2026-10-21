@@ -455,6 +455,9 @@
         .about-roadmap {
             position: relative;
             overflow: hidden;
+            /* clip keeps the fog inside without making the section a scroll container,
+               so the pinned shell below can stick to the viewport. */
+            overflow: clip;
             padding: clamp(58px, 5vw, 82px) 0 0;
             scroll-margin-top: 90px;
             background: linear-gradient(180deg, #060606 0%, #060708 58%, #050607 100%);
@@ -610,10 +613,13 @@
             white-space: nowrap;
         }
 
+        .about-map {
+            padding-top: clamp(80px, 5.5vw, 104px);
+        }
+
         .roadmap {
             position: relative;
             height: 450px;
-            margin-top: clamp(80px, 5.5vw, 104px);
         }
 
         .roadmap::before {
@@ -643,11 +649,11 @@
             stroke-linecap: round;
         }
 
-        .route-line:nth-child(2) { stroke-dasharray: 12 15; }
-        .route-line:nth-child(3) { stroke-dasharray: 3 12 15 12; }
-        .route-line:nth-child(4) { stroke-dasharray: 6 11; }
-        .route-line:nth-child(5) { stroke-dasharray: 14 13 3 13; }
-        .route-line:nth-child(6) { stroke-dasharray: 5 12 2 12; }
+        .route-line:nth-of-type(2) { stroke-dasharray: 12 15; }
+        .route-line:nth-of-type(3) { stroke-dasharray: 3 12 15 12; }
+        .route-line:nth-of-type(4) { stroke-dasharray: 6 11; }
+        .route-line:nth-of-type(5) { stroke-dasharray: 14 13 3 13; }
+        .route-line:nth-of-type(6) { stroke-dasharray: 5 12 2 12; }
 
         .route-dots { fill: #a5a095; opacity: .36; }
 
@@ -722,13 +728,160 @@
             color: #bebeba;
         }
 
-        .roadmap-step:nth-child(1) { left: 1%; top: 30px; }
-        .roadmap-step:nth-child(2) { left: 18%; top: 205px; }
-        .roadmap-step:nth-child(3) { left: 35%; top: 0; width: calc(18% - 24px); }
-        .roadmap-step:nth-child(4) { left: 53%; top: 115px; }
-        .roadmap-step:nth-child(5) { left: 63%; top: 250px; width: calc(19% - 40px); }
-        .roadmap-step:nth-child(6) { left: 82%; top: 145px; }
-        .roadmap-step:nth-child(7) { left: 85%; top: 0; }
+        /* +15px puts each marker centre exactly on the percentage the route uses,
+           so the line meets the ring at any width. */
+        .roadmap-step:nth-child(1) { left: calc(1% + 15px); top: 30px; }
+        .roadmap-step:nth-child(2) { left: calc(18% + 15px); top: 205px; }
+        .roadmap-step:nth-child(3) { left: calc(35% + 15px); top: 0; width: calc(18% - 24px); }
+        .roadmap-step:nth-child(4) { left: calc(53% + 15px); top: 115px; }
+        .roadmap-step:nth-child(5) { left: calc(63% + 15px); top: 250px; width: calc(19% - 40px); }
+        .roadmap-step:nth-child(6) { left: calc(82% + 15px); top: 145px; }
+        .roadmap-step:nth-child(7) { left: calc(85% + 15px); top: 0; }
+
+
+        /* ---- Scroll-driven reveal: the shell pins, the route draws as you scroll, each stage
+           blooms when the line reaches it, and past the last stage the line fades into the dark. */
+        .about-pin {
+            position: relative;
+            z-index: 2;
+        }
+
+        .about-track {
+            height: 0;
+        }
+
+        .about-roadmap.is-reveal .about-track {
+            height: var(--rm-track, 150vh);
+        }
+
+        .about-stick {
+            position: relative;
+        }
+
+        /* Whole "О проекте" screen pins when it fits under the nav; otherwise only the map
+           pins (centred) and the heading scrolls away above it. */
+        .about-roadmap.is-reveal.pin-shell .about-stick {
+            position: -webkit-sticky;
+            position: sticky;
+            top: var(--rm-top, 60px);
+        }
+
+        .about-roadmap.is-reveal.pin-map .about-stick {
+            display: contents;
+        }
+
+        .about-roadmap.is-reveal.pin-map .about-map {
+            position: -webkit-sticky;
+            position: sticky;
+            top: var(--rm-top, 120px);
+        }
+
+        .rm-draw {
+            fill: none;
+            stroke: #fff;
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .route-beyond {
+            fill: none;
+            stroke: url(#rmFade);
+            stroke-width: 1.4;
+            stroke-dasharray: 5 12 2 12;
+            stroke-linecap: round;
+        }
+
+        .route-ellipsis circle {
+            fill: #b5b2a9;
+            opacity: 0;
+            transition: opacity .9s ease;
+        }
+
+        .roadmap.is-beyond .route-ellipsis circle:nth-child(1) { opacity: .34; transition-delay: .15s; }
+        .roadmap.is-beyond .route-ellipsis circle:nth-child(2) { opacity: .24; transition-delay: .55s; }
+        .roadmap.is-beyond .route-ellipsis circle:nth-child(3) { opacity: .15; transition-delay: .95s; }
+
+        .rm-pen {
+            fill: #fbbf24;
+            opacity: 0;
+            filter: drop-shadow(0 0 3px rgba(251, 191, 36, .95)) drop-shadow(0 0 9px rgba(245, 158, 11, .55));
+        }
+
+        .rm-trail {
+            fill: #f59e0b;
+            opacity: 0;
+            filter: drop-shadow(0 0 4px rgba(245, 158, 11, .6));
+        }
+
+        .about-roadmap.is-reveal .route-details {
+            opacity: 0;
+        }
+
+        .about-roadmap.is-reveal .roadmap-marker {
+            opacity: 0;
+            transform: scale(.2);
+            transition: opacity .25s ease, transform .3s ease;
+        }
+
+        .about-roadmap.is-reveal .roadmap-marker::after {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            border: 1px solid rgba(251, 191, 36, .7);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .about-roadmap.is-reveal .roadmap-step.is-on .roadmap-marker {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity .25s ease, transform .6s cubic-bezier(.2, 1.25, .3, 1);
+            animation: rmBloom 1.4s ease-out both;
+        }
+
+        .about-roadmap.is-reveal .roadmap-step.is-on .roadmap-marker::after {
+            animation: rmRipple 1.25s cubic-bezier(.2, .6, .2, 1) .08s both;
+        }
+
+        @keyframes rmBloom {
+            0% { box-shadow: 0 0 0 4px #060708, 0 0 24px 7px rgba(245, 158, 11, .6); }
+            100% { box-shadow: 0 0 0 4px #060708, 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        @keyframes rmRipple {
+            0% { opacity: .8; transform: scale(.7); }
+            100% { opacity: 0; transform: scale(3.6); }
+        }
+
+        .about-roadmap.is-reveal .stage-icon,
+        .about-roadmap.is-reveal .stage-heading,
+        .about-roadmap.is-reveal .stage-description,
+        .about-roadmap.is-reveal .stage-date {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity .3s ease, transform .3s ease;
+        }
+
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-icon,
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-heading,
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-description,
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-date {
+            opacity: 1;
+            transform: none;
+            transition: opacity .75s ease, transform .85s cubic-bezier(.2, .7, .2, 1);
+        }
+
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-icon { transition-delay: .1s; }
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-heading { transition-delay: .22s; animation: rmWarm 1.6s ease-out .22s both; }
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-description { transition-delay: .36s; }
+        .about-roadmap.is-reveal .roadmap-step.is-on .stage-date { transition-delay: .5s; }
+
+        @keyframes rmWarm {
+            0% { color: #fbbf24; }
+            100% { color: #efefec; }
+        }
 
         .roadmap-marker {
             position: absolute;
@@ -939,9 +1092,11 @@
             .metric-copy span:last-child {
                 white-space: normal;
             }
+            .about-map {
+                padding-top: 62px;
+            }
             .roadmap {
                 height: auto;
-                margin-top: 62px;
                 padding-bottom: 58px;
             }
             .route-map,
@@ -979,6 +1134,18 @@
                 top: 62px;
                 width: 14px;
                 height: 14px;
+            }
+            .about-roadmap.is-reveal .about-track { height: 0; }
+            .about-roadmap.is-reveal .about-stick,
+            .about-roadmap.is-reveal .about-map { position: static; display: block; }
+            .about-roadmap.is-reveal .roadmap-marker,
+            .about-roadmap.is-reveal .stage-icon,
+            .about-roadmap.is-reveal .stage-heading,
+            .about-roadmap.is-reveal .stage-description,
+            .about-roadmap.is-reveal .stage-date {
+                opacity: 1;
+                transform: none;
+                animation: none;
             }
             .stage-icon {
                 width: 48px;
@@ -1066,10 +1233,6 @@
             .hero-scroll-chevron {
                 animation: none;
             }
-            .route-line,
-            .roadmap-marker,
-            .stage-heading,
-            .stage-icon,
             .about-link {
                 transition: none;
             }
@@ -1134,6 +1297,8 @@
 
     <section class="screen about-roadmap" id="aboutCodeBug">
         <div class="about-code-fog" id="aboutCodeFog" aria-hidden="true"></div>
+        <div class="about-pin">
+        <div class="about-stick">
         <div class="about-shell">
             <div class="about-head">
                 <span class="about-kicker">О ПРОЕКТЕ</span>
@@ -1158,23 +1323,44 @@
                     </li>
                 </ul>
             </div>
+        </div>
+        <div class="about-shell about-map">
             <section class="roadmap" aria-label="Карта развития проекта">
                 <svg class="route-map" viewBox="0 0 1400 450" preserveAspectRatio="none" aria-hidden="true">
-                    <path class="route-line" d="M0 88 C-34 112 -47 190 5 194 C36 198 56 184 83 194 M108 205 C155 222 180 258 237 263"></path>
-                    <path class="route-line" d="M237 263 C214 280 192 330 211 372 C214 416 414 443 498 394 M517 371 C550 324 528 247 520 206 C517 181 448 196 441 159 C430 112 449 77 475 58"></path>
-                    <path class="route-line" d="M475 58 C442 24 463 -32 532 -22 C588 -14 682 -21 718 25 M731 48 C742 85 731 125 736 158 C739 170 735 173 727 173"></path>
-                    <path class="route-line" d="M727 173 C696 198 685 275 718 295 C754 319 786 293 811 297 M832 299 C847 301 858 306 867 308"></path>
-                    <path class="route-line" d="M867 308 C841 332 830 409 863 431 C908 450 1050 450 1098 423 M1114 400 C1140 351 1136 315 1131 272 C1129 247 1120 216 1133 203"></path>
-                    <path class="route-line" d="M1133 203 C1107 180 1092 151 1108 116 M1117 98 C1130 80 1153 67 1175 58"></path>
-                    <path class="route-arrow" d="M501 398 l8 -10 -12 2 M718 23 l7 9 -11 -2 M1166 55 l9 3 -5 7"></path>
-                    <g class="route-dots">
-                        <circle cx="91" cy="197" r="1.2"></circle><circle cx="100" cy="201" r="1.2"></circle>
-                        <circle cx="817" cy="298" r="1"></circle><circle cx="824" cy="298.5" r="1"></circle>
-                        <circle cx="1111" cy="110" r="1.1"></circle><circle cx="1114" cy="104" r="1.1"></circle>
+                    <defs>
+                        <mask id="rmDraw" maskUnits="userSpaceOnUse" x="-160" y="-220" width="1760" height="800">
+                            <path id="rmDrawPath" class="rm-draw" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" d="M14 88 C-16 103 -24 126.7 -24 150 C-24 173.3 -4.7 192 22 194 C48.7 196 74.7 197.3 98 200 L128 210 C148 218.3 228.7 259.7 252 263 L252 263 C228.7 281.3 214 308.3 214 335 C214 361.7 225.3 411.7 262 420 C298.7 428.3 383.3 441.3 420 438 C456.7 434.7 496.3 414 513 394 L532 371 C538.7 351 551.7 323.3 550 300 C548.3 276.7 537.7 219.3 535 206 C532.3 192.7 459.3 179 456 159 C452.7 139 470 71.3 490 58 L490 58 C476.7 43 481.7 -11.3 505 -18 C528.3 -24.7 613.3 -19.3 640 -16 C666.7 -12.7 723 11.7 733 25 L746 48 C748.7 68 752.7 100 752 120 C751.3 140 752 166.3 742 173 L742 173 C718.7 186.3 701.3 221.7 703 245 C704.7 268.3 716.7 290.3 740 297 C763.3 303.7 775 310.7 790 308 C805 305.3 812.7 298.7 826 298 L850 300 C863.3 301.7 868.7 305.3 882 308 L882 308 C862 323 848.7 356.7 852 380 C855.3 403.3 870 432 900 436 C930 440 1000 448.7 1030 446 C1060 443.3 1096.3 438 1113 423 L1129 400 C1137.3 380 1154.3 339.7 1153 318 C1151.7 296.3 1143 265 1143 250 C1143 235 1143 214.7 1148 203 L1148 203 C1134.7 194.7 1116.7 175 1115 160 C1113.3 145 1118 126 1123 116 L1134 94 C1140.7 85.7 1170 64.7 1190 58 L1190 58 C1183.3 41.3 1175 23 1180 8 C1185 -7 1185.3 -34 1212 -36 C1238.7 -38 1273.3 -40.7 1300 -42 C1326.7 -43.3 1361.7 -52 1385 -62"></path>
+                        </mask>
+                        <linearGradient id="rmFade" gradientUnits="userSpaceOnUse" x1="1195" y1="0" x2="1390" y2="0">
+                            <stop offset="0" stop-color="#bab5a8" stop-opacity=".38"></stop>
+                            <stop offset=".55" stop-color="#bab5a8" stop-opacity=".22"></stop>
+                            <stop offset="1" stop-color="#bab5a8" stop-opacity="0"></stop>
+                        </linearGradient>
+                    </defs>
+                    <g class="route-ink" mask="url(#rmDraw)">
+<path class="route-line" vector-effect="non-scaling-stroke" d="M14 88 C-16 103 -24 126.7 -24 150 C-24 173.3 -4.7 192 22 194 C48.7 196 74.7 197.3 98 200 M128 210 C148 218.3 228.7 259.7 252 263"></path>
+<path class="route-line" vector-effect="non-scaling-stroke" d="M252 263 C228.7 281.3 214 308.3 214 335 C214 361.7 225.3 411.7 262 420 C298.7 428.3 383.3 441.3 420 438 C456.7 434.7 496.3 414 513 394 M532 371 C538.7 351 551.7 323.3 550 300 C548.3 276.7 537.7 219.3 535 206 C532.3 192.7 459.3 179 456 159 C452.7 139 470 71.3 490 58"></path>
+<path class="route-line" vector-effect="non-scaling-stroke" d="M490 58 C476.7 43 481.7 -11.3 505 -18 C528.3 -24.7 613.3 -19.3 640 -16 C666.7 -12.7 723 11.7 733 25 M746 48 C748.7 68 752.7 100 752 120 C751.3 140 752 166.3 742 173"></path>
+<path class="route-line" vector-effect="non-scaling-stroke" d="M742 173 C718.7 186.3 701.3 221.7 703 245 C704.7 268.3 716.7 290.3 740 297 C763.3 303.7 775 310.7 790 308 C805 305.3 812.7 298.7 826 298 M850 300 C863.3 301.7 868.7 305.3 882 308"></path>
+<path class="route-line" vector-effect="non-scaling-stroke" d="M882 308 C862 323 848.7 356.7 852 380 C855.3 403.3 870 432 900 436 C930 440 1000 448.7 1030 446 C1060 443.3 1096.3 438 1113 423 M1129 400 C1137.3 380 1154.3 339.7 1153 318 C1151.7 296.3 1143 265 1143 250 C1143 235 1143 214.7 1148 203"></path>
+<path class="route-line" vector-effect="non-scaling-stroke" d="M1148 203 C1134.7 194.7 1116.7 175 1115 160 C1113.3 145 1118 126 1123 116 M1134 94 C1140.7 85.7 1170 64.7 1190 58"></path>
+<path class="route-arrow" vector-effect="non-scaling-stroke" d="M510.5 403.6 L513 394 L504 398.2 M724.2 20.3 L733 25 L731 15.3 M1109.1 432.1 L1113 423 L1103.5 425.9"></path>
+<g class="route-dots"><circle cx="109" cy="203" r="1.2"></circle><circle cx="118" cy="206" r="1.2"></circle><circle cx="836" cy="299" r="1.2"></circle><circle cx="843" cy="299.5" r="1.2"></circle><circle cx="1127" cy="108" r="1.2"></circle><circle cx="1130" cy="101" r="1.2"></circle></g>
+<circle class="route-waypoint" vector-effect="non-scaling-stroke" cx="22" cy="194" r="2.6"></circle>
+<circle class="route-waypoint" vector-effect="non-scaling-stroke" cx="535" cy="206" r="3"></circle>
+<circle class="route-waypoint" vector-effect="non-scaling-stroke" cx="900" cy="436" r="2.6"></circle>
+                        <path class="route-beyond" vector-effect="non-scaling-stroke" d="M1190 58 C1183.3 41.3 1175 23 1180 8 C1185 -7 1185.3 -34 1212 -36 C1238.7 -38 1273.3 -40.7 1300 -42 C1326.7 -43.3 1361.7 -52 1385 -62"></path>
                     </g>
-                    <circle class="route-waypoint" cx="5" cy="194" r="2.6"></circle>
-                    <circle class="route-waypoint" cx="520" cy="206" r="3"></circle>
-                    <circle class="route-waypoint" cx="863" cy="431" r="2.6"></circle>
+                    <g class="route-ellipsis">
+                        <circle cx="1404" cy="-74" r="1.2"></circle>
+                        <circle cx="1421" cy="-87" r="1.1"></circle>
+                        <circle cx="1441" cy="-103" r="1"></circle>
+                    </g>
+                    <circle class="rm-trail" r="1.9"></circle>
+                    <circle class="rm-trail" r="1.7"></circle>
+                    <circle class="rm-trail" r="1.5"></circle>
+                    <circle class="rm-trail" r="1.3"></circle>
+                    <circle class="rm-pen" r="2.3"></circle>
                 </svg>
                 <div class="route-details" aria-hidden="true">
                     <span class="route-detail route-detail-braces">{ }</span>
@@ -1237,7 +1423,7 @@
                         <div class="stage-body">
                             <h3 class="stage-heading"><span class="stage-number">5.</span>Развитие и реклама</h3>
                             <p class="stage-description">Партнёрства, продвижение и рост сообщества</p>
-                            <time class="stage-date" datetime="2026-10">Октябрь 2026</time>
+                            <time class="stage-date" datetime="2026-11">Ноябрь 2026</time>
                         </div>
                     </li>
                     <li class="roadmap-step">
@@ -1246,7 +1432,7 @@
                         <div class="stage-body">
                             <h3 class="stage-heading"><span class="stage-number">6.</span>Новые горизонты</h3>
                             <p class="stage-description">Больше задач, лучше система, шире возможности</p>
-                            <time class="stage-date" datetime="2026-12">Декабрь 2026</time>
+                            <time class="stage-date" datetime="2027-02">Февраль 2027</time>
                         </div>
                     </li>
                     <li class="roadmap-step">
@@ -1259,7 +1445,9 @@
                     </li>
                 </ol>
             </section>
-
+        </div>
+        </div>
+        <div class="about-track" aria-hidden="true"></div>
         </div>
         <footer class="about-links" aria-label="Ссылки CodeBug">
                 <div class="about-links-grid">
@@ -1715,10 +1903,182 @@ return 0; }`;
             setIndicatorVisibility();
         }
 
+
+        /* Scroll-driven roadmap: pins the "О проекте" shell, draws the route in step with the
+           scroll, blooms each stage as the line reaches it, then lets the line wander off. */
+        function initRoadmapReveal() {
+            const section = document.getElementById("aboutCodeBug");
+            if (!section) return;
+            const pin = section.querySelector(".about-pin");
+            const stick = section.querySelector(".about-stick");
+            const shell = section.querySelector(".about-shell");
+            const mapWrap = section.querySelector(".about-map");
+            const map = section.querySelector(".roadmap");
+            const svg = map && map.querySelector(".route-map");
+            const draw = svg && svg.querySelector("#rmDrawPath");
+            const pen = svg && svg.querySelector(".rm-pen");
+            if (!pin || !stick || !shell || !mapWrap || !map || !svg || !draw || !pen) return;
+            if (typeof draw.getTotalLength !== "function") return;
+            const mobile = window.matchMedia("(max-width: 760px)");
+
+            const trail = Array.from(svg.querySelectorAll(".rm-trail"));
+            const steps = Array.from(map.querySelectorAll(".roadmap-step"));
+            const details = map.querySelector(".route-details");
+            const nav = document.querySelector(".top-nav");
+            const ANCHORS = [[14, 88], [252, 263], [490, 58], [742, 173], [882, 308], [1148, 203], [1190, 58]];
+            const ROUTE_SHARE = 0.8;      // part of the pinned scroll spent on the route itself
+            const FRAME_MS = 16.667;
+            const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+            const L = draw.getTotalLength();
+            // Fraction of the path length at which the line reaches each marker.
+            const T = [];
+            let from = 0;
+            for (const [ax, ay] of ANCHORS) {
+                let best = Infinity, bestL = from;
+                for (let l = from; l <= L; l += 3) {
+                    const q = draw.getPointAtLength(l);
+                    const d = Math.hypot(q.x - ax, q.y - ay);
+                    if (d < best) { best = d; bestL = l; }
+                    if (best < 2 && d > best + 24) break;
+                }
+                T.push(bestL / L);
+                from = bestL;
+            }
+            const T7 = T[T.length - 1];
+
+            const S = { p: 0, ps: 0, raf: 0, last: 0, start: 0, end: 1, tl: trail.map(() => 0) };
+
+            function applyMode() {
+                if (mobile.matches) {
+                    section.classList.remove("is-reveal", "pin-shell", "pin-map");
+                    return false;
+                }
+                section.classList.add("is-reveal");
+                return true;
+            }
+
+            function measure() {
+                if (!applyMode()) return;
+                const vh = window.innerHeight;
+                const navH = nav ? nav.offsetHeight : 72;
+                const headH = shell.offsetHeight;
+                const mapH = mapWrap.offsetHeight;
+                const padTop = mapH - map.offsetHeight;
+                const fits = vh - navH - 16 >= headH + mapH;
+                section.classList.toggle("pin-shell", fits);
+                section.classList.toggle("pin-map", !fits);
+                const top = fits
+                    ? Math.min(Math.max(navH + 16, (vh - headH - mapH) / 2), 96)
+                    : Math.max(navH + 8 - padTop, (vh - map.offsetHeight) / 2 - padTop);
+                section.style.setProperty("--rm-top", Math.round(top) + "px");
+                const track = Math.round(vh * 1.5);
+                section.style.setProperty("--rm-track", track + "px");
+                // Flow position of the pinned box (the pin container never sticks, so it is stable).
+                const pinTop = pin.getBoundingClientRect().top + window.scrollY;
+                const pinStart = (fits ? pinTop : pinTop + headH) - top;
+                const lead = Math.round(vh * 0.3);
+                const maxScroll = document.documentElement.scrollHeight - vh;
+                S.start = pinStart - lead;
+                S.end = Math.max(S.start + 1, Math.min(pinStart + track, maxScroll));
+            }
+
+            function target() {
+                return clamp((window.scrollY - S.start) / (S.end - S.start), 0, 1);
+            }
+
+            function paint(p) {
+                const d = p <= ROUTE_SHARE
+                    ? (p / ROUTE_SHARE) * T7
+                    : T7 + ((p - ROUTE_SHARE) / (1 - ROUTE_SHARE)) * (1 - T7);
+                draw.setAttribute("stroke-dashoffset", String(1 - d));
+                for (let i = 0; i < steps.length; i++) {
+                    // The first marker blooms once the pen has actually set off.
+                    const on = d >= Math.max(T[i], 0.012) - 0.003;
+                    if (on !== steps[i].classList.contains("is-on")) steps[i].classList.toggle("is-on", on);
+                }
+                if (details) details.style.opacity = clamp(d / 0.55, 0, 1).toFixed(3);
+                const q = p <= ROUTE_SHARE ? 0 : (p - ROUTE_SHARE) / (1 - ROUTE_SHARE);
+                let op = d <= 0.002 ? 0 : 1;
+                if (q > 0.66) op *= clamp(1 - (q - 0.66) / 0.26, 0, 1);
+                const len = d * L;
+                const pt = draw.getPointAtLength(len);
+                pen.setAttribute("transform", "translate(" + pt.x.toFixed(1) + " " + pt.y.toFixed(1) + ")");
+                pen.style.opacity = op.toFixed(3);
+                map.classList.toggle("is-beyond", q > 0.84);
+                return len;
+            }
+
+            function paintTrail(len, f, op) {
+                const w = [0.5, 0.34, 0.2, 0.1];
+                let prev = len;
+                for (let k = 0; k < trail.length; k++) {
+                    const k2 = 1 - Math.pow(1 - (0.42 - 0.07 * k), f);
+                    S.tl[k] += (prev - S.tl[k]) * k2;
+                    const q = draw.getPointAtLength(clamp(S.tl[k], 0, L));
+                    trail[k].setAttribute("transform", "translate(" + q.x.toFixed(1) + " " + q.y.toFixed(1) + ")");
+                    const gap = Math.min(1, Math.abs(prev - S.tl[k]) / 6);
+                    trail[k].style.opacity = (op * w[k] * gap).toFixed(3);
+                    prev = S.tl[k];
+                }
+            }
+
+            function tick(t) {
+                const dt = S.last ? clamp(t - S.last, 1, 50) : FRAME_MS;
+                S.last = t;
+                const f = dt / FRAME_MS;
+                S.ps += (S.p - S.ps) * (1 - Math.pow(0.85, f));
+                if (Math.abs(S.p - S.ps) < 0.0003) S.ps = S.p;
+                const len = paint(S.ps);
+                paintTrail(len, f, parseFloat(pen.style.opacity) || 0);
+                const trailMoving = S.tl.some((v, k) => Math.abs(v - (k ? S.tl[k - 1] : len)) > 0.3);
+                if (S.ps !== S.p || trailMoving) {
+                    S.raf = window.requestAnimationFrame(tick);
+                } else {
+                    S.raf = 0;
+                    S.last = 0;
+                }
+            }
+
+            function start() {
+                if (!section.classList.contains("is-reveal")) return;
+                S.p = target();
+                if (!S.raf) S.raf = window.requestAnimationFrame(tick);
+            }
+
+            function sync() {
+                // Land directly on the state for the current scroll position (no catch-up animation).
+                measure();
+                if (!section.classList.contains("is-reveal")) return;
+                S.p = target();
+                S.ps = S.p;
+                S.tl = trail.map(() => S.p * L);
+                paint(S.ps);
+                paintTrail(S.ps * L, 1, parseFloat(pen.style.opacity) || 0);
+            }
+
+            sync();
+            window.addEventListener("scroll", start, { passive: true });
+            let resizeFrame = 0;
+            window.addEventListener("resize", () => {
+                if (resizeFrame) return;
+                resizeFrame = window.requestAnimationFrame(() => {
+                    resizeFrame = 0;
+                    measure();
+                    start();
+                });
+            });
+            const onMode = () => { measure(); start(); };
+            if (mobile.addEventListener) mobile.addEventListener("change", onMode); else mobile.addListener(onMode);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(sync);
+            window.addEventListener("load", sync);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             updateNavbar();
             initCodeEffect();
             initHeroScrollIndicator();
+            initRoadmapReveal();
             if (window.lucide) window.lucide.createIcons();
         });
     </script>
