@@ -50,10 +50,6 @@
             --success-soft: rgba(34, 197, 94, 0.15);
             --code: rgba(148, 168, 184, 0.52);
             --code-hover: rgba(205, 221, 234, 0.78);
-            --flash-red: rgba(239, 68, 68, 0.13);
-            --flash-red-ink: rgba(248, 113, 113, 0.72);
-            --flash-amber: rgba(245, 158, 11, 0.12);
-            --flash-amber-ink: rgba(253, 230, 138, 0.72);
             --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         
@@ -182,7 +178,7 @@
             line-height: 1.45;
             color: var(--code);
             opacity: .26;
-            transition: opacity .3s ease, color .3s ease, background-color .25s linear;
+            transition: opacity 2.6s ease, color 2.6s ease, text-shadow 2.6s ease;
         }
         
         .code-row:nth-child(2n) {
@@ -206,18 +202,22 @@
         }
         
 
-        .code-row.red {
-            opacity: .42;
-            color: var(--flash-red-ink);
-            background: var(--flash-red);
-            box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.22), 0 0 30px rgba(239, 68, 68, 0.10);
+        /* Every 5 s a random row breathes faintly white or red (see runGlow): a quick rise here, then the
+           slow fade of the base .code-row transition. */
+        .code-row.glow-white,
+        .code-row.glow-red {
+            opacity: .5;
+            transition: opacity .9s ease-out, color .9s ease-out, text-shadow .9s ease-out;
         }
-        
-        .code-row.amber {
-            opacity: .42;
-            color: var(--flash-amber-ink);
-            background: var(--flash-amber);
-            box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.18);
+
+        .code-row.glow-white {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+        }
+
+        .code-row.glow-red {
+            color: rgba(248, 113, 113, 0.85);
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
         }
         
         .code-row.fade {
@@ -291,13 +291,42 @@
             will-change: auto;
         }
 
-        .code-lens .code-row:not(.red):not(.amber) {
+        .code-lens .code-row:not(.glow-white):not(.glow-red) {
             color: var(--code-hover);
         }
 
-        /* Guarded explicitly: .red/.amber (.42) and .fade (.03) keep their own opacity inside the glass. */
-        .code-lens .code-row:not(.red):not(.amber):not(.fade) {
-            opacity: .45;
+        /* Guarded explicitly: glowing rows (.5) and .fade (.03) keep their own opacity inside the glass. */
+        .code-lens .code-row:not(.glow-white):not(.glow-red):not(.fade) {
+            opacity: .32;
+        }
+
+        /* Trail: three echoes of the lit code lag behind the lens along the pointer's path and fade out,
+           like a comet's tail — no zoom, no warp, just a faint afterglow. */
+        .code-lens-echo {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 180px;
+            height: 180px;
+            z-index: 1;
+            opacity: 0;
+            overflow: hidden;
+            border-radius: 50%;
+            pointer-events: none;
+            will-change: transform, opacity;
+            -webkit-mask-image: radial-gradient(circle closest-side, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, .96) 28%, rgba(0, 0, 0, .82) 48%, rgba(0, 0, 0, .55) 66%, rgba(0, 0, 0, .25) 82%, rgba(0, 0, 0, .07) 93%, rgba(0, 0, 0, 0) 100%);
+            mask-image: radial-gradient(circle closest-side, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, .96) 28%, rgba(0, 0, 0, .82) 48%, rgba(0, 0, 0, .55) 66%, rgba(0, 0, 0, .25) 82%, rgba(0, 0, 0, .07) 93%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        .code-lens-echo .layer {
+            opacity: 1;
+            filter: none;
+            will-change: auto;
+        }
+
+        .code-lens-echo .code-row:not(.glow-white):not(.glow-red):not(.fade) {
+            color: var(--code-hover);
+            opacity: .26;
         }
 
         .code-lens-defs {
@@ -1020,7 +1049,8 @@
 
         @media (hover: none) {
             .code-lens,
-            .code-lens-shade {
+            .code-lens-shade,
+            .code-lens-echo {
                 display: none;
             }
         }
@@ -1056,6 +1086,9 @@
 
     <section class="screen hero" id="heroScreen">
         <div class="code-fog" id="codeFog" aria-hidden="true"></div>
+        <div class="code-lens-echo" aria-hidden="true"><div class="code-lens-stage"></div></div>
+        <div class="code-lens-echo" aria-hidden="true"><div class="code-lens-stage"></div></div>
+        <div class="code-lens-echo" aria-hidden="true"><div class="code-lens-stage"></div></div>
         <div class="code-lens-shade" id="codeLensShade" aria-hidden="true"><div class="code-lens-back"></div></div>
         <div class="code-lens" id="codeLens" aria-hidden="true">
             <div class="code-lens-zoom">
@@ -1341,7 +1374,8 @@ return 0; }`;
             }
 
             const baseText = rows.map(r => r.txt.textContent);
-            let pulseTimer = null;
+            let glowTimer = null;
+            let lastGlow = -1;
             let driftTimer = null;
 
             function mutateLine(text) {
@@ -1364,25 +1398,19 @@ return 0; }`;
                 return text;
             }
 
-            function runPulse() {
-                const idx = Math.floor(Math.random() * rows.length);
-                const row = rows[idx];
-                const txt = row.txt;
-                const original = baseText[idx];
-                const amber = Math.random() > 0.55;
+            // Every 5 s a random row breathes faintly white or red: it rises in under a second and fades
+            // over 2.6 s (see .code-row.glow-white / .glow-red). Never the same row twice in a row.
+            function runGlow() {
+                let idx = Math.floor(Math.random() * rows.length);
+                if (idx === lastGlow) idx = (idx + 1) % rows.length;
+                lastGlow = idx;
+                const row = rows[idx].row;
+                row.classList.add(Math.random() < 0.5 ? "glow-red" : "glow-white");
 
-                row.row.classList.remove("red", "amber");
-                row.row.classList.add(amber ? "amber" : "red");
-                if (Math.random() > 0.55) {
-                    const next = mutateLine(original);
-                    txt.textContent = next;
-                }
-
-                if (pulseTimer) clearTimeout(pulseTimer);
-                pulseTimer = setTimeout(() => {
-                    row.row.classList.remove("red", "amber");
-                    txt.textContent = original;
-                }, 1000);
+                if (glowTimer) clearTimeout(glowTimer);
+                glowTimer = setTimeout(() => {
+                    row.classList.remove("glow-red", "glow-white");
+                }, 1300);
             }
 
             function runDrift() {
@@ -1411,12 +1439,11 @@ return 0; }`;
                 }, 1800);
             }
 
-            function schedulePulse() {
-                const delay = 5000 + Math.floor(Math.random() * 5000);
+            function scheduleGlow() {
                 setTimeout(() => {
-                    runPulse();
-                    schedulePulse();
-                }, delay);
+                    runGlow();
+                    scheduleGlow();
+                }, 5000);
             }
 
             function scheduleDrift() {
@@ -1427,73 +1454,90 @@ return 0; }`;
                 }, delay);
             }
 
-            schedulePulse();
+            scheduleGlow();
             scheduleDrift();
             initCodeLens(hero, fog);
         }
 
-        // Soft glass lens over the code fog: follows the pointer with a critically damped spring,
-        // magnifies and bends the code under it, and shows the fog crisp and brighter inside.
+        // Soft glass lens over the code fog: follows the pointer with a critically damped spring, magnifies
+        // and bends the code under it, shows the fog crisp and brighter inside, and leaves a short trail of
+        // fading echoes behind it.
         function initCodeLens(hero, fog) {
             const lens = document.getElementById("codeLens");
             const stage = document.getElementById("codeLensStage");
             const shade = document.getElementById("codeLensShade");
+            const echoes = Array.from(hero.querySelectorAll(".code-lens-echo"));
             if (!lens || !stage || !shade || !fog) return;
             const zoomEl = lens.firstElementChild;
             const shadeBack = shade.firstElementChild;
-            if (!zoomEl || !shadeBack) return;
+            const echoStages = echoes.map((echo) => echo.firstElementChild);
+            if (!zoomEl || !shadeBack || echoStages.some((el) => !el)) return;
             if (window.matchMedia("(hover: none)").matches) {
                 lens.remove();
                 shade.remove();
+                echoes.forEach((echo) => echo.remove());
                 return;
             }
 
             const R = 90; // half of the lens box
             const ZOOM = 1.35; // uniform magnification
-            const WARP = 0.5; // extra magnification at the glass centre (+50%), eased out by #codeLensWarp
+            const WARP = 0.25; // extra magnification at the glass centre (+25%), eased out by #codeLensWarp
             // dR/dx of the #codeLensWarp map at the lens centre: colour strips 50 px either side of the centre,
             // 100 px long, blurred with sigma = 28. Re-derive this (and the scale="-48.7" default in the markup)
             // whenever the strips or stdDeviation change.
             const MAP_SLOPE = 0.00685;
             const DAMP = 0.74; // position retention per 60 Hz frame (k = 0.26 per stage)
             const FRAME_MS = 16.667;
+            const ECHO_WEIGHT = [0.45, 0.3, 0.18]; // opacity of each echo relative to the lens
             const warpNode = document.querySelector("#codeLensWarp feDisplacementMap");
             if (warpNode) warpNode.setAttribute("scale", ((1 / (1 + WARP) - 1) / MAP_SLOPE).toFixed(1));
 
-            // The stage and the shade backdrop mirror the hero box, so the fog clone and the background register exactly.
+            // The stages and the shade backdrop mirror the hero box, so the fog copies and the background
+            // register exactly with the real fog.
+            const boxes = [stage, shadeBack].concat(echoStages);
             function fit() {
                 const w = hero.offsetWidth + "px";
                 const h = hero.offsetHeight + "px";
-                stage.style.width = w;
-                stage.style.height = h;
-                shadeBack.style.width = w;
-                shadeBack.style.height = h;
+                boxes.forEach((box) => {
+                    box.style.width = w;
+                    box.style.height = h;
+                });
             }
             fit();
             window.addEventListener("resize", fit, { passive: true });
 
-            // Re-clone the fog whenever its rows change (pulses, drift), at most once per frame and only while
-            // the lens can be seen; a change that arrives while it is hidden is applied on the next entry.
-            let syncFrame = 0;
-            let stale = false;
-            let visible = false;
-
-            function syncStage() {
-                syncFrame = 0;
-                if (!visible) {
-                    stale = true;
-                    return;
-                }
-                stale = false;
+            // Copies of the fog for the lens and the echoes are built once; afterwards only the rows that
+            // change (glow classes, drift text) are mirrored, so CSS transitions keep running inside the copies.
+            const copies = [stage].concat(echoStages).map((box) => {
                 const copy = fog.cloneNode(true);
                 copy.removeAttribute("id");
-                stage.replaceChildren(copy);
+                box.replaceChildren(copy);
+                return copy;
+            });
+            const sourceRows = Array.from(fog.querySelectorAll(".code-row"));
+            const copyRows = copies.map((copy) => Array.from(copy.querySelectorAll(".code-row")));
+
+            function mirrorRow(index) {
+                const src = sourceRows[index];
+                const srcTxt = src.querySelector(".txt");
+                copyRows.forEach((rowsOfCopy) => {
+                    const dst = rowsOfCopy[index];
+                    if (!dst) return;
+                    if (dst.className !== src.className) dst.className = src.className;
+                    const dstTxt = dst.querySelector(".txt");
+                    if (srcTxt && dstTxt && dstTxt.textContent !== srcTxt.textContent) dstTxt.textContent = srcTxt.textContent;
+                });
             }
-            visible = true;
-            syncStage();
-            visible = false;
-            new MutationObserver(() => {
-                if (!syncFrame) syncFrame = window.requestAnimationFrame(syncStage);
+            new MutationObserver((records) => {
+                const touched = new Set();
+                records.forEach((record) => {
+                    const node = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+                    const row = node && node.closest(".code-row");
+                    if (row) touched.add(sourceRows.indexOf(row));
+                });
+                touched.forEach((index) => {
+                    if (index >= 0) mirrorRow(index);
+                });
             }).observe(fog, {
                 subtree: true,
                 childList: true,
@@ -1504,6 +1548,7 @@ return 0; }`;
 
             // Motion: target (tx,ty) -> mid stage (mx,my) -> position (px,py). Two cascaded exponentials
             // form a critically damped spring: no kinks, no overshoot, ~100 ms trail at pointer speed.
+            // The echoes (ex,ey) chase the lens and each other more slowly, so they spread out along the path.
             const S = {
                 tx: 0,
                 ty: 0,
@@ -1511,6 +1556,8 @@ return 0; }`;
                 my: 0,
                 px: 0,
                 py: 0,
+                ex: [0, 0, 0],
+                ey: [0, 0, 0],
                 z: 1,
                 op: 0,
                 on: false,
@@ -1534,7 +1581,13 @@ return 0; }`;
                 shade.style.opacity = opacity;
                 shade.style.transform = move;
                 shadeBack.style.transform = counter;
-                visible = S.op > 0;
+                for (let k = 0; k < echoes.length; k++) {
+                    const ea = +(S.ex[k] - R).toFixed(2);
+                    const eb = +(S.ey[k] - R).toFixed(2);
+                    echoes[k].style.opacity = (S.quiet ? 0 : S.op * ECHO_WEIGHT[k]).toFixed(3);
+                    echoes[k].style.transform = "translate(" + ea + "px, " + eb + "px)";
+                    echoStages[k].style.transform = "translate(" + (-ea) + "px, " + (-eb) + "px)";
+                }
             }
 
             function start() {
@@ -1570,12 +1623,27 @@ return 0; }`;
                     S.py = S.my = S.ty;
                     S.z = zT;
                 }
-                const landed = Math.abs(S.tx - S.px) < 0.05 && Math.abs(S.tx - S.mx) < 0.05 &&
+                const ke = ease(0.16);
+                let echoesLanded = true;
+                for (let k = 0; k < S.ex.length; k++) {
+                    const qx = k ? S.ex[k - 1] : S.px;
+                    const qy = k ? S.ey[k - 1] : S.py;
+                    S.ex[k] += (qx - S.ex[k]) * ke;
+                    S.ey[k] += (qy - S.ey[k]) * ke;
+                    if (S.quiet) {
+                        S.ex[k] = S.px;
+                        S.ey[k] = S.py;
+                    }
+                    if (Math.abs(S.ex[k] - S.tx) >= 0.05 || Math.abs(S.ey[k] - S.ty) >= 0.05) echoesLanded = false;
+                }
+                const landed = echoesLanded && Math.abs(S.tx - S.px) < 0.05 && Math.abs(S.tx - S.mx) < 0.05 &&
                     Math.abs(S.ty - S.py) < 0.05 && Math.abs(S.ty - S.my) < 0.05 &&
                     Math.abs(zT - S.z) < 0.0005 && Math.abs(oT - S.op) < 0.003;
                 if (landed) {
                     S.px = S.mx = S.tx;
                     S.py = S.my = S.ty;
+                    S.ex.fill(S.tx);
+                    S.ey.fill(S.ty);
                     S.z = zT;
                     S.op = oT;
                     S.last = 0;
@@ -1590,13 +1658,13 @@ return 0; }`;
                 const y = e.clientY - rect.top;
                 if (!isFinite(x) || !isFinite(y)) return;
                 if (!S.on) {
-                    visible = true;
-                    if (stale) syncStage();
                     S.quiet = reducedMotion.matches;
                     // Fresh entry snaps under the pointer and swells from scale 1; re-entry mid-fade keeps gliding.
                     if (S.op < 0.2) {
                         S.mx = S.px = x;
                         S.my = S.py = y;
+                        S.ex.fill(x);
+                        S.ey.fill(y);
                         S.z = 1;
                         S.op = 0;
                     }
