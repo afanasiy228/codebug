@@ -182,7 +182,7 @@
             line-height: 1.45;
             color: var(--code);
             opacity: .26;
-            transition: opacity .3s ease, color .3s ease, background-color .25s linear, filter .3s ease;
+            transition: opacity .3s ease, color .3s ease, background-color .25s linear;
         }
         
         .code-row:nth-child(2n) {
@@ -205,11 +205,6 @@
             font-size: 14px;
         }
         
-        .code-row.hover {
-            opacity: .44;
-            color: rgba(189, 204, 216, 0.62);
-            filter: blur(0);
-        }
 
         .code-row.red {
             opacity: .42;
@@ -227,6 +222,89 @@
         
         .code-row.fade {
             opacity: .03;
+        }
+
+        /* Lens over the code fog: a soft pool of light that follows the pointer. No border, no ring — the alpha
+           falls off along a smooth S-curve to zero at the rim, so there is no edge to see. #codeLensWarp bends the
+           glass (defined inline in the hero); without SVG filter support the lens degrades to a plain magnifier. */
+        .code-lens {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 180px;
+            height: 180px;
+            z-index: 1;
+            opacity: 0;
+            overflow: hidden;
+            border-radius: 50%;
+            pointer-events: none;
+            will-change: transform, opacity;
+            filter: url(#codeLensWarp);
+            -webkit-mask-image: radial-gradient(circle closest-side, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, .96) 28%, rgba(0, 0, 0, .82) 48%, rgba(0, 0, 0, .55) 66%, rgba(0, 0, 0, .25) 82%, rgba(0, 0, 0, .07) 93%, rgba(0, 0, 0, 0) 100%);
+            mask-image: radial-gradient(circle closest-side, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, .96) 28%, rgba(0, 0, 0, .82) 48%, rgba(0, 0, 0, .55) 66%, rgba(0, 0, 0, .25) 82%, rgba(0, 0, 0, .07) 93%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        /* Shade under the lens: paints the page background over the dim fog with a mask that stays opaque well
+           inside the lens falloff, so the base rows never show through the glass and no edge appears. */
+        .code-lens-shade {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 180px;
+            height: 180px;
+            z-index: 1;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            will-change: transform, opacity;
+            -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, #000 70%, rgba(0, 0, 0, .55) 84%, rgba(0, 0, 0, 0) 100%);
+            mask-image: radial-gradient(circle closest-side, #000 0%, #000 70%, rgba(0, 0, 0, .55) 84%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        /* Same background as the page under the hero (body gradient plus the .hero::before tints), sized to the hero box. */
+        .code-lens-back {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background:
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
+                linear-gradient(180deg, var(--bg), var(--bg2));
+        }
+
+        .code-lens-zoom {
+            position: absolute;
+            inset: 0;
+            transform-origin: 90px 90px;
+        }
+
+        /* Mirror of the hero box: the fog clone inside it lays out exactly like the real fog. */
+        .code-lens-stage {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .code-lens .layer {
+            opacity: 1;
+            filter: none;
+            will-change: auto;
+        }
+
+        .code-lens .code-row:not(.red):not(.amber) {
+            color: var(--code-hover);
+        }
+
+        /* Guarded explicitly: .red/.amber (.42) and .fade (.03) keep their own opacity inside the glass. */
+        .code-lens .code-row:not(.red):not(.amber):not(.fade) {
+            opacity: .45;
+        }
+
+        .code-lens-defs {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
         }
         
         .hero-content {
@@ -940,6 +1018,13 @@
             }
         }
 
+        @media (hover: none) {
+            .code-lens,
+            .code-lens-shade {
+                display: none;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .hero-scroll-indicator {
                 transition: opacity .2s linear;
@@ -971,6 +1056,34 @@
 
     <section class="screen hero" id="heroScreen">
         <div class="code-fog" id="codeFog" aria-hidden="true"></div>
+        <div class="code-lens-shade" id="codeLensShade" aria-hidden="true"><div class="code-lens-back"></div></div>
+        <div class="code-lens" id="codeLens" aria-hidden="true">
+            <div class="code-lens-zoom">
+                <div class="code-lens-stage" id="codeLensStage"></div>
+            </div>
+        </div>
+        <svg class="code-lens-defs" width="0" height="0" aria-hidden="true" focusable="false">
+            <defs>
+                <!-- Displacement map for the glass: blurred colour strips (100 px long, 50 px either side of the centre)
+                     give a derivative-of-Gaussian profile that is close to radial: extra magnification at the
+                     centre that eases out and squeezes slightly at the rim. -->
+                <filter id="codeLensWarp" filterUnits="userSpaceOnUse" x="-90" y="-90" width="360" height="360" color-interpolation-filters="sRGB">
+                    <feFlood flood-color="#808080" x="-90" y="-90" width="360" height="360" result="g"/>
+                    <feFlood flood-color="#008080" x="20" y="40" width="40" height="100" result="xl"/>
+                    <feFlood flood-color="#ff8080" x="120" y="40" width="40" height="100" result="xr"/>
+                    <feComposite in="xl" in2="g" operator="over" result="x1"/>
+                    <feComposite in="xr" in2="x1" operator="over" result="x2"/>
+                    <feGaussianBlur in="x2" stdDeviation="28" result="mapX"/>
+                    <feFlood flood-color="#800080" x="40" y="20" width="100" height="40" result="yu"/>
+                    <feFlood flood-color="#80ff80" x="40" y="120" width="100" height="40" result="yd"/>
+                    <feComposite in="yu" in2="g" operator="over" result="y1"/>
+                    <feComposite in="yd" in2="y1" operator="over" result="y2"/>
+                    <feGaussianBlur in="y2" stdDeviation="28" result="mapY"/>
+                    <feComposite in="mapX" in2="mapY" operator="arithmetic" k1="0" k2="1" k3="1" k4="-0.5" result="map"/>
+                    <feDisplacementMap in="SourceGraphic" in2="map" scale="-48.7" xChannelSelector="R" yChannelSelector="G"/>
+                </filter>
+            </defs>
+        </svg>
 
         <div class="hero-content">
             <div class="hero-right">
@@ -1231,23 +1344,6 @@ return 0; }`;
             let pulseTimer = null;
             let driftTimer = null;
 
-            function setHoverByPointer(clientX, clientY) {
-                const heroRect = hero.getBoundingClientRect();
-                if (clientY < heroRect.top || clientY > heroRect.bottom) {
-                    rows.forEach((item) => item.row.classList.remove("hover"));
-                    return;
-                }
-                rows.forEach((item) => {
-                    const r = item.row.getBoundingClientRect();
-                    const cx = r.left + r.width / 2;
-                    const cy = r.top + r.height / 2;
-                    const dx = Math.abs(clientX - cx);
-                    const dy = Math.abs(clientY - cy);
-                    if (dx < 760 && dy < 56) item.row.classList.add("hover");
-                    else item.row.classList.remove("hover");
-                });
-            }
-
             function mutateLine(text) {
                 const swaps = [{
                     from: "<=",
@@ -1331,13 +1427,190 @@ return 0; }`;
                 }, delay);
             }
 
-            document.addEventListener("mousemove", (e) => setHoverByPointer(e.clientX, e.clientY), {
-                passive: true
-            });
-            document.addEventListener("mouseleave", () => rows.forEach((item) => item.row.classList.remove("hover")));
-
             schedulePulse();
             scheduleDrift();
+            initCodeLens(hero, fog);
+        }
+
+        // Soft glass lens over the code fog: follows the pointer with a critically damped spring,
+        // magnifies and bends the code under it, and shows the fog crisp and brighter inside.
+        function initCodeLens(hero, fog) {
+            const lens = document.getElementById("codeLens");
+            const stage = document.getElementById("codeLensStage");
+            const shade = document.getElementById("codeLensShade");
+            if (!lens || !stage || !shade || !fog) return;
+            const zoomEl = lens.firstElementChild;
+            const shadeBack = shade.firstElementChild;
+            if (!zoomEl || !shadeBack) return;
+            if (window.matchMedia("(hover: none)").matches) {
+                lens.remove();
+                shade.remove();
+                return;
+            }
+
+            const R = 90; // half of the lens box
+            const ZOOM = 1.35; // uniform magnification
+            const WARP = 0.5; // extra magnification at the glass centre (+50%), eased out by #codeLensWarp
+            // dR/dx of the #codeLensWarp map at the lens centre: colour strips 50 px either side of the centre,
+            // 100 px long, blurred with sigma = 28. Re-derive this (and the scale="-48.7" default in the markup)
+            // whenever the strips or stdDeviation change.
+            const MAP_SLOPE = 0.00685;
+            const DAMP = 0.74; // position retention per 60 Hz frame (k = 0.26 per stage)
+            const FRAME_MS = 16.667;
+            const warpNode = document.querySelector("#codeLensWarp feDisplacementMap");
+            if (warpNode) warpNode.setAttribute("scale", ((1 / (1 + WARP) - 1) / MAP_SLOPE).toFixed(1));
+
+            // The stage and the shade backdrop mirror the hero box, so the fog clone and the background register exactly.
+            function fit() {
+                const w = hero.offsetWidth + "px";
+                const h = hero.offsetHeight + "px";
+                stage.style.width = w;
+                stage.style.height = h;
+                shadeBack.style.width = w;
+                shadeBack.style.height = h;
+            }
+            fit();
+            window.addEventListener("resize", fit, { passive: true });
+
+            // Re-clone the fog whenever its rows change (pulses, drift), at most once per frame and only while
+            // the lens can be seen; a change that arrives while it is hidden is applied on the next entry.
+            let syncFrame = 0;
+            let stale = false;
+            let visible = false;
+
+            function syncStage() {
+                syncFrame = 0;
+                if (!visible) {
+                    stale = true;
+                    return;
+                }
+                stale = false;
+                const copy = fog.cloneNode(true);
+                copy.removeAttribute("id");
+                stage.replaceChildren(copy);
+            }
+            visible = true;
+            syncStage();
+            visible = false;
+            new MutationObserver(() => {
+                if (!syncFrame) syncFrame = window.requestAnimationFrame(syncStage);
+            }).observe(fog, {
+                subtree: true,
+                childList: true,
+                characterData: true,
+                attributes: true,
+                attributeFilter: ["class"]
+            });
+
+            // Motion: target (tx,ty) -> mid stage (mx,my) -> position (px,py). Two cascaded exponentials
+            // form a critically damped spring: no kinks, no overshoot, ~100 ms trail at pointer speed.
+            const S = {
+                tx: 0,
+                ty: 0,
+                mx: 0,
+                my: 0,
+                px: 0,
+                py: 0,
+                z: 1,
+                op: 0,
+                on: false,
+                quiet: false,
+                raf: 0,
+                last: 0,
+                h: 0
+            };
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+            function paint() {
+                const a = +(S.px - R).toFixed(2);
+                const b = +(S.py - R).toFixed(2);
+                const opacity = S.op.toFixed(3);
+                const move = "translate(" + a + "px, " + b + "px) scale(" + (S.quiet ? "1" : (0.97 + 0.03 * S.op).toFixed(4)) + ")";
+                const counter = "translate(" + (-a) + "px, " + (-b) + "px)";
+                lens.style.opacity = opacity;
+                lens.style.transform = move;
+                zoomEl.style.transform = "scale(" + S.z.toFixed(4) + ")";
+                stage.style.transform = counter;
+                shade.style.opacity = opacity;
+                shade.style.transform = move;
+                shadeBack.style.transform = counter;
+                visible = S.op > 0;
+            }
+
+            function start() {
+                if (!S.raf) S.raf = window.requestAnimationFrame(tick);
+            }
+
+            function tick(t) {
+                S.raf = 0;
+                const raw = t - S.last;
+                const ok = S.last && isFinite(raw);
+                const dt = ok ? Math.min(50, Math.max(1, raw)) : (S.h || FRAME_MS);
+                if (ok) S.h = dt;
+                S.last = t;
+                const f = dt / FRAME_MS;
+                const ease = (k) => 1 - Math.pow(1 - k, f);
+                const r = Math.pow(DAMP, f);
+                const L = -Math.log(DAMP) * f; // exact step of the two-stage spring
+                const emx = S.mx - S.tx;
+                const emy = S.my - S.ty;
+                const epx = S.px - S.tx;
+                const epy = S.py - S.ty;
+                S.px = S.tx + r * (epx + L * emx);
+                S.py = S.ty + r * (epy + L * emy);
+                S.mx = S.tx + r * emx;
+                S.my = S.ty + r * emy;
+                const zT = S.on ? ZOOM : 1;
+                const oT = S.on ? 1 : 0;
+                S.z += (zT - S.z) * ease(S.on ? 0.085 : 0.1);
+                S.op += (oT - S.op) * ease(S.on ? 0.11 : 0.13);
+                // Reduced motion: the lens follows the pointer instantly and only crossfades, like the iOS text loupe.
+                if (S.quiet) {
+                    S.px = S.mx = S.tx;
+                    S.py = S.my = S.ty;
+                    S.z = zT;
+                }
+                const landed = Math.abs(S.tx - S.px) < 0.05 && Math.abs(S.tx - S.mx) < 0.05 &&
+                    Math.abs(S.ty - S.py) < 0.05 && Math.abs(S.ty - S.my) < 0.05 &&
+                    Math.abs(zT - S.z) < 0.0005 && Math.abs(oT - S.op) < 0.003;
+                if (landed) {
+                    S.px = S.mx = S.tx;
+                    S.py = S.my = S.ty;
+                    S.z = zT;
+                    S.op = oT;
+                    S.last = 0;
+                }
+                paint();
+                if (!landed) start();
+            }
+
+            hero.addEventListener("mousemove", (e) => {
+                const rect = hero.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (!isFinite(x) || !isFinite(y)) return;
+                if (!S.on) {
+                    visible = true;
+                    if (stale) syncStage();
+                    S.quiet = reducedMotion.matches;
+                    // Fresh entry snaps under the pointer and swells from scale 1; re-entry mid-fade keeps gliding.
+                    if (S.op < 0.2) {
+                        S.mx = S.px = x;
+                        S.my = S.py = y;
+                        S.z = 1;
+                        S.op = 0;
+                    }
+                    S.on = true;
+                }
+                S.tx = x;
+                S.ty = y;
+                start();
+            }, { passive: true });
+            hero.addEventListener("mouseleave", () => {
+                if (!S.on) return;
+                S.on = false;
+                start();
+            });
         }
 
         function initHeroScrollIndicator() {
