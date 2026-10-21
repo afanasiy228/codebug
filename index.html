@@ -1561,18 +1561,15 @@ return 0; }`;
                 z: 1,
                 op: 0,
                 on: false,
-                quiet: false,
                 raf: 0,
                 last: 0,
                 h: 0
             };
-            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
             function paint() {
                 const a = +(S.px - R).toFixed(2);
                 const b = +(S.py - R).toFixed(2);
                 const opacity = S.op.toFixed(3);
-                const move = "translate(" + a + "px, " + b + "px) scale(" + (S.quiet ? "1" : (0.97 + 0.03 * S.op).toFixed(4)) + ")";
+                const move = "translate(" + a + "px, " + b + "px) scale(" + (0.97 + 0.03 * S.op).toFixed(4) + ")";
                 const counter = "translate(" + (-a) + "px, " + (-b) + "px)";
                 lens.style.opacity = opacity;
                 lens.style.transform = move;
@@ -1584,7 +1581,7 @@ return 0; }`;
                 for (let k = 0; k < echoes.length; k++) {
                     const ea = +(S.ex[k] - R).toFixed(2);
                     const eb = +(S.ey[k] - R).toFixed(2);
-                    echoes[k].style.opacity = (S.quiet ? 0 : S.op * ECHO_WEIGHT[k]).toFixed(3);
+                    echoes[k].style.opacity = (S.op * ECHO_WEIGHT[k]).toFixed(3);
                     echoes[k].style.transform = "translate(" + ea + "px, " + eb + "px)";
                     echoStages[k].style.transform = "translate(" + (-ea) + "px, " + (-eb) + "px)";
                 }
@@ -1617,12 +1614,6 @@ return 0; }`;
                 const oT = S.on ? 1 : 0;
                 S.z += (zT - S.z) * ease(S.on ? 0.085 : 0.1);
                 S.op += (oT - S.op) * ease(S.on ? 0.11 : 0.13);
-                // Reduced motion: the lens follows the pointer instantly and only crossfades, like the iOS text loupe.
-                if (S.quiet) {
-                    S.px = S.mx = S.tx;
-                    S.py = S.my = S.ty;
-                    S.z = zT;
-                }
                 const ke = ease(0.16);
                 let echoesLanded = true;
                 for (let k = 0; k < S.ex.length; k++) {
@@ -1630,10 +1621,6 @@ return 0; }`;
                     const qy = k ? S.ey[k - 1] : S.py;
                     S.ex[k] += (qx - S.ex[k]) * ke;
                     S.ey[k] += (qy - S.ey[k]) * ke;
-                    if (S.quiet) {
-                        S.ex[k] = S.px;
-                        S.ey[k] = S.py;
-                    }
                     if (Math.abs(S.ex[k] - S.tx) >= 0.05 || Math.abs(S.ey[k] - S.ty) >= 0.05) echoesLanded = false;
                 }
                 const landed = echoesLanded && Math.abs(S.tx - S.px) < 0.05 && Math.abs(S.tx - S.mx) < 0.05 &&
@@ -1658,7 +1645,6 @@ return 0; }`;
                 const y = e.clientY - rect.top;
                 if (!isFinite(x) || !isFinite(y)) return;
                 if (!S.on) {
-                    S.quiet = reducedMotion.matches;
                     // Fresh entry snaps under the pointer and swells from scale 1; re-entry mid-fade keeps gliding.
                     if (S.op < 0.2) {
                         S.mx = S.px = x;
