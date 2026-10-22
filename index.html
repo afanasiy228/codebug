@@ -35,9 +35,12 @@
     <meta property="og:title" content="CodeBug — найди баг в коде на C++">
     <meta property="og:description" content="Тренажёр для школьников: в каждой задаче уже есть решение на C++ с ошибкой. Найди баг, исправь код и проверь его на тестах.">
     <meta property="og:url" content="https://codebug.online/">
-    <meta property="og:image" content="https://codebug.online/logo.png">
-    <meta name="twitter:card" content="summary">
-    <link rel="icon" type="image/png" href="/logo.png?v=2">
+    <meta property="og:image" content="https://codebug.online/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="CodeBug: найди баг в коде на C++ и почини его">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="/logo.png?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap" rel="stylesheet">
@@ -1316,15 +1319,15 @@
                 <ul class="about-metrics" aria-label="Показатели платформы">
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="terminal"></i></span>
-                        <span class="metric-copy"><span>≈100</span><span>задач</span></span>
+                        <span class="metric-copy"><span id="metricTasks">21</span><span id="metricTasksWord">задача</span></span>
                     </li>
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="braces"></i></span>
-                        <span class="metric-copy"><span>1000+</span><span>решений</span></span>
+                        <span class="metric-copy"><span>400+</span><span>посылок</span></span>
                     </li>
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="code-xml"></i></span>
-                        <span class="metric-copy"><span>Поддержка</span><span>C++ и Python</span></span>
+                        <span class="metric-copy"><span>Задачи</span><span>на C++</span></span>
                     </li>
                     <li class="about-metric">
                         <span class="metric-icon" aria-hidden="true"><i data-lucide="rocket"></i></span>
@@ -2083,8 +2086,34 @@ return 0; }`;
             window.addEventListener("load", sync);
         }
 
+        // Live task count for the "about" metrics; the markup keeps the last known number.
+        async function updateTaskMetric() {
+            const num = document.getElementById("metricTasks");
+            const word = document.getElementById("metricTasksWord");
+            if (!num || !word) return;
+            const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
+            const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+            const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : 0;
+            try {
+                const res = await fetch(`${base}/tasks/list`, ctrl ? { signal: ctrl.signal } : {});
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = Array.isArray(data) ? data : (data && (data.tasks || data.items)) || [];
+                const n = Array.isArray(list) ? list.length : 0;
+                if (!n) return;
+                const m10 = n % 10, m100 = n % 100;
+                num.textContent = String(n);
+                word.textContent = m10 === 1 && m100 !== 11 ? "задача" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "задачи" : "задач";
+            } catch (_) {
+                // keep the static number
+            } finally {
+                if (timer) clearTimeout(timer);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             updateNavbar();
+            updateTaskMetric();
             initCodeEffect();
             initHeroScrollIndicator();
             initRoadmapReveal();
