@@ -118,21 +118,63 @@
             margin-bottom: 30px;
             font-size: 15px;
         }
-        /* FAQ BLOCKS */
-        
+        /* FAQ BLOCKS: same cards and numbers, each question opens its answer */
+
+        .faq-search {
+            position: relative;
+            margin: 0 0 22px;
+        }
+
+        .faq-search input {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px 0 44px;
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+            color: var(--ink);
+            font: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .faq-search input::placeholder {
+            color: #7d7d7d;
+        }
+
+        .faq-search input:focus {
+            border-color: var(--accent);
+        }
+
+        .faq-search svg {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            width: 18px;
+            height: 18px;
+            transform: translateY(-50%);
+            color: #8a8a8a;
+            pointer-events: none;
+        }
+
         .faq-block {
             background: var(--card);
             border: 1px solid var(--stroke);
-            padding: 20px 20px 20px 60px;
             border-radius: 16px;
             margin-bottom: 20px;
-            transition: 0.2s;
+            transition: border-color 0.2s;
             position: relative;
             box-shadow: var(--shadow);
         }
-        
-        .faq-block:hover {
+
+        .faq-block:hover,
+        .faq-block[open] {
             border-color: var(--accent);
+        }
+
+        .faq-block[open]:not(:hover) {
+            border-color: rgba(245, 158, 11, 0.45);
         }
 
         .faq-block::before {
@@ -150,33 +192,127 @@
             display: grid;
             place-items: center;
             font-size: 12px;
+            pointer-events: none;
         }
-        
+
         .faq-question {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 20px 20px 20px 60px;
             font-size: 20px;
+            line-height: 1.35;
             color: var(--ink);
-            margin-bottom: 10px;
             font-weight: 700;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            cursor: pointer;
+            list-style: none;
+            border-radius: 16px;
         }
-        
+
+        .faq-question::-webkit-details-marker {
+            display: none;
+        }
+
+        .faq-question::after {
+            content: "+";
+            margin-left: auto;
+            flex: 0 0 auto;
+            color: var(--accent);
+            font-size: 22px;
+            font-weight: 400;
+            line-height: 1.2;
+        }
+
+        .faq-block[open] .faq-question::after {
+            content: "−";
+        }
+
+        .faq-question:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
+
         .faq-answer {
+            padding: 0 20px 20px 60px;
+            margin-top: -6px;
             color: var(--muted);
             font-size: 15px;
             line-height: 1.7;
         }
-        
+
+        .faq-answer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .faq-answer a:hover {
+            color: var(--accent-strong);
+        }
+
+        .faq-answer strong {
+            color: #d8d8d8;
+            font-weight: 600;
+        }
+
+        .faq-empty {
+            padding: 26px 20px;
+            border: 1px dashed var(--stroke);
+            border-radius: 16px;
+            color: var(--muted);
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .faq-empty a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .faq-contact {
+            margin-top: 34px;
+            padding: 22px 20px;
+            border-top: 1px solid var(--stroke);
+        }
+
+        .faq-contact h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+            color: var(--ink);
+        }
+
+        .faq-contact-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .faq-contact-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 0 14px;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .faq-contact-links a:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .faq-contact-links span {
+            color: #8a8a8a;
+        }
+
         ul {
             margin-top: 8px;
             padding-left: 20px;
-        }
-        
-        pre {
-            background: #fff;
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid var(--stroke);
-            overflow-x: auto;
         }
 
         .reveal {
@@ -196,6 +332,39 @@
         @media (max-width: 640px) {
             header {
                 padding: 0 20px;
+            }
+            .container {
+                margin-top: 28px;
+                padding: 0 16px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+            .faq-block {
+                margin-bottom: 14px;
+            }
+            .faq-block::before {
+                left: 14px;
+                top: 16px;
+                width: 26px;
+                height: 26px;
+                font-size: 11px;
+            }
+            .faq-question {
+                gap: 10px;
+                padding: 16px 16px 16px 52px;
+                font-size: 17px;
+            }
+            .faq-answer {
+                padding: 0 16px 18px 52px;
+                font-size: 15px;
+                line-height: 1.6;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .faq-answer {
+                padding-left: 16px;
             }
         }
 
@@ -223,101 +392,107 @@
             <h1>Помощь</h1>
         </div>
 
-        <!-- FAQ BLOCK 1 -->
-        <div class="faq-block reveal" style="--delay: 0.05s;">
-            <div class="faq-question">Что такое CodeBug?</div>
-            <div class="faq-answer">
-                CodeBug — это тренировочная платформа, где школьники учатся находить и исправлять ошибки в C++. Всё работает как в настоящем онлайн-джадже: решение запускается на тестах, выдаёт вердикт, и нужно исправить ошибку самостоятельно.
-            </div>
+        <div class="faq-search reveal" style="--delay: 0.03s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input id="faqSearch" type="search" placeholder="Поиск по вопросам" aria-label="Поиск по вопросам" autocomplete="off">
         </div>
 
-        <!-- FAQ BLOCK 2 -->
-        <div class="faq-block reveal" style="--delay: 0.08s;">
-            <div class="faq-question">Чем задачи отличаются от обычных олимпиадных?</div>
+        <div id="faqList">
+        <details class="faq-block reveal" style="--delay: 0.05s;" open>
+            <summary class="faq-question">Что такое CodeBug?</summary>
             <div class="faq-answer">
-                В задачах уже есть готовое решение с ошибкой. Ты не пишешь с нуля, а ищешь и исправляешь баг, как в реальном коде.
+                CodeBug — тренировочная платформа, где школьники учатся находить и исправлять ошибки в коде на C++. Всё работает как в настоящей проверяющей системе: решение запускается на тестах, получает вердикт, а исправить ошибку нужно самому.
             </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.08s;">
+            <summary class="faq-question">Чем задачи отличаются от обычных олимпиадных?</summary>
+            <div class="faq-answer">
+                В каждой задаче уже есть готовое решение с ошибкой. Ты не пишешь код с нуля, а ищешь баг и исправляешь его, как в настоящем проекте.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.11s;">
+            <summary class="faq-question">Какие ошибки встречаются?</summary>
+            <div class="faq-answer">
+                Логические ошибки, забытые граничные случаи, переполнение, ошибки в индексах и во вводе-выводе, слишком медленный алгоритм (TL) и лишняя память (ML).
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.14s;">
+            <summary class="faq-question">Как понять, что я исправил правильно?</summary>
+            <div class="faq-answer">
+                Нажми «Отправить»: код проверится на всех тестах. Если все тесты пройдены, придёт вердикт <strong>OK</strong> и опыт за задачу. Перед отправкой код можно проверить на своём примере в блоке «Запуск на своих данных» под редактором, это не влияет на баллы.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.17s;">
+            <summary class="faq-question">Можно ли посмотреть правильное решение?</summary>
+            <div class="faq-answer">
+                Нет, правильное решение не показывается: весь смысл в том, чтобы найти ошибку самому. Если застрял, посмотри на вердикт, пример теста и запусти код на своих данных. Кнопка «Сброс» над редактором вернёт исходный код задачи.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.20s;">
+            <summary class="faq-question">Как выбрать сложность?</summary>
+            <div class="faq-answer">
+                На странице «Тренировка» есть фильтр «Все сложности». Сейчас в задачах есть три уровня: <strong>лёгкая</strong>, <strong>нормальная</strong> и <strong>сложная</strong>. Начни с лёгких и постепенно повышай уровень.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.23s;">
+            <summary class="faq-question">Как начисляется опыт и рейтинг?</summary>
+            <div class="faq-answer">
+                Опыт зависит от сложности задачи: лёгкая — 4, нормальная — 12, сложная — 20. Рейтинг строится по сумме опыта, а от опыта зависят твой ранг и цвет ника.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.26s;">
+            <summary class="faq-question">Почему решение получает TL или ML?</summary>
+            <div class="faq-answer">
+                Обычно алгоритм слишком медленный для ограничений задачи или хранит лишние данные. Проверь асимптотику и размеры массивов, ограничения указаны в начале условия.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.29s;">
+            <summary class="faq-question">Нужно ли знать алгоритмы заранее?</summary>
+            <div class="faq-answer">
+                Хватит базовых структур данных и понимания асимптотики. Начни с лёгких задач: в них ошибка обычно в одной-двух строках.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.32s;">
+            <summary class="faq-question">Можно ли тренироваться без регистрации?</summary>
+            <div class="faq-answer">
+                Условия и код задач открыты всем. Чтобы отправлять решения и сохранять прогресс, нужно <a href="auth.html">войти или зарегистрироваться</a>.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.35s;">
+            <summary class="faq-question">На каких языках задачи?</summary>
+            <div class="faq-answer">
+                Сейчас все задачи на C++. Задачи на других языках, например на Python, планируются.
+            </div>
+        </details>
+
+        <details class="faq-block reveal" style="--delay: 0.38s;">
+            <summary class="faq-question">Можно ли предложить свою задачу?</summary>
+            <div class="faq-answer">
+                Да. Внизу страницы <a href="train.html">«Тренировка»</a> есть кнопка «Предложить задачу». Ещё можно написать в поддержку в Telegram: <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">@afony_l</a>.
+            </div>
+        </details>
         </div>
 
-        <!-- FAQ BLOCK 3 -->
-        <div class="faq-block reveal" style="--delay: 0.11s;">
-            <div class="faq-question">Какие типы ошибок встречаются?</div>
-            <div class="faq-answer">
-                Логические, граничные случаи, неверная асимптотика (TL), превышение памяти (ML), ошибки индексов и ввода/вывода.
-            </div>
-        </div>
+        <p class="faq-empty" id="faqEmpty" hidden>Ничего не нашлось. Напиши нам в <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">поддержку</a>, ответим.</p>
 
-        <!-- FAQ BLOCK 4 -->
-        <div class="faq-block reveal" style="--delay: 0.14s;">
-            <div class="faq-question">Как понять, что я исправил правильно?</div>
-            <div class="faq-answer">
-                После отправки код прогоняется по тестам. Если все тесты прошли, получаешь OK и опыт за задачу.
+        <section class="faq-contact reveal" style="--delay: 0.4s;" aria-labelledby="faqContactTitle">
+            <h2 id="faqContactTitle">Не нашёл ответ?</h2>
+            <div class="faq-contact-links">
+                <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">Поддержка <span>@afony_l</span></a>
+                <a href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">Канал <span>@codebug_official</span></a>
+                <a href="mailto:support@codebug.online">Почта <span>support@codebug.online</span></a>
             </div>
-        </div>
-
-        <!-- FAQ BLOCK 5 -->
-        <div class="faq-block reveal" style="--delay: 0.17s;">
-            <div class="faq-question">Можно ли посмотреть эталонное решение?</div>
-            <div class="faq-answer">
-                Да, но лучше сначала попытаться найти ошибку самому. Так быстрее развивается навык дебага.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 6 -->
-        <div class="faq-block reveal" style="--delay: 0.2s;">
-            <div class="faq-question">Как выбрать уровень сложности?</div>
-            <div class="faq-answer">
-                Используй фильтры: учебная, лёгкая, средняя, сложная и ультра. Начинай с учебных и постепенно повышай уровень.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 7 -->
-        <div class="faq-block reveal" style="--delay: 0.23s;">
-            <div class="faq-question">Почему решение даёт TL или ML?</div>
-            <div class="faq-answer">
-                Обычно это неправильная асимптотика или лишние структуры данных. Исправь алгоритм и оптимизируй память.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 8 -->
-        <div class="faq-block reveal" style="--delay: 0.26s;">
-            <div class="faq-question">Нужно ли знать алгоритмы заранее?</div>
-            <div class="faq-answer">
-                Базовые структуры данных и понимание асимптотики очень помогают. В учебных задачах всё объясняется по шагам.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 9 -->
-        <div class="faq-block reveal" style="--delay: 0.29s;">
-            <div class="faq-question">Можно ли тренироваться без регистрации?</div>
-            <div class="faq-answer">
-                Да, ты можешь читать условия и код. Но для отправки решений и сохранения прогресса нужен вход.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 10 -->
-        <div class="faq-block reveal" style="--delay: 0.32s;">
-            <div class="faq-question">Как начисляется опыт и рейтинг?</div>
-            <div class="faq-answer">
-                Опыт зависит от сложности исправления ошибки. За ультра-задачи даётся больше всего баллов.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 5 -->
-        <div class="faq-block reveal" style="--delay: 0.35s;">
-            <div class="faq-question">Можно ли предложить свою задачу?</div>
-            <div class="faq-answer">
-                Да! Присылай задачу через GitHub Issues в репозитории проекта или в Telegram: <strong>@afanasiy228</strong>.
-            </div>
-        </div>
-
-        <!-- FAQ BLOCK 6 -->
-        <div class="faq-block reveal" style="--delay: 0.38s;">
-            <div class="faq-question">Будет ли поддержка других языков?</div>
-            <div class="faq-answer">
-                Пока что CodeBug целиком сфокусирован на C++. В будущем возможна поддержка Python или Java.
-            </div>
-        </div>
+        </section>
 
     </div>
 
@@ -328,13 +503,36 @@
 
     <script src="firebase.js"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20260915-registration-fix"></script>
+    <script src="auth.js?v=20261021-mobile"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
     <script src="submit.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", updateNavbar);
+
+        // Search: filters questions by question and answer text, opens the matches.
+        (function () {
+            const input = document.getElementById("faqSearch");
+            const list = document.getElementById("faqList");
+            const empty = document.getElementById("faqEmpty");
+            if (!input || !list || !empty) return;
+            const blocks = Array.from(list.querySelectorAll(".faq-block"));
+            const initiallyOpen = blocks.map((b) => b.open);
+            const norm = (t) => String(t || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+            const texts = blocks.map((b) => norm(b.textContent));
+            input.addEventListener("input", () => {
+                const q = norm(input.value);
+                let shown = 0;
+                blocks.forEach((block, i) => {
+                    const hit = !q || q.split(" ").every((w) => texts[i].includes(w));
+                    block.hidden = !hit;
+                    if (hit) shown++;
+                    block.open = q ? hit : initiallyOpen[i];
+                });
+                empty.hidden = shown > 0;
+            });
+        })();
     </script>
 </body>
 

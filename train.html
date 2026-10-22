@@ -945,7 +945,18 @@
                 height: 13px;
             }
             .metric-value { font-size: 20px; }
-            .metric-label { font-size: 7px; }
+            .metric-label { font-size: 10px; }
+            .filters-line { padding: 12px 0; }
+            .filter-sep { display: none; }
+            .filter-main { gap: 12px 18px; }
+            .filter-actions {
+                flex-wrap: wrap;
+                min-width: 0;
+                gap: 12px;
+            }
+            .filter-search {
+                flex: 1 1 100%;
+            }
             .level-head { gap: 10px; }
             .level-title {
                 gap: 8px;
@@ -1109,7 +1120,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
     <script src="firebase.js?v=20260521-3"></script>
-    <script src="auth.js?v=20260915-registration-fix"></script>
+    <script src="auth.js?v=20261021-mobile"></script>
     <script>
         let problems = [];
         let visibleProblems = [];

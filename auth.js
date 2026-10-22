@@ -254,6 +254,7 @@ header .brand-suffix,
     text-decoration: none !important;
     font-size: 14px;
     font-weight: 650;
+    white-space: nowrap;
 }
 #nav-links .nav-notification {
     position: relative;
@@ -447,16 +448,21 @@ header .brand-suffix,
     display: none;
     position: fixed;
     top: 0;
-    right: -320px;
-    width: 280px;
+    /* Closed drawer sits on the edge with zero width: parked off-screen it made phones
+       lay every page out ~700px wide and shrink it. */
+    right: 0;
+    width: 0;
+    overflow: hidden;
+    visibility: hidden;
+    white-space: nowrap;
     height: 100%;
     background: #0B0B0B;
-    padding: 80px 22px 24px;
+    padding: 80px 0 24px;
     box-shadow: -20px 0 40px rgba(0, 0, 0, 0.45);
     z-index: 2002;
     gap: 0;
     flex-direction: column;
-    transition: right 0.25s ease;
+    transition: width 0.25s ease, padding 0.25s ease, visibility 0s linear 0.25s;
     pointer-events: none;
 }
 #nav-links .nav-drawer a {
@@ -481,8 +487,11 @@ body.nav-open #nav-overlay {
     pointer-events: auto;
 }
 body.nav-open #nav-links .nav-drawer {
-    right: 0;
+    width: min(280px, 86vw);
+    padding: 80px 22px 24px;
+    visibility: visible;
     pointer-events: auto;
+    transition: width 0.25s ease, padding 0.25s ease, visibility 0s;
 }
 @media (max-width: 900px) {
     header.cb-site-header,
@@ -493,11 +502,23 @@ body.nav-open #nav-links .nav-drawer {
     .top-nav {
         min-height: 50px !important;
     }
+    /* Phones: logo left, account + burger share the rest of the row, so
+       "Войти / Регистрация" stays on one line. */
+    header.cb-site-header,
+    .top-nav .cb-site-header {
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 12px;
+    }
     #nav-links .nav-primary {
         display: none;
     }
     #nav-links .nav-account {
+        grid-column: 2;
+        min-width: 0;
         margin-right: 42px;
+    }
+    #nav-links .nav-burger {
+        grid-column: 2;
     }
     #nav-links .nav-burger {
         display: inline-flex;
@@ -516,6 +537,11 @@ body.nav-open #nav-links .nav-drawer {
     }
     #nav-links .nav-notification {
         width: 28px;
+    }
+}
+@media (max-width: 360px) {
+    #nav-links .nav-auth-link {
+        font-size: 13px;
     }
 }
 `;

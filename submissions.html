@@ -218,6 +218,40 @@
             header {
                 padding: 0 20px;
             }
+            /* Same table, tighter cells so four columns fit a phone. */
+            .page {
+                margin-top: 28px;
+                padding: 0 14px;
+            }
+            th {
+                padding: 10px 5px;
+                font-size: 10px;
+                letter-spacing: 0;
+            }
+            td {
+                padding: 10px 5px;
+                font-size: 13px;
+            }
+            td:nth-child(1) {
+                overflow-wrap: anywhere;
+            }
+            td:nth-child(2) {
+                min-width: 104px;
+            }
+            td:nth-child(3),
+            .task-card {
+                hyphens: auto;
+            }
+            /* If a long word still does not fit, the table scrolls on its own, not the page. */
+            .table-scroll {
+                overflow-x: auto;
+                border-radius: 16px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .task-card {
+                padding: 5px 7px;
+                font-size: 13px;
+            }
         }
     </style>
     <link rel="stylesheet" href="theme-dark.css">
@@ -250,6 +284,7 @@
         </div>
 
         <!-- TABLE -->
+        <div class="table-scroll">
         <table>
             <thead>
                 <tr>
@@ -265,6 +300,7 @@
                 </tr>
             </tbody>
         </table>
+        </div>
 
     </div>
 
@@ -274,7 +310,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
 
     <script src="firebase.js?v=20260521-3"></script>
-    <script src="auth.js?v=20260915-registration-fix"></script>
+    <script src="auth.js?v=20261021-mobile"></script>
     <script src="submission-diagnostics.js?v=20260921-1"></script>
 
     <script>

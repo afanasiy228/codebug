@@ -597,7 +597,7 @@
 
 <script src="firebase.js?v=20260521-3"></script>
 <!-- обязательно первой! -->
-<script src="auth.js?v=20260915-registration-fix"></script>
+<script src="auth.js?v=20261021-mobile"></script>
 <script src="submission-diagnostics.js?v=20260921-1"></script>
 <!-- использует db -->
 <script src="globalsubmissions.js"></script>
@@ -2221,7 +2221,7 @@
                         automaticLayout: true,
                         minimap: { enabled: false },
                         renderLineHighlight: "none",
-                        fontSize: 14,
+                        fontSize: window.matchMedia("(max-width: 640px)").matches ? 13 : 14,
                         padding: { top: 44, bottom: 12 },
                         lineHeight: 20,
                         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
