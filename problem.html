@@ -4,7 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeBug — Задача</title>
+    <title>Задача — CodeBug</title>
+    <meta name="description" content="Задача CodeBug: решение на C++ с ошибкой. Найди баг, исправь код и проверь его на тестах.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CodeBug">
+    <meta property="og:title" content="Задача — CodeBug">
+    <meta property="og:description" content="Задача CodeBug: решение на C++ с ошибкой. Найди баг, исправь код и проверь его на тестах.">
+    <meta property="og:image" content="https://codebug.online/logo.png">
+    <meta name="twitter:card" content="summary">
     <link rel="icon" type="image/png" href="/logo.png?v=2">
 
     <style>
@@ -1891,6 +1898,12 @@
                 console.log("Загружена сложность:", TASK_DIFFICULTY);
 
                 document.getElementById("taskTitle").innerText = meta.title || "Без названия";
+                if (meta.title) {
+                    // Search engines read the rendered page: give every task its own title and description.
+                    document.title = `${meta.title} — CodeBug`;
+                    const descTag = document.querySelector('meta[name="description"]');
+                    if (descTag) descTag.setAttribute("content", `Задача «${meta.title}» на CodeBug: решение на C++ с ошибкой. Найди баг, исправь код и проверь его на тестах.`);
+                }
                 const tagsRoot = document.getElementById("taskTags");
                 if (tagsRoot) {
                     const tags = Array.isArray(meta.tags) ? meta.tags : [];
