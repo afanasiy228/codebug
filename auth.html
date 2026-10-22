@@ -98,14 +98,108 @@
             color: var(--accent);
         }
         
-        .auth-shell {
-            max-width: 980px;
-            margin: 50px auto 90px;
-            padding: 0 20px;
+        /* Activity grid behind the form: empty at first, lights up in a wave from the
+           card outward as the visitor types (fast at first, then slower). */
+        .auth-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 420px;
-            gap: 30px;
-            align-items: stretch;
+            grid-template-columns: repeat(var(--cols, 40), 1fr);
+            gap: 4px;
+            padding: 4px;
+            align-content: start;
+            pointer-events: none;
+        }
+
+        .auth-grid i {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: #0e0e0e;
+            transition: background 0.45s ease;
+        }
+
+        .auth-grid i.l1 { background: #0c2a18; }
+        .auth-grid i.l2 { background: #105a2c; }
+        .auth-grid i.l3 { background: #1a9e4c; }
+
+        .auth-shade {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(520px 420px at 50% 52%, rgba(5, 5, 5, 0.55), rgba(5, 5, 5, 0.2) 70%, rgba(5, 5, 5, 0.05)),
+                linear-gradient(180deg, rgba(5, 5, 5, 0.35), rgba(5, 5, 5, 0) 18%);
+        }
+
+        .auth-shell {
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - 72px);
+            min-height: calc(100dvh - 72px);
+            display: grid;
+            place-items: center;
+            padding: 40px 20px 60px;
+        }
+
+        /* Liquid glass card: translucent, blurred and saturated backdrop, bright rim. */
+        .glass.container {
+            position: relative;
+            width: min(400px, 100%);
+            padding: 30px 30px 32px;
+            border-radius: 28px;
+            background: linear-gradient(140deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025) 42%, rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(18px) saturate(170%);
+            backdrop-filter: blur(18px) saturate(170%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.22),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+                0 30px 80px rgba(0, 0, 0, 0.55);
+        }
+
+        .glass.container::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(140deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 68%, rgba(255, 255, 255, 0.2));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .glass h1 {
+            margin: 0 0 22px;
+        }
+
+        .glass input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 14px;
+            padding: 13px 14px;
+        }
+
+        .glass input:focus {
+            border-color: rgba(245, 158, 11, 0.7) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .glass .avatar-preview {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        }
+
+        .glass .turnstile-wrap {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .glass button:not(.password-toggle) {
+            border-radius: 14px;
         }
 
         .auth-aside {
@@ -362,9 +456,19 @@
             }
         }
 
-        @media (max-width: 980px) {
+        @media (max-width: 640px) {
             .auth-shell {
-                grid-template-columns: 1fr;
+                min-height: calc(100vh - 50px);
+                min-height: calc(100dvh - 50px);
+                padding: 28px 16px 40px;
+            }
+            .glass.container {
+                padding: 24px 20px 26px;
+                border-radius: 24px;
+            }
+            .auth-grid {
+                gap: 3px;
+                padding: 3px;
             }
         }
 
@@ -392,14 +496,10 @@
         <nav id="nav-links"></nav>
     </header>
 
-    <div class="auth-shell">
-        <div class="auth-aside reveal" style="--delay: 0s;">
-            <div class="auth-badge">CodeBug</div>
-            <h2>Вход и регистрация</h2>
-            <p>Аккаунт нужен для отправки решений и сохранения прогресса.</p>
-        </div>
-
-        <div class="container reveal" style="--delay: 0.1s;">
+    <div class="auth-grid" id="authGrid" aria-hidden="true"></div>
+    <div class="auth-shade" aria-hidden="true"></div>
+    <main class="auth-shell">
+        <div class="container glass reveal" id="authCard" style="--delay: 0.05s;">
 
         <!-- LOGIN -->
         <div id="screen-login">
@@ -459,7 +559,7 @@
         </div>
 
         </div>
-    </div>
+    </main>
 
     <script>
         window.onRecaptchaLoad = function() {
@@ -525,6 +625,97 @@
         }
     </script>
 
+    <script>
+        // Activity grid: lit cells follow how much has been typed into the form.
+        // Lit share = 1 - e^(-chars / 9): the first keystrokes light a lot, later ones less.
+        (function () {
+            const grid = document.getElementById("authGrid");
+            const card = document.getElementById("authCard");
+            if (!grid || !card) return;
+            let cells = [], order = [], levels = [], lit = 0, cols = 0, rows = 0, timers = [];
+
+            function seeded(seed) {
+                return function () {
+                    seed = (seed * 1664525 + 1013904223) >>> 0;
+                    return seed / 4294967296;
+                };
+            }
+
+            function build() {
+                const w = window.innerWidth, h = window.innerHeight;
+                const target = w < 640 ? 22 : 28;
+                cols = Math.max(12, Math.round(w / target));
+                const cell = (w - 8) / cols;
+                rows = Math.ceil(h / cell) + 1;
+                grid.style.setProperty("--cols", cols);
+                grid.innerHTML = "<i></i>".repeat(cols * rows);
+                cells = Array.from(grid.children);
+                const rnd = seeded(20251010);
+                const r = card.getBoundingClientRect();
+                const cx = (r.left + r.width / 2) / cell, cy = (r.top + r.height / 2) / cell;
+                levels = cells.map(() => {
+                    const p = rnd();
+                    return p < 0.3 ? 0 : p < 0.6 ? 1 : p < 0.85 ? 2 : 3;
+                });
+                order = cells
+                    .map((_, i) => ({ i, d: Math.hypot((i % cols) + 0.5 - cx, Math.floor(i / cols) + 0.5 - cy) + rnd() * 1.6 }))
+                    .sort((a, b) => a.d - b.d)
+                    .map((x) => x.i);
+                lit = 0;
+            }
+
+            function typedChars() {
+                let n = 0;
+                card.querySelectorAll("input").forEach((inp) => {
+                    if (inp.offsetParent !== null) n += inp.value.length;
+                });
+                return n;
+            }
+
+            // `lit` is how many cells (in wave order) are actually lit right now; a new
+            // keystroke continues from there, so a fast typist never leaves gaps.
+            function update() {
+                const want = Math.round(order.length * (1 - Math.exp(-typedChars() / 9)));
+                timers.forEach(clearTimeout);
+                timers = [];
+                if (want === lit) return;
+                const step = want > lit ? 1 : -1, count = Math.abs(want - lit);
+                const gap = Math.min(6, 420 / count);
+                for (let k = 0; k < count; k++) {
+                    timers.push(setTimeout(() => {
+                        if (step > 0) {
+                            const idx = order[lit];
+                            if (levels[idx]) cells[idx].className = "l" + levels[idx];
+                            lit++;
+                        } else {
+                            lit--;
+                            cells[order[lit]].className = "";
+                        }
+                    }, k * gap));
+                }
+            }
+
+            build();
+            card.addEventListener("input", update);
+            card.addEventListener("click", () => setTimeout(update, 0));
+            let resizeTimer = 0;
+            window.addEventListener("resize", () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    timers.forEach(clearTimeout);
+                    build();
+                    const keep = Math.round(order.length * (1 - Math.exp(-typedChars() / 9)));
+                    for (let k = 0; k < keep; k++) {
+                        const idx = order[k];
+                        if (levels[idx]) cells[idx].className = "l" + levels[idx];
+                    }
+                    lit = keep;
+                }, 150);
+            });
+            // Autofill from a password manager may not fire input events.
+            setTimeout(update, 800);
+        })();
+    </script>
 </body>
 
 </html>
