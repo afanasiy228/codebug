@@ -105,7 +105,7 @@
         /* Help: every question is visible; the one nearest the centre of the screen
            grows and sharpens, and its answer streams in like a chat model's reply. */
         .help {
-            max-width: 900px;
+            max-width: 1120px;
             margin: 0 auto;
             padding: 48px 6% 0;
         }
@@ -114,12 +114,6 @@
             margin: 0;
             font-size: 32px;
             font-weight: 700;
-        }
-
-        .help-sub {
-            margin: 8px 0 0;
-            color: var(--dim);
-            font-size: 14px;
         }
 
         .help-list {
@@ -156,7 +150,7 @@
         }
 
         .help-a {
-            max-width: 56ch;
+            max-width: 72ch;
             margin-top: 16px;
             font-size: 18px;
             line-height: 1.65;
@@ -205,44 +199,6 @@
             50% { transform: scale(0.55); opacity: 0.5; }
         }
 
-        .help-contact {
-            padding: 0 0 80px;
-        }
-
-        .help-contact h2 {
-            margin: 0 0 14px;
-            font: 500 clamp(26px, 3vw, 36px)/1.15 var(--serif);
-        }
-
-        .help-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .help-links a {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            min-height: 42px;
-            padding: 0 14px;
-            border: 1px solid var(--stroke);
-            border-radius: 12px;
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 14px;
-            transition: border-color 0.2s, color 0.2s;
-        }
-
-        .help-links a:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .help-links span {
-            color: #8a8a8a;
-        }
-
         .help-fade {
             position: fixed;
             left: 0;
@@ -289,16 +245,7 @@
 
     <main class="help">
         <h1 class="help-title">Помощь</h1>
-        <p class="help-sub">Листай вниз. Ответ на вопрос в центре экрана напишется сам.</p>
         <div class="help-list" id="helpList"></div>
-        <section class="help-contact" aria-labelledby="helpContactTitle">
-            <h2 id="helpContactTitle">Не нашёл ответ?</h2>
-            <div class="help-links">
-                <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">Поддержка <span>@afony_l</span></a>
-                <a href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">Канал <span>@codebug_official</span></a>
-                <a href="mailto:support@codebug.online">Почта <span>support@codebug.online</span></a>
-            </div>
-        </section>
     </main>
     <div class="help-fade" aria-hidden="true"></div>
 
