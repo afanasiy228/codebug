@@ -122,6 +122,7 @@
         .auth-grid i.l1 { background: #0c2a18; }
         .auth-grid i.l2 { background: #105a2c; }
         .auth-grid i.l3 { background: #1a9e4c; }
+        .auth-grid i.l4 { background: #34d399; box-shadow: 0 0 10px rgba(52, 211, 153, 0.45); }
 
         .auth-shade {
             position: fixed;
@@ -131,6 +132,16 @@
             background:
                 radial-gradient(520px 420px at 50% 52%, rgba(5, 5, 5, 0.55), rgba(5, 5, 5, 0.2) 70%, rgba(5, 5, 5, 0.05)),
                 linear-gradient(180deg, rgba(5, 5, 5, 0.35), rgba(5, 5, 5, 0) 18%);
+        }
+
+        /* The shared legal footer sits above the fixed grid, on a solid ground. */
+        body #global-legal-footer {
+            position: relative;
+            z-index: 2;
+            margin-top: 0;
+            background: rgba(5, 5, 5, 0.94);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
         }
 
         .auth-shell {
@@ -627,11 +638,14 @@
 
     <script>
         // Activity grid: lit cells follow how much has been typed into the form.
-        // Lit share = 1 - e^(-chars / 9): the first keystrokes light a lot, later ones less.
+        // Each layer is a wave from the card outward over every cell; within a layer the
+        // first keystrokes light the most cells, later ones fewer. When a layer is full,
+        // the next wave starts from the centre again and makes every cell one step brighter.
         (function () {
             const grid = document.getElementById("authGrid");
             const card = document.getElementById("authCard");
             if (!grid || !card) return;
+            const LAYERS = 3, CHARS_PER_LAYER = 20, CURVE = 3;
             let cells = [], order = [], levels = [], lit = 0, cols = 0, rows = 0, timers = [];
 
             function seeded(seed) {
@@ -672,10 +686,25 @@
                 return n;
             }
 
-            // `lit` is how many cells (in wave order) are actually lit right now; a new
-            // keystroke continues from there, so a fast typist never leaves gaps.
+            // Units: layer * cells + cells reached in the current layer.
+            function wantedUnits() {
+                const n = order.length, chars = typedChars();
+                const layer = Math.min(LAYERS - 1, Math.floor(chars / CHARS_PER_LAYER));
+                const x = Math.min(1, (chars - layer * CHARS_PER_LAYER) / CHARS_PER_LAYER);
+                const p = (1 - Math.exp(-CURVE * x)) / (1 - Math.exp(-CURVE));
+                return Math.min(LAYERS * n, layer * n + Math.round(p * n));
+            }
+
+            // Look of a cell once `layer` waves (1-based) have passed over it.
+            function paint(idx, layer) {
+                const lvl = layer <= 0 ? 0 : Math.min(4, levels[idx] + layer - 1);
+                cells[idx].className = lvl ? "l" + lvl : "";
+            }
+
+            // `lit` is how many units are actually shown right now; a new keystroke
+            // continues from there, so a fast typist never leaves gaps.
             function update() {
-                const want = Math.round(order.length * (1 - Math.exp(-typedChars() / 9)));
+                const want = wantedUnits(), n = order.length;
                 timers.forEach(clearTimeout);
                 timers = [];
                 if (want === lit) return;
@@ -684,12 +713,11 @@
                 for (let k = 0; k < count; k++) {
                     timers.push(setTimeout(() => {
                         if (step > 0) {
-                            const idx = order[lit];
-                            if (levels[idx]) cells[idx].className = "l" + levels[idx];
+                            paint(order[lit % n], Math.floor(lit / n) + 1);
                             lit++;
                         } else {
                             lit--;
-                            cells[order[lit]].className = "";
+                            paint(order[lit % n], Math.floor(lit / n));
                         }
                     }, k * gap));
                 }
@@ -704,11 +732,8 @@
                 resizeTimer = setTimeout(() => {
                     timers.forEach(clearTimeout);
                     build();
-                    const keep = Math.round(order.length * (1 - Math.exp(-typedChars() / 9)));
-                    for (let k = 0; k < keep; k++) {
-                        const idx = order[k];
-                        if (levels[idx]) cells[idx].className = "l" + levels[idx];
-                    }
+                    const keep = wantedUnits(), n = order.length;
+                    for (let u = 0; u < keep; u++) paint(order[u % n], Math.floor(u / n) + 1);
                     lit = keep;
                 }, 150);
             });
