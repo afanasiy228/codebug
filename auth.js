@@ -545,38 +545,35 @@ body.nav-open #nav-links .nav-drawer {
     }
 }
 
-/* ---------- Capsule header ----------
-   The header floats as a glass pill. The glass lives on ::before so the header
-   itself has no backdrop-filter: a filtered ancestor would trap the fixed
-   mobile drawer inside the pill. */
+/* ---------- Beam header ----------
+   A full-width bar. A small amber glow follows the cursor along the bar and
+   along its bottom edge; links get an underline that grows from the centre.
+   The glass lives on ::before so the header itself has no backdrop-filter:
+   a filtered ancestor would trap the fixed mobile drawer inside the bar. */
 header.cb-site-header,
 .top-nav .cb-site-header {
     position: sticky !important;
-    top: 12px !important;
+    top: 0 !important;
     z-index: 30 !important;
     isolation: isolate;
-    height: 56px !important;
-    min-height: 56px !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    height: 64px !important;
+    min-height: 64px !important;
     grid-template-columns: auto minmax(0, 1fr) auto !important;
-    grid-template-rows: 56px !important;
-    column-gap: 16px;
-    padding: 0 10px 0 22px !important;
+    grid-template-rows: 64px !important;
+    column-gap: 20px;
+    padding: 0 max(20px, calc((100% - 1180px) / 2)) !important;
     border: 0 !important;
-    border-radius: 999px !important;
+    border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
-header.cb-site-header {
-    width: min(1100px, calc(100% - 32px)) !important;
-    margin: 12px auto 0 !important;
-}
 .top-nav .cb-site-header {
     position: relative !important;
-    top: 0 !important;
-    width: min(1100px, 100%) !important;
-    margin: 0 auto !important;
     pointer-events: auto;
 }
 header.cb-site-header::before,
@@ -585,64 +582,71 @@ header.cb-site-header::before,
     position: absolute;
     inset: 0;
     z-index: -1;
-    border-radius: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)), rgba(8, 8, 8, 0.55);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    backdrop-filter: blur(16px) saturate(160%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 40px rgba(0, 0, 0, 0.45);
-    transition: background 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        radial-gradient(150px 64px at var(--beam-x, 50%) 0%, rgba(245, 158, 11, calc(0.1 * var(--beam, 0))), transparent 70%),
+        rgba(6, 6, 6, 0.82);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: background-color 0.3s ease;
     pointer-events: none;
 }
 .cb-site-header.is-scrolled::before {
-    background: linear-gradient(140deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)), rgba(10, 10, 10, 0.88);
+    background:
+        radial-gradient(150px 64px at var(--beam-x, 50%) 0%, rgba(245, 158, 11, calc(0.1 * var(--beam, 0))), transparent 70%),
+        rgba(6, 6, 6, 0.94);
+}
+.cb-site-header .nav-beam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: radial-gradient(120px 1px at var(--beam-x, 50%) 50%, rgba(251, 191, 36, 0.7), transparent);
+    opacity: var(--beam, 0);
+    transition: opacity 0.3s ease;
 }
 .top-nav {
     height: auto !important;
     min-height: 0 !important;
-    padding: 12px 16px 0 !important;
+    padding: 0 !important;
     border: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    pointer-events: none;
 }
 #nav-links .nav-primary {
-    position: relative;
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
     width: auto;
-    height: 36px;
-    gap: 2px;
+    height: 64px;
+    gap: 4px;
     border-top: 0;
 }
 #nav-links .nav-primary a {
-    z-index: 1;
-    height: 36px;
-    padding: 0 12px;
-    border-radius: 999px !important;
+    height: 64px;
+    padding: 0 11px;
 }
-#nav-links .nav-primary a.active::after {
-    display: none;
-}
-/* Barely-there highlight that slides under the hovered or current link. */
-#nav-links .nav-ind {
+#nav-links .nav-primary a.active::after,
+#nav-links .nav-primary a::after {
+    content: "";
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    border-radius: 999px;
-    background: rgba(245, 158, 11, 0.016);
-    border: 1px solid rgba(245, 158, 11, 0.035);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+    left: 11px;
+    right: 11px;
+    bottom: 14px;
+    height: 2px;
+    border-radius: 2px;
+    background: #F59E0B !important;
+    transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-#nav-links .nav-ind.is-on {
-    opacity: 1;
+#nav-links .nav-primary a:hover::after,
+#nav-links .nav-primary a:focus-visible::after,
+#nav-links .nav-primary a.active::after {
+    transform: scaleX(1);
 }
 #nav-links .nav-account {
     grid-column: 3;
@@ -657,7 +661,7 @@ header.cb-site-header::before,
     .top-nav .cb-site-header {
         grid-template-columns: auto minmax(0, 1fr) !important;
         column-gap: 12px;
-        padding: 0 8px 0 18px !important;
+        padding: 0 18px !important;
     }
     #nav-links .nav-primary {
         display: none;
@@ -678,20 +682,10 @@ header.cb-site-header::before,
 @media (max-width: 640px) {
     header.cb-site-header,
     .top-nav .cb-site-header {
-        top: 8px !important;
-        height: 52px !important;
-        min-height: 52px !important;
-        grid-template-rows: 52px !important;
-    }
-    header.cb-site-header {
-        width: calc(100% - 16px) !important;
-        margin: 8px auto 0 !important;
-    }
-    .top-nav .cb-site-header {
-        top: 0 !important;
-    }
-    .top-nav {
-        padding: 8px 8px 0 !important;
+        height: 54px !important;
+        min-height: 54px !important;
+        grid-template-rows: 54px !important;
+        padding: 0 14px !important;
     }
 }
 `;
@@ -736,51 +730,26 @@ function bindMobileNav(nav) {
     closeMenu();
 }
 
-// Slides the faint pill under the hovered link and back to the current page.
-function bindNavIndicator(nav) {
-    const primary = nav.querySelector(".nav-primary");
-    if (!primary) return;
-    const ind = document.createElement("span");
-    ind.className = "nav-ind";
-    ind.setAttribute("aria-hidden", "true");
-    primary.prepend(ind);
-    const moveTo = (link) => {
-        if (!link || !link.offsetWidth) {
-            ind.classList.remove("is-on");
-            return;
-        }
-        ind.style.width = link.offsetWidth + "px";
-        ind.style.transform = `translateX(${link.offsetLeft}px)`;
-        ind.classList.add("is-on");
-    };
-    const current = () => primary.querySelector("a.active");
-    primary.querySelectorAll("a").forEach((link) => {
-        link.addEventListener("mouseenter", () => moveTo(link));
-        link.addEventListener("focus", () => moveTo(link));
-    });
-    primary.addEventListener("mouseleave", () => moveTo(current()));
-    const settle = () => {
-        ind.style.transition = "none";
-        moveTo(current());
-        void ind.offsetWidth;
-        ind.style.transition = "";
-    };
-    requestAnimationFrame(settle);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle);
-    if (!window.__codebugNavIndResize) {
-        window.__codebugNavIndResize = true;
-        window.addEventListener("resize", () => {
-            const live = document.querySelector("#nav-links .nav-primary a.active");
-            const pill = document.querySelector("#nav-links .nav-ind");
-            if (live && pill && live.offsetWidth) {
-                pill.style.width = live.offsetWidth + "px";
-                pill.style.transform = `translateX(${live.offsetLeft}px)`;
-            }
-        });
+// A small glow follows the cursor along the header and its bottom edge.
+function bindHeaderBeam(shell) {
+    if (!shell || shell.__beamBound) return;
+    shell.__beamBound = true;
+    if (!shell.querySelector(".nav-beam")) {
+        const beam = document.createElement("span");
+        beam.className = "nav-beam";
+        beam.setAttribute("aria-hidden", "true");
+        shell.appendChild(beam);
     }
+    shell.addEventListener("pointermove", (event) => {
+        if (event.pointerType && event.pointerType !== "mouse") return;
+        const rect = shell.getBoundingClientRect();
+        shell.style.setProperty("--beam-x", `${Math.round(event.clientX - rect.left)}px`);
+        shell.style.setProperty("--beam", "1");
+    });
+    shell.addEventListener("pointerleave", () => shell.style.setProperty("--beam", "0"));
 }
 
-// The capsule gets a denser glass once the page is scrolled.
+// The header glass gets denser once the page is scrolled.
 function bindHeaderScroll(shell) {
     if (!shell) return;
     const apply = () => shell.classList.toggle("is-scrolled", window.scrollY > 40);
@@ -1077,7 +1046,7 @@ function updateNavbar() {
 
     bindMobileNav(nav);
     bindAccountMenu(nav);
-    bindNavIndicator(nav);
+    bindHeaderBeam(shell);
     bindHeaderScroll(shell);
     runLowPriority(startKeepAlive);
     runLowPriority(() => applyProBrandingToNavbar(user).catch(() => {}));
