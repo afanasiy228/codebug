@@ -9,7 +9,7 @@ const { TEST_USER, expect, preparePage } = require("./helpers/mock-codebug");
  */
 const CSP_PAGES = [
   "/auth.html", "/index.html", "/profile.html", "/rating.html", "/friends.html",
-  "/submissions.html", "/contests.html", "/contest.html", "/donate.html",
+  "/contests.html", "/contest.html", "/donate.html",
   "/faq.html", "/train.html", "/404.html",
 ];
 

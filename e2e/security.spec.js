@@ -67,9 +67,9 @@ test.describe("Безопасность: XSS в пользовательских
     await preparePage(page, { authenticated: true });
 
     const payload = '<img src=x onerror="window.__xss__=1">';
-    await page.goto("/submissions.html");
+    await page.goto("/problem.html?id=101");
 
-    // escapeHtml is the helper the submission table now runs the verdict through.
+    // escapeHtml is the helper the problem page runs submission verdicts through.
     const escaped = await page.evaluate((v) => {
       const fn = window.escapeHtml || ((s) => s);
       return fn(v);

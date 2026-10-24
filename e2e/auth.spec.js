@@ -76,7 +76,7 @@ test.describe("Авторизация", () => {
     await expect(page.locator('#nav-links a[href="train.html"]').first()).toHaveText("Тренировка");
     await expect(page.locator('#nav-links a[href="contests.html"]').first()).toHaveText("Соревнования");
     await expect(page.locator('#nav-links a[href="rating.html"]').first()).toHaveText("Рейтинг");
-    await expect(page.locator('#nav-links a[href="submissions.html"]').first()).toHaveText("Посылки");
+    await expect(page.locator('#nav-links a[href="submissions.html"]')).toHaveCount(0);
   });
 
   test("navbar сразу восстанавливает аватар и PRO+ из display-кэша", async ({ page }) => {
