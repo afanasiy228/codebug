@@ -1231,6 +1231,7 @@ function clearErrors() {
     showError("login-error", "");
     showError("reg-error", "");
     showError("verify-error", "");
+    showError("google-error", "");
 }
 
 
@@ -1545,6 +1546,154 @@ async function loginUser(identity, pass) {
     }
 
     return { ok: true, userAuth, loginHint };
+}
+
+/* ============================
+   SIGN IN WITH GOOGLE
+   Google accounts always carry a verified email, so they go through the same
+   /auth/finalize-profile step as a verified email/password account. A first
+   Google sign-in has no login yet: the visitor picks one on #screen-google.
+============================ */
+var googleSignInBusy = false;
+
+function suggestLoginFromGoogle(userAuth) {
+    const fromEmail = String(userAuth?.email || "").split("@")[0];
+    const fromName = String(userAuth?.displayName || "");
+    let base = (fromEmail || fromName).replace(/[^a-zA-Z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+    if (base.length > 16) base = base.slice(0, 16);
+    if (base.length < 3) base = ("user_" + base + Math.floor(Math.random() * 1000)).slice(0, 16);
+    return base;
+}
+
+function showAuthScreen(id) {
+    ["screen-login", "screen-register", "screen-verify", "screen-google"].forEach((screenId) => {
+        const el = document.getElementById(screenId);
+        if (el) el.style.display = screenId === id ? "block" : "none";
+    });
+}
+
+function googleErrorText(code) {
+    if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return "";
+    if (code === "auth/operation-not-allowed") return "Вход через Google пока не включён. Войди по логину и паролю";
+    if (code === "auth/unauthorized-domain") return "Вход через Google не разрешён для этого адреса сайта";
+    if (code === "auth/account-exists-with-different-credential") return "Этот email уже зарегистрирован. Войди по логину и паролю";
+    if (code === "auth/network-request-failed") return "Нет связи с Google. Проверь интернет и попробуй ещё раз";
+    if (code === "auth/too-many-requests") return "Слишком много попыток. Попробуй позже";
+    return "Не удалось войти через Google. Попробуй ещё раз";
+}
+
+async function handleGoogleUser(userAuth, errorBoxId) {
+    let mapped = null;
+    try {
+        mapped = await resolveLoginByUidOrEmail(userAuth.uid, userAuth.email);
+    } catch (err) {
+        console.warn("Google login lookup failed", err);
+    }
+    if (mapped) {
+        const finalized = await finalizeVerifiedAccount(userAuth, mapped);
+        if (!finalized.ok) return showError(errorBoxId, finalized.error);
+        const next = new URLSearchParams(window.location.search).get("next");
+        window.location.href = safeNextTarget(next);
+        return;
+    }
+    // First Google sign-in: ask for a login before creating the profile.
+    const input = document.getElementById("google-login");
+    const label = document.getElementById("google-email-label");
+    if (label) label.innerText = normalizeEmail(userAuth.email) || "твой Google-аккаунт";
+    if (input && !input.value) input.value = suggestLoginFromGoogle(userAuth);
+    showAuthScreen("screen-google");
+    if (input) {
+        input.focus();
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+}
+
+async function loginWithGoogle(errorBoxId = "login-error") {
+    clearErrors();
+    if (googleSignInBusy) return;
+    const auth = getAuth();
+    if (!auth || !firebase.auth.GoogleAuthProvider) return showError(errorBoxId, "Сервис входа временно недоступен");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    // An abandoned email registration must not hand its login to this Google account.
+    clearPendingRegistration();
+    googleSignInBusy = true;
+    try {
+        const cred = await auth.signInWithPopup(provider);
+        await handleGoogleUser(cred.user, errorBoxId);
+    } catch (err) {
+        const code = err?.code || "";
+        if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
+            // The browser refused the popup: continue in this tab instead.
+            try {
+                sessionStorage.setItem("googleRedirectBox", errorBoxId);
+                await auth.signInWithRedirect(provider);
+                return;
+            } catch (redirectErr) {
+                console.warn("Google redirect failed", redirectErr);
+                showError(errorBoxId, googleErrorText(redirectErr?.code || ""));
+                return;
+            }
+        }
+        console.warn("Google sign-in failed", code || err);
+        showError(errorBoxId, googleErrorText(code));
+    } finally {
+        googleSignInBusy = false;
+    }
+}
+
+async function completeGoogleLogin() {
+    clearErrors();
+    const auth = getAuth();
+    const userAuth = auth && auth.currentUser;
+    if (!userAuth) {
+        showAuthScreen("screen-login");
+        return showError("login-error", "Сессия Google истекла. Войди через Google ещё раз");
+    }
+    const login = String(document.getElementById("google-login")?.value || "").trim();
+    if (!isLoginValid(login)) return showError("google-error", "Логин: 3-16 символов, латиница/цифры/_");
+    try {
+        const taken = await db.ref("publicProfiles/" + login + "/login").get();
+        if (taken.exists()) return showError("google-error", "Логин уже занят");
+    } catch (err) {
+        console.warn("Login availability check failed", err);
+    }
+    const finalized = await finalizeVerifiedAccount(userAuth, login);
+    if (!finalized.ok) {
+        const msg = /уже занят/.test(finalized.error) ? "Логин уже занят" : finalized.error;
+        return showError("google-error", msg);
+    }
+    const next = new URLSearchParams(window.location.search).get("next");
+    window.location.href = safeNextTarget(next);
+}
+
+async function cancelGoogleLogin() {
+    clearErrors();
+    const auth = getAuth();
+    try {
+        if (auth && auth.currentUser) await auth.signOut();
+    } catch (err) {
+        console.warn("Google sign-out failed", err);
+    }
+    clearSession();
+    const input = document.getElementById("google-login");
+    if (input) input.value = "";
+    showAuthScreen("screen-login");
+}
+
+async function resumeGoogleRedirect() {
+    const auth = getAuth();
+    if (!auth || !isAuthPage() || typeof auth.getRedirectResult !== "function") return;
+    const box = sessionStorage.getItem("googleRedirectBox");
+    if (!box) return;
+    sessionStorage.removeItem("googleRedirectBox");
+    try {
+        const result = await auth.getRedirectResult();
+        if (result && result.user) await handleGoogleUser(result.user, box);
+    } catch (err) {
+        console.warn("Google redirect result failed", err?.code || err);
+        showError(box, googleErrorText(err?.code || ""));
+    }
 }
 
 async function sendVerificationWithCooldown(userAuth) {
@@ -2051,6 +2200,7 @@ async function syncSessionFromAuth() {
         return;
     }
     enforcePendingVerificationGuard();
+    resumeGoogleRedirect();
     auth.onAuthStateChanged(async () => {
         try {
             if (localStorage.getItem("forceSignout") === "1") {
@@ -2081,6 +2231,9 @@ if (typeof document !== "undefined") {
 window.updateNavbar = updateNavbar;
 window.login = login;
 window.register = register;
+window.loginWithGoogle = loginWithGoogle;
+window.completeGoogleLogin = completeGoogleLogin;
+window.cancelGoogleLogin = cancelGoogleLogin;
 window.forgotPassword = forgotPassword;
 window.resendVerificationFromForm = resendVerificationFromForm;
 window.checkVerificationStatus = checkVerificationStatus;

@@ -17,12 +17,12 @@
     -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://*.europe-west1.firebasedatabase.app;
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://*.europe-west1.firebasedatabase.app;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com data:;
         img-src 'self' data: blob: https:;
         connect-src 'self' https://codebug.onrender.com http://localhost:7777 http://127.0.0.1:7777 https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com wss://*.firebasedatabase.app https://www.google.com https://api.cloudinary.com;
-        frame-src https://www.google.com https://*.europe-west1.firebasedatabase.app;
+        frame-src https://www.google.com https://*.europe-west1.firebasedatabase.app https://codebug-47347.firebaseapp.com https://accounts.google.com;
         object-src 'none';
         base-uri 'self';
         form-action 'self'
@@ -223,6 +223,59 @@
 
         .glass button:not(.password-toggle) {
             border-radius: 14px;
+        }
+
+        /* Sign in with Google */
+        .oauth-sep {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0 4px;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 13px;
+        }
+
+        .oauth-sep::before,
+        .oauth-sep::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .glass .oauth-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.94) !important;
+            color: #1f1f1f !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            box-shadow: none !important;
+            font-weight: 600;
+        }
+
+        .glass .oauth-btn:hover {
+            background: #fff !important;
+        }
+
+        .oauth-btn svg {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+        }
+
+        .google-note {
+            margin: -8px 0 18px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .google-note b {
+            color: var(--ink);
+            font-weight: 600;
         }
 
         .auth-aside {
@@ -540,6 +593,8 @@
             <div id="login-error" class="error-msg"></div>
 
             <button onclick="login()">Войти</button>
+            <div class="oauth-sep">или</div>
+            <button type="button" class="oauth-btn" onclick="loginWithGoogle('login-error')"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Войти через Google</button>
 
             <div class="switch-link" onclick="goRegister()">Нет аккаунта? Регистрация</div>
         </div>
@@ -565,6 +620,8 @@
             <div id="reg-error" class="error-msg"></div>
 
             <button id="reg-submit-btn" onclick="register()" disabled>Зарегистрироваться</button>
+            <div class="oauth-sep">или</div>
+            <button type="button" class="oauth-btn" onclick="loginWithGoogle('reg-error')"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Продолжить с Google</button>
 
             <div class="switch-link" onclick="goLogin()">Уже есть аккаунт? Войти</div>
         </div>
@@ -579,6 +636,16 @@
             <button onclick="checkVerificationStatus()">Я подтвердил, проверить</button>
             <button type="button" onclick="resendVerificationFromForm()" style="margin-top:8px;background:#1f7a63;">Отправить ссылку повторно</button>
             <button type="button" onclick="cancelPendingRegistration()" style="margin-top:8px;background:#8f3d3d;">Отменить регистрацию</button>
+        </div>
+
+        <!-- FIRST GOOGLE SIGN-IN: PICK A LOGIN -->
+        <div id="screen-google" style="display:none;">
+            <h1>Придумай логин</h1>
+            <p class="google-note">Ты вошёл через Google как <b id="google-email-label">твой аккаунт</b>. Логин будет виден в рейтинге и в посылках.</p>
+            <input id="google-login" type="text" placeholder="Логин" autocomplete="username" maxlength="16" onkeydown="if (event.key === 'Enter') completeGoogleLogin()">
+            <div id="google-error" class="error-msg"></div>
+            <button type="button" onclick="completeGoogleLogin()">Готово</button>
+            <div class="switch-link" onclick="cancelGoogleLogin()">Отмена</div>
         </div>
 
         </div>
@@ -596,7 +663,7 @@
 
     <script src="firebase.js?v=20260513-5"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261021-mobile"></script>
+    <script src="auth.js?v=20261024-google"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->

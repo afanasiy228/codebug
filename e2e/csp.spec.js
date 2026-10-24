@@ -56,7 +56,7 @@ test("auth.html: вход работает при включённом CSP", asy
   await page.goto("/auth.html");
   await page.locator("#login-identity").fill(TEST_USER.login);
   await page.locator("#login-pass").fill(TEST_USER.password);
-  await page.getByRole("button", { name: "Войти" }).click();
+  await page.getByRole("button", { name: "Войти", exact: true }).click();
 
   await expect(page).toHaveURL(/index\.html$/);
   expect(violations, `CSP violations during login:\n${violations.join("\n")}`).toEqual([]);

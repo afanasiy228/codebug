@@ -64,7 +64,7 @@ test.describe("Авторизация", () => {
     await page.locator("#login-identity").fill(TEST_USER.login);
     await page.locator("#login-pass").fill(TEST_USER.password);
     const loginRequest = page.waitForRequest("**/auth/login");
-    await page.getByRole("button", { name: "Войти" }).click();
+    await page.getByRole("button", { name: "Войти", exact: true }).click();
     const request = await loginRequest;
     expect(request.postDataJSON()).toEqual({ identity: TEST_USER.login, password: TEST_USER.password });
     await expect(page.locator("#nav-links")).toContainText(TEST_USER.login);
