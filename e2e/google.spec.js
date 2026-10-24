@@ -100,8 +100,8 @@ test.describe("Вход через Google", () => {
   test("кнопка есть и на экране регистрации", async ({ page }) => {
     await withGoogle(page, "new");
     await page.goto("/auth.html");
-    await page.getByText("Нет аккаунта? Регистрация").click();
-    await page.getByRole("button", { name: "Продолжить с Google" }).click();
+    await page.getByRole("tab", { name: "Регистрация" }).click();
+    await page.getByRole("button", { name: "Регистрация через Google" }).click();
     await expect(page.locator("#screen-google")).toBeVisible();
   });
 });

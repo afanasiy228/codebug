@@ -5,7 +5,7 @@ test.describe("Авторизация", () => {
   test("регистрация показывает экран подтверждения email", async ({ page }, testInfo) => {
     await preparePage(page);
     await page.goto("/auth.html");
-    await page.getByText("Нет аккаунта? Регистрация").click();
+    await page.getByRole("tab", { name: "Регистрация" }).click();
     await page.locator("#reg-user").fill("fresh_user");
     await page.locator("#reg-email").fill("fresh_user@codebug.test");
     await page.locator("#reg-pass").fill(TEST_USER.password);
@@ -24,7 +24,7 @@ test.describe("Авторизация", () => {
   test("старая незавершённая регистрация восстанавливает профиль", async ({ page }, testInfo) => {
     await preparePage(page, { orphanedRegistration: true });
     await page.goto("/auth.html");
-    await page.getByText("Нет аккаунта? Регистрация").click();
+    await page.getByRole("tab", { name: "Регистрация" }).click();
     await page.locator("#reg-user").fill("recovered_user");
     await page.locator("#reg-email").fill("orphan@codebug.test");
     await page.locator("#reg-pass").fill(TEST_USER.password);
