@@ -1571,7 +1571,7 @@
             <section class="osu-overview">
                 <div class="osu-main">
                     <div class="osu-graph-head">
-                        <span>Тренд решённых задач (90 дней)</span>
+                        <span>Накоплено за год</span>
                         <span id="solvedTrendTotal">Всего: 0</span>
                     </div>
                     <div class="osu-graph">
@@ -2132,22 +2132,21 @@
             const dayMs = 24 * 60 * 60 * 1000;
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const points = [];
-            let total = 0;
-            for (let i = 89; i >= 0; i--) {
+            const days = [];
+            let running = 0;
+            for (let i = 364; i >= 0; i--) {
                 const d = new Date(today.getTime() - i * dayMs);
-                const key = makeDateKey(d.getTime());
-                const v = Number(solvedByDay[key] || 0);
-                points.push(v);
-                total += v;
+                running += Number(solvedByDay[makeDateKey(d.getTime())] || 0);
+                days.push({ date: d, total: running });
             }
+            const total = running;
 
             const totalEl = document.getElementById("solvedTrendTotal");
             if (totalEl) totalEl.textContent = `Всего: ${total}`;
 
             // crisp on retina, and as wide as the card
             const box = canvas.parentElement;
-            const cssW = Math.max(320, Math.round((box ? box.clientWidth : canvas.clientWidth) || 900));
+            const cssW = Math.max(280, Math.round((box ? box.clientWidth : canvas.clientWidth) || 900));
             const cssH = 150;
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
             if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
@@ -2160,25 +2159,23 @@
             const height = cssH;
             ctx.clearRect(0, 0, width, height);
 
-            const maxV = Math.max(...points, 1);
-            const padX = 12;
-            const padTop = 20;
-            const padBottom = 24;
+            const padX = 14;
+            const padTop = 22;
+            const padBottom = 26;
             const plotW = width - padX * 2;
             const plotH = height - padTop - padBottom;
             const baseY = padTop + plotH;
-            const scaleY = (v) => baseY - (v / maxV) * plotH;
-            const coords = points.map((v, i) => ({
-                x: padX + (i / (points.length - 1)) * plotW,
-                y: scaleY(v),
-                v
+            const maxV = Math.max(total, 1);
+            const coords = days.map((d, i) => ({
+                x: padX + (i / (days.length - 1)) * plotW,
+                y: baseY - (d.total / maxV) * plotH
             }));
 
-            // guide lines, faint, with the peak value on top
+            // faint guides plus the final number on top
             ctx.save();
             ctx.setLineDash([3, 7]);
             ctx.lineWidth = 1;
-            ctx.strokeStyle = "rgba(148, 163, 184, 0.14)";
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.13)";
             for (let i = 0; i <= 2; i += 1) {
                 const gy = padTop + (plotH * i) / 2;
                 ctx.beginPath();
@@ -2192,10 +2189,10 @@
             ctx.font = "600 10px system-ui, -apple-system, 'Segoe UI', sans-serif";
             ctx.fillStyle = "rgba(148, 163, 184, 0.55)";
             ctx.textAlign = "left";
-            ctx.fillText(String(maxV), padX, padTop - 7);
+            ctx.fillText(String(total), padX, padTop - 7);
             ctx.restore();
 
-            // one smooth path through the days
+            // the curve only ever rises, so it never reads as empty
             const curve = new Path2D();
             curve.moveTo(coords[0].x, coords[0].y);
             for (let i = 1; i < coords.length - 1; i += 1) {
@@ -2212,35 +2209,20 @@
             area.closePath();
 
             const fillGrad = ctx.createLinearGradient(0, padTop, 0, baseY);
-            fillGrad.addColorStop(0, "rgba(251, 191, 36, 0.30)");
-            fillGrad.addColorStop(0.55, "rgba(251, 191, 36, 0.10)");
+            fillGrad.addColorStop(0, "rgba(251, 191, 36, 0.32)");
+            fillGrad.addColorStop(0.6, "rgba(251, 191, 36, 0.09)");
             fillGrad.addColorStop(1, "rgba(251, 191, 36, 0)");
             ctx.fillStyle = fillGrad;
             ctx.fill(area);
 
-            // baseline so quiet days still read as a line
-            ctx.save();
-            const baseGrad = ctx.createLinearGradient(padX, 0, width - padX, 0);
-            baseGrad.addColorStop(0, "rgba(251, 191, 36, 0.05)");
-            baseGrad.addColorStop(0.5, "rgba(251, 191, 36, 0.22)");
-            baseGrad.addColorStop(1, "rgba(251, 191, 36, 0.05)");
-            ctx.strokeStyle = baseGrad;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(padX, baseY + 0.5);
-            ctx.lineTo(width - padX, baseY + 0.5);
-            ctx.stroke();
-            ctx.restore();
-
-            // glow, then the line itself
             const lineGrad = ctx.createLinearGradient(padX, 0, width - padX, 0);
             lineGrad.addColorStop(0, "#f59e0b");
-            lineGrad.addColorStop(0.5, "#fcd34d");
+            lineGrad.addColorStop(0.55, "#fcd34d");
             lineGrad.addColorStop(1, "#fde68a");
 
             ctx.save();
-            ctx.shadowColor = "rgba(251, 191, 36, 0.55)";
-            ctx.shadowBlur = 14;
+            ctx.shadowColor = "rgba(251, 191, 36, 0.5)";
+            ctx.shadowBlur = 12;
             ctx.strokeStyle = lineGrad;
             ctx.lineWidth = 2.6;
             ctx.lineJoin = "round";
@@ -2254,22 +2236,25 @@
             ctx.lineCap = "round";
             ctx.stroke(curve);
 
-            // mark only the busiest days, not every eighth point
-            const peaks = [];
-            for (let i = 1; i < coords.length - 1; i += 1) {
-                const c = coords[i];
-                if (c.v > 0 && c.v >= coords[i - 1].v && c.v > coords[i + 1].v) peaks.push(c);
-            }
-            peaks.sort((a, b) => b.v - a.v);
-            peaks.slice(0, 3).forEach((p) => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 3.1, 0, Math.PI * 2);
-                ctx.fillStyle = "#0a0a0a";
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = "#fcd34d";
-                ctx.stroke();
+            // months along the bottom, skipping any that would collide
+            ctx.save();
+            ctx.font = "600 10px system-ui, -apple-system, 'Segoe UI', sans-serif";
+            ctx.fillStyle = "rgba(139, 155, 176, 0.9)";
+            ctx.textAlign = "center";
+            const monthNames = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+            // the first month is only a few days long, so start from the next one
+            let lastMonth = days[0].date.getMonth();
+            let lastX = -999;
+            days.forEach((d, i) => {
+                const m = d.date.getMonth();
+                if (m === lastMonth) return;
+                lastMonth = m;
+                const x = coords[i].x;
+                if (x - lastX < 42 || x > width - padX - 12) return;
+                lastX = x;
+                ctx.fillText(monthNames[m], x, baseY + 16);
             });
+            ctx.restore();
 
             // today
             ctx.save();
