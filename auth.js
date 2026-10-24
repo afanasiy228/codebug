@@ -299,7 +299,7 @@ header .brand-suffix,
 }
 #nav-links .nav-profile {
     display: inline-grid;
-    grid-template-columns: 28px minmax(0, auto) 10px;
+    grid-template-columns: 28px minmax(0, auto);
     align-items: center;
     gap: 9px;
     min-height: 34px;
@@ -368,25 +368,65 @@ header .brand-suffix,
 #nav-links .nav-profile-tier.is-pro {
     color: #FBBF24;
 }
-#nav-links .nav-caret {
-    color: #737373;
-    font-size: 10px;
-    transform: translateY(-1px);
+#nav-links .nav-profile-wrap {
+    position: relative;
+}
+#nav-links .nav-profile-wrap.menu-open .nav-profile {
+    background: rgba(255, 255, 255, 0.06) !important;
 }
 #nav-links .nav-account-menu {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    display: none;
-    min-width: 176px;
+    min-width: 182px;
     padding: 6px 0;
     border: 1px solid rgba(255, 255, 255, 0.10);
-    background: #090B0F;
-    box-shadow: none;
+    border-radius: 12px;
+    background: rgba(9, 11, 15, 0.94);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-7px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.16s ease, transform 0.22s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0s linear 0.22s;
+    z-index: 2005;
+}
+/* keeps hover alive across the gap between the button and the menu */
+#nav-links .nav-account-menu::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -10px;
+    height: 10px;
+}
+#nav-links .nav-account-menu > * {
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.18s ease, transform 0.24s cubic-bezier(0.2, 0.9, 0.25, 1), color 0.15s, background 0.15s;
 }
 #nav-links .nav-profile-wrap.menu-open .nav-account-menu {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.16s ease, transform 0.26s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0s;
+}
+#nav-links .nav-profile-wrap.menu-open .nav-account-menu > * {
+    opacity: 1;
+    transform: none;
+}
+#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(1) {
+    transition-delay: 0.04s;
+}
+#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(2) {
+    transition-delay: 0.08s;
+}
+#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(3) {
+    transition-delay: 0.1s;
+}
+#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(4) {
+    transition-delay: 0.12s;
 }
 #nav-links .nav-account-menu a,
 #nav-links .nav-account-menu button {
@@ -778,12 +818,49 @@ function bindAccountMenu(nav) {
         button.setAttribute("aria-expanded", "false");
     };
 
+    const openMenu = () => {
+        wrap.classList.add("menu-open");
+        button.setAttribute("aria-expanded", "true");
+    };
+
+    const hoverCapable = !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+
     button.onclick = (event) => {
         event.preventDefault();
         event.stopPropagation();
+        // With a mouse the menu is already open under the cursor, so a click opens the profile.
+        if (hoverCapable) {
+            window.location.href = "profile.html";
+            return;
+        }
         const isOpen = wrap.classList.toggle("menu-open");
         button.setAttribute("aria-expanded", String(isOpen));
     };
+
+    // On a mouse the menu follows the pointer; a touch still needs a tap.
+    if (hoverCapable) {
+        let timer = 0;
+        const later = (fn, ms) => {
+            clearTimeout(timer);
+            timer = setTimeout(fn, ms);
+        };
+        wrap.addEventListener("pointerenter", (event) => {
+            if (event.pointerType === "touch") return;
+            later(openMenu, 70);
+        });
+        wrap.addEventListener("pointerleave", (event) => {
+            if (event.pointerType === "touch") return;
+            later(closeMenu, 180);
+        });
+        wrap.addEventListener("pointerdown", () => clearTimeout(timer));
+    }
+
+    wrap.addEventListener("focusin", openMenu);
+    wrap.addEventListener("focusout", () => {
+        setTimeout(() => {
+            if (!wrap.contains(document.activeElement)) closeMenu();
+        }, 0);
+    });
 
     menu.querySelectorAll("a, button").forEach((item) => {
         item.addEventListener("click", closeMenu);
@@ -1043,7 +1120,6 @@ function buildAccountHtml(user) {
                     <span class="nav-profile-name">${safeUser}</span>
                     <span class="nav-profile-tier">FREE</span>
                 </span>
-                <span class="nav-caret" aria-hidden="true">▾</span>
             </button>
             <div class="nav-account-menu" role="menu">
                 <a href="profile.html" role="menuitem">Профиль</a>
