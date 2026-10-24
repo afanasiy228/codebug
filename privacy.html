@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <!--
+      Content-Security-Policy. GitHub Pages cannot send headers, so it is declared
+      here. The host list is the set these pages actually load; 'unsafe-inline' is
+      required because the page logic lives in inline <script> blocks, so the value
+      of this policy is that it pins WHICH hosts may serve scripts and WHERE data
+      may be sent - not inline-script suppression.
+
+      frame-ancestors is deliberately absent: browsers ignore it in a <meta> tag.
+      Clickjacking protection for this static site needs an HTTP header at the CDN.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.europe-west1.firebasedatabase.app;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data: blob: https:;
+        connect-src 'self' https://codebug.onrender.com http://localhost:7777 http://127.0.0.1:7777 https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com wss://*.firebasedatabase.app https://www.google.com https://api.cloudinary.com;
+        frame-src https://www.google.com https://*.europe-west1.firebasedatabase.app;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self'
+    ">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Политика конфиденциальности — CodeBug</title>
+    <meta name="description" content="Какие данные собирает CodeBug, зачем, кому они передаются, сколько хранятся и как удалить аккаунт.">
+    <link rel="canonical" href="https://codebug.online/privacy.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CodeBug">
+    <meta property="og:title" content="Политика конфиденциальности — CodeBug">
+    <meta property="og:description" content="Какие данные собирает CodeBug, зачем, кому они передаются, сколько хранятся и как удалить аккаунт.">
+    <meta property="og:url" content="https://codebug.online/privacy.html">
+    <meta property="og:image" content="https://codebug.online/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="/logo.png?v=3">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --bg-strong: #0B0B0B;
+            --ink: #FFFFFF;
+            --text: #d6d4ce;
+            --muted: #B0B0B0;
+            --dim: #8a8984;
+            --accent: #F59E0B;
+            --accent-strong: #FBBF24;
+            --card: #121212;
+            --stroke: rgba(255, 255, 255, 0.08);
+            --serif: "Lora", Georgia, "Times New Roman", serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+            background-attachment: fixed;
+        }
+
+        ::selection {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        header {
+            height: 72px;
+            background: rgba(5, 5, 5, 0.88);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0 4vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--ink);
+        }
+
+        nav a {
+            margin-left: 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .doc {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .doc-kicker {
+            color: var(--dim);
+            font-size: 14px;
+        }
+
+        .doc h1 {
+            margin: 10px 0 0;
+            font: 500 clamp(32px, 4.4vw, 46px)/1.12 var(--serif);
+            letter-spacing: -0.02em;
+            text-wrap: balance;
+        }
+
+        .summary {
+            margin: 30px 0 8px;
+            padding: 22px 24px;
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            background: var(--card);
+        }
+
+        .summary h2 {
+            margin: 0 0 12px;
+            font-size: 17px;
+            color: var(--accent);
+            font-weight: 650;
+        }
+
+        .summary ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .doc section {
+            margin-top: 38px;
+        }
+
+        .doc h2 {
+            margin: 0 0 12px;
+            font: 500 26px/1.2 var(--serif);
+            text-wrap: balance;
+        }
+
+        .doc h3 {
+            margin: 22px 0 8px;
+            font-size: 17px;
+            font-weight: 650;
+            color: var(--ink);
+        }
+
+        .doc p,
+        .doc li {
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .doc p {
+            margin: 0 0 12px;
+        }
+
+        .doc ul {
+            margin: 0 0 12px;
+            padding-left: 22px;
+        }
+
+        .doc li + li {
+            margin-top: 4px;
+        }
+
+        .doc b {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .doc a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .doc a:hover {
+            color: var(--accent-strong);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 8px 0 12px;
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+        }
+
+        .doc table {
+            width: 100%;
+            min-width: 520px;
+            border-collapse: collapse;
+            font-size: 15px;
+            line-height: 1.5;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .doc th,
+        .doc td {
+            padding: 11px 14px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid var(--stroke) !important;
+            color: var(--text);
+        }
+
+        .doc th {
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: var(--muted) !important;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+        }
+
+        .doc tr:last-child td {
+            border-bottom: 0 !important;
+        }
+
+        .doc tr:hover {
+            background: transparent !important;
+        }
+
+        .updated {
+            margin-top: 44px;
+            padding-top: 18px;
+            border-top: 1px solid var(--stroke);
+            color: var(--dim);
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
+            .doc {
+                padding: 30px 16px 60px;
+            }
+            .summary {
+                padding: 18px 18px;
+            }
+            .doc p,
+            .doc li {
+                font-size: 15.5px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <main class="doc">
+        <div class="doc-kicker">Действует с 24 октября 2026 года</div>
+        <h1>Политика конфиденциальности</h1>
+
+        <div class="summary">
+            <h2>Коротко</h2>
+            <ul>
+                <li>Мы храним только то, что нужно для работы сайта: логин, email, прогресс в задачах и посылки.</li>
+                <li>Твой логин, аватар, рейтинг и список посылок видны всем. Email не виден никому.</li>
+                <li>Пароль мы не видим и не храним: им занимается Google Firebase.</li>
+                <li>На сайте нет рекламы и счётчиков аналитики. Данные мы не продаём.</li>
+                <li>Аккаунт можно удалить в любой момент: напиши нам, и мы удалим данные в течение 30 дней.</li>
+            </ul>
+        </div>
+
+        <section>
+            <h2>1. Кто мы</h2>
+            <p>CodeBug — образовательный сайт <b>codebug.online</b>, где школьники ищут и исправляют ошибки в коде. Эта политика объясняет, какие данные пользователей собирает сайт, как и зачем он их использует.</p>
+            <p>По всем вопросам о данных пиши в Telegram <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">@afony_l</a> или на <b>support@codebug.online</b>.</p>
+        </section>
+
+        <section>
+            <h2>2. Какие данные мы собираем</h2>
+
+            <h3>Аккаунт</h3>
+            <ul>
+                <li>Логин, который ты выбираешь при регистрации.</li>
+                <li>Email и отметка, подтверждён ли он.</li>
+                <li>Пароль. Его хранит Google Firebase в зашифрованном виде, мы его не видим.</li>
+                <li>Если входишь через Google: email и идентификатор Google-аккаунта. Имя и фото профиля Google передаёт сервису входа, но сайт их не показывает и не сохраняет в профиль.</li>
+            </ul>
+
+            <h3>Профиль</h3>
+            <ul>
+                <li>Аватар и обложка профиля, если ты их загрузил.</li>
+                <li>Оформление профиля, список друзей, уведомления.</li>
+                <li>Статус «в сети» и время последнего визита.</li>
+            </ul>
+
+            <h3>Решения и прогресс</h3>
+            <ul>
+                <li>Код, который ты отправляешь на проверку или запускаешь на своих данных. Он нужен, чтобы проверить решение.</li>
+                <li>Результаты посылок: задача, вердикт, баллы, время отправки.</li>
+                <li>Опыт, рейтинг, ранг, список решённых задач, участие в соревнованиях.</li>
+                <li>Задачи, которые ты предлагаешь через «Предложить задачу»: название, условие, код и пояснение.</li>
+            </ul>
+
+            <h3>Оплата подписки</h3>
+            <ul>
+                <li>Выбранный тариф, сумма, статус и номер платежа.</li>
+                <li>Данные карты вводятся на стороне платёжного сервиса Platega. Мы их не получаем и не храним.</li>
+            </ul>
+
+            <h3>Технические данные</h3>
+            <ul>
+                <li>IP-адрес: сервер использует его, чтобы ограничивать подбор паролей и защищаться от злоупотреблений.</li>
+                <li>Хостинг и сервисы, перечисленные ниже, могут вести свои журналы запросов: адрес, браузер, время.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. Зачем нам эти данные</h2>
+            <ul>
+                <li>Создать аккаунт, впустить тебя и защитить вход.</li>
+                <li>Проверить решения и посчитать опыт, рейтинг и место в таблице.</li>
+                <li>Показать профиль, рейтинг, посылки и результаты соревнований.</li>
+                <li>Оформить подписку и выдать её возможности.</li>
+                <li>Отправить письма для подтверждения email и восстановления пароля.</li>
+                <li>Ответить на вопросы и разобраться с ошибками.</li>
+                <li>Найти и остановить спам, подбор паролей и другие злоупотребления.</li>
+            </ul>
+            <p>Мы не используем данные для рекламы и не продаём их.</p>
+        </section>
+
+        <section>
+            <h2>4. Что видят другие пользователи</h2>
+            <ul>
+                <li><b>Видно всем:</b> логин, аватар, обложка, опыт, рейтинг, ранг, число решённых задач, посылки (логин, задача, вердикт, время), результаты соревнований.</li>
+                <li><b>Не видно никому:</b> email, пароль, код твоих решений, данные об оплате, IP-адрес.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>5. Кому передаются данные</h2>
+            <p>Сайт работает на сервисах других компаний. Они получают данные только для того, чтобы выполнять свою часть работы.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Сервис</th><th>Что делает</th><th>Какие данные</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Google Firebase</td><td>Вход, база данных</td><td>Аккаунт, профиль, прогресс, посылки</td></tr>
+                        <tr><td>Google reCAPTCHA</td><td>Защита регистрации от ботов</td><td>Технические данные браузера</td></tr>
+                        <tr><td>Render</td><td>Сервер, который проверяет решения</td><td>Код решений, логин, IP-адрес</td></tr>
+                        <tr><td>GitHub Pages</td><td>Хостинг сайта</td><td>Технические данные запросов</td></tr>
+                        <tr><td>Cloudinary</td><td>Хранение картинок</td><td>Аватар и обложка</td></tr>
+                        <tr><td>Platega</td><td>Приём оплаты</td><td>Сумма и номер платежа, данные карты</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>Серверы этих компаний могут находиться за пределами России, например в странах Европейского союза и в США. Пользуясь сайтом, ты соглашаешься на такую передачу данных.</p>
+            <p>Мы можем раскрыть данные, если этого требует закон, например по запросу суда.</p>
+        </section>
+
+        <section>
+            <h2>6. Хранение в браузере</h2>
+            <p>Сайт не ставит рекламных cookie. В памяти браузера (localStorage) хранятся логин, служебный токен входа и сохранённый черновик кода, чтобы не входить и не набирать код заново. Google Firebase хранит в браузере данные сессии входа. Это всё стирается, когда ты выходишь из аккаунта или очищаешь данные сайта в браузере.</p>
+        </section>
+
+        <section>
+            <h2>7. Сколько мы храним данные</h2>
+            <ul>
+                <li>Данные аккаунта, прогресс и посылки — пока существует аккаунт.</li>
+                <li>Записи об оплате — столько, сколько требует закон.</li>
+                <li>Технические журналы — не дольше, чем они нужны для защиты сайта.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>8. Твои права</h2>
+            <p>Ты можешь:</p>
+            <ul>
+                <li>узнать, какие данные о тебе хранятся;</li>
+                <li>исправить неверные данные;</li>
+                <li>удалить аккаунт и все связанные с ним данные;</li>
+                <li>отозвать согласие на обработку данных: это означает удаление аккаунта.</li>
+            </ul>
+            <p>Напиши в Telegram <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">@afony_l</a> или на <b>support@codebug.online</b> с адреса, привязанного к аккаунту. Мы ответим и выполним запрос в течение 30 дней. После удаления посылки в общей таблице остаются без логина.</p>
+        </section>
+
+        <section>
+            <h2>9. Если тебе меньше 14 лет</h2>
+            <p>CodeBug делают для школьников. Если тебе меньше 14 лет, зарегистрироваться можно только с согласия родителей или законных представителей. Родители могут написать нам и попросить показать или удалить данные ребёнка.</p>
+        </section>
+
+        <section>
+            <h2>10. Как мы защищаем данные</h2>
+            <p>Сайт работает только по HTTPS. Пароли хранит Google Firebase, а не мы. Сервер проверяет токен входа при каждом важном действии, а доступ к базе ограничен правилами безопасности. Полной защиты не даёт ни один сайт, поэтому придумай надёжный пароль и не используй его на других сайтах.</p>
+        </section>
+
+        <section>
+            <h2>11. Изменения политики</h2>
+            <p>Мы можем обновлять эту политику, когда сайт меняется. Новая версия появляется на этой странице с новой датой вверху. О важных изменениях мы расскажем в Telegram-канале <a href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">@codebug_official</a>.</p>
+        </section>
+
+        <p class="updated">Последнее обновление: 24 октября 2026 года.</p>
+    </main>
+
+
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
+
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
+    <script src="auth.js?v=20261024-privacy"></script>
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", updateNavbar);
+    </script>
+</body>
+
+</html>

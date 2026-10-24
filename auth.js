@@ -1134,7 +1134,7 @@ function ensureGlobalFooter() {
     footer.id = "global-legal-footer";
     footer.innerHTML = `
         <div class="cb-legal-footer-inner">
-            <a class="cb-legal-btn" href="https://telegra.ph/Politika-konfidencialnosti-04-01-26" target="_blank" rel="noopener">Политика конфиденциальности</a>
+            <a class="cb-legal-btn" href="/privacy.html">Политика конфиденциальности</a>
             <a class="cb-legal-btn" href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19" target="_blank" rel="noopener">Пользовательское соглашение</a>
             <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
             <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
