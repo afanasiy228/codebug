@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <!--
+      Content-Security-Policy. GitHub Pages cannot send headers, so it is declared
+      here. The host list is the set these pages actually load; 'unsafe-inline' is
+      required because the page logic lives in inline <script> blocks, so the value
+      of this policy is that it pins WHICH hosts may serve scripts and WHERE data
+      may be sent - not inline-script suppression.
+
+      frame-ancestors is deliberately absent: browsers ignore it in a <meta> tag.
+      Clickjacking protection for this static site needs an HTTP header at the CDN.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.europe-west1.firebasedatabase.app;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data: blob: https:;
+        connect-src 'self' https://codebug.onrender.com http://localhost:7777 http://127.0.0.1:7777 https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com wss://*.firebasedatabase.app https://www.google.com https://api.cloudinary.com;
+        frame-src https://www.google.com https://*.europe-west1.firebasedatabase.app;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self'
+    ">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пользовательское соглашение — CodeBug</title>
+    <meta name="description" content="Правила CodeBug: аккаунт, честная игра, код и задачи пользователей, подписка PRO и PRO+, возврат денег и соревнования.">
+    <link rel="canonical" href="https://codebug.online/terms.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CodeBug">
+    <meta property="og:title" content="Пользовательское соглашение — CodeBug">
+    <meta property="og:description" content="Правила CodeBug: аккаунт, честная игра, код и задачи пользователей, подписка PRO и PRO+, возврат денег и соревнования.">
+    <meta property="og:url" content="https://codebug.online/terms.html">
+    <meta property="og:image" content="https://codebug.online/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="/logo.png?v=3">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --bg-strong: #0B0B0B;
+            --ink: #FFFFFF;
+            --text: #d6d4ce;
+            --muted: #B0B0B0;
+            --dim: #8a8984;
+            --accent: #F59E0B;
+            --accent-strong: #FBBF24;
+            --card: #121212;
+            --stroke: rgba(255, 255, 255, 0.08);
+            --serif: "Lora", Georgia, "Times New Roman", serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
+                linear-gradient(180deg, var(--bg), var(--bg-strong));
+            background-attachment: fixed;
+        }
+
+        ::selection {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        header {
+            height: 72px;
+            background: rgba(5, 5, 5, 0.88);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0 4vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--ink);
+        }
+
+        nav a {
+            margin-left: 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .doc {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .doc-kicker {
+            color: var(--dim);
+            font-size: 14px;
+        }
+
+        .doc h1 {
+            margin: 10px 0 0;
+            font: 500 clamp(32px, 4.4vw, 46px)/1.12 var(--serif);
+            letter-spacing: -0.02em;
+            text-wrap: balance;
+        }
+
+        .summary {
+            margin: 30px 0 8px;
+            padding: 22px 24px;
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            background: var(--card);
+        }
+
+        .summary h2 {
+            margin: 0 0 12px;
+            font-size: 17px;
+            color: var(--accent);
+            font-weight: 650;
+        }
+
+        .summary ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .doc section {
+            margin-top: 38px;
+        }
+
+        .doc h2 {
+            margin: 0 0 12px;
+            font: 500 26px/1.2 var(--serif);
+            text-wrap: balance;
+        }
+
+        .doc h3 {
+            margin: 22px 0 8px;
+            font-size: 17px;
+            font-weight: 650;
+            color: var(--ink);
+        }
+
+        .doc p,
+        .doc li {
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .doc p {
+            margin: 0 0 12px;
+        }
+
+        .doc ul {
+            margin: 0 0 12px;
+            padding-left: 22px;
+        }
+
+        .doc li + li {
+            margin-top: 4px;
+        }
+
+        .doc b {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .doc a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .doc a:hover {
+            color: var(--accent-strong);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 8px 0 12px;
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+        }
+
+        .doc table {
+            width: 100%;
+            min-width: 520px;
+            border-collapse: collapse;
+            font-size: 15px;
+            line-height: 1.5;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .doc th,
+        .doc td {
+            padding: 11px 14px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid var(--stroke) !important;
+            color: var(--text);
+        }
+
+        .doc th {
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: var(--muted) !important;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+        }
+
+        .doc tr:last-child td {
+            border-bottom: 0 !important;
+        }
+
+        .doc tr:hover {
+            background: transparent !important;
+        }
+
+        .updated {
+            margin-top: 44px;
+            padding-top: 18px;
+            border-top: 1px solid var(--stroke);
+            color: var(--dim);
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 0 20px;
+            }
+            .doc {
+                padding: 30px 16px 60px;
+            }
+            .summary {
+                padding: 18px 18px;
+            }
+            .doc p,
+            .doc li {
+                font-size: 15.5px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="theme-dark.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CodeBug</div>
+        <nav id="nav-links"></nav>
+    </header>
+
+    <main class="doc">
+        <div class="doc-kicker">Действует с 24 октября 2026 года</div>
+        <h1>Пользовательское соглашение</h1>
+
+        <div class="summary">
+            <h2>Коротко</h2>
+            <ul>
+                <li>Пользоваться CodeBug можно бесплатно. Подписка PRO или PRO+ даёт дополнительные возможности.</li>
+                <li>Играй честно: без накрутки рейтинга, атак на проверяющую систему и оскорблений.</li>
+                <li>Твой код остаётся твоим. Мы храним и запускаем его только для проверки.</li>
+                <li>Подписка оплачивается один раз на 30 дней и сама не продлевается.</li>
+                <li>Если подписка не включилась после оплаты, мы вернём деньги.</li>
+            </ul>
+        </div>
+
+        <section>
+            <h2>1. О чём это соглашение</h2>
+            <p>Это правила использования сайта <b>codebug.online</b> (дальше — CodeBug). CodeBug — образовательный сервис, где пользователи ищут и исправляют ошибки в коде и соревнуются.</p>
+            <p>Регистрируясь или пользуясь сайтом, ты соглашаешься с этими правилами и с <a href="/privacy.html">политикой конфиденциальности</a>. Оплачивая подписку, ты соглашаешься с условиями подписки из разделов 6 и 7. Если правила тебе не подходят, не пользуйся сайтом.</p>
+        </section>
+
+        <section>
+            <h2>2. Аккаунт</h2>
+            <ul>
+                <li>Чтобы отправлять решения и копить опыт, нужен аккаунт. Его можно создать по email и паролю или через Google.</li>
+                <li>Логин: от 3 до 16 символов, латинские буквы, цифры и знак подчёркивания. Логин не должен оскорблять, выдавать себя за другого человека или за администрацию.</li>
+                <li>Один человек — один аккаунт. Не передавай аккаунт другим и не пользуйся чужим.</li>
+                <li>Ты отвечаешь за действия в своём аккаунте. Держи пароль в секрете. Если кто-то получил доступ к аккаунту, сразу напиши нам.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. Честная игра</h2>
+            <p>Нельзя:</p>
+            <ul>
+                <li>накручивать опыт и рейтинг: заводить несколько аккаунтов, решать за других или давать решать за себя;</li>
+                <li>во время идущего соревнования публиковать решения его задач или получать их от других;</li>
+                <li>отправлять код, который пытается сломать проверяющую систему, выбраться из песочницы, прочитать чужие данные или перегрузить сервер;</li>
+                <li>засыпать сайт автоматическими запросами и посылками, подбирать пароли, искать уязвимости без нашего разрешения;</li>
+                <li>загружать аватары и обложки с насилием, порнографией, оскорблениями или чужими материалами без разрешения;</li>
+                <li>нарушать законы Российской Федерации.</li>
+            </ul>
+            <p>Нашёл уязвимость или ошибку — напиши нам, мы будем благодарны.</p>
+        </section>
+
+        <section>
+            <h2>4. Твой код и предложенные задачи</h2>
+            <ul>
+                <li>Код, который ты отправляешь, остаётся твоим. Ты разрешаешь CodeBug хранить его и запускать, чтобы проверить решение и показать тебе результат.</li>
+                <li>Предлагая задачу через «Предложить задачу», ты подтверждаешь, что имеешь на неё права, и разрешаешь CodeBug бесплатно публиковать её на сайте, редактировать и использовать в соревнованиях. Мы можем указать тебя как автора, если ты об этом попросишь.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>5. Материалы CodeBug</h2>
+            <p>Задачи, условия, тесты, код с ошибками и оформление сайта принадлежат CodeBug или авторам задач. Ими можно пользоваться для своего обучения. Копировать задачи и тесты на другие сайты целиком или массово можно только с нашего разрешения.</p>
+        </section>
+
+        <section>
+            <h2>6. Подписка PRO и PRO+</h2>
+            <ul>
+                <li>Что даёт каждая подписка и сколько она стоит, написано на странице <a href="/donate.html">«Подписка»</a>. Цена на момент оплаты — та, что указана там.</li>
+                <li>Подписка действует 30 дней с момента подтверждения оплаты. Это разовый платёж: деньги не списываются повторно, подписка сама не продлевается. Продлить её можно новой оплатой.</li>
+                <li>Оплату принимает платёжный сервис Platega. Данные карты вводятся на его стороне, CodeBug их не получает.</li>
+                <li>Подписка включается автоматически после того, как Platega подтвердит оплату. Обычно это занимает несколько минут.</li>
+                <li>Мы можем менять и дополнять возможности подписки. Если мы уберём важную возможность, пока твоя подписка действует, напиши нам, и мы продлим подписку или вернём деньги за оставшиеся дни.</li>
+                <li>Если тебе нет 18 лет, оплачивай подписку с согласия родителей.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>7. Возврат денег</h2>
+            <p>Мы вернём деньги, если:</p>
+            <ul>
+                <li>оплата прошла, а подписка не включилась, и мы не смогли её включить;</li>
+                <li>деньги списались дважды за одну подписку;</li>
+                <li>возможности подписки не работали больше трёх дней подряд по нашей вине, за дни, когда они не работали.</li>
+            </ul>
+            <p>Напиши в течение 14 дней после оплаты в Telegram <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">@afony_l</a> или на <b>support@codebug.online</b>. Укажи логин, дату и сумму платежа. Деньги вернутся тем же способом, которым ты платил, обычно за 10 рабочих дней.</p>
+            <p>Если подписка работала, деньги за уже прошедшие дни не возвращаются. Пожалуйста, сначала напиши нам, а не отменяй платёж через банк: так мы быстрее разберёмся.</p>
+            <p>Это не ограничивает права, которые даёт тебе закон о защите прав потребителей.</p>
+        </section>
+
+        <section>
+            <h2>8. Соревнования</h2>
+            <ul>
+                <li>У каждого соревнования свои правила, время и призы. Они указаны на его странице.</li>
+                <li>Призы — опыт и подписки на CodeBug. Их нельзя обменять на деньги или передать другому человеку.</li>
+                <li>За нарушение раздела 3 мы можем снять участника с соревнования и отменить его результат и приз.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>9. Если правила нарушены</h2>
+            <p>Мы можем удалить логин, аватар или задачу, которые нарушают правила, обнулить накрученный опыт, временно или навсегда закрыть доступ к аккаунту. Если доступ закрыт за нарушение правил, деньги за подписку не возвращаются. Если считаешь, что мы ошиблись, напиши нам: мы разберёмся.</p>
+        </section>
+
+        <section>
+            <h2>10. Ответственность</h2>
+            <ul>
+                <li>CodeBug — учебный проект. Мы стараемся, чтобы сайт работал без перебоев, но не обещаем, что ошибок и перерывов не будет. Иногда сайт будет недоступен из-за обновлений или сбоев у сервисов, на которых он работает.</li>
+                <li>Мы не отвечаем за то, как ты используешь знания и код с сайта за его пределами.</li>
+                <li>Мы можем изменять и удалять задачи, менять систему опыта и рейтинга, если это нужно для развития сайта.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>11. Если тебе меньше 14 лет</h2>
+            <p>Пользоваться CodeBug можно с согласия родителей или законных представителей. Они могут написать нам, если у них есть вопросы или если нужно удалить аккаунт.</p>
+        </section>
+
+        <section>
+            <h2>12. Изменения соглашения</h2>
+            <p>Мы можем обновлять это соглашение. Новая версия появляется на этой странице с новой датой вверху. О важных изменениях мы расскажем в Telegram-канале <a href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">@codebug_official</a>. Если ты продолжаешь пользоваться сайтом после изменений, значит, ты согласен с новой версией. Уже оплаченная подписка до конца срока действует на прежних условиях.</p>
+        </section>
+
+        <section>
+            <h2>13. Контакты</h2>
+            <p>Telegram: <a href="https://t.me/afony_l" target="_blank" rel="noopener noreferrer">@afony_l</a>. Почта: <b>support@codebug.online</b>. Новости: <a href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">@codebug_official</a>.</p>
+        </section>
+
+        <p class="updated">Последнее обновление: 24 октября 2026 года.</p>
+    </main>
+
+
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
+
+    <script src="firebase.js"></script>
+    <!-- обязательно первой! -->
+    <script src="auth.js?v=20261024-terms"></script>
+    <!-- использует db -->
+    <script src="globalsubmissions.js"></script>
+    <!-- использует db -->
+    <script src="submit.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", updateNavbar);
+    </script>
+</body>
+
+</html>
