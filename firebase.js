@@ -34,6 +34,11 @@
     window.RECAPTCHA_SITE_KEY = runtimeConfig.recaptchaSiteKey || "";
 
     const firebaseConfig = runtimeConfig.firebase || {};
+    // The Google sign-in helper is self-hosted at /__/auth/, so the Google window
+    // shows codebug.online instead of the Firebase project domain.
+    if (location.hostname === "codebug.online" || location.hostname === "www.codebug.online") {
+        firebaseConfig.authDomain = location.hostname;
+    }
     const requiredFirebaseKeys = [
         "apiKey",
         "authDomain",

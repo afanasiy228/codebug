@@ -1,0 +1,4 @@
+# GitHub Pages runs Jekyll, which skips folders starting with "_".
+# "__" holds the self-hosted Firebase sign-in helper (/__/auth/handler).
+include:
+  - "__"
