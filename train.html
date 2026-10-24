@@ -870,6 +870,17 @@
             }
         }
 
+        /* Between tablet and wide desktop the search box must not push the row wider than the screen. */
+        @media (max-width: 1180px) {
+            .filter-actions {
+                min-width: 0;
+            }
+            .filter-search {
+                min-width: 0;
+                width: clamp(160px, 20vw, 300px);
+            }
+        }
+
         @media (max-width: 900px) {
             .training-shell {
                 width: min(960px, 94vw);
@@ -1132,7 +1143,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
     <script src="firebase.js?v=20260521-3"></script>
-    <script src="auth.js?v=20261024-terms"></script>
+    <script src="auth.js?v=20261024-capsule"></script>
     <script>
         let problems = [];
         let visibleProblems = [];
