@@ -1034,6 +1034,356 @@
             }
         }
 
+        /* ---------- Profile statistics ---------- */
+        .pstats {
+            margin-top: 22px;
+        }
+
+        .pstats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .pcard {
+            min-width: 0;
+            padding: 18px 20px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--stroke);
+            background: rgba(18, 18, 18, 0.72);
+        }
+
+        .pcard-wide {
+            grid-column: 1 / -1;
+        }
+
+        .pcard-h {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-bottom: 14px;
+        }
+
+        .pcard-h h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .pcard-meta {
+            color: #8f8f8a;
+            font-size: 13px;
+        }
+
+        .pcard-meta b {
+            color: #d6d4ce;
+            font-weight: 600;
+        }
+
+        /* difficulty ring */
+        .dring-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 26px;
+            flex-wrap: wrap;
+            min-height: 210px;
+        }
+
+        .dring {
+            position: relative;
+            width: 180px;
+            max-width: 100%;
+            aspect-ratio: 1;
+        }
+
+        .dring svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .dring .seg {
+            fill: none;
+            stroke-width: 13;
+            transition: stroke-width 0.2s;
+        }
+
+        .dring .seg:hover {
+            stroke-width: 17;
+        }
+
+        .dring-c {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-content: center;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .dring-c b {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dring-c span {
+            margin-top: 6px;
+            color: #a9a8a3;
+            font-size: 13px;
+        }
+
+        .dlist {
+            display: grid;
+            gap: 11px;
+            min-width: 140px;
+        }
+
+        .dl-row {
+            display: grid;
+            grid-template-columns: 10px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            color: #d6d4ce;
+        }
+
+        .dl-row i {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dl-row b {
+            font-variant-numeric: tabular-nums;
+            color: #f2f1ee;
+        }
+
+        /* verdict bar */
+        .vbar {
+            display: flex;
+            gap: 3px;
+            height: 50px;
+        }
+
+        .vbar button {
+            --g: var(--n);
+            flex: var(--n) 1 0;
+            min-width: 0;
+            position: relative;
+            border: 0;
+            padding: 0;
+            margin: 0;
+            font: inherit;
+            cursor: default;
+            color: #111;
+            overflow: hidden;
+            container-type: inline-size;
+            transition: flex-grow 0.55s cubic-bezier(0.2, 0.9, 0.25, 1), filter 0.3s, transform 0.3s cubic-bezier(0.2, 0.9, 0.25, 1);
+        }
+
+        .vbar button:first-child {
+            border-radius: 13px 0 0 13px;
+        }
+
+        .vbar button:last-child {
+            border-radius: 0 13px 13px 0;
+        }
+
+        .vbar button.on {
+            flex-grow: var(--g);
+            filter: brightness(1.08) saturate(1.1);
+            transform: scaleY(1.1);
+            z-index: 1;
+            border-radius: 10px;
+        }
+
+        .vbar button > span {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            white-space: nowrap;
+            transition: opacity 0.3s, transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1);
+        }
+
+        .vbar .vcode {
+            font: 800 15px/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+            letter-spacing: 0.03em;
+        }
+
+        .vbar .vfull {
+            font: 700 14px/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+            opacity: 0;
+            transform: translateY(70%) scaleY(0.9);
+        }
+
+        .vbar button.on .vcode {
+            opacity: 0;
+            transform: translateY(-70%) scaleY(0.9);
+        }
+
+        .vbar button.on .vfull {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.08s;
+        }
+
+        @container (max-width: 22px) {
+            .vbar .vcode {
+                opacity: 0;
+            }
+        }
+
+        /* tag groups: euler diagram */
+        .tagwrap {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 190px;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .venn {
+            width: 100%;
+            height: auto;
+            max-height: 320px;
+            display: block;
+            margin: 0 auto;
+            overflow: visible;
+        }
+
+        .venn .rg {
+            transition: opacity 0.3s, filter 0.3s;
+        }
+
+        .venn.hov .rg {
+            opacity: 0.38;
+        }
+
+        .venn.hov .rg.on {
+            opacity: 1;
+            filter: brightness(1.12);
+        }
+
+        .venn .vnum {
+            font: 800 15px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+            fill: #111;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .venn.hov .vnum {
+            opacity: 0.35;
+        }
+
+        .venn.hov .vnum.on {
+            opacity: 1;
+        }
+
+        .tagcap {
+            grid-column: 1 / -1;
+            min-height: 22px;
+            margin-top: 6px;
+            color: #a9a8a3;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .tagcap b {
+            color: #f2f1ee;
+        }
+
+        .pstats .analytics-controls {
+            display: flex;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .pstats .analytics-controls select {
+            height: 34px;
+            padding: 0 30px 0 12px;
+            border-radius: 999px;
+            font-size: 13px;
+        }
+
+        .pstats .bars {
+            display: grid;
+            gap: 9px;
+        }
+
+        .pstats .bar-row {
+            display: grid;
+            grid-template-columns: minmax(110px, 200px) minmax(0, 1fr) 32px;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pstats .bar-label {
+            color: #d6d4ce;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pstats .bar-track {
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .pstats .bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.55), #fbbf24);
+        }
+
+        .pstats .bar-value {
+            color: #b0b0b0;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 960px) {
+            .pstats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .pcard {
+                padding: 16px;
+            }
+            .dring-wrap {
+                gap: 18px;
+            }
+            .tagwrap {
+                grid-template-columns: 1fr;
+            }
+            .vbar {
+                height: 44px;
+            }
+            .vbar .vcode {
+                font-size: 13px;
+            }
+            .vbar .vfull {
+                font-size: 12.5px;
+            }
+            .pstats .bar-row {
+                grid-template-columns: minmax(90px, 40%) minmax(0, 1fr) 28px;
+                gap: 8px;
+            }
+        }
+
         @media (max-width: 960px) {
             .container {
                 max-width: 100%;
@@ -1245,37 +1595,39 @@
                 </div>
             </section>
 
-            <section class="analytics-section">
-                <article class="analytics-card">
-                    <h3 class="analytics-title">По сложности</h3>
-                    <p class="analytics-sub">Сколько задач каждого уровня уже решено.</p>
-                    <div class="bars" id="difficultyBars"></div>
-                </article>
+            <section class="pstats pstats-bottom" aria-label="Разбор решений">
+                <div class="pstats-grid">
+                    <article class="pcard">
+                        <div class="pcard-h"><h3>По сложности</h3><span class="pcard-meta" id="diffMeta"></span></div>
+                        <div class="dring-wrap">
+                            <div class="dring" id="diffRing"></div>
+                            <div class="dlist" id="difficultyBars"></div>
+                        </div>
+                    </article>
 
-                <article class="analytics-card">
-                    <h3 class="analytics-title">По тегам</h3>
-                    <div class="analytics-controls">
-                        <select id="tagMetricSelect">
-                            <option value="solved">Решённые задачи</option>
-                            <option value="attempts">Все попытки</option>
-                        </select>
-                        <select id="tagLimitSelect">
-                            <option value="10">Топ 10</option>
-                            <option value="20">Топ 20</option>
-                            <option value="999">Все</option>
-                        </select>
-                    </div>
-                    <div class="bars" id="tagBars"></div>
-                </article>
+                    <article class="pcard">
+                        <div class="pcard-h"><h3>По тегам</h3><span class="pcard-meta" id="tagMeta"></span></div>
+                        <div class="tagwrap">
+                            <div id="tagVenn"></div>
+                            <div class="dlist" id="tagLegend"></div>
+                            <div class="tagcap" id="tagCap"></div>
+                        </div>
+                    </article>
 
-                <article class="analytics-card" id="proPlusCard" style="display:none;">
-                    <h3 class="analytics-title">PRO+ аналитика</h3>
-                    <p class="analytics-sub" id="proPlusSummary">Загрузка расширенной статистики…</p>
-                    <div class="bars" id="proPlusVerdicts"></div>
-                    <div class="bars" id="proPlusActivity"></div>
-                    <h3 class="analytics-title" style="margin-top:14px;">Персональные подборки</h3>
-                    <div class="bars" id="proPlusRecs"></div>
-                </article>
+                    <article class="pcard pcard-wide">
+                        <div class="pcard-h"><h3>Вердикты</h3><span class="pcard-meta" id="verdictTotal"></span></div>
+                        <div class="vbar" id="verdictBar"></div>
+                    </article>
+
+                    <article class="pcard pcard-wide analytics-card" id="proPlusCard" style="display:none;">
+                        <h3 class="analytics-title">PRO+ аналитика</h3>
+                        <p class="analytics-sub" id="proPlusSummary">Загрузка расширенной статистики…</p>
+                        <div class="bars" id="proPlusVerdicts"></div>
+                        <div class="bars" id="proPlusActivity"></div>
+                        <h3 class="analytics-title" style="margin-top:14px;">Персональные подборки</h3>
+                        <div class="bars" id="proPlusRecs"></div>
+                    </article>
+                </div>
             </section>
 
             <div id="emptyLast" class="empty-last" style="display:none;">Пока нет попыток…</div>
@@ -1852,6 +2204,312 @@
             ctx.stroke();
         }
 
+        const DIFF_COLORS = {
+            tutorial: "#94a3b8", easy: "#22c55e", casual: "#4ade80", normal: "#f59e0b", hard: "#ef4444",
+            insane: "#a855f7", extreme: "#a855f7", ultra: "#c084fc", impossible: "#e879f9", tourist: "#fbbf24", unknown: "#4b5563"
+        };
+
+        const DIFF_PLURAL = {
+            tutorial: "Учебные", easy: "Лёгкие", casual: "Простые", normal: "Нормальные", hard: "Сложные",
+            insane: "Очень сложные", extreme: "Экстремальные", ultra: "Ультра", impossible: "Невозможные", tourist: "Экспертные"
+        };
+
+        function renderDifficultyRing(entries, extra) {
+            const box = document.getElementById("diffRing");
+            const legend = document.getElementById("difficultyBars");
+            const meta = document.getElementById("diffMeta");
+            if (!box || !legend) return;
+            const total = entries.reduce((a, e) => a + e.value, 0);
+            if (meta) {
+                meta.textContent = extra > 0 ? `+${extra} вне сайта` : "";
+                meta.title = extra > 0 ? "Решённые задачи, которых больше нет на сайте" : "";
+            }
+            if (!total) {
+                box.innerHTML = `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="13"/></svg><div class="dring-c"><b>0</b><span>задач</span></div>`;
+                legend.innerHTML = `<div class="analytics-sub">Реши первую задачу, и здесь появится разбивка.</div>`;
+                return;
+            }
+            let acc = 0;
+            const gap = entries.length > 1 ? 1.4 : 0;
+            const arcs = entries.map((e) => {
+                const len = (e.value / total) * 100;
+                const dash = Math.max(0.5, len - gap);
+                const arc = `<circle class="seg" cx="60" cy="60" r="50" pathLength="100" stroke="${DIFF_COLORS[e.key] || "#6b7280"}" stroke-dasharray="${dash} ${100 - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 60 60)"><title>${e.label}: ${e.value}</title></circle>`;
+                acc += len;
+                return arc;
+            }).join("");
+            const word = typeof codebugPlural === "function" ? codebugPlural(total, "задача", "задачи", "задач").replace(/^\d+\s*/, "") : "задач";
+            box.innerHTML = `<svg viewBox="0 0 120 120" role="img" aria-label="Решённые задачи по сложности"><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="13"/>${arcs}</svg><div class="dring-c"><b>${total}</b><span>${word}</span></div>`;
+            legend.innerHTML = entries.map((e) => `<div class="dl-row"><i style="background:${DIFF_COLORS[e.key] || "#6b7280"}"></i><span>${DIFF_PLURAL[e.key] || e.label}</span><b>${e.value}</b></div>`).join("");
+        }
+
+        const VERDICT_GROUPS = [
+            ["ok", "AC", "Accepted", "#22c55e"], ["partial", "PT", "Partial", "#facc15"], ["wa", "WA", "Wrong Answer", "#ef4444"],
+            ["tl", "TL", "Time Limit", "#a78bfa"], ["re", "RE", "Runtime Error", "#fb7185"], ["ce", "CE", "Compilation Error", "#fb923c"], ["other", "OT", "Other", "#6b7280"]
+        ];
+
+        function renderVerdicts(subs) {
+            const bar = document.getElementById("verdictBar");
+            const totalEl = document.getElementById("verdictTotal");
+            if (!bar) return;
+            const counts = Object.fromEntries(VERDICT_GROUPS.map((g) => [g[0], 0]));
+            subs.forEach((sub) => {
+                const v = String(sub.verdict || "").toUpperCase();
+                if (isSolvedSubmission(sub)) counts.ok++;
+                else if (/^\d+$/.test(v) || v === "PS" || v === "PT") counts.partial++;
+                else if (v.startsWith("WA")) counts.wa++;
+                else if (v.startsWith("TL")) counts.tl++;
+                else if (v.startsWith("RE") || v.startsWith("ML")) counts.re++;
+                else if (v.startsWith("CE")) counts.ce++;
+                else counts.other++;
+            });
+            const total = subs.length;
+            if (totalEl) totalEl.textContent = total ? (typeof codebugPlural === "function" ? codebugPlural(total, "посылка", "посылки", "посылок") : `${total}`) : "";
+            if (!total) {
+                bar.innerHTML = `<div class="analytics-sub">Посылок пока нет.</div>`;
+                return;
+            }
+            const used = VERDICT_GROUPS.filter((g) => counts[g[0]] > 0);
+            bar.innerHTML = used.map((g) => `<button type="button" data-k="${g[0]}" style="--n:${counts[g[0]]};background:${g[3]}" aria-label="${g[2]}: ${counts[g[0]]}"><span class="vcode">${g[1]}</span><span class="vfull">${g[2]}</span></button>`).join("");
+
+            const openSeg = (btn) => {
+                [...bar.children].forEach((x) => { if (x !== btn) x.classList.remove("on"); });
+                if (!btn) return;
+                const n = counts[btn.dataset.k];
+                const width = bar.clientWidth || 1;
+                const need = btn.querySelector(".vfull").scrollWidth + 32;
+                const share = Math.min(0.8, need / width);
+                const grow = (n / total) >= share ? n : share * (total - n) / (1 - share);
+                btn.style.setProperty("--g", grow.toFixed(2));
+                btn.classList.add("on");
+            };
+            bar.onpointerover = (e) => { const b = e.target.closest("button"); if (b && e.pointerType === "mouse") openSeg(b); };
+            bar.onpointerleave = (e) => { if (e.pointerType === "mouse") openSeg(null); };
+            bar.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; b.classList.contains("on") ? openSeg(null) : openSeg(b); };
+            bar.onfocusin = (e) => { const b = e.target.closest("button"); if (b && b.matches(":focus-visible")) openSeg(b); };
+            bar.onfocusout = () => openSeg(null);
+        }
+
+        /* ---------- tags: three groups on an area-proportional Euler diagram ---------- */
+        const TAG_GROUPS = [
+            { key: "idea", label: "Идея", color: "#f59e0b" },
+            { key: "impl", label: "Реализация", color: "#38bdf8" },
+            { key: "algo", label: "Алгоритмы и СД", color: "#a78bfa" }
+        ];
+        const TAG_GROUP_OF = (() => {
+            const map = {};
+            const add = (g, list) => list.forEach((t) => { map[t] = g; });
+            add(0, ["idea", "constructive", "math", "xor", "permutation", "counting", "bruteforce", "brute force", "greedy", "invariant"]);
+            add(1, ["implementation", "input", "output", "overflow", "precision", "time limit", "interactive", "queries", "subgroups", "simulation", "arrays", "array", "strings", "string"]);
+            add(2, ["binary search", "hash table", "prefix sums", "two pointers", "dijkstra", "multiset", "modular exponentiation", "modulo", "integer sqrt", "dynamic programming", "dp", "graphs", "graph", "sorting", "tree", "trees", "data structures", "dsu", "segment tree"]);
+            return (tag) => {
+                const key = String(tag || "").trim().toLowerCase();
+                return key in map ? map[key] : -1;
+            };
+        })();
+        const TAG_REGIONS = [
+            { m: 1, label: "Только идея", color: "#f59e0b" },
+            { m: 2, label: "Только реализация", color: "#38bdf8" },
+            { m: 4, label: "Только алгоритмы и СД", color: "#a78bfa" },
+            { m: 3, label: "Идея и реализация", color: "#bef264" },
+            { m: 5, label: "Идея и алгоритмы", color: "#fb7185" },
+            { m: 6, label: "Реализация и алгоритмы", color: "#818cf8" },
+            { m: 7, label: "Все три сразу", color: "#fff4d6" }
+        ];
+
+        function ellipseHas(c, px, py) {
+            if (!(c.a > 0)) return Infinity;
+            const dx = px - c.x, dy = py - c.y, co = Math.cos(c.t || 0), si = Math.sin(c.t || 0);
+            const u = dx * co + dy * si, v = -dx * si + dy * co;
+            return (u / c.a) ** 2 + (v / c.b) ** 2;
+        }
+
+        function vennSample(cs, box, N, cb) {
+            const sx = (box.x1 - box.x0) / N, sy = (box.y1 - box.y0) / N, cell = sx * sy;
+            const E = cs.map((c) => c.a > 0 ? [c.x, c.y, Math.cos(c.t || 0) / c.a, Math.sin(c.t || 0) / c.a, Math.cos(c.t || 0) / c.b, Math.sin(c.t || 0) / c.b] : null);
+            for (let i = 0; i < N; i++) {
+                const px = box.x0 + (i + 0.5) * sx;
+                for (let j = 0; j < N; j++) {
+                    const py = box.y0 + (j + 0.5) * sy;
+                    let m = 0;
+                    for (let k = 0; k < 3; k++) {
+                        const e = E[k];
+                        if (!e) continue;
+                        const dx = px - e[0], dy = py - e[1], u = dx * e[2] + dy * e[3], v = -dx * e[5] + dy * e[4];
+                        if (u * u + v * v < 1) m |= 1 << k;
+                    }
+                    cb(m, px, py, cell);
+                }
+            }
+        }
+
+        function lensArea(r1, r2, d) {
+            if (r1 <= 0 || r2 <= 0 || d >= r1 + r2) return 0;
+            if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
+            const a = r1 * r1 * Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1));
+            const b = r2 * r2 * Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2));
+            const c = 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
+            return a + b - c;
+        }
+
+        function lensDistance(r1, r2, area) {
+            if (r1 <= 0 || r2 <= 0) return r1 + r2 + 0.5;
+            if (area <= 0) return (r1 + r2) * 1.04;
+            if (area >= Math.PI * Math.min(r1, r2) ** 2 - 1e-9) return Math.abs(r1 - r2) * 0.98;
+            let lo = Math.abs(r1 - r2), hi = r1 + r2;
+            for (let i = 0; i < 60; i++) {
+                const mid = (lo + hi) / 2;
+                lensArea(r1, r2, mid) > area ? lo = mid : hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+
+        function vennLayout(counts) {
+            const tot = TAG_REGIONS.reduce((a, R) => a + counts[R.m], 0);
+            const floor = 0.15 * Math.max(1, tot) / 7;
+            const reg = {};
+            TAG_REGIONS.forEach((R) => { reg[R.m] = counts[R.m] + floor; });
+            const size = [0, 1, 2].map((k) => TAG_REGIONS.reduce((a, R) => a + (R.m & (1 << k) ? reg[R.m] : 0), 0));
+            const pair = (a, b) => TAG_REGIONS.reduce((acc, R) => acc + ((R.m & (1 << a)) && (R.m & (1 << b)) ? reg[R.m] : 0), 0);
+            const r = size.map((v) => Math.sqrt(v / Math.PI));
+            const dAB = lensDistance(r[0], r[1], pair(0, 1)), dAC = lensDistance(r[0], r[2], pair(0, 2)), dBC = lensDistance(r[1], r[2], pair(1, 2));
+            const base = [{ x: 0, y: 0 }, { x: Math.max(dAB, 1e-3), y: 0 }, { x: 0, y: 0 }];
+            const cx0 = (dAC * dAC - dBC * dBC + base[1].x * base[1].x) / (2 * base[1].x);
+            base[2].x = cx0;
+            base[2].y = Math.sqrt(Math.max(0, dAC * dAC - cx0 * cx0));
+            // Three shapes cannot always match seven parts exactly: fit by relative error,
+            // and push back hard on any non-empty part that would shrink to nothing.
+            const maxR = Math.max(...r, 0.01);
+            const lossOf = (cs, box) => {
+                const A = new Array(8).fill(0);
+                vennSample(cs, box, 56, (m, x, y, a) => { A[m] += a; });
+                let L = 0;
+                for (const R of TAG_REGIONS) {
+                    const t = reg[R.m], a = A[R.m];
+                    L += (a - t) ** 2 / t;
+                    if (counts[R.m] > 0 && a < 0.45 * t) L += 12 * (0.45 * t - a) ** 2 / t;
+                }
+                return L;
+            };
+            const ok = (c, k) => r[k] <= 0 || (c.a >= r[k] * 0.6 && c.b >= r[k] * 0.6 && c.a <= r[k] * 1.6 && c.b <= r[k] * 1.6 && Math.max(c.a / c.b, c.b / c.a) <= 1.6);
+            const fit = (cs) => {
+                const xs = cs.map((c) => c.x), ys = cs.map((c) => c.y), m = 2 * maxR;
+                const box = { x0: Math.min(...xs) - m, x1: Math.max(...xs) + m, y0: Math.min(...ys) - m, y1: Math.max(...ys) + m };
+                const P = [[1, "x"], [1, "y"], [2, "x"], [2, "y"], [0, "a"], [0, "b"], [1, "a"], [1, "b"], [2, "a"], [2, "b"], [0, "t"], [1, "t"], [2, "t"]];
+                let best = lossOf(cs, box), step = maxR * 0.3;
+                for (let it = 0; it < 60 && step > maxR * 0.006; it++) {
+                    let moved = false;
+                    for (const [k, ax] of P) {
+                        if (r[k] <= 0) continue;
+                        for (const sg of [step, -step]) {
+                            const d = ax === "t" ? sg / maxR * 0.6 : (ax === "a" || ax === "b") ? sg * 0.4 : sg;
+                            cs[k][ax] += d;
+                            const L = ok(cs[k], k) ? lossOf(cs, box) : Infinity;
+                            if (L < best - 1e-9) { best = L; moved = true; } else cs[k][ax] -= d;
+                        }
+                    }
+                    if (!moved) step /= 2;
+                }
+                return best;
+            };
+            let cs = null, bestL = Infinity;
+            for (const turn of [0, 0.5, -0.5, 1.1, -1.1]) {
+                const c = base.map((q, k) => ({ x: q.x, y: q.y, a: r[k], b: r[k], t: 0 }));
+                const a0 = Math.atan2(c[2].y, c[2].x) + turn, d = Math.hypot(c[2].x, c[2].y);
+                c[2].x = Math.cos(a0) * d;
+                c[2].y = Math.sin(a0) * d;
+                const L = fit(c);
+                if (L < bestL) { bestL = L; cs = c; }
+            }
+            // turn the picture so идея is on the left, реализация on the right, алгоритмы below
+            const [A, B, C] = cs;
+            if (A.a > 0 && B.a > 0) {
+                const ang = -Math.atan2(B.y - A.y, B.x - A.x), co = Math.cos(ang), si = Math.sin(ang);
+                cs.forEach((c) => {
+                    const dx = c.x - A.x, dy = c.y - A.y;
+                    c.x = A.x + dx * co - dy * si;
+                    c.y = A.y + dx * si + dy * co;
+                    c.t += ang;
+                });
+                if (C.a > 0 && C.y < A.y) cs.forEach((c) => { c.y = 2 * A.y - c.y; c.t = -c.t; });
+            }
+            const real = [0, 1, 2].map((k) => TAG_REGIONS.reduce((a, R) => a + (R.m & (1 << k) ? counts[R.m] : 0), 0));
+            return { cs, size: real };
+        }
+
+        function renderTagVenn(counts, noTagCount) {
+            const host = document.getElementById("tagVenn");
+            const legend = document.getElementById("tagLegend");
+            const cap = document.getElementById("tagCap");
+            const meta = document.getElementById("tagMeta");
+            if (!host || !legend) return;
+            const total = TAG_REGIONS.reduce((a, R) => a + counts[R.m], 0);
+            if (meta) meta.textContent = total ? (typeof codebugPlural === "function" ? codebugPlural(total, "задача", "задачи", "задач") : `${total}`) : "";
+            if (!total) {
+                host.innerHTML = "";
+                legend.innerHTML = `<div class="analytics-sub">Пока нет решённых задач с тегами.</div>`;
+                if (cap) cap.textContent = "";
+                return;
+            }
+            const { cs: raw, size } = vennLayout(counts);
+            legend.innerHTML = TAG_GROUPS.map((g, k) => `<div class="dl-row"><i style="background:${g.color}"></i><span>${g.label}</span><b>${size[k]}</b></div>`).join("");
+            const live = raw.filter((c) => c.a > 0);
+            const hx = (c) => Math.hypot(c.a * Math.cos(c.t), c.b * Math.sin(c.t));
+            const hy = (c) => Math.hypot(c.a * Math.sin(c.t), c.b * Math.cos(c.t));
+            const bx0 = Math.min(...live.map((c) => c.x - hx(c))), bx1 = Math.max(...live.map((c) => c.x + hx(c)));
+            const by0 = Math.min(...live.map((c) => c.y - hy(c))), by1 = Math.max(...live.map((c) => c.y + hy(c)));
+            const S = 300 / Math.max(bx1 - bx0, by1 - by0);
+            const cs = raw.map((c) => ({ x: (c.x - bx0) * S, y: (c.y - by0) * S, a: c.a * S, b: c.b * S, t: c.t }));
+            const best = {};
+            vennSample(cs, { x0: 0, x1: (bx1 - bx0) * S, y0: 0, y1: (by1 - by0) * S }, 120, (m, x, y) => {
+                if (!m) return;
+                let d = Infinity;
+                for (const c of cs) if (c.a > 0) d = Math.min(d, Math.abs(Math.sqrt(ellipseHas(c, x, y)) - 1) * Math.min(c.a, c.b));
+                if (!best[m] || d > best[m].d) best[m] = { x, y, d };
+            });
+            const vx0 = -8, vy0 = -8, vx1 = (bx1 - bx0) * S + 8, vy1 = (by1 - by0) * S + 8;
+            const rect = `x="${vx0}" y="${vy0}" width="${vx1 - vx0}" height="${vy1 - vy0}"`;
+            const shape = (c, extra) => `<ellipse cx="${c.x.toFixed(2)}" cy="${c.y.toFixed(2)}" rx="${Math.max(0, c.a).toFixed(2)}" ry="${Math.max(0, c.b).toFixed(2)}" transform="rotate(${(c.t * 180 / Math.PI).toFixed(2)} ${c.x.toFixed(2)} ${c.y.toFixed(2)})" ${extra || ""}/>`;
+            let defs = cs.map((c, k) => `<clipPath id="vcp${k}">${shape(c)}</clipPath>`).join("");
+            defs += `<clipPath id="vcpu">${cs.map((c) => shape(c)).join("")}</clipPath>`;
+            defs += `<linearGradient id="vsheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>`;
+            let body = "";
+            for (const R of TAG_REGIONS) {
+                const inc = [0, 1, 2].filter((k) => R.m & (1 << k));
+                const exc = [0, 1, 2].filter((k) => !(R.m & (1 << k)) && cs[k].a > 0);
+                if (inc.some((k) => !(cs[k].a > 0))) continue;
+                defs += `<mask id="vmk${R.m}" maskUnits="userSpaceOnUse" ${rect}><rect ${rect} fill="#fff"/>${exc.map((k) => shape(cs[k], 'fill="#000"')).join("")}</mask>`;
+                const fill = counts[R.m] > 0 ? R.color : "rgba(255,255,255,.05)";
+                let inner = `<rect ${rect} fill="${fill}" mask="url(#vmk${R.m})"/>`;
+                for (const k of inc) inner = `<g clip-path="url(#vcp${k})">${inner}</g>`;
+                body += `<g class="rg" data-m="${R.m}">${inner}</g>`;
+            }
+            body += `<rect ${rect} fill="url(#vsheen)" clip-path="url(#vcpu)" pointer-events="none"/>`;
+            body += cs.filter((c) => c.a > 0).map((c) => shape(c, 'fill="none" stroke="#0e0e0e" stroke-width="3.5" pointer-events="none"')).join("");
+            body += cs.map((c, k) => c.a > 0 ? shape(c, `fill="none" stroke="${TAG_GROUPS[k].color}" stroke-width="1.4" pointer-events="none"`) : "").join("");
+            body += TAG_REGIONS.map((R) => {
+                const b = best[R.m], n = counts[R.m];
+                return b && n > 0 && b.d > 9 ? `<text class="vnum" data-m="${R.m}" x="${b.x.toFixed(1)}" y="${(b.y + 5).toFixed(1)}" text-anchor="middle">${n}</text>` : "";
+            }).join("");
+            host.innerHTML = `<svg class="venn" viewBox="${vx0} ${vy0} ${(vx1 - vx0).toFixed(1)} ${(vy1 - vy0).toFixed(1)}" role="img" aria-label="Решённые задачи по трём группам тегов">${`<defs>${defs}</defs>`}${body}</svg>`;
+            const DEFAULT_CAP = noTagCount > 0
+                ? `Наведи на любую часть · ещё ${noTagCount} без тегов`
+                : "Наведи на любую часть";
+            if (cap) cap.textContent = DEFAULT_CAP;
+            const hover = (m) => {
+                const svg = host.querySelector("svg");
+                if (!svg) return;
+                svg.classList.toggle("hov", !!m);
+                svg.querySelectorAll(".rg, .vnum").forEach((el) => el.classList.toggle("on", Number(el.dataset.m) === m));
+                if (!cap) return;
+                if (!m) { cap.textContent = DEFAULT_CAP; return; }
+                const R = TAG_REGIONS.find((x) => x.m === m), n = counts[m];
+                cap.innerHTML = `${R.label}: <b>${typeof codebugPlural === "function" ? codebugPlural(n, "задача", "задачи", "задач") : n}</b>`;
+            };
+            host.onpointermove = (e) => { const g = e.target.closest(".rg"); hover(g ? Number(g.dataset.m) : 0); };
+            host.onpointerleave = () => hover(0);
+        }
+
         async function loadAnalytics() {
             let submissions = [];
             try {
@@ -1876,6 +2534,7 @@
             }
             renderHeatmap(solvedByDay);
             renderSolvedTrendChart(solvedByDay);
+            renderVerdicts(mySubmissions);
 
             const attemptsCount = mySubmissions.length;
             const solvedCount = solvedSubs.length;
@@ -1914,51 +2573,28 @@
                 diffCounts[key] = (diffCounts[key] || 0) + 1;
             }
 
-            const diffOrder = ["tutorial", "easy", "casual", "normal", "hard", "insane", "extreme", "ultra", "impossible", "tourist", "unknown"];
+            const diffOrder = ["tutorial", "easy", "casual", "normal", "hard", "insane", "extreme", "ultra", "impossible", "tourist"];
             const diffEntries = diffOrder
                 .filter(key => (diffCounts[key] || 0) > 0)
-                .map(key => ({ label: difficultyLabel(key), value: diffCounts[key] }));
-            renderBars("difficultyBars", diffEntries);
+                .map(key => ({ key, label: difficultyLabel(key), value: diffCounts[key] }));
+            renderDifficultyRing(diffEntries, diffCounts.unknown || 0);
 
-            const tagMetricSelect = document.getElementById("tagMetricSelect");
-            const tagLimitSelect = document.getElementById("tagLimitSelect");
-            const renderTagChart = () => {
-                const metric = tagMetricSelect?.value || "solved";
-                const limit = Number(tagLimitSelect?.value || 10);
-                const tagCounts = {};
-
-                if (metric === "attempts") {
-                    for (const sub of mySubmissions) {
-                        const task = tasksById[String(sub.task ?? "")];
-                        const tags = Array.isArray(task?.tags) ? task.tags : [];
-                        for (const tag of tags) {
-                            const key = String(tag || "").trim().toLowerCase();
-                            if (!key) continue;
-                            tagCounts[key] = (tagCounts[key] || 0) + 1;
-                        }
-                    }
-                } else {
-                    for (const tid of solvedTaskIds) {
-                        const task = tasksById[String(tid)];
-                        const tags = Array.isArray(task?.tags) ? task.tags : [];
-                        for (const tag of tags) {
-                            const key = String(tag || "").trim().toLowerCase();
-                            if (!key) continue;
-                            tagCounts[key] = (tagCounts[key] || 0) + 1;
-                        }
-                    }
+            const tagCounts = {};
+            TAG_REGIONS.forEach((R) => { tagCounts[R.m] = 0; });
+            let noTagCount = 0;
+            for (const tid of solvedTaskIds) {
+                const task = tasksById[String(tid)];
+                if (!task) continue;
+                const tags = Array.isArray(task.tags) ? task.tags : [];
+                let mask = 0;
+                for (const tag of tags) {
+                    const g = TAG_GROUP_OF(tag);
+                    if (g >= 0) mask |= 1 << g;
                 }
-
-                const entries = Object.entries(tagCounts)
-                    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-                    .slice(0, Number.isFinite(limit) ? limit : 10)
-                    .map(([label, value]) => ({ label: typeof window.codebugTagRu === "function" ? window.codebugTagRu(label) : label, value }));
-                renderBars("tagBars", entries);
-            };
-
-            if (tagMetricSelect) tagMetricSelect.onchange = renderTagChart;
-            if (tagLimitSelect) tagLimitSelect.onchange = renderTagChart;
-            renderTagChart();
+                if (mask) tagCounts[mask]++;
+                else noTagCount++;
+            }
+            renderTagVenn(tagCounts, noTagCount);
         }
 
         /* ============================
