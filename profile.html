@@ -1341,7 +1341,7 @@
 
     <script src="firebase.js?v=20260521-3"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261024-beam"></script>
+    <script src="auth.js?v=20261024-ux1"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -1582,17 +1582,17 @@
 
         function difficultyLabel(key) {
             const map = {
-                tutorial: "Tutorial",
-                easy: "Easy",
-                casual: "Casual",
-                normal: "Normal",
-                hard: "Hard",
-                insane: "Insane",
-                extreme: "Extreme",
-                ultra: "Ultra",
-                impossible: "Impossible",
-                tourist: "Tourist",
-                unknown: "Unknown"
+                tutorial: "Учебная",
+                easy: "Лёгкая",
+                casual: "Простая",
+                normal: "Нормальная",
+                hard: "Сложная",
+                insane: "Очень сложная",
+                extreme: "Экстремальная",
+                ultra: "Ультра",
+                impossible: "Невозможная",
+                tourist: "Экспертная",
+                unknown: "Другие задачи"
             };
             return map[key] || key;
         }
@@ -1952,7 +1952,7 @@
                 const entries = Object.entries(tagCounts)
                     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
                     .slice(0, Number.isFinite(limit) ? limit : 10)
-                    .map(([label, value]) => ({ label, value }));
+                    .map(([label, value]) => ({ label: typeof window.codebugTagRu === "function" ? window.codebugTagRu(label) : label, value }));
                 renderBars("tagBars", entries);
             };
 

@@ -444,7 +444,7 @@
 
     <script src="firebase.js"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261024-beam"></script>
+    <script src="auth.js?v=20261024-ux1"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -636,7 +636,7 @@
             </div>
 
             <div class="user-exp">${u.exp} EXP</div>
-            <div class="user-solved">${solvedCnt} задач</div>
+            <div class="user-solved">${window.codebugPlural ? codebugPlural(solvedCnt, "задача", "задачи", "задач") : solvedCnt + " задач"}</div>
         `;
 
                 list.appendChild(row);

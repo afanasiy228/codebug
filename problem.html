@@ -345,6 +345,44 @@
             line-height: 1.45;
         }
         
+        .statement-hint {
+            margin: 18px 0 6px;
+            border: 1px dashed rgba(245, 158, 11, 0.35);
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.04);
+        }
+
+        .statement-hint > summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 14px;
+            color: #fbbf24;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .statement-hint > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .statement-hint > summary::after {
+            content: "Попробуй сначала сам";
+            margin-left: auto;
+            color: #8a8984;
+            font-size: 12.5px;
+            font-weight: 500;
+        }
+
+        .statement-hint[open] > summary::after {
+            content: "Скрыть";
+        }
+
+        .statement-hint-body {
+            padding: 0 14px 12px;
+        }
+
         #taskHelp {
             font-size: 16.5px;
             line-height: 1.45;
@@ -607,7 +645,7 @@
 
 <script src="firebase.js?v=20260521-3"></script>
 <!-- обязательно первой! -->
-<script src="auth.js?v=20261024-beam"></script>
+<script src="auth.js?v=20261024-ux1"></script>
 <script src="submission-diagnostics.js?v=20260921-1"></script>
 <!-- использует db -->
 <script src="globalsubmissions.js"></script>
@@ -1543,9 +1581,38 @@
             statementPreludeHtml = buildStatementPrelude(currentStatementLang, currentProblemMeta);
             const bodyHtml = stripDuplicatedIoMetaHtml(statementSections[currentStatementLang] || statementSections.ru || "");
             target.innerHTML = `${statementPreludeHtml}${bodyHtml}`;
+            hideStatementHints(target);
             if (window.MathJax?.typesetPromise) {
                 MathJax.typesetPromise([target]).catch(console.warn);
             }
+        }
+
+        // The "Важно" / "Important" section of a statement often names the bug outright.
+        // Fold it (up to the next heading of the same or higher level) behind a button.
+        function hideStatementHints(root) {
+            const isHint = (el) => /^(важно|important|подсказка|hint)\s*[!:.]?$/i.test(String(el.textContent || "").trim());
+            const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(isHint);
+            headings.forEach((heading) => {
+                const level = Number(heading.tagName.slice(1));
+                const parts = [];
+                let node = heading.nextSibling;
+                while (node) {
+                    if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName) && Number(node.tagName.slice(1)) <= level) break;
+                    const next = node.nextSibling;
+                    parts.push(node);
+                    node = next;
+                }
+                if (!parts.some((p) => String(p.textContent || "").trim())) return;
+                const details = document.createElement("details");
+                details.className = "statement-hint";
+                const summary = document.createElement("summary");
+                summary.textContent = currentStatementLang === "en" ? "Show hint" : "Показать подсказку";
+                const body = document.createElement("div");
+                body.className = "statement-hint-body";
+                parts.forEach((p) => body.appendChild(p));
+                details.append(summary, body);
+                heading.replaceWith(details);
+            });
         }
 
         function formatTimeLimit(meta, lang) {
@@ -1630,6 +1697,7 @@
         }
 
         function normalizeTag(tag) {
+            if (typeof window.codebugTagRu === "function") return window.codebugTagRu(tag);
             const t = String(tag || "").trim();
             const key = t.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
             const map = {

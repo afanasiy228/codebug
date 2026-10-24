@@ -1092,6 +1092,30 @@
       background: rgba(245, 158, 11, 0.16) !important;
     }
 
+    body.contests-page [hidden] {
+      display: none !important;
+    }
+
+    body.contests-page .quiet-line {
+      margin: 0 0 30px;
+      padding: 14px 16px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 10px;
+      color: var(--text-dim);
+      font-size: 14.5px;
+      line-height: 1.5;
+    }
+
+    body.contests-page .quiet-line a {
+      color: #fbbf24;
+      text-decoration: none;
+    }
+
+    body.contests-page .empty-line.is-compact {
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
     body.contests-page .empty-line,
     body.contests-page .empty-state {
       border: 1px dashed var(--line-strong);
@@ -1369,12 +1393,12 @@
       <div>
         <div class="title-row">
           <h1 class="page-title">Соревнования</h1>
-          <button class="create-trigger" type="button" id="openCreateModal">+ Создать соревнование</button>
+          <button class="create-trigger" type="button" id="openCreateModal" hidden>+ Создать соревнование</button>
         </div>
       </div>
     </section>
 
-    <section class="user-stats" aria-label="Статистика пользователя">
+    <section class="user-stats" id="userStats" aria-label="Статистика пользователя" hidden>
       <div class="user-stat">
         <strong id="statWins">0</strong>
         <span>побед</span>
@@ -1383,7 +1407,8 @@
 
     <section class="layout">
       <div class="left-column">
-        <section class="section">
+        <p class="quiet-line" id="noLiveLine" hidden>Сейчас соревнований нет. Анонсы новых — в Telegram <a href="https://t.me/codebug_official" target="_blank" rel="noopener noreferrer">@codebug_official</a>.</p>
+        <section class="section" id="ongoingSection">
           <h2 class="section-title">Идут сейчас</h2>
           <div id="ongoingList" class="contest-list"></div>
           <div id="ongoingEmpty" class="empty-line" style="display:none;">
@@ -1392,7 +1417,7 @@
           </div>
         </section>
 
-        <section class="section">
+        <section class="section" id="upcomingSection">
           <h2 class="section-title">Предстоящие</h2>
           <div id="upcomingList" class="contest-list"></div>
           <div id="upcomingEmpty" class="empty-line" style="display:none;">
@@ -1498,7 +1523,7 @@
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
   <script src="firebase.js"></script>
-  <script src="auth.js?v=20261024-beam"></script>
+  <script src="auth.js?v=20261024-ux1"></script>
 
   <script>
     updateNavbar();
@@ -1631,7 +1656,7 @@
 
     function getParticipantsText(contest) {
       const count = Number(contest.participantsCount || contest.registeredCount || 0);
-      if (Number.isFinite(count) && count > 0) return `${count} участников`;
+      if (Number.isFinite(count) && count > 0) return window.codebugPlural ? codebugPlural(count, "участник", "участника", "участников") : `${count} участников`;
       return "участники: —";
     }
 
@@ -1725,7 +1750,7 @@
                 <span class="type-badge ${kind}">${kindLabel(kind)}</span>
                 <span class="visibility-badge ${visibilityClass}">${visibility}</span>
               </div>
-              ${contestDescription(contest) ? `<p class="contest-description">${escapeHtml(contestDescription(contest))}</p>` : ""}
+              ${contestDescription(contest) && !(contest.status === "finished" && /появ\S* позже/i.test(contestDescription(contest))) ? `<p class="contest-description">${escapeHtml(contestDescription(contest))}</p>` : ""}
               ${contestRewardsText(contest) ? `<p class="contest-description">${escapeHtml(contestRewardsText(contest))}</p>` : ""}
             </div>
           </div>
@@ -1770,9 +1795,34 @@
       await renderList(ongoing, "ongoingList", "ongoingEmpty");
       await renderList(upcoming, "upcomingList", "upcomingEmpty");
       await renderList(finished, "finishedList", "finishedEmpty");
+      collapseEmptySections(ongoing.length, upcoming.length);
+    }
+
+    // Nothing live and nothing upcoming: one quiet line instead of two empty blocks.
+    // Only one of them empty: keep its heading with a one-line note.
+    function collapseEmptySections(ongoingCount, upcomingCount) {
+      const both = !ongoingCount && !upcomingCount;
+      const line = document.getElementById("noLiveLine");
+      if (line) line.hidden = !both;
+      const ongoingSection = document.getElementById("ongoingSection");
+      const upcomingSection = document.getElementById("upcomingSection");
+      if (ongoingSection) ongoingSection.hidden = both;
+      if (upcomingSection) upcomingSection.hidden = both;
+      const compact = (id, text) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        el.classList.add("is-compact");
+      };
+      if (!both && !ongoingCount) compact("ongoingEmpty", "Сейчас ничего не идёт.");
+      if (!both && !upcomingCount) compact("upcomingEmpty", "Анонсов пока нет.");
     }
 
     function renderUserStats() {
+      const statsBox = document.getElementById("userStats");
+      if (statsBox) statsBox.hidden = !user;
+      const createBtn = document.getElementById("openCreateModal");
+      if (createBtn) createBtn.hidden = !user;
       const wins = Number(state.userStats?.contestWins || state.userStats?.wins || 0);
       document.getElementById("statWins").textContent = formatNumber(wins);
     }

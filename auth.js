@@ -852,12 +852,66 @@ function runLowPriority(task) {
     }
 }
 
+// Task tags come from the task packages in English; show them in Russian everywhere.
+const TAG_RU = {
+    "idea": "идея",
+    "interactive": "интерактив",
+    "overflow": "переполнение",
+    "math": "математика",
+    "hash table": "хеш-таблицы",
+    "binary search": "бинарный поиск",
+    "prefix sums": "префиксные суммы",
+    "time limit": "медленное решение",
+    "modular exponentiation": "быстрое возведение в степень",
+    "modulo": "остатки по модулю",
+    "xor": "xor",
+    "dijkstra": "алгоритм Дейкстры",
+    "subgroups": "подгруппы",
+    "permutation": "перестановки",
+    "queries": "запросы",
+    "two pointers": "два указателя",
+    "constructive": "конструктив",
+    "integer sqrt": "целый корень",
+    "precision": "точность вычислений",
+    "input": "ввод данных",
+    "implementation": "реализация",
+    "multiset": "multiset",
+    "counting": "подсчёт",
+    "bruteforce": "перебор",
+    "brute force": "перебор",
+    "dynamic programming": "динамика",
+    "dp": "динамика",
+    "graphs": "графы",
+    "graph": "графы",
+    "strings": "строки",
+    "string": "строки",
+    "arrays": "массивы",
+    "array": "массивы",
+    "sorting": "сортировка",
+    "greedy": "жадность",
+    "tree": "деревья",
+    "trees": "деревья"
+};
+
+function codebugTagRu(tag) {
+    const raw = String(tag || "").trim();
+    const key = raw.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+    return TAG_RU[key] || raw;
+}
+
+// codebugPlural(5, "задача", "задачи", "задач") -> "5 задач"
+function codebugPlural(n, one, few, many) {
+    const abs = Math.abs(Number(n) || 0);
+    const m10 = abs % 10, m100 = abs % 100;
+    const word = m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+    return `${n} ${word}`;
+}
+
 const NAV_ITEMS = [
     { href: "index.html", label: "Главное", aliases: ["", "index.html"] },
     { href: "train.html", label: "Тренировка", aliases: ["train.html", "problem.html"] },
     { href: "contests.html", label: "Соревнования", aliases: ["contests.html", "contest.html"] },
     { href: "rating.html", label: "Рейтинг", aliases: ["rating.html"] },
-    { href: "submissions.html", label: "Посылки", aliases: ["submissions.html"] },
     { href: "donate.html", label: "Подписка", aliases: ["donate.html"] },
     { href: "faq.html", label: "Помощь", aliases: ["faq.html"] }
 ];
@@ -2412,6 +2466,8 @@ if (typeof document !== "undefined") {
    EXPORT GLOBAL (for HTML)
 ============================ */
 window.updateNavbar = updateNavbar;
+window.codebugTagRu = codebugTagRu;
+window.codebugPlural = codebugPlural;
 window.login = login;
 window.register = register;
 window.loginWithGoogle = loginWithGoogle;
