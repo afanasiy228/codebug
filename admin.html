@@ -439,7 +439,9 @@
         padding: 0 20px;
       }
     }
-  </style>
+        .kind-checks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 2px; color: #cbd5e1; font-size: 14px; }
+      .kind-checks label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+</style>
   <link rel="stylesheet" href="theme-dark.css">
 </head>
 
@@ -516,11 +518,12 @@
           </div>
         </div>
         <input id="taskMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
-        <select id="taskMetaMainTag" class="admin-input">
-          <option value="algorithm">Главный тег: Алгоритм</option>
-          <option value="idea">Главный тег: Идея</option>
-          <option value="implementation">Главный тег: Реализация</option>
-        </select>
+        <div class="kind-checks" id="taskMetaKinds" role="group" aria-label="Тип задачи, можно несколько">
+          <span>Тип:</span>
+          <label><input type="checkbox" value="idea"> Идея</label>
+          <label><input type="checkbox" value="implementation"> Реализация</label>
+          <label><input type="checkbox" value="algorithm"> Алгоритм</label>
+        </div>
         <select id="taskMetaTaskType" class="admin-input">
           <option value="standard">standard</option>
           <option value="grader">grader</option>
@@ -648,11 +651,12 @@
           </div>
         </div>
         <input id="editMetaTags" class="admin-input" type="text" placeholder="Теги (через запятую)">
-        <select id="editMetaMainTag" class="admin-input">
-          <option value="algorithm">Главный тег: Алгоритм</option>
-          <option value="idea">Главный тег: Идея</option>
-          <option value="implementation">Главный тег: Реализация</option>
-        </select>
+        <div class="kind-checks" id="editMetaKinds" role="group" aria-label="Тип задачи, можно несколько">
+          <span>Тип:</span>
+          <label><input type="checkbox" value="idea"> Идея</label>
+          <label><input type="checkbox" value="implementation"> Реализация</label>
+          <label><input type="checkbox" value="algorithm"> Алгоритм</label>
+        </div>
         <select id="editMetaTaskType" class="admin-input">
           <option value="standard">standard</option>
           <option value="grader">grader</option>
@@ -815,9 +819,20 @@
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
   <script src="firebase.js?v=20260521-3"></script>
-  <script src="auth.js?v=20261025-icons"></script>
+  <script src="auth.js?v=20261026-kinds"></script>
 
   <script>
+    // A task can be several kinds at once; the first checked one is also sent as mainTag.
+    function readKinds(prefix) {
+      return [...document.querySelectorAll(`#${prefix}Kinds input:checked`)].map((el) => el.value);
+    }
+    function writeKinds(prefix, problem) {
+      const kinds = Array.isArray(problem && problem.kinds) && problem.kinds.length
+        ? problem.kinds
+        : [(problem && problem.mainTag) || "algorithm"];
+      document.querySelectorAll(`#${prefix}Kinds input`).forEach((el) => { el.checked = kinds.includes(el.value); });
+    }
+
     updateNavbar();
 
     const user = getUser();
@@ -1080,7 +1095,8 @@
       const type = document.getElementById("taskMetaType").value.trim();
       const language = (document.getElementById("taskMetaLanguage").value.trim() || "cpp");
       const taskType = document.getElementById("taskMetaTaskType").value || "standard";
-      const mainTag = document.getElementById("taskMetaMainTag").value || "algorithm";
+      const kinds = readKinds("taskMeta");
+      const mainTag = kinds[0] || "algorithm";
       const tagsRaw = document.getElementById("taskMetaTags").value.trim();
       let groups = [];
 
@@ -1125,6 +1141,7 @@
         language,
         taskType,
         mainTag,
+        kinds,
         type,
         tags,
         groups
@@ -1375,7 +1392,7 @@
           document.getElementById("editMetaTags").value = Array.isArray(problem.tags) ? problem.tags.join(", ") : "";
           document.getElementById("editGroupsJson").value = JSON.stringify(problem.groups || [], null, 2);
           document.getElementById("editMetaTaskType").value = problem.taskType || "standard";
-          document.getElementById("editMetaMainTag").value = problem.mainTag || "algorithm";
+          writeKinds("editMeta", problem);
           window.editTaskGroups = Array.isArray(problem.groups) && problem.groups.length
             ? problem.groups.map(group => ({
                 id: Number(group.id),
@@ -1421,7 +1438,7 @@
         document.getElementById("editMetaTags").value = Array.isArray(meta.tags) ? meta.tags.join(", ") : "";
         document.getElementById("editGroupsJson").value = "[]";
         document.getElementById("editMetaTaskType").value = "standard";
-        document.getElementById("editMetaMainTag").value = meta.mainTag || "algorithm";
+        writeKinds("editMeta", meta);
         window.editTaskGroups = [{ id: 1, name: "group 1", points: 100, dependencies: [] }];
         renderGroupEditor("edit");
         setCustomSelectValue("editDifficultySelect", meta.difficulty || "", "Сложность");
@@ -1586,7 +1603,8 @@
       const type = document.getElementById("editMetaType").value.trim();
       const language = (document.getElementById("editMetaLanguage").value.trim() || "cpp");
       const taskType = document.getElementById("editMetaTaskType").value || "standard";
-      const mainTag = document.getElementById("editMetaMainTag").value || "algorithm";
+      const kinds = readKinds("editMeta");
+      const mainTag = kinds[0] || "algorithm";
       const tagsRaw = document.getElementById("editMetaTags").value.trim();
       const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
       let groups = [];
@@ -1624,6 +1642,7 @@
           language,
           taskType,
           mainTag,
+          kinds,
           type,
           tags,
           groups

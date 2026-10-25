@@ -8,7 +8,6 @@ AUTHENTICATED_PAGES = (
     "profile.html",
     "train.html",
     "problem.html",
-    "submissions.html",
     "friends.html",
     "rating.html",
     "contests.html",

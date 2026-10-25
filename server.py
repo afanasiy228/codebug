@@ -23,6 +23,7 @@ except Exception:
     redis = None
 
 import firebase_admin
+from line_diff import count_changed_lines
 from firebase_admin import credentials, db
 from firebase_admin import auth as admin_auth
 from polygon_importer import PolygonImportError, parse_polygon_package
@@ -1709,6 +1710,65 @@ def task_verification_status(problem, *, default="approved"):
     return value if value in {"approved", "pending"} else default
 
 
+TASK_KINDS = ("idea", "implementation", "algorithm")
+
+
+def task_kinds(problem):
+    """Every kind the task belongs to: idea, implementation, algorithm.
+
+    A task may be several at once. Older tasks only carry a single mainTag.
+    """
+    raw = (problem or {}).get("kinds")
+    kinds = []
+    if isinstance(raw, list):
+        for item in raw:
+            value = str(item or "").strip().lower()
+            if value in TASK_KINDS and value not in kinds:
+                kinds.append(value)
+    if not kinds:
+        main = str((problem or {}).get("mainTag") or "").strip().lower()
+        if main in TASK_KINDS:
+            kinds.append(main)
+    return kinds
+
+
+_CHANGE_BUDGET_CACHE = {}
+
+
+def task_change_budget(task_id, problem=None):
+    """How many lines a participant may change in the broken code.
+
+    An explicit maxChangedLines in problem.json wins; otherwise it is the
+    number of changed lines between the broken and the reference solution.
+    None means the task has no limit (no reference to compare with).
+    """
+    problem = problem if problem is not None else read_problem_config(task_id)
+    if not problem:
+        return None
+    explicit = problem.get("maxChangedLines")
+    if isinstance(explicit, int) and explicit > 0:
+        return explicit
+    files = problem.get("files") or {}
+    base = task_dir(task_id)
+    broken = os.path.join(base, files.get("code") or "")
+    reference = os.path.join(base, files.get("solution") or "")
+    if not (files.get("code") and files.get("solution") and os.path.isfile(broken) and os.path.isfile(reference)):
+        return None
+    key = (str(task_id), os.path.getmtime(broken), os.path.getmtime(reference))
+    cached = _CHANGE_BUDGET_CACHE.get(str(task_id))
+    if cached and cached[0] == key:
+        return cached[1]
+    budget = count_changed_lines(_read_text(broken), _read_text(reference)) or None
+    _CHANGE_BUDGET_CACHE[str(task_id)] = (key, budget)
+    return budget
+
+
+def task_broken_code(task_id, problem=None):
+    problem = problem if problem is not None else read_problem_config(task_id)
+    files = (problem or {}).get("files") or {}
+    return _task_text(task_id, files.get("code")) if files.get("code") else ""
+
+
 def read_task_meta(task_id):
     problem = read_problem_config(task_id)
     if not problem:
@@ -1723,6 +1783,8 @@ def read_task_meta(task_id):
         "language": normalize_language(problem.get("language")),
         "type": problem.get("type", ""),
         "tags": problem.get("tags") or [],
+        "kinds": task_kinds(problem),
+        "mainTag": (task_kinds(problem) or [""])[0],
         "visibility": visibility,
         "ownerLogin": str(problem.get("ownerLogin") or "").strip(),
         "verificationStatus": task_verification_status(problem),
@@ -1760,6 +1822,9 @@ def public_problem_meta(problem):
         "visibility": str(problem.get("visibility") or "public").strip().lower(),
         "ownerLogin": str(problem.get("ownerLogin") or "").strip(),
         "verificationStatus": task_verification_status(problem),
+        "kinds": task_kinds(problem),
+        "mainTag": (task_kinds(problem) or [""])[0],
+        "maxChangedLines": task_change_budget(problem.get("id"), problem) if problem.get("id") is not None else None,
         "taskType": problem.get("taskType", "standard"),
         "grader": problem.get("grader") if problem.get("taskType") == "grader" else None,
         "interactor": problem.get("interactor") if problem.get("taskType") == "interactive" else None,
@@ -2081,7 +2146,10 @@ def _build_problem_v2(task_id, meta, files, tests):
         "language": lang,
         "type": meta.get("type", ""),
         "tags": meta.get("tags") or [],
-        "mainTag": str(meta.get("mainTag") or "").strip(),
+        "mainTag": (task_kinds(meta) or [str(meta.get("mainTag") or "").strip()])[0],
+        **({"kinds": task_kinds(meta)} if task_kinds(meta) else {}),
+        **({"timeLimit": meta["timeLimit"]} if isinstance(meta.get("timeLimit"), (int, float)) and meta["timeLimit"] > 0 else {}),
+        **({"memoryLimitMb": meta["memoryLimitMb"]} if isinstance(meta.get("memoryLimitMb"), int) and meta["memoryLimitMb"] > 0 else {}),
         "visibility": str(meta.get("visibility") or "public").strip().lower(),
         "ownerLogin": str(meta.get("ownerLogin") or "").strip(),
         "verificationStatus": task_verification_status(meta, default="pending"),
@@ -2190,8 +2258,41 @@ def _write_task_tree(task_path, problem_v2, files, tests):
     return compile_result
 
 
+_CARRY_FIELDS = ("timeLimit", "memoryLimitMb", "kinds", "maxChangedLines", "reviewDecision")
+_CARRY_STATEMENT_FILES = ("editorial", "hypothesis")
+
+
+def _carry_over_task_extras(problem_v2, old_problem):
+    """The admin form does not know every field a task can have. Whatever the
+    form did not send is taken from the previous problem.json, so a re-save
+    never silently drops limits, kinds, editorials or a custom checker.
+    Returns the files that have to be copied from the old task directory."""
+    if not old_problem:
+        return []
+    copy = []
+    for key in _CARRY_FIELDS:
+        if key not in problem_v2 and key in old_problem:
+            problem_v2[key] = old_problem[key]
+    old_statement = old_problem.get("statement") or {}
+    new_statement = problem_v2.setdefault("statement", {})
+    for key in _CARRY_STATEMENT_FILES:
+        rel = old_statement.get(key)
+        if rel and key not in new_statement:
+            new_statement[key] = rel
+            copy.append(rel)
+    old_checker = old_problem.get("checker") or {}
+    if old_checker.get("type") == "custom" and (problem_v2.get("checker") or {}).get("type") != "custom":
+        problem_v2["checker"] = dict(old_checker)
+        rel = old_checker.get("path") or "checker/checker.cpp"
+        problem_v2.setdefault("files", {})["checker"] = rel
+        copy.append(rel)
+    return copy
+
+
 def _save_task_payload(task_id, meta, files, tests, commit_message):
     problem_v2 = _build_problem_v2(task_id, meta, files, tests)
+    old_problem = read_problem_config(task_id) if os.path.isdir(task_dir(task_id)) else None
+    carried_files = _carry_over_task_extras(problem_v2, old_problem)
     parent = os.path.abspath(TASKS_REPO_DIR)
     os.makedirs(parent, exist_ok=True)
     tmp_path = tempfile.mkdtemp(prefix=f".task_{task_id}_", dir=parent)
@@ -2199,6 +2300,14 @@ def _save_task_payload(task_id, meta, files, tests, commit_message):
     backup_path = None
     try:
         compile_result = _write_task_tree(tmp_path, problem_v2, files, tests)
+        for rel in carried_files:
+            if ".." in rel or rel.startswith("/"):
+                continue
+            src = os.path.join(final_path, rel)
+            if os.path.isfile(src):
+                dst = os.path.join(tmp_path, rel)
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copyfile(src, dst)
         if not compile_result.ok:
             print("statement compile failed:", (compile_result.stderr or "")[:2000])
             shutil.rmtree(tmp_path, ignore_errors=True)
@@ -2537,6 +2646,18 @@ def submit():
         return _api_error("task_not_found", 404, "TASK_NOT_FOUND")
     if not _task_access_allowed(task, viewer_login=login, viewer_is_admin=_is_admin_request()):
         return _api_error("forbidden", 403, "FORBIDDEN")
+    # The point of a task is to find the bug, not to rewrite the solution:
+    # a fix may touch no more lines than the reference fix does.
+    change_budget = task_change_budget(task)
+    if change_budget is not None:
+        changed_lines = count_changed_lines(task_broken_code(task), code)
+        if changed_lines > change_budget:
+            return jsonify({
+                "error": "too_many_changes",
+                "code": "TOO_MANY_CHANGES",
+                "changedLines": changed_lines,
+                "maxChangedLines": change_budget,
+            }), 400
     with SUBMIT_QUEUE_LOCK:
         if (len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)) >= MAX_SUBMIT_QUEUE_SIZE:
             return _api_error("queue_overloaded", 503, "QUEUE_OVERLOADED")
@@ -2988,7 +3109,10 @@ def tasks_admin_review(task_id):
     files = problem.get("files") or {}
     return jsonify({
         "editorial": _task_text(task_id, statement.get("editorial")),
+        "hypothesis": _task_text(task_id, statement.get("hypothesis")),
         "solution": _task_text(task_id, files.get("solution")),
+        "kinds": task_kinds(problem),
+        "maxChangedLines": task_change_budget(task_id, problem),
     })
 
 

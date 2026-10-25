@@ -183,6 +183,24 @@
 
         .editor-feedback:empty { display: none; }
 
+        .change-counter {
+            position: absolute;
+            right: 14px;
+            bottom: 12px;
+            z-index: 4;
+            padding: 4px 9px;
+            border-radius: 7px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(20, 18, 16, 0.92);
+            color: #a8a29a;
+            font: 600 12px/1.2 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+            pointer-events: auto;
+            transition: color .2s, border-color .2s;
+        }
+
+        .change-counter.is-full { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); }
+        .change-counter.is-over { color: #f87171; border-color: rgba(248, 113, 113, 0.45); }
+
         .right .btn,
         .right .run-button {
             background: #d6a079 !important;
@@ -655,7 +673,8 @@
 
 <script src="firebase.js?v=20260521-3"></script>
 <!-- обязательно первой! -->
-<script src="auth.js?v=20261025-icons"></script>
+<script src="auth.js?v=20261026-kinds"></script>
+<script src="line-diff.js?v=20261026-1"></script>
 <script src="submission-diagnostics.js?v=20260921-1"></script>
 <!-- использует db -->
 <script src="globalsubmissions.js"></script>
@@ -699,6 +718,10 @@
                     <summary>Краткий разбор и где ошибка</summary>
                     <div id="adminEditorial" class="admin-review-content"></div>
                 </details>
+                <details id="adminHypothesisBlock" hidden>
+                    <summary>Гипотеза автора</summary>
+                    <div id="adminHypothesis" class="admin-review-content"></div>
+                </details>
                 <details id="adminSolutionBlock">
                     <summary>Правильное решение</summary>
                     <pre id="adminSolution" class="admin-review-code"></pre>
@@ -715,6 +738,7 @@
                 <div class="editor-wrap">
                     <button type="button" class="reset-code-btn" onclick="resetEditorDraft()" title="Сбросить код к исходному шаблону">Сброс</button>
                     <span id="editorFeedback" class="editor-feedback" role="status"></span>
+                    <span id="changeCounter" class="change-counter" hidden title="Сколько строк сломанного кода ты изменил. Больше, чем нужно для исправления, отправить нельзя."></span>
                     <div id="editor" aria-label="Code editor"></div>
                 </div>
 
@@ -870,6 +894,25 @@
             DRAFT_SAVE_TIMER = setTimeout(saveEditorDraftNow, 500);
         }
 
+        // How many lines of the broken code the fix may touch (from the task meta).
+        let CHANGE_BUDGET = null;
+
+        function changedLinesNow() {
+            if (typeof window.codebugCountChangedLines !== "function" || !window.editor || !editor.getValue) return 0;
+            return window.codebugCountChangedLines(BASELINE_CODE, editor.getValue());
+        }
+
+        function updateChangeCounter() {
+            const el = document.getElementById("changeCounter");
+            if (!el) return;
+            if (!CHANGE_BUDGET || !BASELINE_CODE) { el.hidden = true; return; }
+            const used = changedLinesNow();
+            el.hidden = false;
+            el.textContent = `Изменено строк: ${used} из ${CHANGE_BUDGET}`;
+            el.classList.toggle("is-full", used === CHANGE_BUDGET);
+            el.classList.toggle("is-over", used > CHANGE_BUDGET);
+        }
+
         function setEditorCodeFromTask(code) {
             BASELINE_CODE = code == null ? "" : String(code);
             const draft = loadEditorDraft();
@@ -877,6 +920,7 @@
             SUPPRESS_DRAFT_SAVE = true;
             if (window.editor) editor.setValue(value);
             SUPPRESS_DRAFT_SAVE = false;
+            updateChangeCounter();
         }
 
         function resetEditorDraft() {
@@ -1058,6 +1102,13 @@
 
             const code = editor.getValue();
             console.log("code =", code.substring(0, 100), "...");
+            if (CHANGE_BUDGET && typeof window.codebugCountChangedLines === "function") {
+                const used = window.codebugCountChangedLines(BASELINE_CODE, code);
+                if (used > CHANGE_BUDGET) {
+                    alert(`Изменено строк: ${used}, а для исправления хватает ${CHANGE_BUDGET}. Найди ошибку, а не переписывай решение.`);
+                    return;
+                }
+            }
             const nonAscii = findFirstNonAsciiChar(code);
             if (nonAscii) {
                 alert(
@@ -1114,6 +1165,7 @@
                 }
                 console.error("🔥 Ошибка submitCode:", e);
                 updateSubmissionRow(pendingRow, e && e.code === "AUTH_SESSION_EXPIRED" ? "Войди снова" : "ERROR");
+                if (e && /^Изменено строк/.test(String(e.message || ""))) alert(e.message);
             }
         }
 
@@ -1275,6 +1327,9 @@
                     const error = new Error("Сессия истекла. Войди в аккаунт снова");
                     error.code = "AUTH_SESSION_EXPIRED";
                     throw error;
+                }
+                if (data && data.code === "TOO_MANY_CHANGES") {
+                    throw new Error(`Изменено строк: ${data.changedLines}, можно не больше ${data.maxChangedLines}`);
                 }
                 const errorMessages = {
                     403: "Нет доступа к этой задаче",
@@ -1759,6 +1814,12 @@
             const solutionRoot = document.getElementById("adminSolution");
             const editorial = String(review?.editorial || "").trim();
             const solution = String(review?.solution || "").trim();
+            const hypothesis = String(review?.hypothesis || "").trim();
+            const hypothesisBlock = document.getElementById("adminHypothesisBlock");
+            if (hypothesisBlock) {
+                hypothesisBlock.hidden = !hypothesis;
+                document.getElementById("adminHypothesis").innerHTML = hypothesis ? renderMarkdown(hypothesis) : "";
+            }
 
             editorialRoot.innerHTML = editorial
                 ? renderMarkdown(editorial)
@@ -1774,6 +1835,7 @@
             const root = document.getElementById("adminReview");
             const blocks = [
                 document.getElementById("adminEditorialBlock"),
+                document.getElementById("adminHypothesisBlock"),
                 document.getElementById("adminSolutionBlock")
             ];
             let reviewRequest = null;
@@ -1974,6 +2036,8 @@
 
                 TASK_DIFFICULTY = meta.difficulty;
                 currentProblemMeta = meta;
+                CHANGE_BUDGET = Number(meta && meta.maxChangedLines) > 0 ? Number(meta.maxChangedLines) : null;
+                updateChangeCounter();
                 TASK_LANGUAGE = normalizeTaskLanguage(meta.language);
                 updateEditorLanguageFromTask();
                 console.log("Загружена сложность:", TASK_DIFFICULTY);
@@ -2346,6 +2410,7 @@
 
                     monacoEditor.onDidChangeModelContent(() => {
                         scheduleEditorDraftSave();
+                        updateChangeCounter();
                     });
 
                     editor = {

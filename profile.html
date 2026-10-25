@@ -1725,7 +1725,7 @@
 
     <script src="firebase.js?v=20260521-3"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261025-icons"></script>
+    <script src="auth.js?v=20261026-kinds"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -2656,9 +2656,18 @@
                 if (!task) continue;
                 const tags = Array.isArray(task.tags) ? task.tags : [];
                 let mask = 0;
-                for (const tag of tags) {
-                    const g = TAG_GROUP_OF(tag);
-                    if (g >= 0) mask |= 1 << g;
+                // Kinds set by hand win; tags are only a fallback for older tasks.
+                const KIND_BIT = { idea: 0, implementation: 1, algorithm: 2 };
+                const kinds = Array.isArray(task.kinds) ? task.kinds : [];
+                for (const kind of kinds) {
+                    const bit = KIND_BIT[String(kind || "").toLowerCase()];
+                    if (bit !== undefined) mask |= 1 << bit;
+                }
+                if (!mask) {
+                    for (const tag of tags) {
+                        const g = TAG_GROUP_OF(tag);
+                        if (g >= 0) mask |= 1 << g;
+                    }
                 }
                 if (mask) tagCounts[mask]++;
                 else noTagCount++;

@@ -978,7 +978,24 @@ const TAG_RU = {
     "sorting": "сортировка",
     "greedy": "жадность",
     "tree": "деревья",
-    "trees": "деревья"
+    "trees": "деревья",
+    "divide and conquer optimization": "оптимизация «разделяй и властвуй»",
+    "dsu rollback": "СНМ с откатами",
+    "dynamic connectivity": "динамическая связность",
+    "factorization": "разложение на множители",
+    "fenwick tree": "дерево Фенвика",
+    "gcd": "НОД",
+    "geometry": "геометрия",
+    "invariant": "инвариант",
+    "lazy propagation": "отложенные операции",
+    "monotonic deque": "монотонная очередь",
+    "mst": "минимальный остов",
+    "multitest": "мультитест",
+    "prefix function": "префикс-функция",
+    "rerooting": "перевешивание корня",
+    "segment tree": "дерево отрезков",
+    "set": "множество",
+    "suffix automaton": "суффиксный автомат"
 };
 
 function codebugTagRu(tag) {

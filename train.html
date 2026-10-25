@@ -599,6 +599,12 @@
             text-overflow: ellipsis;
         }
 
+        .task-kinds {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
         .task-tags.kind-idea {
             --task-kind-border: rgba(142, 167, 255, 0.3);
             --task-kind-bg: rgba(142, 167, 255, 0.09);
@@ -1143,7 +1149,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
     <script src="firebase.js?v=20260521-3"></script>
-    <script src="auth.js?v=20261025-icons"></script>
+    <script src="auth.js?v=20261026-kinds"></script>
     <script>
         let problems = [];
         let visibleProblems = [];
@@ -1477,8 +1483,19 @@
             return { key: "algorithm", label: "Алгоритм" };
         }
 
+        const KIND_LABELS = { idea: "Идея", implementation: "Реализация", algorithm: "Алгоритм" };
+
+        // A task can be several kinds at once, for example both an idea and an implementation.
+        function taskKinds(problem) {
+            const list = Array.isArray(problem.kinds)
+                ? problem.kinds.map((k) => String(k || "").trim().toLowerCase()).filter((k) => KIND_LABELS[k])
+                : [];
+            if (list.length) return [...new Set(list)].map((key) => ({ key, label: KIND_LABELS[key] }));
+            return [taskKindMeta(problem)];
+        }
+
         function taskKindLabel(problem) {
-            return taskKindMeta(problem).label;
+            return taskKinds(problem).map((k) => k.label).join(" ");
         }
 
         function taskSearchText(problem) {
@@ -1548,8 +1565,9 @@
                 const solved = isTaskSolved(p.id);
                 const diff = difficultyMeta(p.difficulty);
                 const safeTitle = escapeHtml(p.title);
-                const kind = taskKindMeta(p);
-                const safeKind = escapeHtml(kind.label);
+                const kindBadges = taskKinds(p)
+                    .map((k) => `<div class="task-tags kind-${escapeHtml(k.key)}">${escapeHtml(k.label)}</div>`)
+                    .join("");
                 const languageLabel = taskLanguageLabel(p.language);
                 const exp = taskExp(p);
 
@@ -1563,7 +1581,7 @@
                         </span>
                         <div class="task-copy">
                             <a class="task-title" href="problem.html?id=${p.id}">${safeTitle}</a>
-                            <div class="task-tags kind-${escapeHtml(kind.key)}">${safeKind}</div>
+                            <div class="task-kinds">${kindBadges}</div>
                         </div>
                     </div>
                     <div class="task-right ${isAdmin ? "with-admin-actions" : ""}">

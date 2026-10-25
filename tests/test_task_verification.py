@@ -165,31 +165,30 @@ def test_training_page_separates_pending_tasks_and_sends_admin_auth():
     assert "createTaskRow(problem)" in page
 
 
-def test_training_page_shows_primary_task_kind_and_keeps_specific_tags_searchable():
+def test_training_page_shows_every_task_kind_and_keeps_specific_tags_searchable():
     page = (REPO_ROOT / "train.html").read_text(encoding="utf-8")
 
+    # A task can be several kinds at once; older tasks still fall back to mainTag/tags.
+    assert "function taskKinds(problem)" in page
+    assert "Array.isArray(problem.kinds)" in page
     assert "function taskKindMeta(problem)" in page
     assert "return { key: \"idea\", label: \"Идея\" }" in page
-    assert "return { key: \"algorithm\", label: \"Алгоритм\" }" in page
-    assert "return { key: \"implementation\", label: \"Реализация\" }" in page
-    assert "const safeKind = escapeHtml(kind.label)" in page
-    assert "<div class=\"task-tags kind-${escapeHtml(kind.key)}\">${safeKind}</div>" in page
+    assert '<div class="task-tags kind-${escapeHtml(k.key)}">${escapeHtml(k.label)}</div>' in page
     assert "...rawTags" in page
     assert "...normalizedTags" in page
     assert "tags.slice(0, 2)" not in page
 
 
-def test_admin_page_can_edit_primary_task_kind():
+def test_admin_page_can_edit_several_task_kinds():
     page = (REPO_ROOT / "admin.html").read_text(encoding="utf-8")
 
-    assert 'id="taskMetaMainTag"' in page
-    assert 'id="editMetaMainTag"' in page
-    assert 'value="idea">Главный тег: Идея' in page
-    assert 'value="algorithm">Главный тег: Алгоритм' in page
-    assert 'value="implementation">Главный тег: Реализация' in page
-    assert 'const mainTag = document.getElementById("taskMetaMainTag").value || "algorithm"' in page
-    assert 'const mainTag = document.getElementById("editMetaMainTag").value || "algorithm"' in page
-    assert "problem.mainTag || \"algorithm\"" in page
+    for prefix in ("taskMeta", "editMeta"):
+        assert f'id="{prefix}Kinds"' in page
+        assert f'readKinds("{prefix}")' in page
+    for kind in ("idea", "implementation", "algorithm"):
+        assert f'<input type="checkbox" value="{kind}">' in page
+    assert 'const mainTag = kinds[0] || "algorithm"' in page
+    assert 'writeKinds("editMeta", problem)' in page
 
 
 def test_training_page_uses_lucide_instead_of_hand_drawn_svg_icons():

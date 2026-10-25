@@ -2,6 +2,27 @@ const { test } = require("@playwright/test");
 const { expect, preparePage, signInThroughUi } = require("./helpers/mock-codebug");
 
 test.describe("Задачи и посылки", () => {
+  test("лимит правок блокирует отправку переписанного решения", async ({ page }) => {
+    await preparePage(page, { authenticated: true });
+    await page.route("**/tasks/101/problem.json", async (route) => {
+      await route.fulfill({ json: {
+        title: "Лимит правок", language: "cpp", difficulty: "easy", maxChangedLines: 1,
+        statement: { markdown: "statement.md" }, files: { code: "code.cpp" }
+      } });
+    });
+    await page.goto("/problem.html?id=101");
+    await expect(page.locator("#changeCounter")).toHaveText("Изменено строк: 0 из 1");
+    let submitted = false;
+    page.on("request", request => { if (request.url().endsWith("/submit")) submitted = true; });
+    await page.evaluate(() => window.editor.setValue("int x;\nint y;\nint z;\nint main() {}"));
+    const dialogPromise = page.waitForEvent("dialog");
+    await page.evaluate(() => { setTimeout(() => submitCode(), 0); });
+    const dialog = await dialogPromise;
+    expect(dialog.message()).toContain("для исправления хватает 1");
+    await dialog.accept();
+    expect(submitted).toBe(false);
+  });
+
   test("редактор блокирует операции с буфером обмена", async ({ page }) => {
     await preparePage(page, { authenticated: true });
     await page.goto("/problem.html?id=101");
