@@ -236,10 +236,13 @@
         }
 
         .feature-list li::before {
-            content: "✓";
-            color: var(--amber);
-            font-weight: 700;
-            line-height: 1.45;
+            content: "";
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            background: var(--amber);
+            -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.8%2012.6%209.6%2017.4%2019.2%206.8%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.8%2012.6%209.6%2017.4%2019.2%206.8%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
         }
 
         .checkout-row {
@@ -376,8 +379,8 @@
                 <p class="secure-sub">Платёж обрабатывается через Platega. Подписка включается после подтверждения оплаты.</p>
             </div>
             <div class="checkout-actions">
-                <button class="cta" onclick="showDonateInfo('PRO')">Выбрать PRO →</button>
-                <button class="cta" onclick="showDonateInfo('PRO+')">Выбрать PRO+ →</button>
+                <button class="cta" onclick="showDonateInfo('PRO')">Выбрать PRO <span class="btn-arrow" data-icon="arrow" data-icon-size="15"></span></button>
+                <button class="cta" onclick="showDonateInfo('PRO+')">Выбрать PRO+ <span class="btn-arrow" data-icon="arrow" data-icon-size="15"></span></button>
             </div>
         </section>
 
@@ -387,7 +390,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="firebase.js"></script>
-    <script src="auth.js?v=20261024-ux2"></script>
+    <script src="auth.js?v=20261025-icons"></script>
 
     <script>
         const PLAN_TO_TIER = {

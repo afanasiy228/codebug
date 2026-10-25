@@ -222,8 +222,18 @@
 
         .custom-run summary::-webkit-details-marker { display: none; }
         .custom-run summary::before { content: ">_"; font-family: monospace; color: #a78870; }
-        .custom-run summary::after { content: "+"; margin-left: auto; font-size: 18px; font-weight: 400; }
-        .custom-run[open] summary::after { content: "−"; }
+        .custom-run summary::after {
+            content: "";
+            margin-left: auto;
+            width: 16px;
+            height: 16px;
+            background: currentColor;
+            transform: rotate(-90deg);
+            transition: transform .25s cubic-bezier(.2, .9, .25, 1);
+            -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8%2010.3%204%204%204-4%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8%2010.3%204%204%204-4%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+        }
+        .custom-run[open] summary::after { transform: none; }
         .custom-run summary:focus-visible { outline: 2px solid #d6a079; outline-offset: 5px; }
         .run-hint { margin: 10px 0 14px; font-size: 12px; color: #8f8983; }
         .run-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -645,7 +655,7 @@
 
 <script src="firebase.js?v=20260521-3"></script>
 <!-- обязательно первой! -->
-<script src="auth.js?v=20261024-ux2"></script>
+<script src="auth.js?v=20261025-icons"></script>
 <script src="submission-diagnostics.js?v=20260921-1"></script>
 <!-- использует db -->
 <script src="globalsubmissions.js"></script>

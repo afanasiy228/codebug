@@ -343,11 +343,12 @@
         .osu-stat-row:last-child { border-bottom: 0; }
 
         .osu-stat-icon {
-            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             line-height: 1;
             opacity: 0.95;
             width: 18px;
-            text-align: center;
         }
 
         .osu-stat-label {
@@ -1545,14 +1546,14 @@
             <section class="profile-cover-panel" id="profileCoverPanel">
                 <div class="profile-cover" id="profileCover"></div>
                 <div class="profile-cover-overlay">
-                    <button id="changeCoverBtn" type="button" class="cover-change-btn" style="display:none;" onclick="openCoverModal()" aria-label="Изменить шапку">✎</button>
+                    <button id="changeCoverBtn" type="button" class="cover-change-btn" style="display:none;" onclick="openCoverModal()" aria-label="Изменить шапку" data-icon="edit" data-icon-size="15"></button>
                 </div>
             </section>
             <section class="profile-header-row">
                 <div class="avatar-block reveal" style="--delay: 0.1s;">
                     <div class="avatar-media">
                         <img id="avatar" src="">
-                        <button id="avatarEditBtn" type="button" class="avatar-edit-btn" style="display:none;" aria-label="Изменить аватар">✎</button>
+                        <button id="avatarEditBtn" type="button" class="avatar-edit-btn" style="display:none;" aria-label="Изменить аватар" data-icon="edit" data-icon-size="15"></button>
                     </div>
                     <input type="file" id="avatar-file" accept="image/*">
                     <div id="avatar-error"></div>
@@ -1602,32 +1603,32 @@
                 </div>
                 <div class="osu-side-stats">
                     <div class="osu-stat-row global">
-                        <div class="osu-stat-icon" style="color:#FBBF24;">🏆</div>
+                        <div class="osu-stat-icon" data-icon="rank" data-icon-size="18" style="color:#FBBF24;"></div>
                         <div class="osu-stat-label">Место в мире</div>
                         <div class="osu-stat-value" id="globalRankValue">#—</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#22C55E;">✓</div>
+                        <div class="osu-stat-icon" data-icon="check" data-icon-size="18" style="color:#22C55E;"></div>
                         <div class="osu-stat-label">Решено</div>
                         <div class="osu-stat-value" id="osuSolvedCount">0</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#22C55E;">◎</div>
+                        <div class="osu-stat-icon" data-icon="target" data-icon-size="18" style="color:#22C55E;"></div>
                         <div class="osu-stat-label">AC%</div>
                         <div class="osu-stat-value" id="osuAcRateValue">0%</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#FBBF24;">⬡</div>
+                        <div class="osu-stat-icon" data-icon="xp" data-icon-size="18" style="color:#FBBF24;"></div>
                         <div class="osu-stat-label">Опыт</div>
                         <div class="osu-stat-value" id="osuExpValue">0</div>
                     </div>
                     <div class="osu-stat-row">
-                        <div class="osu-stat-icon" style="color:#EF4444;">↻</div>
+                        <div class="osu-stat-icon" data-icon="retry" data-icon-size="18" style="color:#EF4444;"></div>
                         <div class="osu-stat-label">Попытки</div>
                         <div class="osu-stat-value" id="osuAttemptsValue">0</div>
                     </div>
                     <div class="osu-stat-row activity">
-                        <div class="osu-stat-icon" style="color:#FBBF24;">⌁</div>
+                        <div class="osu-stat-icon" data-icon="pulse" data-icon-size="18" style="color:#FBBF24;"></div>
                         <div class="osu-stat-label">Последняя активность</div>
                         <div class="osu-stat-value" id="lastActive">—</div>
                     </div>
@@ -1724,7 +1725,7 @@
 
     <script src="firebase.js?v=20260521-3"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261024-ux2"></script>
+    <script src="auth.js?v=20261025-icons"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->

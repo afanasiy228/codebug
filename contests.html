@@ -279,12 +279,16 @@
     }
 
     .contest-icon::after {
-      content: "♛";
+      content: "";
       position: absolute;
       inset: 0;
-      display: grid;
-      place-items: center;
+      margin: auto;
+      width: 19px;
+      height: 19px;
       opacity: 0.9;
+      background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%208.2%207.6%2012%2012%205.4%2016.4%2012%2020%208.2%2018.4%2017.6H5.6L4%208.2Z%22%20fill%3D%22%23000%22%20fill-opacity%3D%22.25%22%2F%3E%3Cpath%20d%3D%22M5.8%2020.2h12.4%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%208.2%207.6%2012%2012%205.4%2016.4%2012%2020%208.2%2018.4%2017.6H5.6L4%208.2Z%22%20fill%3D%22%23000%22%20fill-opacity%3D%22.25%22%2F%3E%3Cpath%20d%3D%22M5.8%2020.2h12.4%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
     }
 
     .contest-logo {
@@ -637,9 +641,13 @@
     }
 
     .datetime-display::after {
-      content: "◷";
-      color: var(--muted);
-      font-size: 15px;
+      content: "";
+      width: 15px;
+      height: 15px;
+      flex: 0 0 15px;
+      background: var(--muted);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.4%22%20fill%3D%22%23000%22%20fill-opacity%3D%22.25%22%2F%3E%3Cpath%20d%3D%22M12%206.9v5.4l3.4%202%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.4%22%20fill%3D%22%23000%22%20fill-opacity%3D%22.25%22%2F%3E%3Cpath%20d%3D%22M12%206.9v5.4l3.4%202%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
     }
 
     .datetime-display:hover,
@@ -1523,7 +1531,7 @@
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
   <script src="firebase.js"></script>
-  <script src="auth.js?v=20261024-ux2"></script>
+  <script src="auth.js?v=20261025-icons"></script>
 
   <script>
     updateNavbar();
@@ -1730,11 +1738,12 @@
         const registered = Boolean(state.registrations[safeId]);
         const row = document.createElement("article");
         row.className = "contest-row";
-        const actionLabel = contest.status === "finished"
-          ? "Результаты →"
+        const arrow = ' <span class="btn-arrow" data-icon="arrow" data-icon-size="15"></span>';
+        const actionLabel = (contest.status === "finished"
+          ? "Результаты"
           : contest.status === "ongoing"
-            ? (registered ? "Открыть →" : "Участвовать →")
-            : "Подробнее →";
+            ? (registered ? "Открыть" : "Участвовать")
+            : "Подробнее") + arrow;
         const timeLabel = contest.status === "ongoing"
           ? formatTimeLeft(contest.end)
           : formatDateTime(contest.status === "finished" ? contest.end : contest.start);
@@ -1768,6 +1777,7 @@
         });
         container.appendChild(row);
       }
+      if (typeof window.codebugFillIcons === "function") window.codebugFillIcons(container);
     }
 
     function filterBySelectedDate(list) {

@@ -132,6 +132,17 @@ function ensureMobileNavStyles() {
     const style = document.createElement("style");
     style.id = "mobile-nav-style";
     style.textContent = `
+[data-icon] {
+    line-height: 0;
+}
+[data-icon] > svg {
+    display: block;
+}
+.btn-arrow {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -2px;
+}
 header.cb-site-header,
 .top-nav {
     background: #050608 !important;
@@ -1093,12 +1104,7 @@ function clearNavbarIdentityCache(login) {
 }
 
 function buildBellIconHtml() {
-    return `
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 17H9m10-2.5c-.9-1-1.5-1.8-1.5-5A5.5 5.5 0 0 0 12 4a5.5 5.5 0 0 0-5.5 5.5c0 3.2-.6 4-1.5 5-.4.4-.1 1.1.5 1.1h13c.6 0 .9-.7.5-1.1Z" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10 19a2 2 0 0 0 4 0" stroke-width="1.7" stroke-linecap="round"/>
-        </svg>
-    `;
+    return codebugIcon("bell", { size: 22 });
 }
 
 function buildAccountHtml(user) {
@@ -1166,7 +1172,7 @@ function updateNavbar() {
         <div class="nav-shell">
             <div class="nav-links nav-primary">${commonLinks}</div>
             <div class="nav-links nav-account">${accountLinks}</div>
-            <button class="nav-burger" type="button" aria-label="Меню" aria-expanded="false">☰</button>
+            <button class="nav-burger" type="button" aria-label="Меню" aria-expanded="false">${codebugIcon("menu", { size: 22 })}</button>
         </div>
         <div class="nav-drawer" aria-hidden="true">${drawerLinks}</div>
     `;
@@ -2538,11 +2544,66 @@ if (typeof document !== "undefined") {
 }
 
 
+
+/* ============================
+   ICONS
+   One duotone set for the whole site: a soft fill inside the closed shape
+   plus a 1.6 stroke. Every icon is drawn on a 24 grid and takes its colour
+   from the element, so a row can stay green or amber without extra files.
+============================ */
+const CODEBUG_ICONS = {
+    rank: '<path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z" fill="currentColor" fill-opacity=".18"/><path d="M7 5.6H4.6v1A4.4 4.4 0 0 0 8 10.9"/><path d="M17 5.6h2.4v1A4.4 4.4 0 0 1 16 10.9"/><path d="M12 13.5V17"/><path d="M8.5 20h7"/>',
+    check: '<path d="M4.8 12.6 9.6 17.4 19.2 6.8"/>',
+    target: '<circle cx="12" cy="12" r="8.4" fill="currentColor" fill-opacity=".18"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+    xp: '<path d="M12 3.3 20 7.65v8.7L12 20.7 4 16.35v-8.7Z" fill="currentColor" fill-opacity=".18"/><path d="M9.3 13.3 12 9.6l2.7 3.7"/>',
+    retry: '<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20.3 4.1v4.7h-4.7"/>',
+    pulse: '<path d="M3 12.6h3.6L9.3 6l3.4 12 2.5-5.4H21"/>',
+    edit: '<path d="M4 20.2h4.2L18.6 9.8a2.95 2.95 0 0 0-4.2-4.2L4 16v4.2Z" fill="currentColor" fill-opacity=".18"/><path d="m13.6 6.4 4.2 4.2"/>',
+    crown: '<path d="M4 8.2 7.6 12 12 5.4 16.4 12 20 8.2 18.4 17.6H5.6L4 8.2Z" fill="currentColor" fill-opacity=".18"/><path d="M5.8 20.2h12.4"/>',
+    clock: '<circle cx="12" cy="12" r="8.4" fill="currentColor" fill-opacity=".18"/><path d="M12 6.9v5.4l3.4 2"/>',
+    bell: '<path d="M15 17H9m10-2.5c-.9-1-1.5-1.8-1.5-5A5.5 5.5 0 0 0 12 4a5.5 5.5 0 0 0-5.5 5.5c0 3.2-.6 4-1.5 5-.4.4-.1 1.1.5 1.1h13c.6 0 .9-.7.5-1.1Z" fill="currentColor" fill-opacity=".18"/><path d="M10 19a2 2 0 0 0 4 0"/>',
+    menu: '<path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/>',
+    arrow: '<path d="M5 12h13"/><path d="m12.6 6.6 5.4 5.4-5.4 5.4"/>',
+    chevron: '<path d="m8 10.3 4 4 4-4"/>',
+    flame: '<path d="M12 3.5c3.4 3 5 5.6 5 8.3a5 5 0 0 1-10 0c0-1.2.4-2.3 1.2-3.4.5 1 1.2 1.6 2 1.8-.4-2.6.2-4.8 1.8-6.7Z" fill="currentColor" fill-opacity=".18"/>'
+};
+
+function codebugIcon(name, options) {
+    const inner = CODEBUG_ICONS[name];
+    if (!inner) return "";
+    const opts = options || {};
+    const size = Number(opts.size) || 20;
+    const cls = opts.className ? ` class="${opts.className}"` : "";
+    return `<svg${cls} viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor"` +
+        ` stroke-width="${opts.stroke || 1.6}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${inner}</svg>`;
+}
+
+/* Fills every <element data-icon="name"> on the page. Pages that build markup
+   later call window.codebugFillIcons(root) on the part they just inserted. */
+function codebugFillIcons(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    scope.querySelectorAll("[data-icon]").forEach((el) => {
+        const name = el.getAttribute("data-icon");
+        if (!name || el.firstElementChild) return;
+        el.innerHTML = codebugIcon(name, { size: Number(el.getAttribute("data-icon-size")) || 20 });
+    });
+}
+
+if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => codebugFillIcons(), { once: true });
+    } else {
+        codebugFillIcons();
+    }
+}
+
 /* ============================
    EXPORT GLOBAL (for HTML)
 ============================ */
 window.updateNavbar = updateNavbar;
 window.codebugTagRu = codebugTagRu;
+window.codebugIcon = codebugIcon;
+window.codebugFillIcons = codebugFillIcons;
 window.codebugPlural = codebugPlural;
 window.login = login;
 window.register = register;
