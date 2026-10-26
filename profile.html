@@ -1298,24 +1298,31 @@
             overflow: visible;
         }
 
-        .venn .rg {
-            transition: opacity 0.3s, filter 0.3s;
+        .venn .rg,
+        .venn .vnum {
+            transform-box: fill-box;
+            transform-origin: center;
+            transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.3s, filter 0.3s;
         }
 
         .venn.hov .rg {
-            opacity: 0.38;
+            opacity: 0.55;
         }
 
         .venn.hov .rg.on {
             opacity: 1;
-            filter: brightness(1.12);
+            transform: scale(1.035);
+            filter: brightness(1.55);
+        }
+
+        .venn.hov .vnum.on {
+            transform: scale(1.12);
         }
 
         .venn .vnum {
             font: 800 15px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-            fill: #111;
+            fill: #d6d4ce;
             pointer-events: none;
-            transition: opacity 0.3s;
         }
 
         .venn.hov .vnum {
@@ -2361,9 +2368,9 @@
 
         /* ---------- tags: three groups on an area-proportional Euler diagram ---------- */
         const TAG_GROUPS = [
-            { key: "idea", label: "Идея", color: "#f59e0b" },
-            { key: "impl", label: "Реализация", color: "#38bdf8" },
-            { key: "algo", label: "Алгоритмы и СД", color: "#a78bfa" }
+            { key: "idea", label: "Идея", color: "#d8a24a" },
+            { key: "impl", label: "Реализация", color: "#79a9c7" },
+            { key: "algo", label: "Алгоритмы и СД", color: "#a596d6" }
         ];
         const TAG_GROUP_OF = (() => {
             const map = {};
@@ -2437,7 +2444,9 @@
             const tot = TAG_REGIONS.reduce((a, R) => a + counts[R.m], 0);
             const floor = 0.15 * Math.max(1, tot) / 7;
             const reg = {};
-            TAG_REGIONS.forEach((R) => { reg[R.m] = counts[R.m] + floor; });
+            // Non-empty parts get a small extra area so even one task stays visible;
+            // empty parts get none, so circles without shared tasks move apart.
+            TAG_REGIONS.forEach((R) => { reg[R.m] = counts[R.m] > 0 ? counts[R.m] + floor : 0; });
             const size = [0, 1, 2].map((k) => TAG_REGIONS.reduce((a, R) => a + (R.m & (1 << k) ? reg[R.m] : 0), 0));
             const pair = (a, b) => TAG_REGIONS.reduce((acc, R) => acc + ((R.m & (1 << a)) && (R.m & (1 << b)) ? reg[R.m] : 0), 0);
             const r = size.map((v) => Math.sqrt(v / Math.PI));
@@ -2455,7 +2464,7 @@
                 let L = 0;
                 for (const R of TAG_REGIONS) {
                     const t = reg[R.m], a = A[R.m];
-                    L += (a - t) ** 2 / t;
+                    L += (a - t) ** 2 / Math.max(t, floor);
                     if (counts[R.m] > 0 && a < 0.45 * t) L += 12 * (0.45 * t - a) ** 2 / t;
                 }
                 return L;
@@ -2541,21 +2550,20 @@
             const shape = (c, extra) => `<ellipse cx="${c.x.toFixed(2)}" cy="${c.y.toFixed(2)}" rx="${Math.max(0, c.a).toFixed(2)}" ry="${Math.max(0, c.b).toFixed(2)}" transform="rotate(${(c.t * 180 / Math.PI).toFixed(2)} ${c.x.toFixed(2)} ${c.y.toFixed(2)})" ${extra || ""}/>`;
             let defs = cs.map((c, k) => `<clipPath id="vcp${k}">${shape(c)}</clipPath>`).join("");
             defs += `<clipPath id="vcpu">${cs.map((c) => shape(c)).join("")}</clipPath>`;
-            defs += `<linearGradient id="vsheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>`;
             let body = "";
             for (const R of TAG_REGIONS) {
                 const inc = [0, 1, 2].filter((k) => R.m & (1 << k));
                 const exc = [0, 1, 2].filter((k) => !(R.m & (1 << k)) && cs[k].a > 0);
                 if (inc.some((k) => !(cs[k].a > 0))) continue;
                 defs += `<mask id="vmk${R.m}" maskUnits="userSpaceOnUse" ${rect}><rect ${rect} fill="#fff"/>${exc.map((k) => shape(cs[k], 'fill="#000"')).join("")}</mask>`;
-                const fill = counts[R.m] > 0 ? R.color : "rgba(255,255,255,.05)";
+                const depth = [0, 1, 2].filter((k) => R.m & (1 << k)).length;
+                const fill = counts[R.m] > 0 ? ["", "#1d1d1d", "#262626", "#303030"][depth] : "transparent";
                 let inner = `<rect ${rect} fill="${fill}" mask="url(#vmk${R.m})"/>`;
                 for (const k of inc) inner = `<g clip-path="url(#vcp${k})">${inner}</g>`;
                 body += `<g class="rg" data-m="${R.m}">${inner}</g>`;
             }
-            body += `<rect ${rect} fill="url(#vsheen)" clip-path="url(#vcpu)" pointer-events="none"/>`;
-            body += cs.filter((c) => c.a > 0).map((c) => shape(c, 'fill="none" stroke="#0e0e0e" stroke-width="3.5" pointer-events="none"')).join("");
-            body += cs.map((c, k) => c.a > 0 ? shape(c, `fill="none" stroke="${TAG_GROUPS[k].color}" stroke-width="1.4" pointer-events="none"`) : "").join("");
+            body += cs.filter((c) => c.a > 0).map((c) => shape(c, 'fill="none" stroke="#0b0b0b" stroke-width="3" pointer-events="none"')).join("");
+            body += cs.map((c, k) => c.a > 0 ? shape(c, `fill="none" stroke="${TAG_GROUPS[k].color}99" stroke-width="1" class="vline" pointer-events="none"`) : "").join("");
             body += TAG_REGIONS.map((R) => {
                 const b = best[R.m], n = counts[R.m];
                 return b && n > 0 && b.d > 9 ? `<text class="vnum" data-m="${R.m}" x="${b.x.toFixed(1)}" y="${(b.y + 5).toFixed(1)}" text-anchor="middle">${n}</text>` : "";
@@ -2570,6 +2578,9 @@
                 if (!svg) return;
                 svg.classList.toggle("hov", !!m);
                 svg.querySelectorAll(".rg, .vnum").forEach((el) => el.classList.toggle("on", Number(el.dataset.m) === m));
+                const active = m ? svg.querySelector(`.rg[data-m="${m}"]`) : null;
+                const firstLine = svg.querySelector("ellipse[pointer-events]");
+                if (active && firstLine && active.nextElementSibling !== firstLine) svg.insertBefore(active, firstLine);
                 if (!cap) return;
                 if (!m) { cap.textContent = DEFAULT_CAP; return; }
                 const R = TAG_REGIONS.find((x) => x.m === m), n = counts[m];
