@@ -39,40 +39,35 @@
   <meta property="og:image:alt" content="CodeBug: найди баг в коде на C++ и почини его">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/png" href="/logo.png?v=3">
+  <link rel="stylesheet" href="theme-dark.css">
   <style>
     :root {
-      --bg: #050505;
-      --bg-strong: #0B0B0B;
-      --ink: #FFFFFF;
-      --muted: #B0B0B0;
+      --ink: #f4f2ec;
+      --text: #d2cfc7;
+      --muted: #8d8a82;
       --accent: #F59E0B;
-      --accent-strong: #FBBF24;
-      --warm: #F59E0B;
-      --card: #121212;
-      --stroke: rgba(255, 255, 255, 0.08);
-      --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-      --radius-lg: 24px;
-      --radius-md: 16px;
+      --green: 34, 197, 94;
+      --red: 239, 68, 68;
+      --glass: linear-gradient(140deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.045));
+      --rim: rgba(255, 255, 255, 0.1);
+      --line: rgba(255, 255, 255, 0.07);
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
 
     body {
       margin: 0;
-      color: var(--ink);
+      color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 60%),
-                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.03), transparent 70%),
-        linear-gradient(180deg, var(--bg), var(--bg-strong));
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     header {
       height: 72px;
-      background: rgba(5, 5, 5, 0.88);
+      background: rgba(5, 5, 5, 0.6);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: 0 4vw;
       display: flex;
@@ -81,176 +76,211 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      backdrop-filter: blur(12px);
-      box-shadow: none;
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      backdrop-filter: blur(16px) saturate(160%);
+      border-radius: 0;
     }
 
-    .logo {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.4px;
-      color: var(--ink);
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: 0.4px; color: #fff; }
+    nav a { margin-left: 20px; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600; }
+    nav a:hover { color: var(--accent); }
+
+    /* Slow drifting light behind the glass, so the blur has something to refract. */
+    .aura { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    .aura i {
+      position: absolute;
+      width: 46vmax;
+      height: 46vmax;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.5;
+      animation: drift 26s ease-in-out infinite alternate;
+    }
+    .aura i:nth-child(1) { background: radial-gradient(circle, rgba(245, 158, 11, 0.32), transparent 65%); top: -18vmax; right: -10vmax; }
+    .aura i:nth-child(2) { background: radial-gradient(circle, rgba(34, 197, 94, 0.14), transparent 65%); bottom: -22vmax; left: -14vmax; animation-duration: 32s; animation-delay: -9s; }
+    .aura i:nth-child(3) { background: radial-gradient(circle, rgba(96, 165, 250, 0.1), transparent 65%); top: 30%; left: 40%; width: 30vmax; height: 30vmax; animation-duration: 38s; animation-delay: -17s; }
+    @keyframes drift {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(-6vmax, 4vmax, 0) scale(1.12); }
+      100% { transform: translate3d(5vmax, -3vmax, 0) scale(0.94); }
     }
 
-    nav a {
-      margin-left: 20px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    nav a:hover {
-      color: var(--accent);
-    }
-
-    .container {
-      width: min(1100px, 92vw);
-      margin: 40px auto 80px;
-    }
-
-    .contest-hero {
-      padding: 22px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--stroke);
-      background: var(--card);
-      box-shadow: var(--shadow);
-      margin-bottom: 24px;
+    .wrap {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 32px max(16px, 4vw) 80px;
       display: grid;
-      gap: 10px;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 20px;
+      align-items: start;
     }
 
-    .contest-title {
-      font-size: 30px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
+    /* Liquid glass panel, square corners. */
+    .glass {
+      position: relative;
+      min-width: 0;
+      padding: 18px;
+      background: var(--glass);
+      border: 1px solid var(--rim);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      backdrop-filter: blur(20px) saturate(170%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 30px 70px rgba(0, 0, 0, 0.45);
+      animation: rise 0.6s cubic-bezier(.2, .8, .2, 1) both;
     }
+    .glass::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      padding: 1px;
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 70%, rgba(245, 158, 11, 0.35));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-    .contest-meta {
+    /* Tabs with a sliding indicator. */
+    .tabs { position: relative; display: inline-flex; padding: 4px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.25); margin-bottom: 14px; }
+    .tabs .ind { position: absolute; top: 4px; bottom: 4px; left: 4px; background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); transition: transform .35s cubic-bezier(.2, .8, .2, 1), width .35s cubic-bezier(.2, .8, .2, 1); }
+    .tabs button.tab {
+      position: relative;
+      z-index: 1;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: var(--muted) !important;
+      padding: 8px 16px;
+      border-radius: 0;
+      font: 600 14px/1.2 inherit;
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .tabs button.tab.active { color: var(--ink) !important; }
+    .tabs button.tab:focus-visible, .task:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .pane { animation: fade .35s ease both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* Tasks: letter, name, arrow that lights up. */
+    .task {
+      position: relative;
       display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .profile-link {
-      color: var(--accent);
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .profile-link:hover {
-      text-decoration: underline;
-    }
-
-    .badge {
-      display: inline-flex;
       align-items: center;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--accent);
-      font-size: 12px;
-      font-weight: 700;
-      width: fit-content;
-    }
-
-    .contest-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    button {
-      padding: 8px 16px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 14px 32px rgba(245, 158, 11, 0.25);
-    }
-
-    button.secondary {
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--accent);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .tab-btn {
-      padding: 8px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--stroke);
-      background: var(--card);
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    .tab-btn.active {
-      color: var(--accent);
-      border-color: rgba(245, 158, 11, 0.4);
-      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.12);
-    }
-
-    .panel {
-      padding: 20px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--stroke);
-      background: var(--card);
-      box-shadow: var(--shadow);
-    }
-
-    .tasks-grid {
-      display: grid;
       gap: 12px;
+      padding: 14px 6px;
+      border-top: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      overflow: hidden;
+      animation: fade .45s ease both;
+      animation-delay: calc(var(--i) * 45ms);
+    }
+    .task:last-child { border-bottom: 1px solid var(--line); }
+    .task::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.12), transparent 70%);
+      opacity: 0;
+      transition: opacity .25s;
+    }
+    .task:hover::before { opacity: 1; }
+    .task .k { position: relative; width: 22px; font: 600 13px var(--mono); color: var(--muted); }
+    .task .nm { position: relative; flex: 1; min-width: 0; font-weight: 600; transition: color .2s; }
+    .task svg { position: relative; flex: 0 0 18px; width: 18px; height: 18px; color: var(--muted); transition: transform .25s, color .25s; }
+    .task:hover .nm { color: #fff; }
+    .task:hover svg { color: var(--accent); transform: translateX(5px); }
+    .task.solved .k, .task.solved .nm, .task.solved svg { color: #4ade80; }
+    .task.solved::before { background: linear-gradient(90deg, rgba(34, 197, 94, 0.12), transparent 70%); }
+    .task.solved:hover svg { color: #86efac; }
+
+    .empty-note { color: var(--muted); padding: 10px 2px; background: transparent !important; box-shadow: none !important; }
+
+    .reg-btn {
+      justify-self: start;
+      padding: 10px 16px;
+      border-radius: 0 !important;
+      font-weight: 700;
+      cursor: pointer;
+      border: 0;
     }
 
-    .task-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--stroke);
-      background: rgba(245, 158, 11, 0.06);
+    /* Standings: each task cell is a square. */
+    .tbl-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px 4px; }
+    table.st {
+      border-collapse: separate;
+      border-spacing: 6px;
+      font-size: 13px;
+      width: max-content;
+      min-width: 100%;
+      background: transparent !important;
+      box-shadow: none !important;
     }
-
-    .task-title {
-      font-weight: 600;
+    table.st th {
+      background: transparent !important;
+      border: 0 !important;
+      font: 600 11px system-ui, sans-serif;
+      color: var(--muted) !important;
+      text-align: center;
+      padding: 0 2px 4px;
+      white-space: nowrap;
     }
-
-    .table {
+    table.st th.l, table.st td.l { text-align: left; }
+    table.st td { border: 0 !important; padding: 0; }
+    table.st tr:hover { background: transparent !important; }
+    table.st tbody tr { animation: fade .4s ease both; animation-delay: calc(var(--i) * 40ms); }
+    table.st tbody tr:hover td.user { filter: brightness(1.35); }
+    td.place { font: 600 12px var(--mono); color: var(--muted); text-align: center; width: 22px; }
+    td.user {
+      white-space: nowrap;
+      padding: 0 14px 0 10px !important;
+      height: 46px;
+      font-weight: 700;
+      border-left: 3px solid var(--ucol) !important;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ucol) 20%, transparent), transparent 90%);
+      transition: filter .2s;
+    }
+    td.user a { text-decoration: none; }
+    td.pen, td.sum { font: 700 13px var(--mono); color: var(--ink); text-align: center; white-space: nowrap; padding: 0 6px !important; }
+    td.sq { width: 46px; min-width: 46px; height: 46px; }
+    .cell {
       width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      font: 700 13px var(--mono);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      transition: transform .18s, box-shadow .18s;
     }
+    .cell.ok { background: rgba(var(--green), var(--a)); border-color: rgba(var(--green), calc(var(--a) + .15)); color: #04130a; box-shadow: 0 0 18px rgba(var(--green), calc(var(--a) * .35)); }
+    .cell.wa { background: rgba(var(--red), var(--a)); border-color: rgba(var(--red), calc(var(--a) + .1)); color: #fff; }
+    .cell.ok, .cell.wa { animation: pop .45s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(var(--i) * 40ms + 120ms); }
+    .cell:hover { transform: scale(1.08); position: relative; z-index: 1; }
+    @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 
-    .table th,
-    .table td {
-      padding: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      text-align: left;
+    /* Banner on the right. */
+    .banner { position: sticky; top: 92px; display: grid; gap: 14px; animation-delay: .08s; }
+    .banner h1 { margin: 0; font: 700 24px/1.15 system-ui, sans-serif; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere; }
+    .timer {
+      font: 700 36px/1 var(--mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      text-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
     }
+    .timer.soon { color: var(--accent); text-shadow: 0 0 26px rgba(245, 158, 11, 0.45); }
+    .timer.word { font-size: 26px; color: var(--text); }
+    .meta { font-size: 13px; color: var(--muted); }
+    .meta b { color: var(--ink); font-weight: 600; }
 
-    .table th {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .empty {
-      color: var(--muted);
+    @media (max-width: 880px) {
+      .wrap { grid-template-columns: 1fr; padding-top: 18px; }
+      .banner { position: static; order: -1; }
     }
   </style>
-  <link rel="stylesheet" href="theme-dark.css">
 </head>
 
 <body>
@@ -258,49 +288,34 @@
     <div class="logo">CodeBug</div>
     <nav id="nav-links"></nav>
   </header>
+  <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 
-  <main class="container">
-    <section class="contest-hero">
-      <div class="badge" id="contestStatus">Статус</div>
-      <h1 class="contest-title" id="contestTitle">Загрузка...</h1>
-      <div class="contest-meta">
-        <span id="contestStart">Старт: —</span>
-        <span id="contestEnd">Финиш: —</span>
-        <span id="contestAuthors">Авторы: —</span>
-        <span id="contestRewards" style="display:none;"></span>
+  <div class="wrap">
+    <main class="glass" aria-label="Задачи и таблица">
+      <div class="tabs" role="tablist">
+        <span class="ind" id="tabInd"></span>
+        <button class="tab active" role="tab" id="tasksTabBtn" onclick="openTab('tasks')">Задачи</button>
+        <button class="tab" role="tab" id="tableTabBtn" onclick="openTab('table')">Таблица</button>
       </div>
-      <div class="contest-actions">
-        <button id="registerBtn" onclick="registerForContest()">Зарегистрироваться</button>
-        <button class="secondary" onclick="goToContests()">Все соревнования</button>
-      </div>
-      <div class="contest-meta" id="contestHint"></div>
-    </section>
 
-    <div class="tabs">
-      <button class="tab-btn active" id="tasksTabBtn" onclick="openTab('tasks')">Задачи</button>
-      <button class="tab-btn" id="tableTabBtn" onclick="openTab('table')">Таблица</button>
-    </div>
+      <section id="tasksPanel" class="pane">
+        <div id="tasksList"></div>
+        <div id="tasksEmpty" class="empty-note" hidden></div>
+      </section>
 
-    <section id="tasksPanel" class="panel">
-      <div id="tasksList" class="tasks-grid"></div>
-      <div id="tasksEmpty" class="empty" style="display:none;">Задачи будут доступны после старта.</div>
-    </section>
+      <section id="tablePanel" class="pane" hidden>
+        <div class="tbl-wrap"><table class="st" id="standings"></table></div>
+        <div id="standingsEmpty" class="empty-note" hidden>Нет зарегистрированных участников.</div>
+      </section>
+    </main>
 
-    <section id="tablePanel" class="panel" style="display:none;">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Пользователь</th>
-            <th>Решено</th>
-            <th>Штраф</th>
-          </tr>
-        </thead>
-        <tbody id="standingsBody"></tbody>
-      </table>
-      <div id="standingsEmpty" class="empty" style="display:none;">Нет зарегистрированных участников.</div>
-    </section>
-  </main>
+    <aside class="glass banner" aria-label="Статус соревнования">
+      <h1 id="contestTitle">Загрузка…</h1>
+      <div class="timer" id="timer">—</div>
+      <div class="meta" id="contestWhen"></div>
+      <button class="reg-btn" id="registerBtn" onclick="registerForContest()" hidden>Зарегистрироваться</button>
+    </aside>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
@@ -314,15 +329,14 @@
     const user = getUser();
     const url = new URL(location.href);
     const contestId = url.searchParams.get("id");
+    const TASKS_BASE = () => (window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com"));
+    const PENALTY = 20;
 
     let contestData = null;
     let isRegistered = false;
     let contestStatus = "upcoming";
-
-    function formatUtc(ts) {
-      if (!ts) return "—";
-      return new Date(ts).toISOString().replace("T", " ").replace(".000Z", " UTC");
-    }
+    let allSubs = null;
+    const taskTitles = {};
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -333,88 +347,118 @@
         .replace(/'/g, "&#039;");
     }
 
+    function letter(i) {
+      return i < 26 ? String.fromCharCode(65 + i) : `${String.fromCharCode(65 + Math.floor(i / 26) - 1)}${String.fromCharCode(65 + (i % 26))}`;
+    }
+
+    function formatMsk(ts) {
+      if (!ts) return "—";
+      return new Date(ts).toLocaleTimeString("ru-RU", { timeZone: "Europe/Moscow", hour: "2-digit", minute: "2-digit" }) + " МСК";
+    }
+
     const contestUserSubCache = {};
     const contestUserExpCache = {};
 
-    function profileLink(login) {
-      const safeLogin = escapeHtml(login);
+    function nickColor(login) {
       const sub = contestUserSubCache[String(login)] || {};
       const exp = Number(contestUserExpCache[String(login)] || 0);
-      const level = (typeof getSubscriptionLevel === "function") ? getSubscriptionLevel(sub) : "free";
-      const isPro = level !== "free";
-      const badgeText = level === "pro_plus" ? "PRO+" : "PRO";
-      const badge = isPro ? ` <span style="color:#FBBF24;font-size:11px;font-weight:700;border:1px solid rgba(245,158,11,.45);border-radius:999px;padding:1px 6px;">${badgeText}</span>` : "";
-      const color = isPro && typeof getSubscriptionNickColor === "function"
-        ? getSubscriptionNickColor(sub)
-        : (typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF");
-      const nickHtml = (typeof buildStyledNickHtml === "function")
-        ? buildStyledNickHtml(login, sub, color)
-        : safeLogin;
-      return `<a class="profile-link" href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>${badge}`;
+      const level = typeof getSubscriptionLevel === "function" ? getSubscriptionLevel(sub) : "free";
+      if (level !== "free" && typeof getSubscriptionNickColor === "function") return getSubscriptionNickColor(sub);
+      return typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF";
     }
 
-    function renderAuthorLinks(authors) {
-      return (authors || []).map(profileLink).join(", ") || "—";
+    function profileLink(login) {
+      const sub = contestUserSubCache[String(login)] || {};
+      const color = nickColor(login);
+      const level = typeof getSubscriptionLevel === "function" ? getSubscriptionLevel(sub) : "free";
+      const nickHtml = level !== "free" && typeof buildStyledNickHtml === "function"
+        ? buildStyledNickHtml(login, sub, color)
+        : `<span style="color:${color}">${escapeHtml(login)}</span>`;
+      return `<a href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>`;
     }
 
     function getStatus(start, end) {
       const now = Date.now();
       if (now < start) return "upcoming";
-      if (now >= start && now <= end) return "ongoing";
+      if (now <= end) return "ongoing";
       return "finished";
     }
 
-    function statusLabel(status) {
-      if (status === "upcoming") return "Скоро";
-      if (status === "ongoing") return "Идет";
-      return "Завершен";
-    }
-
-    function rewardsLabel(rewards) {
-      if (!Array.isArray(rewards) || !rewards.length) return "";
-      const items = rewards.slice(0, 3).map((reward) => {
-        const place = Number(reward?.place || 0);
-        const exp = Number(reward?.exp || 0);
-        const sub = reward?.subscription || {};
-        const tier = String(sub.tier || "").toLowerCase() === "pro_plus" ? "PRO+" : String(sub.tier || "").toLowerCase() === "pro" ? "PRO" : "";
-        const days = Number(sub.days || 0);
-        const prize = [exp > 0 ? `${exp} опыта` : "", tier && days > 0 ? `${tier} на ${days} дней` : ""].filter(Boolean).join(" + ");
-        return place > 0 && prize ? `${place} место: ${prize}` : "";
-      }).filter(Boolean);
-      return items.join(" · ");
-    }
-
     function openTab(tab) {
-      const tasksPanel = document.getElementById("tasksPanel");
-      const tablePanel = document.getElementById("tablePanel");
-      document.getElementById("tasksTabBtn").classList.toggle("active", tab === "tasks");
-      document.getElementById("tableTabBtn").classList.toggle("active", tab === "table");
-      tasksPanel.style.display = tab === "tasks" ? "block" : "none";
-      tablePanel.style.display = tab === "table" ? "block" : "none";
+      const tasksBtn = document.getElementById("tasksTabBtn");
+      const tableBtn = document.getElementById("tableTabBtn");
+      tasksBtn.classList.toggle("active", tab === "tasks");
+      tableBtn.classList.toggle("active", tab === "table");
+      tasksBtn.setAttribute("aria-selected", tab === "tasks");
+      tableBtn.setAttribute("aria-selected", tab === "table");
+      document.getElementById("tasksPanel").hidden = tab !== "tasks";
+      document.getElementById("tablePanel").hidden = tab !== "table";
+      moveIndicator();
     }
 
-    function goToContests() {
-      window.location.href = "contests.html";
+    function moveIndicator() {
+      const active = document.querySelector(".tabs .tab.active");
+      const ind = document.getElementById("tabInd");
+      if (!active || !ind) return;
+      ind.style.width = `${active.offsetWidth}px`;
+      ind.style.transform = `translateX(${active.offsetLeft - 4}px)`;
+    }
+
+    let timerHandle = null;
+    function startTimer() {
+      clearInterval(timerHandle);
+      const el = document.getElementById("timer");
+      const tick = () => {
+        const now = Date.now();
+        const status = getStatus(contestData.start, contestData.end);
+        if (status !== contestStatus) {
+          contestStatus = status;
+          renderBanner();
+          renderTasks();
+          loadStandings();
+        }
+        if (status === "finished") {
+          el.textContent = "Дорешивание";
+          el.className = "timer word";
+          clearInterval(timerHandle);
+          return;
+        }
+        const target = status === "upcoming" ? contestData.start : contestData.end;
+        const left = Math.max(0, Math.floor((target - now) / 1000));
+        const h = Math.floor(left / 3600);
+        const m = Math.floor((left % 3600) / 60);
+        const sec = left % 60;
+        el.textContent = `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+        el.className = status === "ongoing" && left < 600 ? "timer soon" : "timer";
+      };
+      tick();
+      timerHandle = setInterval(tick, 1000);
+    }
+
+    function renderBanner() {
+      const when = document.getElementById("contestWhen");
+      when.innerHTML = contestStatus === "upcoming"
+        ? `Старт <b>${formatMsk(contestData.start)}</b>`
+        : `Финиш <b>${formatMsk(contestData.end)}</b>`;
+      document.getElementById("registerBtn").hidden = isRegistered || contestStatus === "finished";
     }
 
     async function registerForContest() {
       if (!user) {
-        alert("Войдите, чтобы зарегистрироваться.");
         window.location.href = "auth.html";
         return;
       }
-      const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
       const auth = typeof getAuth === "function" ? getAuth() : null;
       const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
       // Fail closed: without a token this is an unauthenticated call to a
       // privileged endpoint, which the server rejects with an opaque 401.
-      if (!token) throw new Error("Не удалось получить токен авторизации. Войдите заново.");
-      const res = await fetch(`${base}/contest/register`, {
+      if (!token) {
+        alert("Не удалось получить токен авторизации. Войдите заново.");
+        return;
+      }
+      const res = await fetch(`${TASKS_BASE()}/contest/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ contestId })
       });
       if (!res.ok) {
@@ -423,146 +467,117 @@
         return;
       }
       isRegistered = true;
-      updateRegisterButton();
-      renderTasks(contestStatus);
+      renderBanner();
+      renderTasks();
       loadStandings();
     }
 
-    function updateRegisterButton() {
-      const btn = document.getElementById("registerBtn");
-      btn.textContent = isRegistered ? "Вы зарегистрированы" : "Зарегистрироваться";
-      btn.disabled = isRegistered;
+    function showUnavailable(text) {
+      document.getElementById("contestTitle").innerText = text;
+      document.getElementById("timer").textContent = "";
+      document.getElementById("tasksEmpty").textContent = "";
     }
 
     async function loadContest() {
-      if (!contestId) {
-        document.getElementById("contestTitle").innerText = "Соревнование не найдено";
-        return;
-      }
+      if (!contestId) return showUnavailable("Соревнование не найдено");
 
       const snap = await db.ref(`contests/${contestId}`).get();
-      if (!snap.exists()) {
-        document.getElementById("contestTitle").innerText = "Соревнование не найдено";
-        return;
-      }
+      if (!snap.exists()) return showUnavailable("Соревнование не найдено");
 
       contestData = snap.val();
       const visibility = String(contestData.visibility || "public").toLowerCase();
       const owner = String(contestData.ownerLogin || "").trim();
       const allowed = Array.isArray(contestData.allowedUsers) ? contestData.allowedUsers.map(v => String(v || "").trim()) : [];
       if (visibility === "private" && user !== owner && !allowed.includes(user)) {
-        document.getElementById("contestTitle").innerText = "Соревнование недоступно";
-        document.getElementById("contestHint").innerText = "Это приватное соревнование.";
-        document.getElementById("registerBtn").disabled = true;
-        return;
+        return showUnavailable("Соревнование недоступно");
       }
       contestStatus = getStatus(contestData.start, contestData.end);
-      document.getElementById("contestStatus").innerText = statusLabel(contestStatus);
       document.getElementById("contestTitle").innerText = contestData.title || "Соревнование";
-      document.getElementById("contestStart").innerText = `Старт: ${formatUtc(contestData.start)}`;
-      document.getElementById("contestEnd").innerText = `Финиш: ${formatUtc(contestData.end)}`;
-      document.getElementById("contestAuthors").innerHTML = `Авторы: ${renderAuthorLinks(contestData.authors)}`;
-      const rewards = document.getElementById("contestRewards");
-      const rewardsText = rewardsLabel(contestData.rewards);
-      if (rewards) {
-        rewards.textContent = rewardsText ? `Призы: ${rewardsText}` : "";
-        rewards.style.display = rewardsText ? "inline" : "none";
-      }
-
-      const hint = document.getElementById("contestHint");
-      if (contestStatus === "upcoming") {
-        hint.textContent = "Соревнование еще не началось. Задачи появятся в момент старта.";
-      } else if (contestStatus === "finished") {
-        hint.textContent = "Соревнование завершено. Дорешивание доступно.";
-      } else {
-        hint.textContent = "Соревнование идет прямо сейчас.";
-      }
+      document.title = `${contestData.title || "Соревнование"} — CodeBug`;
 
       if (user) {
         const regSnap = await db.ref(`contest_regs/${contestId}/${user}`).get();
         isRegistered = regSnap.exists();
       }
-      updateRegisterButton();
+      renderBanner();
+      startTimer();
 
-      renderTasks(contestStatus);
+      const tasks = Array.isArray(contestData.tasks) ? contestData.tasks : [];
+      await Promise.all(tasks.map(async (taskId) => {
+        try {
+          const res = await fetch(`${TASKS_BASE()}/tasks/${taskId}/meta.json`);
+          const meta = await res.json();
+          taskTitles[taskId] = meta.title;
+        } catch (e) {}
+      }));
+
+      renderTasks();
       loadStandings();
     }
 
-    async function renderTasks(status) {
-      const tasksList = document.getElementById("tasksList");
-      const tasksEmpty = document.getElementById("tasksEmpty");
-      tasksList.innerHTML = "";
-
-      if (!contestData || !Array.isArray(contestData.tasks) || !contestData.tasks.length) {
-        tasksEmpty.textContent = status === "finished"
-          ? "У этого соревнования нет опубликованных задач."
-          : "Задачи появятся позже.";
-        tasksEmpty.style.display = "block";
-        return;
-      }
-
-      if (status === "upcoming") {
-        tasksEmpty.textContent = "Задачи будут доступны после старта.";
-        tasksEmpty.style.display = "block";
-        return;
-      }
-
-      if (!isRegistered) {
-        tasksEmpty.textContent = "Зарегистрируйтесь, чтобы открыть задачи.";
-        tasksEmpty.style.display = "block";
-        return;
-      }
-
-      tasksEmpty.style.display = "none";
-
-      for (const taskId of contestData.tasks) {
-        let title = `Задача #${taskId}`;
-        try {
-          const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
-          const res = await fetch(`${base}/tasks/${taskId}/meta.json`);
-          const meta = await res.json();
-          title = meta.title || title;
-        } catch (e) {}
-
-        const row = document.createElement("div");
-        row.className = "task-row";
-        row.innerHTML = `
-          <div class="task-title">${escapeHtml(title)}</div>
-          <button type="button" class="open-task-btn">Открыть</button>
-        `;
-        row.querySelector(".open-task-btn")?.addEventListener("click", () => openTask(taskId));
-        tasksList.appendChild(row);
-      }
+    async function fetchSubs() {
+      if (allSubs) return allSubs;
+      const snap = await db.ref("submissions/global").get();
+      allSubs = snap.exists() ? Object.values(snap.val()).filter(Boolean) : [];
+      return allSubs;
     }
 
-    function openTask(taskId) {
-      window.location.href = `problem.html?id=${taskId}&contest=${contestId}`;
+    async function renderTasks() {
+      const list = document.getElementById("tasksList");
+      const empty = document.getElementById("tasksEmpty");
+      list.innerHTML = "";
+      const tasks = Array.isArray(contestData?.tasks) ? contestData.tasks : [];
+      const note = !tasks.length
+        ? (contestStatus === "finished" ? "У этого соревнования нет опубликованных задач." : "Задачи появятся позже.")
+        : contestStatus === "upcoming" ? "Задачи откроются в момент старта."
+        : contestStatus === "ongoing" && !isRegistered ? "Зарегистрируйтесь, чтобы открыть задачи."
+        : "";
+      empty.textContent = note;
+      empty.hidden = !note;
+      if (note) return;
+
+      let solved = new Set();
+      if (user) {
+        const subs = await fetchSubs();
+        subs.forEach((sub) => {
+          if (sub.login === user && sub.verdict === "OK") solved.add(Number(sub.task));
+        });
+      }
+
+      list.innerHTML = tasks.map((taskId, i) => {
+        const title = taskTitles[taskId] || `Задача #${taskId}`;
+        const href = `problem.html?id=${encodeURIComponent(taskId)}&contest=${encodeURIComponent(contestId)}`;
+        return `<a class="task${solved.has(Number(taskId)) ? " solved" : ""}" style="--i:${i}" href="${href}">
+          <span class="k">${letter(i)}</span><span class="nm">${escapeHtml(title)}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"/><path d="m12.6 6.6 5.4 5.4-5.4 5.4"/></svg>
+        </a>`;
+      }).join("");
     }
 
-    function calcPenalty(attempts) {
-      let solved = 0;
-      let penalty = 0;
-      attempts.forEach(item => {
-        if (item.okTime === null) return;
-        solved += 1;
-        penalty += item.okTime + item.wrongCount * 20;
-      });
-      return { solved, penalty };
+    // Accepted: brightest on the first try, fainter with each earlier miss.
+    // Not accepted: faint after one try, full red from about the fifth.
+    function cellHtml(entry, rowIndex) {
+      if (!entry || (!entry.wrongCount && entry.okTime === null)) return `<div class="cell"></div>`;
+      if (entry.okTime !== null) {
+        const alpha = Math.max(0.3, 1 - 0.18 * entry.wrongCount).toFixed(2);
+        return `<div class="cell ok" style="--a:${alpha};--i:${rowIndex}" title="решено на ${entry.okTime} минуте">+${entry.wrongCount || ""}</div>`;
+      }
+      const alpha = Math.min(1, 0.15 + 0.2 * (entry.wrongCount - 1)).toFixed(2);
+      return `<div class="cell wa" style="--a:${alpha};--i:${rowIndex}" title="попыток: ${entry.wrongCount}">−${entry.wrongCount}</div>`;
     }
 
     async function loadStandings() {
-      const body = document.getElementById("standingsBody");
+      const table = document.getElementById("standings");
       const empty = document.getElementById("standingsEmpty");
-      body.innerHTML = "";
-
+      table.innerHTML = "";
       if (!contestData) return;
 
       const regsSnap = await db.ref(`contest_regs/${contestId}`).get();
       if (!regsSnap.exists()) {
-        empty.style.display = "block";
+        empty.hidden = false;
         return;
       }
-      empty.style.display = "none";
+      empty.hidden = true;
 
       const regs = regsSnap.val() || {};
       const regUsers = Object.entries(regs).map(([key, value]) => String((value && value.login) || key)).filter(Boolean);
@@ -570,70 +585,55 @@
       if (usersSnap.exists()) {
         const usersData = usersSnap.val() || {};
         for (const login of regUsers) {
-          contestUserSubCache[String(login)] = (usersData[login] && usersData[login].subscription) || {};
-          contestUserExpCache[String(login)] = Number(usersData[login]?.stats?.exp || 0);
+          contestUserSubCache[login] = usersData[login]?.subscription || {};
+          contestUserExpCache[login] = Number(usersData[login]?.stats?.exp || 0);
         }
       }
 
-      const submissionsSnap = await db.ref("submissions/global").get();
-      const subs = submissionsSnap.exists() ? Object.values(submissionsSnap.val()) : [];
+      const subs = (await fetchSubs()).slice().sort((a, b) => Number(a.date || 0) - Number(b.date || 0));
+      const { start, end } = contestData;
+      const tasks = (contestData.tasks || []).map(Number);
 
-      const start = contestData.start;
-      const end = contestData.end;
-      const tasks = contestData.tasks || [];
-
-      const attemptsByUser = {};
-      regUsers.forEach(login => {
-        attemptsByUser[login] = {};
-        tasks.forEach(taskId => {
-          attemptsByUser[login][taskId] = { wrongCount: 0, okTime: null };
-        });
+      const attempts = {};
+      regUsers.forEach((login) => {
+        attempts[login] = {};
+        tasks.forEach((taskId) => { attempts[login][taskId] = { wrongCount: 0, okTime: null }; });
       });
 
-      subs.forEach(sub => {
-        if (!sub || sub.contestId !== contestId) return;
-        if (!regUsers.includes(sub.login)) return;
-        if (!tasks.includes(Number(sub.task))) return;
+      subs.forEach((sub) => {
+        if (sub.contestId !== contestId || !attempts[sub.login]) return;
         if (sub.date < start || sub.date > end) return;
-
-        const taskId = Number(sub.task);
-        const entry = attemptsByUser[sub.login][taskId];
+        const entry = attempts[sub.login][Number(sub.task)];
         if (!entry || entry.okTime !== null) return;
-
-        if (sub.verdict === "OK") {
-          entry.okTime = Math.floor((sub.date - start) / 60000);
-        } else {
-          entry.wrongCount += 1;
-        }
+        if (sub.verdict === "OK") entry.okTime = Math.floor((sub.date - start) / 60000);
+        else entry.wrongCount += 1;
       });
 
-      const table = regUsers.map(login => {
-        const attempts = Object.values(attemptsByUser[login]);
-        const result = calcPenalty(attempts);
-        return {
-          login,
-          solved: result.solved,
-          penalty: result.penalty
-        };
-      });
+      const rows = regUsers.map((login) => {
+        let solved = 0;
+        let penalty = 0;
+        tasks.forEach((taskId) => {
+          const e = attempts[login][taskId];
+          if (e.okTime === null) return;
+          solved += 1;
+          penalty += e.okTime + e.wrongCount * PENALTY;
+        });
+        return { login, solved, penalty };
+      }).sort((a, b) => (b.solved - a.solved) || (a.penalty - b.penalty));
 
-      table.sort((a, b) => {
-        if (b.solved !== a.solved) return b.solved - a.solved;
-        return a.penalty - b.penalty;
-      });
-
-      table.forEach((row, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${idx + 1}</td>
-          <td>${profileLink(row.login)}</td>
-          <td>${row.solved}</td>
-          <td>${row.penalty}</td>
-        `;
-        body.appendChild(tr);
-      });
+      const head = `<thead><tr><th>#</th><th class="l">Участник</th><th>Штраф</th>${tasks.map((_, i) => `<th>${letter(i)}</th>`).join("")}<th>Сумма</th></tr></thead>`;
+      const body = rows.map((row, idx) => `<tr style="--i:${idx}">
+          <td class="place">${idx + 1}</td>
+          <td class="user l" style="--ucol:${nickColor(row.login)}">${profileLink(row.login)}</td>
+          <td class="pen">${row.penalty}</td>
+          ${tasks.map((taskId) => `<td class="sq">${cellHtml(attempts[row.login][taskId], idx)}</td>`).join("")}
+          <td class="sum">${row.solved}</td>
+        </tr>`).join("");
+      table.innerHTML = `${head}<tbody>${body}</tbody>`;
     }
 
+    window.addEventListener("resize", moveIndicator);
+    requestAnimationFrame(moveIndicator);
     loadContest();
   </script>
 </body>
