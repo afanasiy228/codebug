@@ -1586,7 +1586,11 @@ window.__captchaReady = !!window.__captchaReady;
 function getAuth() {
     if (!window.firebase || typeof firebase.auth !== "function") return null;
     try {
-        return firebase.auth();
+        const auth = firebase.auth();
+        // Firebase picks the language of its emails (verification, password reset)
+        // from this value; without it every letter goes out in English.
+        if (auth.languageCode !== "ru") auth.languageCode = "ru";
+        return auth;
     } catch (_) {
         return null;
     }
