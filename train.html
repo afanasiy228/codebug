@@ -1232,6 +1232,8 @@
                     taskType: meta.taskType || "standard",
                     verificationStatus: String(meta.verificationStatus || "approved").toLowerCase(),
                     tags: Array.isArray(meta.tags) ? meta.tags : [],
+                    kinds: Array.isArray(meta.kinds) ? meta.kinds : [],
+                    mainTag: meta.mainTag || "",
                     shortDescription: meta.shortDescription || meta.description || ""
                 }));
             } catch (e) {
