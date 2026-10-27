@@ -2263,8 +2263,54 @@
             const feedback = document.getElementById("editorFeedback");
             if (!feedback) return;
             clearTimeout(showEditorClipboardBlocked.timer);
-            feedback.textContent = "Буфер обмена отключён в редакторе";
+            feedback.textContent = "Вставить можно только то, что скопировано в редакторе";
             showEditorClipboardBlocked.timer = setTimeout(() => { feedback.textContent = ""; }, 2200);
+        }
+
+        // The system clipboard stays off: copy and cut fill this in-page buffer and paste
+        // reads only from it, so code moves around inside the editor but never in or out.
+        let editorClipboard = { text: "", wholeLine: false };
+
+        function editorClipboardRange() {
+            if (!monacoEditor) return null;
+            const model = monacoEditor.getModel();
+            const sel = monacoEditor.getSelection();
+            if (!model || !sel) return null;
+            if (!sel.isEmpty()) return { range: sel, wholeLine: false };
+            // Like Monaco itself: with nothing selected, copy or cut the current line.
+            const line = sel.startLineNumber;
+            const last = model.getLineCount();
+            const range = line < last
+                ? { startLineNumber: line, startColumn: 1, endLineNumber: line + 1, endColumn: 1 }
+                : { startLineNumber: Math.max(1, line - 1), startColumn: line > 1 ? model.getLineMaxColumn(line - 1) : 1, endLineNumber: line, endColumn: model.getLineMaxColumn(line) };
+            return { range, wholeLine: true, atEnd: line >= last && line > 1 };
+        }
+
+        function editorCopy(cut) {
+            const target = editorClipboardRange();
+            if (!target) return;
+            const model = monacoEditor.getModel();
+            let text = model.getValueInRange(target.range);
+            if (target.atEnd) text = text.replace(/^\r?\n/, "") + "\n";
+            editorClipboard = { text, wholeLine: target.wholeLine };
+            if (cut) monacoEditor.executeEdits("internal-cut", [{ range: target.range, text: "", forceMoveMarkers: true }]);
+        }
+
+        function editorPaste() {
+            if (!monacoEditor || !editorClipboard.text) {
+                showEditorClipboardBlocked();
+                return;
+            }
+            const sel = monacoEditor.getSelection();
+            if (!sel) return;
+            if (editorClipboard.wholeLine && sel.isEmpty()) {
+                const at = { startLineNumber: sel.startLineNumber, startColumn: 1, endLineNumber: sel.startLineNumber, endColumn: 1 };
+                monacoEditor.executeEdits("internal-paste", [{ range: at, text: editorClipboard.text, forceMoveMarkers: true }]);
+            } else {
+                monacoEditor.executeEdits("internal-paste", [{ range: sel, text: editorClipboard.text, forceMoveMarkers: true }]);
+            }
+            monacoEditor.pushUndoStop();
+            monacoEditor.focus();
         }
 
         function installEditorClipboardGuard(editorRoot) {
@@ -2276,6 +2322,7 @@
                 event.stopImmediatePropagation();
                 showEditorClipboardBlocked();
             };
+            // Native clipboard events never reach Monaco; the shortcuts below do the work.
             ["copy", "cut", "paste", "contextmenu", "dragstart", "drop"].forEach((eventName) => {
                 editorRoot.addEventListener(eventName, block, true);
             });
@@ -2284,12 +2331,21 @@
             }, true);
             editorRoot.addEventListener("keydown", (event) => {
                 const key = String(event.key || "").toLowerCase();
-                const modifierClipboard = (event.ctrlKey || event.metaKey) && ["c", "x", "v"].includes(key);
-                const legacyCopy = event.ctrlKey && key === "insert";
-                const legacyCut = event.shiftKey && key === "delete";
-                const legacyPaste = event.shiftKey && key === "insert";
+                const mod = event.ctrlKey || event.metaKey;
+                const action =
+                    (mod && key === "c") || (event.ctrlKey && key === "insert") ? "copy"
+                    : (mod && key === "x") || (event.shiftKey && key === "delete") ? "cut"
+                    : (mod && key === "v") || (event.shiftKey && key === "insert") ? "paste"
+                    : "";
+                if (action) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    if (action === "paste") editorPaste();
+                    else editorCopy(action === "cut");
+                    return;
+                }
                 const keyboardMenu = key === "contextmenu" || (event.shiftKey && key === "f10");
-                if (modifierClipboard || legacyCopy || legacyCut || legacyPaste || keyboardMenu) block(event);
+                if (keyboardMenu) block(event);
             }, true);
         }
 
