@@ -1479,8 +1479,18 @@ function ensureGlobalFooter() {
 
     const style = document.createElement("style");
     style.textContent = `
+        body.cb-footer-layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            min-height: 100dvh;
+            height: auto;
+        }
+        body.cb-footer-layout > * {
+            flex-shrink: 0;
+        }
         #global-legal-footer {
-            margin-top: 28px;
+            margin-top: auto;
             padding: 12px 10px 18px;
             border-top: 1px solid rgba(148, 163, 184, 0.22);
             background: rgba(2, 6, 23, 0.18);
@@ -1522,6 +1532,7 @@ function ensureGlobalFooter() {
     `;
 
     document.head.appendChild(style);
+    document.body.classList.add("cb-footer-layout");
     document.body.appendChild(footer);
 }
 
