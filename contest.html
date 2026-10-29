@@ -258,21 +258,28 @@
     .cell:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.18); position: relative; z-index: 1; }
     @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 
-    /* Quiet contest heading, without a separate card. */
-    .banner { position: sticky; top: 104px; min-width: 0; padding: 12px 0; display: grid; justify-items: end; text-align: right; gap: 12px; animation: rise .6s .08s ease both; }
-    .banner .reg-btn { justify-self: end; }
-    .banner h1 { margin: 0 0 4px; font: 650 26px/1.25 system-ui, sans-serif; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere; }
-    .timer { font: 600 32px/1.2 var(--mono); font-variant-numeric: tabular-nums; color: var(--text); }
+    /* Amber rail: right-aligned contest identity, status and personal result. */
+    .banner { position: sticky; top: 104px; min-width: 0; padding: 8px 22px 8px 0; border-right: 2px solid var(--accent); display: grid; justify-items: end; text-align: right; gap: 14px; animation: rise .6s .08s ease both; }
+    .banner-eyebrow { color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: 1.8px; text-transform: uppercase; }
+    .banner .reg-btn { justify-self: end; max-width: 100%; }
+    .banner h1 { margin: 0; font: 750 32px/1.15 system-ui, sans-serif; letter-spacing: -.7px; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere; max-width: 100%; }
+    .banner-status { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; color: var(--accent); font-size: 13px; font-weight: 550; }
+    .banner-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .banner-status[data-status="upcoming"] { color: var(--muted); }
+    .timer { font: 600 13px/1.5 var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
     .timer.soon { color: var(--accent); }
-    .timer.word { font: 500 16px/1.4 system-ui, sans-serif; color: var(--muted); }
-    .meta { font-size: 14px; color: var(--muted); }
-    .meta b { color: var(--ink); font-weight: 600; }
+    .meta { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    .meta b { color: var(--ink); font-weight: 600; white-space: nowrap; }
+    .banner-metrics { display: flex; justify-content: flex-end; gap: 30px; width: 100%; margin: 8px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+    .banner-metrics > div { display: flex; flex-direction: column; gap: 2px; }
+    .banner-metrics dt { order: 1; font-size: 12px; color: var(--muted); }
+    .banner-metrics dd { margin: 0; font: 650 24px/1.3 var(--mono); color: var(--ink); }
 
     @media (max-width: 1024px) {
       .wrap { grid-template-columns: 1fr; padding-top: 18px; }
       .banner { position: static; order: -1; }
       .wrap { gap: 20px; }
-      .banner { padding: 4px 0 12px; gap: 8px; }
+      .banner { padding: 8px 20px 8px 0; gap: 12px; width: min(100%, 300px); justify-self: end; }
     }
     @media (prefers-reduced-motion: reduce) {
       .aura i, .banner, .contest-content, .pane, .task, table.st tbody tr, .cell.ok, .cell.wa { animation: none; }
@@ -309,9 +316,16 @@
     </main>
 
     <aside class="banner" aria-label="Статус соревнования">
+      <div class="banner-eyebrow">Соревнование</div>
       <h1 id="contestTitle">Загрузка…</h1>
-      <div class="timer" id="timer">—</div>
-      <div class="meta" id="contestWhen"></div>
+      <div class="banner-status" id="contestStatus" hidden>
+        <span id="contestStatusLabel"></span><span class="timer" id="timer" hidden></span>
+      </div>
+      <div class="meta" id="contestWhen" hidden></div>
+      <dl class="banner-metrics" id="contestMetrics" hidden>
+        <div><dt id="contestTaskLabel">задач</dt><dd id="contestTaskCount">—</dd></div>
+        <div><dt>место</dt><dd id="contestPlace" aria-label="Ваше место">—</dd></div>
+      </dl>
       <button class="reg-btn" id="registerBtn" onclick="registerForContest()" hidden>Зарегистрироваться</button>
     </aside>
   </div>
@@ -466,29 +480,43 @@
           renderTasks();
           loadStandings();
         }
-        if (status === "finished") {
-          el.textContent = "Дорешивание";
-          el.className = "timer word";
-          clearInterval(timerHandle);
+        el.hidden = status !== "ongoing";
+        if (status !== "ongoing") {
+          el.textContent = "";
+          if (status === "finished") clearInterval(timerHandle);
           return;
         }
-        const target = status === "upcoming" ? contestData.start : contestData.end;
-        const left = Math.max(0, Math.floor((target - now) / 1000));
+        const left = Math.max(0, Math.floor((contestData.end - now) / 1000));
         const h = Math.floor(left / 3600);
         const m = Math.floor((left % 3600) / 60);
         const sec = left % 60;
-        el.textContent = `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-        el.className = status === "ongoing" && left < 600 ? "timer soon" : "timer";
+        el.textContent = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+        el.className = left < 600 ? "timer soon" : "timer";
       };
       tick();
-      timerHandle = setInterval(tick, 1000);
+      if (contestStatus !== "finished") timerHandle = setInterval(tick, 1000);
     }
 
     function renderBanner() {
+      const status = document.getElementById("contestStatus");
+      status.hidden = false;
+      status.dataset.status = contestStatus;
+      document.getElementById("contestStatusLabel").textContent = {
+        upcoming: "Не началось", ongoing: "В процессе", finished: "Дорешивание"
+      }[contestStatus];
+      document.getElementById("timer").hidden = contestStatus !== "ongoing";
       const when = document.getElementById("contestWhen");
+      when.hidden = contestStatus === "finished";
       when.innerHTML = contestStatus === "upcoming"
-        ? `Старт <b>${formatMsk(contestData.start)}</b>`
-        : `Финиш <b>${formatMsk(contestData.end)}</b>`;
+        ? `Начало <b>${formatMsk(contestData.start)}</b>`
+        : `Завершение <b>${formatMsk(contestData.end)}</b>`;
+      const count = Array.isArray(contestData.tasks) ? contestData.tasks.length : 0;
+      const mod10 = count % 10, mod100 = count % 100;
+      const taskWord = mod10 === 1 && mod100 !== 11 ? "задача"
+        : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "задачи" : "задач";
+      document.getElementById("contestTaskCount").textContent = count;
+      document.getElementById("contestTaskLabel").textContent = taskWord;
+      document.getElementById("contestMetrics").hidden = false;
       document.getElementById("registerBtn").hidden = isRegistered || contestStatus === "finished";
     }
 
@@ -524,6 +552,7 @@
     function showUnavailable(text) {
       document.getElementById("contestTitle").innerText = text;
       document.getElementById("timer").textContent = "";
+      ["contestStatus", "contestWhen", "contestMetrics", "registerBtn"].forEach(id => document.getElementById(id).hidden = true);
       document.getElementById("tasksEmpty").textContent = "";
     }
 
@@ -619,6 +648,7 @@
       const table = document.getElementById("standings");
       const empty = document.getElementById("standingsEmpty");
       table.innerHTML = "";
+      document.getElementById("contestPlace").textContent = "—";
       if (!contestData) return;
 
       const regsSnap = await db.ref(`contest_regs/${contestId}`).get();
@@ -674,6 +704,9 @@
         });
         return { login, solved, penalty };
       }).sort((a, b) => (b.solved - a.solved) || (a.penalty - b.penalty));
+
+      const viewerIndex = rows.findIndex(row => row.login === user);
+      document.getElementById("contestPlace").textContent = contestStatus !== "upcoming" && viewerIndex >= 0 ? String(viewerIndex + 1) : "—";
 
       const head = `<thead><tr><th>#</th><th class="l">Участник</th><th>Сумма</th><th>Штраф</th>${tasks.map((_, i) => `<th>${letter(i)}</th>`).join("")}</tr></thead>`;
       const body = rows.map((row, idx) => `<tr style="--i:${idx}">
