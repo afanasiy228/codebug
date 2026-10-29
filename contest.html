@@ -259,7 +259,8 @@
     @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 
     /* Quiet contest heading, without a separate card. */
-    .banner { position: sticky; top: 104px; min-width: 0; padding: 12px 0; display: grid; gap: 12px; animation: rise .6s .08s ease both; }
+    .banner { position: sticky; top: 104px; min-width: 0; padding: 12px 0; display: grid; justify-items: end; text-align: right; gap: 12px; animation: rise .6s .08s ease both; }
+    .banner .reg-btn { justify-self: end; }
     .banner h1 { margin: 0 0 4px; font: 650 26px/1.25 system-ui, sans-serif; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere; }
     .timer { font: 600 32px/1.2 var(--mono); font-variant-numeric: tabular-nums; color: var(--text); }
     .timer.soon { color: var(--accent); }
