@@ -48,7 +48,7 @@
       --accent: #F59E0B;
       --green: 34, 197, 94;
       --red: 239, 68, 68;
-      --glass: linear-gradient(140deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.045));
+      --glass: linear-gradient(135deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.025) 48%, rgba(245, 158, 11, 0.045));
       --rim: rgba(255, 255, 255, 0.1);
       --line: rgba(255, 255, 255, 0.07);
       --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -115,22 +115,25 @@
       align-items: start;
     }
 
-    /* Liquid glass panel, square corners. */
+    /* Rounded glass with a soft rim and a warm reflected highlight. */
     .glass {
       position: relative;
       min-width: 0;
-      padding: 18px;
+      padding: 20px;
+      border-radius: 24px;
       background: var(--glass);
       border: 1px solid var(--rim);
       -webkit-backdrop-filter: blur(20px) saturate(170%);
       backdrop-filter: blur(20px) saturate(170%);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 30px 70px rgba(0, 0, 0, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -1px 0 rgba(255, 255, 255, 0.025), 0 18px 48px rgba(0, 0, 0, 0.32);
+      transition: border-color .35s ease, box-shadow .35s ease;
       animation: rise 0.6s cubic-bezier(.2, .8, .2, 1) both;
     }
     .glass::before {
       content: "";
       position: absolute;
       inset: -1px;
+      border-radius: inherit;
       padding: 1px;
       background: linear-gradient(140deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 70%, rgba(245, 158, 11, 0.35));
       -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -138,11 +141,25 @@
       mask-composite: exclude;
       pointer-events: none;
     }
+    .glass::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(ellipse at 15% 0%, rgba(255, 255, 255, .07), transparent 60%);
+      opacity: .5;
+      pointer-events: none;
+      transition: opacity .45s ease;
+    }
+    .glass:hover::after { opacity: 1; }
+    .glass:hover { border-color: rgba(255, 255, 255, .16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 22px 56px rgba(0, 0, 0, .36); }
     @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-    /* Tabs with a sliding indicator. */
-    .tabs { position: relative; display: inline-flex; padding: 4px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.25); margin-bottom: 14px; }
-    .tabs .ind { position: absolute; top: 4px; bottom: 4px; left: 4px; background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); transition: transform .35s cubic-bezier(.2, .8, .2, 1), width .35s cubic-bezier(.2, .8, .2, 1); }
+    .contest-content { min-width: 0; padding: 8px 0; animation: rise .6s cubic-bezier(.2, .8, .2, 1) both; }
+
+    /* Floating tabs above the open standings. */
+    .tabs { position: relative; display: inline-flex; border-radius: 15px; padding: 4px; border: 1px solid var(--line); background: rgba(255, 255, 255, .025); margin-bottom: 22px; }
+    .tabs .ind { position: absolute; top: 4px; bottom: 4px; left: 4px; border-radius: 11px; background: linear-gradient(145deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .055)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); transition: transform .35s cubic-bezier(.2, .8, .2, 1), width .35s cubic-bezier(.2, .8, .2, 1); }
     .tabs button.tab {
       position: relative;
       z-index: 1;
@@ -151,11 +168,12 @@
       box-shadow: none !important;
       color: var(--muted) !important;
       padding: 8px 16px;
-      border-radius: 0;
-      font: 600 14px/1.2 inherit;
+      border-radius: 11px;
+      font: 600 14px/1.2 system-ui, sans-serif;
       cursor: pointer;
       transition: color .2s;
     }
+    .tabs button.tab:hover { color: var(--ink) !important; }
     .tabs button.tab.active { color: var(--ink) !important; }
     .tabs button.tab:focus-visible, .task:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -168,15 +186,18 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 14px 6px;
-      border-top: 1px solid var(--line);
+      padding: 14px 10px;
+      margin-top: 5px;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      transition: border-color .25s, background .25s;
       color: var(--ink);
       text-decoration: none;
       overflow: hidden;
       animation: fade .45s ease both;
       animation-delay: calc(var(--i) * 45ms);
     }
-    .task:last-child { border-bottom: 1px solid var(--line); }
+    .task:hover { border-color: var(--line); background: rgba(255, 255, 255, .025); }
     .task::before {
       content: "";
       position: absolute;
@@ -200,14 +221,19 @@
     .reg-btn {
       justify-self: start;
       padding: 10px 16px;
-      border-radius: 0 !important;
+      border-radius: 12px !important;
+      transition: transform .2s ease, filter .2s ease;
       font-weight: 700;
       cursor: pointer;
       border: 0;
     }
 
-    /* Standings: each task cell is a square. */
-    .tbl-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px 4px; }
+    .reg-btn:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .reg-btn:not(:disabled):active { transform: translateY(0); }
+    .reg-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+    /* Standings retain compact, equal-sized cells. */
+    .tbl-wrap { overflow-x: auto; margin: 0 -4px; padding: 5px 4px 8px; }
     table.st {
       border-collapse: separate;
       border-spacing: 6px;
@@ -233,36 +259,45 @@
     table.st tbody tr:hover td.user { filter: brightness(1.35); }
     td.place { font: 600 12px var(--mono); color: var(--muted); text-align: center; width: 22px; }
     td.user {
+      border-radius: 11px;
       white-space: nowrap;
       padding: 0 14px 0 10px !important;
       height: 46px;
       font-weight: 700;
       border-left: 3px solid var(--ucol) !important;
-      background: linear-gradient(90deg, color-mix(in srgb, var(--ucol) 20%, transparent), transparent 90%);
+      background-color: #121212;
+      background-size: cover;
+      background-position: center;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
       transition: filter .2s;
     }
     td.user a { text-decoration: none; }
     td.pen, td.sum { font: 700 13px var(--mono); color: var(--ink); text-align: center; white-space: nowrap; padding: 0 6px !important; }
     td.sq { width: 46px; min-width: 46px; height: 46px; }
     .cell {
-      width: 100%;
-      height: 100%;
+      width: 46px;
+      height: 46px;
+      margin-inline: auto;
       display: grid;
       place-items: center;
       font: 700 13px var(--mono);
       color: var(--ink);
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.02);
-      transition: transform .18s, box-shadow .18s;
+      border-radius: 0;
+      background: linear-gradient(145deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .01));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+      transition: transform .25s cubic-bezier(.2, .8, .2, 1), filter .25s, box-shadow .25s;
     }
-    .cell.ok { background: rgba(var(--green), var(--a)); border-color: rgba(var(--green), calc(var(--a) + .15)); color: #04130a; box-shadow: 0 0 18px rgba(var(--green), calc(var(--a) * .35)); }
-    .cell.wa { background: rgba(var(--red), var(--a)); border-color: rgba(var(--red), calc(var(--a) + .1)); color: #fff; }
-    .cell.ok, .cell.wa { animation: pop .45s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(var(--i) * 40ms + 120ms); }
-    .cell:hover { transform: scale(1.08); position: relative; z-index: 1; }
-    @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+    .cell.ok { background: linear-gradient(145deg, rgba(var(--green), calc(var(--a) * .65)), rgba(var(--green), calc(var(--a) * .28))); border-color: rgba(var(--green), calc(var(--a) * .45 + .1)); color: #c4fbd6; box-shadow: inset 0 1px 0 rgba(206, 255, 220, .14), 0 4px 14px rgba(var(--green), calc(var(--a) * .1)); }
+    .cell.wa { background: linear-gradient(145deg, rgba(var(--red), calc(var(--a) * .65)), rgba(var(--red), calc(var(--a) * .28))); border-color: rgba(var(--red), calc(var(--a) * .45 + .1)); color: #ffe0df; box-shadow: inset 0 1px 0 rgba(255, 220, 220, .12); }
+    .cell.ok, .cell.wa { animation: pop .45s cubic-bezier(.2, 1.4, .4, 1) backwards; animation-delay: calc(var(--i) * 40ms + 120ms); }
+    .cell:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.18); position: relative; z-index: 1; }
+    @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 
     /* Banner on the right. */
     .banner { position: sticky; top: 92px; display: grid; gap: 14px; animation-delay: .08s; }
+    .banner.glass, .banner.glass:hover { border: 0; box-shadow: none; }
+    .banner.glass::before { display: none; }
     .banner h1 { margin: 0; font: 700 24px/1.15 system-ui, sans-serif; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere; }
     .timer {
       font: 700 36px/1 var(--mono);
@@ -279,6 +314,12 @@
     @media (max-width: 880px) {
       .wrap { grid-template-columns: 1fr; padding-top: 18px; }
       .banner { position: static; order: -1; }
+      .glass { border-radius: 20px; padding: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .aura i, .glass, .contest-content, .pane, .task, table.st tbody tr, .cell.ok, .cell.wa { animation: none; }
+      .glass, .glass::after, .tabs .ind, .tabs button.tab, .task, .task::before, .task .nm, .task svg, .reg-btn, td.user, .cell { transition: none; }
+      .cell:hover, .reg-btn:not(:disabled):hover, .task:hover svg { transform: none; }
     }
   </style>
 </head>
@@ -291,7 +332,7 @@
   <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 
   <div class="wrap">
-    <main class="glass" aria-label="Задачи и таблица">
+    <main class="contest-content" aria-label="Задачи и таблица">
       <div class="tabs" role="tablist">
         <span class="ind" id="tabInd"></span>
         <button class="tab active" role="tab" id="tasksTabBtn" onclick="openTab('tasks')">Задачи</button>
@@ -358,6 +399,21 @@
 
     const contestUserSubCache = {};
     const contestUserExpCache = {};
+    const contestUserCoverCache = {};
+
+    // Same preset backgrounds as the profile cover picker.
+    const COVER_PRESETS = [
+      { id: "cover_1", name: "Amber code", bg: "linear-gradient(120deg,#121212 0%,#F59E0B 100%)" },
+      { id: "cover_2", name: "Dark build", bg: "linear-gradient(120deg,#050505 0%,#D97706 55%,#FBBF24 100%)" },
+      { id: "cover_3", name: "Deep terminal", bg: "linear-gradient(120deg,#050505 0%,#3A2A12 100%)" },
+      { id: "cover_4", name: "Баг найден", bg: "linear-gradient(120deg,#0B0B0B 0%,#EF4444 100%)" },
+      { id: "cover_5", name: "Ночной техно", bg: "linear-gradient(120deg,#050505 0%,#121212 50%,#2A2A2A 100%)" },
+      { id: "cover_6", name: "Slate terminal", bg: "linear-gradient(120deg,#0B0B0B 0%,#242424 100%)" },
+      { id: "cover_7", name: "Compiler amber", bg: "linear-gradient(120deg,#121212 0%,#B45309 100%)" },
+      { id: "cover_8", name: "Debug console", bg: "linear-gradient(120deg,#050505 0%,#1A1A1A 50%,#F59E0B 100%)" },
+      { id: "cover_9", name: "Runtime trace", bg: "linear-gradient(120deg,#0B0B0B 0%,#F59E0B 35%,#F59E0B 100%)" },
+      { id: "cover_10", name: "Cold deploy", bg: "linear-gradient(120deg,#050505 0%,#121212 50%,#FBBF24 100%)" }
+    ];
 
     function nickColor(login) {
       const sub = contestUserSubCache[String(login)] || {};
@@ -365,6 +421,21 @@
       const level = typeof getSubscriptionLevel === "function" ? getSubscriptionLevel(sub) : "free";
       if (level !== "free" && typeof getSubscriptionNickColor === "function") return getSubscriptionNickColor(sub);
       return typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF";
+    }
+
+    function participantCover(login) {
+      const style = contestUserCoverCache[login] || {};
+      const preset = COVER_PRESETS.find(item => item.id === String(style.coverId || "").toLowerCase()) || COVER_PRESETS[0];
+      const sub = contestUserSubCache[login] || {};
+      const level = typeof getSubscriptionLevel === "function" ? getSubscriptionLevel(sub) : "free";
+      const custom = String(style.coverUrl || "").trim();
+      let background = preset.bg;
+      if (level !== "free" && (/^https?:\/\//i.test(custom) || custom.startsWith("/"))) {
+        const url = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom) : custom;
+        // Quote as a CSS string; assign through the style API after rendering.
+        background = `url(${JSON.stringify(url)})`;
+      }
+      return `linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.2)), ${background}`;
     }
 
     function profileLink(login) {
@@ -587,6 +658,11 @@
         for (const login of regUsers) {
           contestUserSubCache[login] = usersData[login]?.subscription || {};
           contestUserExpCache[login] = Number(usersData[login]?.stats?.exp || 0);
+          const profile = usersData[login] || {};
+          contestUserCoverCache[login] = {
+            ...(profile.profileStyle || {}),
+            coverUrl: profile.coverUrl || profile.profileStyle?.coverUrl || ""
+          };
         }
       }
 
@@ -630,6 +706,9 @@
           <td class="sum">${row.solved}</td>
         </tr>`).join("");
       table.innerHTML = `${head}<tbody>${body}</tbody>`;
+      table.querySelectorAll("td.user").forEach((cell, index) => {
+        cell.style.backgroundImage = participantCover(rows[index].login);
+      });
     }
 
     window.addEventListener("resize", moveIndicator);
