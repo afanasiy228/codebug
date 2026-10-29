@@ -106,12 +106,12 @@
     }
 
     .wrap {
-      width: min(1440px, 100%);
+      width: min(1480px, 100%);
       margin: 0 auto;
       padding: 40px clamp(16px, 3vw, 40px) 80px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 250px;
-      gap: 40px;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: clamp(48px, 5vw, 80px);
       align-items: start;
     }
 
@@ -267,7 +267,7 @@
     .meta { font-size: 14px; color: var(--muted); }
     .meta b { color: var(--ink); font-weight: 600; }
 
-    @media (max-width: 880px) {
+    @media (max-width: 1024px) {
       .wrap { grid-template-columns: 1fr; padding-top: 18px; }
       .banner { position: static; order: -1; }
       .wrap { gap: 20px; }
@@ -674,13 +674,13 @@
         return { login, solved, penalty };
       }).sort((a, b) => (b.solved - a.solved) || (a.penalty - b.penalty));
 
-      const head = `<thead><tr><th>#</th><th class="l">Участник</th><th>Штраф</th>${tasks.map((_, i) => `<th>${letter(i)}</th>`).join("")}<th>Сумма</th></tr></thead>`;
+      const head = `<thead><tr><th>#</th><th class="l">Участник</th><th>Сумма</th><th>Штраф</th>${tasks.map((_, i) => `<th>${letter(i)}</th>`).join("")}</tr></thead>`;
       const body = rows.map((row, idx) => `<tr style="--i:${idx}">
           <td class="place">${idx + 1}</td>
           <td class="user l" style="--ucol:${nickColor(row.login)}">${profileLink(row.login)}</td>
+          <td class="sum">${row.solved}</td>
           <td class="pen">${row.penalty}</td>
           ${tasks.map((taskId) => `<td class="sq">${cellHtml(attempts[row.login][taskId], idx)}</td>`).join("")}
-          <td class="sum">${row.solved}</td>
         </tr>`).join("");
       table.innerHTML = `${head}<tbody>${body}</tbody>`;
       const participantCells = Array.from(table.querySelectorAll("td.user"));
