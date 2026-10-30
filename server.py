@@ -5068,6 +5068,22 @@ def admin_contests_finalize():
         return _server_error("contest_finalize_failed", "CONTEST_FINALIZE_FAILED", exc=e)
 
 
+def _is_allowed_contest_logo(logo):
+    # Keep old inline logos readable while new uploads use our Cloudinary cloud.
+    if len(logo) <= 500_000 and re.match(r"^data:image/(png|jpe?g|webp|gif);base64,", logo, re.I):
+        return True
+    if len(logo) > 2048 or any(character.isspace() for character in logo):
+        return False
+    try:
+        parsed = urllib.parse.urlsplit(logo)
+        prefix = f"/{PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/"
+        return (parsed.scheme == "https" and parsed.netloc == "res.cloudinary.com"
+                and parsed.path.startswith(prefix) and len(parsed.path) > len(prefix)
+                and not parsed.fragment)
+    except ValueError:
+        return False
+
+
 @app.route("/contests/create", methods=["POST"])
 def contests_create():
     login, auth_error = _require_user_login()
@@ -5092,9 +5108,8 @@ def contests_create():
         return _api_error("tasks_required", 400, "TASKS_REQUIRED")
     description = str(data.get("description") or "").strip()[:1000]
     logo = str(data.get("logo") or "").strip()
-    if logo:
-        if len(logo) > 500_000 or not re.match(r"^data:image/(png|jpe?g|webp|gif);base64,", logo, re.I):
-            return _api_error("invalid_logo", 400, "INVALID_LOGO")
+    if logo and not _is_allowed_contest_logo(logo):
+        return _api_error("invalid_logo", 400, "INVALID_LOGO")
     start = int(data.get("start") or 0)
     end = int(data.get("end") or 0)
     try:

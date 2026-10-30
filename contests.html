@@ -2302,7 +2302,9 @@
       });
       const payload = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        alert(payload.error || "Не удалось создать соревнование");
+        setFormError(payload.error === "invalid_logo"
+          ? "Не удалось принять логотип. Выбери изображение заново или убери его."
+          : (payload.error || "Не удалось создать соревнование"));
         return;
       }
       CodeBugData.invalidate("contests:");
