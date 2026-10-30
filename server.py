@@ -18,6 +18,7 @@ import urllib.error
 import hmac
 import html
 import traceback
+import hashlib
 
 try:
     import redis
@@ -26,6 +27,7 @@ except Exception:
 
 import firebase_admin
 from line_diff import count_changed_lines
+from reference_match import matches_reference
 from firebase_admin import credentials, db
 from firebase_admin import auth as admin_auth
 from polygon_importer import PolygonImportError, parse_polygon_package
@@ -1305,6 +1307,88 @@ def _extract_compilation_diagnostics(log_text):
     return details[:16_000]
 
 
+_VERIFIED_REFERENCE_CACHE = {}
+_VERIFIED_REFERENCE_LOCK = threading.Lock()
+
+
+def _reference_match_key(task, code, language):
+    """Identify an unchanged task whose submitted source matches its reference.
+
+    A clean Git tree is required so a cached verdict cannot survive edited tests,
+    checker files or reference source. The first matching submission is still
+    judged normally; only a previously verified tree can take the shortcut.
+    """
+    problem = read_problem_config(task)
+    if not problem or problem.get("taskType", "standard") != "standard":
+        return None
+    if (problem.get("checker") or {}).get("type", "standard") != "standard":
+        return None
+    files = problem.get("files") or {}
+    relative = files.get("solution")
+    if not isinstance(relative, str) or not relative:
+        return None
+    task_root = os.path.realpath(task_dir(task))
+    reference_path = os.path.realpath(os.path.join(task_root, relative))
+    if os.path.commonpath((task_root, reference_path)) != task_root:
+        return None
+    try:
+        with open(reference_path, encoding="utf-8") as source_file:
+            reference = source_file.read()
+    except (OSError, UnicodeError):
+        return None
+    if not matches_reference(code, reference, language):
+        return None
+    if not os.path.isdir(os.path.join(TASKS_REPO_DIR, ".git")):
+        return None
+    try:
+        with TASKS_SYNC_LOCK:
+            status = subprocess.run(
+                ["git", "-C", TASKS_REPO_DIR, "status", "--porcelain", "--untracked-files=all", "--", str(task)],
+                capture_output=True, text=True, check=True, timeout=5,
+            )
+            if status.stdout.strip():
+                return None
+            tree = subprocess.run(
+                ["git", "-C", TASKS_REPO_DIR, "rev-parse", f"HEAD:{task}"],
+                capture_output=True, text=True, check=True, timeout=5,
+            ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if not re.fullmatch(r"[0-9a-f]{40,64}", tree):
+        return None
+    reference_hash = hashlib.sha256(reference.encode("utf-8")).hexdigest()
+    return (str(task), tree, language, reference_hash)
+
+
+def _verified_reference_result(key):
+    if key is None:
+        return None
+    with _VERIFIED_REFERENCE_LOCK:
+        return _VERIFIED_REFERENCE_CACHE.get(key)
+
+
+def _remember_verified_reference(key, parsed):
+    if key is None or str(parsed.get("final") or "").upper() != "OK":
+        return
+    with _VERIFIED_REFERENCE_LOCK:
+        if len(_VERIFIED_REFERENCE_CACHE) >= 512:
+            _VERIFIED_REFERENCE_CACHE.clear()
+        _VERIFIED_REFERENCE_CACHE[key] = {
+            "score": parsed.get("score"),
+            "passedGroups": tuple(parsed.get("passedGroups") or ()),
+        }
+
+
+def _verified_reference_log(verified):
+    lines = ["Matched a reference already accepted on this task revision"]
+    for group in verified["passedGroups"]:
+        lines.append(f"Group {int(group)} verdict: OK")
+    if verified["score"] is not None:
+        lines.append(f"Score: {verified['score']}")
+    lines.append("Final verdict: OK")
+    return "\n".join(lines) + "\n"
+
+
 def _run_submission_job(job):
     task = str(job["task"])
     code = str(job["code"])
@@ -1313,6 +1397,8 @@ def _run_submission_job(job):
     task_meta = read_task_meta(task)
     task_lang = normalize_language(task_meta.get("language"))
     source_name = "sol.py" if task_lang == "python" else "sol.cpp"
+    reference_key = _reference_match_key(task, code, task_lang)
+    verified_reference = _verified_reference_result(reference_key)
 
     if submission_id and FIREBASE_READY:
         try:
@@ -1333,33 +1419,36 @@ def _run_submission_job(job):
         "log": log_text,
     }
     try:
-        with _runtime_tempdir("codebug_submit_") as workdir:
-            source_path = os.path.join(workdir, source_name)
-            with open(source_path, "w") as f:
-                f.write(code)
+        if verified_reference is not None:
+            log_text = _verified_reference_log(verified_reference)
+        else:
+            with _runtime_tempdir("codebug_submit_") as workdir:
+                source_path = os.path.join(workdir, source_name)
+                with open(source_path, "w") as f:
+                    f.write(code)
 
-            judge_env = {
-                **_scrubbed_env(),
-                "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
-                "JUDGE_SOURCE": source_name,
-                "JUDGE_BINARY": "sol",
-                "JUDGE_LANG": task_lang,
-                "JUDGE_LOG_FILE": "log.txt"
-            }
-            result = subprocess.run(
-                ["python3", os.path.abspath(JUDGE_SCRIPT), task],
-                capture_output=True,
-                text=True,
-                timeout=JUDGE_PROCESS_TIMEOUT,
-                cwd=workdir,
-                env=judge_env
-            )
-            log_path = os.path.join(workdir, "log.txt")
-            if os.path.exists(log_path):
-                with open(log_path, "r") as f:
-                    log_text = f.read()
-            else:
-                log_text = (result.stdout or "") + "\n" + (result.stderr or "")
+                judge_env = {
+                    **_scrubbed_env(),
+                    "TASKS_REPO_DIR": os.path.abspath(TASKS_REPO_DIR),
+                    "JUDGE_SOURCE": source_name,
+                    "JUDGE_BINARY": "sol",
+                    "JUDGE_LANG": task_lang,
+                    "JUDGE_LOG_FILE": "log.txt"
+                }
+                result = subprocess.run(
+                    ["python3", os.path.abspath(JUDGE_SCRIPT), task],
+                    capture_output=True,
+                    text=True,
+                    timeout=JUDGE_PROCESS_TIMEOUT,
+                    cwd=workdir,
+                    env=judge_env
+                )
+                log_path = os.path.join(workdir, "log.txt")
+                if os.path.exists(log_path):
+                    with open(log_path, "r") as f:
+                        log_text = f.read()
+                else:
+                    log_text = (result.stdout or "") + "\n" + (result.stderr or "")
     except subprocess.TimeoutExpired:
         log_text = "Judge timeout"
         result_obj.update({
@@ -1416,6 +1505,10 @@ def _run_submission_job(job):
             "passedGroups": parsed["passedGroups"],
             "log": log_text,
         })
+        if verified_reference is None and reference_key is not None and final == "OK":
+            # Recheck the tree: an admin may have updated the task during judge.
+            if _reference_match_key(task, code, task_lang) == reference_key:
+                _remember_verified_reference(reference_key, parsed)
         print(
             "[XP TRACE][SERVER] judge parsed:",
             {

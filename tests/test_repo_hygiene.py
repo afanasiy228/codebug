@@ -95,7 +95,7 @@ def test_pages_excludes_backend_and_operational_files():
         lines = fh.read().splitlines()
     excluded = {line.strip()[2:].strip() for line in lines[lines.index("exclude:") + 1:] if line.startswith("  - ")}
     required = {
-        "server.py", "judge.py", "read_api.py", "sandbox", "runner", "docker",
+        "server.py", "judge.py", "read_api.py", "reference_match.py", "sandbox", "runner", "docker",
         "scripts", "tests", "e2e", "firebase.database.rules.json", "output",
     }
     assert required <= excluded

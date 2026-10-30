@@ -13,6 +13,7 @@ exclude:
   - server.py
   - judge.py
   - read_api.py
+  - reference_match.py
   - generator.py
   - line_diff.py
   - polygon_importer.py
