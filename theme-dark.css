@@ -69,7 +69,26 @@ body::after {
 }
 
 * {
-  scrollbar-color: rgba(245, 158, 11, 0.7) transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #3b3b3b transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #3b3b3b;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #565656;
 }
 
 header {
