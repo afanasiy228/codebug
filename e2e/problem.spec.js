@@ -2,6 +2,31 @@ const { test } = require("@playwright/test");
 const { expect, preparePage, signInThroughUi } = require("./helpers/mock-codebug");
 
 test.describe("Задачи и посылки", () => {
+  for (const duplicate of [true, false]) {
+    test(duplicate ? "совпадающий пример показывается один раз и кнопки центрированы" : "отличающийся пример в условии сохраняется", async ({ page }) => {
+      await preparePage(page, { authenticated: true });
+      await page.route("**/tasks/101/view", route => route.fulfill({ json: {
+        meta: { title: "Примеры", language: "cpp", statement: { html: "statement/russian.html" }, files: { code: "code.cpp" }, openTests: [{ name: "001", input: "tests/1.in", answer: "tests/1.out" }] },
+        files: {
+          "statement/russian.html": `<h1>Примеры</h1><h2>Формат входных данных</h2><p>Даны числа.</p><h2>Пример входных данных</h2><pre>5 3\n1 2 -1 3 0\n</pre><h2>Пример выходных данных</h2><pre>${duplicate ? "3" : "9"}\n</pre><h2>Пояснение</h2><p>Это пояснение нужно сохранить.</p>`,
+          "code.cpp": "int main() {}", "tests/1.in": "5 3\n1 2 -1 3 0\n", "tests/1.out": "3\n"
+        }
+      } }));
+      await page.goto("/problem.html?id=101");
+      await expect(page.locator("#examples .testcase-block")).toHaveCount(1);
+      await expect(page.locator("#taskStatement pre")).toHaveCount(duplicate ? 0 : 2);
+      await expect(page.locator("#taskStatement")).toContainText("Формат входных данных");
+      await expect(page.locator("#taskStatement")).toContainText("Это пояснение нужно сохранить.");
+      await page.evaluate(() => setStatementLanguage("ru"));
+      await expect(page.locator("#taskStatement pre")).toHaveCount(duplicate ? 0 : 2);
+      const geometry = await page.locator("#examples .kf-io").evaluateAll(blocks => blocks.map(block => {
+        const outer = block.getBoundingClientRect(), button = block.querySelector("button").getBoundingClientRect(), code = block.querySelector("pre").getBoundingClientRect();
+        return { centerError: Math.abs((outer.top + outer.bottom - button.top - button.bottom) / 2), overlaps: code.right > button.left };
+      }));
+      expect(geometry.every(item => item.centerError < 1 && !item.overlaps)).toBe(true);
+    });
+  }
+
   test("пакет задачи показывает условие и примеры без отдельных запросов файлов", async ({ page }) => {
     await preparePage(page, { authenticated: true });
     const fileRequests = [];

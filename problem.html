@@ -535,12 +535,19 @@
             padding: 0;
             margin-bottom: 22px;
             position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) max-content;
+            align-items: center;
+            column-gap: 12px;
         }
         
         .kf-copy {
-            position: absolute;
-            right: 10px;
-            top: 10px;
+            grid-column: 2;
+            grid-row: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 10px 10px 0;
             background: #f8f1e6;
             border: 1px solid var(--stroke);
             padding: 4px 10px;
@@ -548,6 +555,8 @@
             border-radius: 6px;
             cursor: pointer;
             color: var(--ink);
+            font-family: inherit;
+            line-height: 1.25;
         }
         
         .kf-copy:hover {
@@ -555,6 +564,10 @@
         }
         
         .kf-pre {
+            grid-column: 1;
+            grid-row: 1;
+            min-width: 0;
+            overflow-wrap: anywhere;
             white-space: pre-wrap;
             padding: 16px;
             margin: 0;
@@ -1628,6 +1641,23 @@
         let statementSections = { ru: "", en: "" };
         let statementPreludeHtml = "";
         let currentProblemMeta = null;
+        const displayedExamples = [];
+
+        function removeDuplicateStatementExamples(root) {
+            const normalize = value => String(value || "").replace(/\r\n?/g, "\n").split("\n").map(line => line.trimEnd()).join("\n").trim();
+            const inputLabel = /^(?:пример\s+(?:входных\s+данных|ввода)|(?:sample|example)\s+input)(?:\s*\d+)?\s*:?$/i;
+            const outputLabel = /^(?:пример\s+(?:выходных\s+данных|вывода)|(?:sample|example)\s+output)(?:\s*\d+)?\s*:?$/i;
+            const isHeading = node => node && /^H[1-6]$/.test(node.tagName);
+            root.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(heading => {
+                if (!inputLabel.test(heading.textContent.trim())) return;
+                const input = heading.nextElementSibling;
+                const outputHeading = input?.nextElementSibling;
+                const output = outputHeading?.nextElementSibling;
+                if (input?.tagName !== "PRE" || !isHeading(outputHeading) || !outputLabel.test(outputHeading.textContent.trim()) || output?.tagName !== "PRE") return;
+                if (!displayedExamples.some(example => normalize(example.input) === normalize(input.textContent) && normalize(example.output) === normalize(output.textContent))) return;
+                [heading, input, outputHeading, output].forEach(node => node.remove());
+            });
+        }
 
         let mathLoader = null;
         function typesetWhenNeeded(element) {
@@ -1654,6 +1684,7 @@
             statementPreludeHtml = buildStatementPrelude(currentStatementLang, currentProblemMeta);
             const bodyHtml = stripDuplicatedIoMetaHtml(statementSections[currentStatementLang] || statementSections.ru || "");
             target.innerHTML = `${statementPreludeHtml}${bodyHtml}`;
+            removeDuplicateStatementExamples(target);
             hideStatementHints(target);
             if (bodyHtml.trim()) CodeBugData.mark("statement-visible");
             typesetWhenNeeded(target);
@@ -2162,26 +2193,29 @@
 
             const examples = document.getElementById("examples");
             examples.innerHTML = "";
+            displayedExamples.length = 0;
             setExamplesVisible(false);
 
             const renderExample = (title, inp, out) => {
+                displayedExamples.push({ input: inp, output: out });
                 examples.innerHTML += `
                 <div class="testcase-block">
                     <div class="kf-title">${escapeHtml(title)}</div>
 
                     <div class="kf-io">
-                        <div class="kf-copy" onclick="copyKF(this)">Скопировать</div>
+                        <button type="button" class="kf-copy" onclick="copyKF(this)">Скопировать</button>
                         <pre class="kf-pre">${escapeHtml(inp.trim())}</pre>
                     </div>
 
                     <div class="kf-title" style="margin-top:10px;">Вывод</div>
                     <div class="kf-io">
-                        <div class="kf-copy" onclick="copyKF(this)">Скопировать</div>
+                        <button type="button" class="kf-copy" onclick="copyKF(this)">Скопировать</button>
                         <pre class="kf-pre">${escapeHtml(out.trim())}</pre>
                     </div>
                 </div>
             `;
                 setExamplesVisible(true);
+                removeDuplicateStatementExamples(document.getElementById("taskStatement"));
             };
 
             const openTests = Array.isArray(problemV2?.openTests) ? problemV2.openTests : [];
