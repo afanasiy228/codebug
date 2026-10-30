@@ -1,4 +1,6 @@
 import os
+import sys
+from read_api import register_read_api, submission_rows, invalidate_submissions
 import json
 import subprocess
 import tempfile
@@ -7,7 +9,7 @@ import shutil
 import zipfile
 import threading
 from collections import deque
-from flask import Flask, request, jsonify, send_file, abort
+from flask import Flask, request, jsonify, send_file, abort, g
 from flask_cors import CORS
 import time
 import urllib.parse
@@ -37,6 +39,11 @@ from telegram_admin_bot import (
 )
 
 app = Flask(__name__)
+
+@app.before_request
+def _start_request_timing():
+    g.request_started_at = time.perf_counter()
+
 
 def _cors_origins():
     raw = os.getenv(
@@ -348,6 +355,10 @@ _PUBLIC_CACHEABLE_PATHS = ("/ping", "/public-config", "/tasks/")
 
 @app.after_request
 def _apply_security_headers(response):
+    started = getattr(g, "request_started_at", None)
+    if started is not None:
+        response.headers["Server-Timing"] = f"app;dur={(time.perf_counter() - started) * 1000:.1f}"
+
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     # This is a JSON API; nothing here should ever be framed.
@@ -1162,7 +1173,13 @@ def _request_ai_code_completion(language, prefix, suffix):
     return completion, None
 
 
+TASKS_SYNC_LOCK = threading.Lock()
+
 def sync_tasks_repo(force=False):
+    with TASKS_SYNC_LOCK:
+        return _sync_tasks_repo_locked(force)
+
+def _sync_tasks_repo_locked(force=False):
     global LAST_TASKS_SYNC
     now = time.time()
     if not force and LAST_TASKS_SYNC and now - LAST_TASKS_SYNC < TASKS_SYNC_TTL:
@@ -1175,7 +1192,8 @@ def sync_tasks_repo(force=False):
                 check=True,
                 capture_output=True,
                 text=True,
-                env=_git_env()
+                env=_git_env(),
+                timeout=90
             )
         else:
             if os.path.isdir(TASKS_REPO_DIR):
@@ -1188,7 +1206,8 @@ def sync_tasks_repo(force=False):
                 check=True,
                 capture_output=True,
                 text=True,
-                env=_git_env()
+                env=_git_env(),
+                timeout=90
             )
         LAST_TASKS_SYNC = now
         return True
@@ -1200,6 +1219,14 @@ def sync_tasks_repo(force=False):
                 if name.isdigit():
                     return True
         return False
+
+
+def _ready_tasks_for_read():
+    # Existing files are served immediately. Network Git work runs in one worker.
+    _ensure_tasks_sync_worker()
+    if os.path.isdir(TASKS_REPO_DIR) and any(name.isdigit() and (os.path.isfile(_problem_path(name)) or os.path.isfile(_meta_path(name))) for name in os.listdir(TASKS_REPO_DIR)):
+        return True
+    return sync_tasks_repo()
 
 
 def _parse_judge_log(log_text):
@@ -1442,6 +1469,8 @@ def _run_submission_job(job):
         if not updated:
             print(f"Queue final firebase update permanently failed for submission={submission_id}")
 
+    invalidate_submissions(sys.modules[__name__], login, job.get("contestId"))
+    _cache_delete(("profile-lite", login))
     solved_like = _is_solved_submission({
         "verdict": result_obj.get("status"),
         "statusLabel": result_obj.get("statusLabel"),
@@ -2682,6 +2711,7 @@ def submit():
     try:
         submission_ref = db.reference("submissions/global").push()
         submission_ref.set(record)
+        invalidate_submissions(sys.modules[__name__], login, contest_id)
         firebase_saved = True
     except Exception as e:
         firebase_error = f"firebase_write_error: {e}"
@@ -3003,7 +3033,7 @@ def auth_verify_captcha():
 
 @app.route("/tasks/list", methods=["GET"])
 def tasks_list():
-    if not sync_tasks_repo():
+    if not _ready_tasks_for_read():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
     viewer_login, viewer_is_admin = _viewer_from_auth_header()
     response = jsonify(list_tasks(viewer_login=viewer_login, viewer_is_admin=viewer_is_admin))
@@ -3118,7 +3148,7 @@ def tasks_admin_review(task_id):
 
 @app.route("/tasks/<int:task_id>/<path:filename>", methods=["GET"])
 def tasks_file(task_id, filename):
-    if not sync_tasks_repo():
+    if not _ready_tasks_for_read():
         return _api_error("tasks_sync_failed", 500, "TASKS_SYNC_FAILED")
     viewer_login, viewer_is_admin = _viewer_from_auth_header()
     if not _task_access_allowed(task_id, viewer_login=viewer_login, viewer_is_admin=viewer_is_admin):
@@ -4510,8 +4540,13 @@ def user_training_stats(login):
         stats = db.reference(f"users/{login}/stats").get() or {}
         stats = stats if isinstance(stats, dict) else {}
         solved = _normalize_solved_map(stats.get("solved"))
+        rows = submission_rows(sys.modules[__name__], "login", login)
+        successes = [item for item in rows if str(item.get("verdict") or item.get("status") or "").upper() in {"OK", "AC", "PS"} or _to_int(item.get("score")) > 0]
+        now = _now_ms()
+        recent = lambda hours: len({str(item.get("task")) for item in successes if _to_int(item.get("date")) >= now - hours * 3600000})
         return jsonify({
             "login": login,
+            "metrics": {"attempts": len(rows), "accuracy": round(100 * len(successes) / len(rows)) if rows else 0, "todaySolved": recent(24), "weekSolved": recent(168)},
             "stats": {
                 "cnt": max(0, _to_int(stats.get("cnt") or len(solved))),
                 "exp": max(0, _to_int(stats.get("exp"))),
@@ -4624,6 +4659,7 @@ def profile_set_cover():
             updates[f"publicProfiles/{login}/coverUrl"] = cover_url
             updates[f"ratingLeaderboard/{login}/profileStyle/coverUrl"] = cover_url
         db.reference("/").update(updates)
+        _cache_delete(("profile-lite", login))
         return jsonify({
             "ok": True,
             "coverId": next_style.get("coverId"),
@@ -5095,6 +5131,7 @@ def contests_create():
     }
     ref = db.reference("contests").push()
     ref.set(payload)
+    _cache_delete(("contests-read",))
     _append_activity(login, "contest_create", {"contestId": ref.key, "title": title, "visibility": visibility})
     return jsonify({"ok": True, "id": ref.key})
 
@@ -5448,7 +5485,7 @@ def public_config():
         "messagingSenderId": PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID,
         "appId": PUBLIC_FIREBASE_WEB_APP_ID
     }
-    return jsonify({
+    response = jsonify({
         "firebase": firebase_public,
         "recaptchaSiteKey": RECAPTCHA_SITE_KEY,
         "cloudinary": {
@@ -5464,6 +5501,8 @@ def public_config():
             "currency": PLATEGA_CURRENCY
         }
     })
+    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
+    return response
 
 
 def _serve_site_page(filename):
@@ -5482,6 +5521,8 @@ def ping():
 def root():
     return jsonify({"status": "ok"})
     
+
+register_read_api(app, sys.modules[__name__])
 
 if __name__ == "__main__":
     print("=== LOCAL JUDGE SERVER ===")

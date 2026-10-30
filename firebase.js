@@ -10,26 +10,28 @@
         return (window.TASKS_API_BASE || window.CODEBUG_API_BASE || defaultApiBase).replace(/\/$/, "");
     };
 
-    function loadPublicConfigSync() {
-        if (window.CODEBUG_PUBLIC_CONFIG && typeof window.CODEBUG_PUBLIC_CONFIG === "object") {
-            return window.CODEBUG_PUBLIC_CONFIG;
-        }
-
+    // Public configuration ships with the page; Render is never a startup dependency.
+    let runtimeConfig = window.CODEBUG_PUBLIC_CONFIG || {};
+    const configKey = "codebug:public-config:" + window.TASKS_API_BASE;
+    if (window.CODEBUG_STATIC_CONFIG) {
         try {
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", window.TASKS_API_BASE + "/public-config", false);
-            xhr.send(null);
-            if (xhr.status >= 200 && xhr.status < 300) {
-                return JSON.parse(xhr.responseText || "{}");
-            }
-            console.error("public-config status:", xhr.status, xhr.responseText);
-        } catch (err) {
-            console.error("public-config request failed:", err);
-        }
-        return {};
+            const saved = JSON.parse(localStorage.getItem(configKey) || "null");
+            if (saved && Date.now() - saved.at < 86400000 && saved.data?.firebase?.projectId === runtimeConfig.firebase?.projectId) runtimeConfig = saved.data;
+        } catch (_) {}
+        // Prices and other public settings can refresh independently of Firebase initialization.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        fetch(window.TASKS_API_BASE + "/public-config", { signal: controller.signal })
+            .then(response => { if (!response.ok) throw new Error("public-config"); return response.json(); })
+            .then(config => {
+                if (config.firebase?.projectId !== runtimeConfig.firebase?.projectId) return;
+                try { localStorage.setItem(configKey, JSON.stringify({ at: Date.now(), data: config })); } catch (_) {}
+                window.CODEBUG_PUBLIC_CONFIG = config;
+                window.RECAPTCHA_SITE_KEY = config.recaptchaSiteKey || "";
+                window.dispatchEvent(new Event("codebug:config-updated"));
+            }).catch(() => {}).finally(() => clearTimeout(timeout));
     }
 
-    const runtimeConfig = loadPublicConfigSync();
     window.CODEBUG_PUBLIC_CONFIG = runtimeConfig;
     window.RECAPTCHA_SITE_KEY = runtimeConfig.recaptchaSiteKey || "";
 

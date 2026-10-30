@@ -655,6 +655,14 @@
         }
     </style>
     <link rel="stylesheet" href="theme-dark.css">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
+    <link id="site-shell-style" rel="stylesheet" href="site-shell.css?v=20261030-1">
+    <link rel="preconnect" href="https://codebug.onrender.com">
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <script src="public-config.js?v=20261030-1"></script>
+    <script src="site-data.js?v=20261030-1"></script>
 </head>
 
 <!-- Firebase -->
@@ -666,14 +674,14 @@
         svg: { fontCache: "global" }
     };
 </script>
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
 
-<script src="firebase.js?v=20260521-3"></script>
+<script src="firebase.js?v=20261030-1"></script>
 <!-- обязательно первой! -->
-<script src="auth.js?v=20261029-footer"></script>
+<script src="auth.js?v=20261030-1"></script>
 <script src="line-diff.js?v=20261026-1"></script>
 <script src="submission-diagnostics.js?v=20260921-1"></script>
 <!-- использует db -->
@@ -687,9 +695,9 @@
 
 <!-- =========================================== -->
 
-<body>
+<body class="cb-footer-layout">
 
-    <header>
+    <header class="cb-site-header">
         <div class="logo">CodeBug</div>
         <nav id="nav-links"></nav>
     </header>
@@ -1340,6 +1348,7 @@
                 throw new Error(errorMessages[res.status] || "Не удалось отправить решение");
             }
 
+            CodeBugData.changed(user);
             console.log("📦 JSON:", data);
             return data;
         }
@@ -1425,7 +1434,7 @@
    LOAD USER SUBMISSIONS (посылки одного пользователя по задаче)
    ============================================================ */
 
-        async function loadMySubsForThisProblem() {
+        async function loadMySubsForThisProblem(force = true) {
             console.log("%c[loadMySubsForThisProblem()]", "color:#F59E0B;");
 
             const user = getUser();
@@ -1436,7 +1445,6 @@
 
             const taskId = resolveTaskIdFromLocation();
             if (taskId === null) {
-                tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
                 return null;
             }
 
@@ -1454,26 +1462,12 @@
 
             tbody.innerHTML = "<tr><td colspan='7' style='color:#B0B0B0'>Загрузка…</td></tr>";
 
-            let snap;
-            try {
-                snap = await dbRef.ref("submissions/global").get();
-            } catch (err) {
-                console.warn("⚠ Не удалось загрузить посылки:", err);
-                tbody.innerHTML = "<tr><td colspan='7' style='color:#B0B0B0'>Не удалось загрузить посылки</td></tr>";
+            let all;
+            try { all = await CodeBugData.submissions({ login: user, force }); }
+            catch (error) {
+                tbody.innerHTML = "<tr><td colspan='7'>Не удалось обновить посылки</td></tr>";
                 return null;
             }
-
-            if (!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='7'>Пока нет посылок…</td></tr>";
-                return null;
-            }
-
-            const all = Object.entries(snap.val() || {}).map(([id, value]) => ({
-                ...(value || {}),
-                _id: id
-            }));
-            console.log("[XP TRACE][CLIENT] submissions loaded:", all.length, "currentUser=", user, "taskId=", taskId);
-
             const mine = all
                 .filter(s => s.login === user && Number(s.task) === Number(taskId))
                 .sort((a, b) => b.date - a.date);
@@ -1635,6 +1629,20 @@
         let statementPreludeHtml = "";
         let currentProblemMeta = null;
 
+        let mathLoader = null;
+        function typesetWhenNeeded(element) {
+            const text = element.textContent || "";
+            if (!/\$|\\\(|\\\[|\\begin\{/.test(text) && !element.querySelector(".math, .MathJax, mjx-container")) return;
+            if (!mathLoader) mathLoader = new Promise((resolve, reject) => {
+                if (window.MathJax?.typesetPromise) { resolve(); return; }
+                const script = document.createElement("script");
+                script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
+                script.onload = resolve; script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            mathLoader.then(() => MathJax.startup?.promise).then(() => MathJax.typesetPromise?.([element])).catch(error => console.warn("formula rendering unavailable", error));
+        }
+
         function setStatementLanguage(lang) {
             currentStatementLang = lang === "en" ? "en" : "ru";
             localStorage.setItem("codebugStatementLang", currentStatementLang);
@@ -1647,9 +1655,8 @@
             const bodyHtml = stripDuplicatedIoMetaHtml(statementSections[currentStatementLang] || statementSections.ru || "");
             target.innerHTML = `${statementPreludeHtml}${bodyHtml}`;
             hideStatementHints(target);
-            if (window.MathJax?.typesetPromise) {
-                MathJax.typesetPromise([target]).catch(console.warn);
-            }
+            CodeBugData.mark("statement-visible");
+            typesetWhenNeeded(target);
         }
 
         // The "Важно" / "Important" section of a statement often names the bug outright.
@@ -1826,9 +1833,7 @@
                 : "<p>Краткий разбор для этой задачи не добавлен.</p>";
             solutionRoot.textContent = solution || "Правильное решение для этой задачи не добавлено.";
 
-            if (window.MathJax?.typesetPromise) {
-                MathJax.typesetPromise([root]).catch(console.warn);
-            }
+            typesetWhenNeeded(root);
         }
 
         function setupAdminReview(taskFetch, reviewUrl) {
@@ -1963,9 +1968,9 @@
                 return;
             }
 
-            const hiddenMap = await loadHiddenMap();
+            const bundleRequest = CodeBugData.load("task:" + id, () => CodeBugData.json(`/tasks/${id}/view`), { ttl: 60000 }).catch(() => null);
+            const [hiddenMap, isAdmin, bundle] = await Promise.all([loadHiddenMap(), checkAdminAccess(), bundleRequest]);
             const isHidden = hiddenMap && hiddenMap[id];
-            const isAdmin = await checkAdminAccess();
             let taskRequestOptions = { cache: "no-store" };
             if (isAdmin && typeof window.getFreshAuthToken === "function") {
                 const token = await window.getFreshAuthToken({ timeoutMs: 5000 }).catch(() => "");
@@ -1976,7 +1981,15 @@
                     };
                 }
             }
-            const taskFetch = (url) => fetch(url, taskRequestOptions);
+            const requests = new Map();
+            const taskFetch = url => {
+                const prefix = `${base}/tasks/${id}/`;
+                const path = url.startsWith(prefix) ? url.slice(prefix.length) : "";
+                if (bundle && path === "problem.json") return Promise.resolve(new Response(JSON.stringify(bundle.meta), { headers: { "Content-Type": "application/json" } }));
+                if (bundle?.files && Object.prototype.hasOwnProperty.call(bundle.files, path)) return Promise.resolve(new Response(bundle.files[path]));
+                if (!requests.has(url)) requests.set(url, fetch(url, { ...taskRequestOptions, cache: isAdmin ? "no-store" : "default" }));
+                return requests.get(url).then(response => response.clone());
+            };
             if (isHidden && !isAdmin) {
                 document.getElementById("taskTitle").innerText = "Задача скрыта";
                 document.getElementById("taskStatement").innerText = "Доступ к этой задаче есть только у администраторов.";
@@ -2034,6 +2047,11 @@
                     meta = await res.json();
                 }
 
+                if (!bundle) {
+                    const paths = [meta.statement?.html || meta.statement?.markdown || "statement.md", meta.statement?.hint, meta.files?.code];
+                    (meta.openTests || []).slice(0, 2).forEach(test => paths.push(test.input, test.answer));
+                    paths.filter(Boolean).forEach(path => taskFetch(`${base}/tasks/${id}/${path}`).catch(() => {}));
+                }
                 TASK_DIFFICULTY = meta.difficulty;
                 currentProblemMeta = meta;
                 CHANGE_BUDGET = Number(meta && meta.maxChangedLines) > 0 ? Number(meta.maxChangedLines) : null;
@@ -2499,15 +2517,22 @@
         }
 
         document.addEventListener("DOMContentLoaded", async() => {
-            await initializeMonacoEditor(TASK_LANGUAGE);
+            const editorReady = initializeMonacoEditor(TASK_LANGUAGE).then(() => CodeBugData.mark("editor-ready"));
+            loadTask().catch(error => console.warn("task load failed", error));
             document.querySelectorAll(".lang-btn").forEach(btn => {
                 btn.addEventListener("click", () => setStatementLanguage(btn.dataset.lang));
             });
             setStatementLanguage(currentStatementLang);
-            loadTask();
+            await editorReady;
         });
     </script>
 
+    <footer id="global-legal-footer"><div class="cb-legal-footer-inner">
+      <a class="cb-legal-btn" href="/privacy.html">Политика конфиденциальности</a>
+      <a class="cb-legal-btn" href="/terms.html">Пользовательское соглашение</a>
+      <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
+      <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
+    </div></footer>
 </body>
 
 </html>

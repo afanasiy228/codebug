@@ -2,6 +2,27 @@ const { test } = require("@playwright/test");
 const { expect, preparePage, signInThroughUi } = require("./helpers/mock-codebug");
 
 test.describe("Задачи и посылки", () => {
+  test("пакет задачи показывает условие и примеры без отдельных запросов файлов", async ({ page }) => {
+    await preparePage(page, { authenticated: true });
+    const fileRequests = [];
+    await page.route("**/tasks/101/**", async route => {
+      if (route.request().url().endsWith("/view")) {
+        return route.fulfill({ json: {
+          meta: { title: "Быстрый пакет", language: "cpp", statement: { markdown: "statement.md" }, files: { code: "code.cpp" }, openTests: [{ input: "tests/1.in", answer: "tests/1.out" }] },
+          files: { "statement.md": "# Условие\nДанные из одного пакета.", "code.cpp": "int main() {}", "tests/1.in": "2 3", "tests/1.out": "5" }
+        } });
+      }
+      fileRequests.push(route.request().url());
+      return route.abort();
+    });
+    await page.goto("/problem.html?id=101");
+    await expect(page.locator("#taskTitle")).toHaveText("Быстрый пакет");
+    await expect(page.locator("#taskStatement")).toContainText("Данные из одного пакета.");
+    await expect(page.locator("#examples")).toContainText("2 3");
+    await expect.poll(() => page.evaluate(() => window.editor?.getValue())).toBe("int main() {}");
+    expect(fileRequests).toEqual([]);
+  });
+
   test("лимит правок блокирует отправку переписанного решения", async ({ page }) => {
     await preparePage(page, { authenticated: true });
     await page.route("**/tasks/101/problem.json", async (route) => {
@@ -71,7 +92,7 @@ test.describe("Задачи и посылки", () => {
       legacyCut: true,
       beforePaste: true
     });
-    await expect(page.locator("#editorFeedback")).toContainText("Буфер обмена отключён");
+    await expect(page.locator("#editorFeedback")).toContainText("Вставить можно только то, что скопировано в редакторе");
 
     const regularFieldPaste = await page.locator("#customInput").evaluate((field) => {
       const event = new Event("paste", { bubbles: true, cancelable: true });

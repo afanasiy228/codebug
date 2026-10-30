@@ -411,11 +411,19 @@
             }
         }
     </style>
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
+    <link id="site-shell-style" rel="stylesheet" href="site-shell.css?v=20261030-1">
+    <link rel="preconnect" href="https://codebug.onrender.com">
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <script src="public-config.js?v=20261030-1"></script>
+    <script src="site-data.js?v=20261030-1"></script>
 </head>
 
-<body>
+<body class="cb-footer-layout">
 
-    <header>
+    <header class="cb-site-header">
         <div class="logo"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></div>
         <nav id="nav-links"></nav>
     </header>
@@ -442,9 +450,9 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
 
-    <script src="firebase.js"></script>
+    <script src="firebase.js?v=20261030-1"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261029-footer"></script>
+    <script src="auth.js?v=20261030-1"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -564,11 +572,17 @@
         }
 
         async function loadRating() {
-            const snap = await firebase.database().ref("ratingLeaderboard").get();
-            if (!snap.exists()) return;
-
             const list = document.getElementById("rating-list");
-            const users = snap.val();
+            const saved = CodeBugData.read("leaderboard");
+            if (!saved && !list.children.length) list.textContent = "Загрузка рейтинга…";
+            const users = saved || await CodeBugData.load("leaderboard", async () => {
+                const snap = await firebase.database().ref("ratingLeaderboard").get();
+                return snap.val() || {};
+            }, { ttl: 30000 });
+            if (saved && !CodeBugData.fresh("leaderboard", 30000)) CodeBugData.load("leaderboard", async () => {
+                const snap = await firebase.database().ref("ratingLeaderboard").get(); return snap.val() || {};
+            }, { force: true }).then(() => loadRating()).catch(() => {});
+            list.innerHTML = "";
 
             let arr = [];
 
@@ -616,7 +630,8 @@
 
                 let row = document.createElement("div");
                 row.className = "rating-row";
-                row.style.setProperty("--row-banner", hasBanner ? rowBanner : "none");
+                row.style.setProperty("--row-banner", "none");
+
                 row.style.setProperty("--row-banner-opacity", hasBanner ? "0.28" : "0");
                 row.style.setProperty("--row-banner-hover-opacity", hasBanner ? "0.35" : "0");
                 row.style.cursor = "pointer";
@@ -640,6 +655,7 @@
         `;
 
                 list.appendChild(row);
+                if (hasBanner) CodeBugData.deferVisible(row, () => row.style.setProperty("--row-banner", rowBanner));
             });
         }
 
@@ -647,6 +663,12 @@
         loadRating();
     </script>
 
+    <footer id="global-legal-footer"><div class="cb-legal-footer-inner">
+      <a class="cb-legal-btn" href="/privacy.html">Политика конфиденциальности</a>
+      <a class="cb-legal-btn" href="/terms.html">Пользовательское соглашение</a>
+      <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
+      <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
+    </div></footer>
 </body>
 
 </html>

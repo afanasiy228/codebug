@@ -109,6 +109,7 @@
         /* PROFILE LAYOUT */
         
         .container {
+            width: 100%;
             max-width: min(1520px, 100%);
             margin: 12px auto 28px;
             padding: 0 16px;
@@ -137,7 +138,7 @@
 
         .profile-cover {
             height: 310px;
-            background-image: linear-gradient(120deg,#121212 0%,#F59E0B 100%);
+            background-color: #121212;
             background-position: center;
             background-size: cover;
             background-repeat: no-repeat;
@@ -1055,9 +1056,9 @@
         }
 
         .reveal {
-            opacity: 0;
-            transform: translateY(18px);
-            animation: fadeUp 0.7s ease forwards;
+            opacity: 1;
+            transform: none;
+            animation: none;
             animation-delay: var(--delay, 0s);
         }
 
@@ -1537,11 +1538,19 @@
             }
         }
     </style>
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
+    <link id="site-shell-style" rel="stylesheet" href="site-shell.css?v=20261030-1">
+    <link rel="preconnect" href="https://codebug.onrender.com">
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <script src="public-config.js?v=20261030-1"></script>
+    <script src="site-data.js?v=20261030-1"></script>
 </head>
 
-<body>
+<body class="cb-footer-layout">
 
-    <header>
+    <header class="cb-site-header">
         <div class="logo"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></div>
         <nav id="nav-links"></nav>
     </header>
@@ -1559,7 +1568,7 @@
             <section class="profile-header-row">
                 <div class="avatar-block reveal" style="--delay: 0.1s;">
                     <div class="avatar-media">
-                        <img id="avatar" src="">
+                        <img id="avatar" src="" width="270" height="270" decoding="async" fetchpriority="high" alt="Аватар">
                         <button id="avatarEditBtn" type="button" class="avatar-edit-btn" style="display:none;" aria-label="Изменить аватар" data-icon="edit" data-icon-size="15"></button>
                     </div>
                     <input type="file" id="avatar-file" accept="image/*">
@@ -1730,9 +1739,9 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
 
-    <script src="firebase.js?v=20260521-3"></script>
+    <script src="firebase.js?v=20261030-1"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261029-footer"></script>
+    <script src="auth.js?v=20261030-1"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -1740,6 +1749,9 @@
 
     <script>
         updateNavbar();
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
 
         const currentUser = getUser();
         if (!currentUser) window.location.href = "auth.html";
@@ -1796,7 +1808,8 @@
         async function dbRead(path, opts = {}) {
             const retries = Number.isFinite(Number(opts.retries)) ? Number(opts.retries) : 1;
             const delayMs = Number.isFinite(Number(opts.delayMs)) ? Number(opts.delayMs) : 180;
-            const forceRest = !!opts.forceRest || preferRestDbReads;
+            const publicPath = /^(publicProfiles|ratingLeaderboard|submissions\/global|tasksHidden)(\/|$)/.test(path);
+            const forceRest = publicPath && (!!opts.forceRest || preferRestDbReads);
             const sdkTimeoutMs = Number.isFinite(Number(opts.sdkTimeoutMs)) ? Number(opts.sdkTimeoutMs) : 700;
             const restTimeoutMs = Number.isFinite(Number(opts.restTimeoutMs)) ? Number(opts.restTimeoutMs) : 1800;
 
@@ -1842,6 +1855,7 @@
                 }
             }
 
+            if (!publicPath) throw new Error("private_read_unavailable");
             let lastErr = null;
             for (let i = 0; i <= retries; i += 1) {
                 try {
@@ -1939,9 +1953,20 @@
             const canUseCustom = (subLevel !== "free");
 
             if (custom && (/^https?:\/\//i.test(custom) || custom.startsWith("/")) && canUseCustom) {
-                const coverUrl = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom) : custom;
-                coverEl.style.backgroundImage = `url("${coverUrl}")`;
+                const coverUrl = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom, Math.ceil(Math.min(1600, window.innerWidth * (window.devicePixelRatio || 1)) / 160) * 160) : custom;
+                if (coverEl.dataset.source === coverUrl) return;
+                coverEl.dataset.source = coverUrl;
+                const image = new Image();
+                image.decoding = "async";
+                image.fetchPriority = "high";
+                image.onload = () => {
+                    if (coverEl.dataset.source !== coverUrl) return;
+                    coverEl.style.backgroundImage = `url(${JSON.stringify(coverUrl)})`;
+                    CodeBugData.mark("profile-cover-loaded");
+                };
+                image.src = coverUrl;
             } else {
+                coverEl.dataset.source = "preset:" + preset.id;
                 coverEl.style.backgroundImage = preset.bg;
             }
         }
@@ -2095,7 +2120,7 @@
             globalEl.innerHTML = "#—";
 
             try {
-                const leaderboard = (await dbRead("ratingLeaderboard", { retries: 1, sdkTimeoutMs: 350, restTimeoutMs: 1800, forceRest: true })) || {};
+                const leaderboard = await CodeBugData.load("leaderboard", async () => (await dbRead("ratingLeaderboard", { retries: 1, sdkTimeoutMs: 900, restTimeoutMs: 1800, forceRest: false })) || {}, { ttl: 30000 });
                 const entries = Object.entries(leaderboard)
                     .filter(([, u]) => u && typeof u === "object")
                     .map(([login, u]) => {
@@ -2593,8 +2618,7 @@
         async function loadAnalytics() {
             let submissions = [];
             try {
-                const raw = await dbRead("submissions/global", { retries: 2 });
-                if (raw && typeof raw === "object") submissions = Object.values(raw);
+                submissions = await CodeBugData.submissions({ login: viewedUser });
             } catch (e) {
                 console.warn("analytics submissions load failed", e);
             }
@@ -2617,7 +2641,7 @@
             renderVerdicts(mySubmissions);
 
             const attemptsCount = mySubmissions.length;
-            const solvedCount = solvedSubs.length;
+            const solvedCount = new Set(solvedSubs.map(item => String(item.task))).size;
             const acRate = attemptsCount > 0 ? Math.round((solvedCount / attemptsCount) * 100) : 0;
             const solvedEl = document.getElementById("osuSolvedCount");
             const attemptsEl = document.getElementById("osuAttemptsValue");
@@ -2629,8 +2653,7 @@
             let taskList = [];
             try {
                 const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
-                const res = await fetch(base + "/tasks/list", { cache: "no-store" });
-                if (res.ok) taskList = await res.json();
+                taskList = await CodeBugData.catalog();
             } catch (e) {
                 console.warn("analytics tasks list load failed", e);
             }
@@ -2827,7 +2850,7 @@
 
             // ---- AVATAR ----
             if (data.avatarUrl) {
-                const avatarUrl = typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(data.avatarUrl) : data.avatarUrl;
+                const avatarUrl = typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(data.avatarUrl, 512) : data.avatarUrl;
                 document.getElementById("avatar").src = avatarUrl;
             } else {
                 const svg = `
@@ -2879,40 +2902,17 @@
             }
             };
 
-            let renderedProfile = null;
+            let renderedProfile = CodeBugData.read("profile:" + viewedUser);
+            if (renderedProfile) applyProfileData(renderedProfile);
             try {
-                renderedProfile = await dbRead("publicProfiles/" + viewedUser, {
-                    retries: 2,
-                    forceRest: true,
-                    sdkTimeoutMs: 650,
-                    restTimeoutMs: 1600
-                });
-                if (renderedProfile && typeof renderedProfile === "object") {
-                    applyProfileData(renderedProfile);
-                }
-            } catch (e) {
-                console.warn("public profile load failed", e);
-            }
-
-            try {
-                const liteRes = await withTimeout(
-                    fetch(`${base}/users/${encodeURIComponent(viewedUser)}/profile-lite`, { cache: "no-store" }),
-                    renderedProfile && typeof renderedProfile === "object" ? 1200 : 1800,
-                    "profile_lite_timeout"
-                );
-                if (liteRes && liteRes.ok) {
-                    renderedProfile = await liteRes.json();
-                    applyProfileData(renderedProfile);
-                } else if (liteRes && liteRes.status !== 404) {
-                    console.warn("profile-lite http status", liteRes.status);
-                }
-            } catch (e) {
-                console.warn("profile-lite load failed", e);
-            }
+                const fresh = await CodeBugData.profile(viewedUser);
+                if (fresh !== renderedProfile) { renderedProfile = fresh; applyProfileData(fresh); }
+                CodeBugData.mark("profile-identity-visible");
+            } catch (error) { console.warn("profile refresh failed", error); }
 
             runAfterProfilePaint("loadRankPlaces", () => loadRankPlaces(renderedProfile));
             runAfterProfilePaint("loadLastActivity", loadLastActivity);
-            runAfterProfilePaint("loadAnalytics", loadAnalytics);
+            CodeBugData.deferVisible(document.querySelector(".pstats"), () => runAfterProfilePaint("loadAnalytics", loadAnalytics));
             runAfterProfilePaint("loadProPlusAnalytics", loadProPlusAnalytics);
             runAfterProfilePaint("setupViewedFriendButton", setupViewedFriendButton);
             runAfterProfilePaint("loadFriends", loadFriends);
@@ -3018,6 +3018,8 @@
                 }
                 currentProfileStyle.coverId = payload.coverId || coverId;
                 delete currentProfileStyle.coverUrl;
+                const cachedProfile = CodeBugData.read("profile:" + currentUser);
+                if (cachedProfile) CodeBugData.write("profile:" + currentUser, { ...cachedProfile, profileStyle: currentProfileStyle, coverUrl: currentProfileStyle.coverUrl || "" });
                 applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
                 renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
             } catch (_) {
@@ -3061,6 +3063,8 @@
                 }
                 currentProfileStyle.coverUrl = String(coverUrl || "");
                 if (payload.coverId) currentProfileStyle.coverId = payload.coverId;
+                const cachedProfile = CodeBugData.read("profile:" + currentUser);
+                if (cachedProfile) CodeBugData.write("profile:" + currentUser, { ...cachedProfile, profileStyle: currentProfileStyle, coverUrl: currentProfileStyle.coverUrl || "" });
                 applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
                 renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
                 if (errorEl) errorEl.textContent = "Кастомная шапка обновлена.";
@@ -3089,6 +3093,8 @@
                 }
                 delete currentProfileStyle.coverUrl;
                 currentProfileStyle.coverId = payload.coverId || currentProfileStyle.coverId || DEFAULT_COVER_ID;
+                const cachedProfile = CodeBugData.read("profile:" + currentUser);
+                if (cachedProfile) CodeBugData.write("profile:" + currentUser, { ...cachedProfile, profileStyle: currentProfileStyle, coverUrl: currentProfileStyle.coverUrl || "" });
                 applyProfileCover(currentProfileStyle, currentSubscriptionLevel);
                 renderCoverControls(currentSubscriptionLevel, currentProfileStyle);
             } catch (_) {
@@ -3534,7 +3540,7 @@
                 await saveAvatarUrl(currentUser, avatarUrl);
 
                 document.getElementById("avatar").src =
-                    typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(avatarUrl) : avatarUrl;
+                    typeof getOptimizedAvatarUrl === "function" ? getOptimizedAvatarUrl(avatarUrl, 512) : avatarUrl;
                 document.getElementById("avatar-error").innerText = "";
 
                 alert("Аватар обновлён!");
@@ -3555,6 +3561,12 @@
 
         initAdminPanel();
     </script>
+    <footer id="global-legal-footer"><div class="cb-legal-footer-inner">
+      <a class="cb-legal-btn" href="/privacy.html">Политика конфиденциальности</a>
+      <a class="cb-legal-btn" href="/terms.html">Пользовательское соглашение</a>
+      <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
+      <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
+    </div></footer>
 </body>
 
 </html>

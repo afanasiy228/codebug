@@ -1007,10 +1007,19 @@
             .suggest-grid { grid-template-columns: 1fr; }
             .suggest-dialog { padding: 18px; }
         }
+        .task-skeleton { height: 82px; border-radius: 12px; margin-bottom: 10px; background: linear-gradient(100deg, #ffffff03, #ffffff07, #ffffff03); list-style: none; }
     </style>
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
+    <link id="site-shell-style" rel="stylesheet" href="site-shell.css?v=20261030-1">
+    <link rel="preconnect" href="https://codebug.onrender.com">
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <script src="public-config.js?v=20261030-1"></script>
+    <script src="site-data.js?v=20261030-1"></script>
 </head>
-<body>
-    <header>
+<body class="cb-footer-layout">
+    <header class="cb-site-header">
         <div class="logo">CodeBug</div>
         <nav id="nav-links"></nav>
     </header>
@@ -1105,7 +1114,7 @@
             </div>
 
             <div id="approvedTasksHeading" class="task-section-heading" hidden>Подтверждённые задачи</div>
-            <ul id="taskList" class="task-list"></ul>
+            <ul id="taskList" class="task-list" aria-busy="true"><li class="task-skeleton" aria-hidden="true"></li><li class="task-skeleton" aria-hidden="true"></li><li class="task-skeleton" aria-hidden="true"></li><li class="task-skeleton" aria-hidden="true"></li><li class="task-skeleton" aria-hidden="true"></li></ul>
             <div id="empty" class="empty" style="display:none;">Задачи не найдены.</div>
             <section id="pendingTasksSection" class="pending-tasks" hidden>
                 <div class="task-section-heading">Неподтверждённые задачи</div>
@@ -1148,8 +1157,8 @@
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
-    <script src="firebase.js?v=20260521-3"></script>
-    <script src="auth.js?v=20261029-footer"></script>
+    <script src="firebase.js?v=20261030-1"></script>
+    <script src="auth.js?v=20261030-1"></script>
     <script>
         let problems = [];
         let visibleProblems = [];
@@ -1215,15 +1224,7 @@
         async function loadProblems() {
             const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
             try {
-                const token = typeof window.getFreshAuthToken === "function"
-                    ? await window.getFreshAuthToken({ timeoutMs: 5000 }).catch(() => "")
-                    : "";
-                const options = token
-                    ? { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
-                    : { cache: "no-store" };
-                const res = await fetch(`${base}/tasks/list`, options);
-                if (!res.ok) return [];
-                const list = await res.json();
+                const list = await CodeBugData.catalog();
                 return list.map(meta => ({
                     id: typeof meta.id === "number" ? meta.id : Number(meta.id),
                     title: meta.title || ("Задача " + meta.id),
@@ -1237,13 +1238,15 @@
                     shortDescription: meta.shortDescription || meta.description || ""
                 }));
             } catch (e) {
-                return [];
+                const saved = CodeBugData.read("catalog");
+                if (saved) return saved;
+                throw e;
             }
         }
 
         async function loadHiddenMap() {
             try {
-                const snap = await db.ref("tasksHidden").get();
+                const snap = await withTimeout(db.ref("tasksHidden").get(), 2600);
                 return snap.exists() ? (snap.val() || {}) : {};
             } catch (err) {
                 return {};
@@ -1289,79 +1292,31 @@
 
         async function loadUserMetrics() {
             const login = getUser();
-            if (!login) {
-                userMetrics = { solved: 0, attempts: 0, accuracy: 0, exp: 0, todaySolved: 0, weekSolved: 0 };
-                solvedMap = {};
-                return;
-            }
-
-            let stats = null;
+            if (!login) return;
+            const key = CodeBugData.privateKey(login, "training");
+            const apply = payload => {
+                const stats = payload.stats || {};
+                solvedMap = stats.solved || {};
+                userMetrics = { ...userMetrics, ...(payload.metrics || {}), solved: Number(stats.cnt || Object.keys(solvedMap).length), exp: Number(stats.exp || 0) };
+                renderTopMetrics(); if (problems.length) renderTaskList();
+            };
+            const cached = CodeBugData.read(key);
+            if (cached) apply(cached);
             try {
-                const base = window.getTasksApiBase ? window.getTasksApiBase() : (window.TASKS_API_BASE || "https://codebug.onrender.com");
-                const token = typeof window.getFreshAuthToken === "function"
-                    ? await window.getFreshAuthToken({ timeoutMs: 5000 })
-                    : "";
-                if (token) {
-                    const response = await withTimeout(fetch(`${base}/users/${encodeURIComponent(login)}/training-stats`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        cache: "no-store",
-                    }), 6000);
-                    if (response.ok) {
-                        const payload = await response.json();
-                        stats = payload && payload.stats && typeof payload.stats === "object" ? payload.stats : null;
+                const payload = await CodeBugData.load(key, async () => {
+                    const token = await getFreshAuthToken({ timeoutMs: 5000 });
+                    if (!token) throw new Error("auth_not_ready");
+                    const result = await CodeBugData.json(`/users/${encodeURIComponent(login)}/training-stats`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+                    if (!result.metrics) {
+                        const rows = await CodeBugData.submissions({ login });
+                        const successful = rows.filter(isSuccessfulSubmission);
+                        const recent = hours => new Set(successful.filter(row => Number(row.date || row.createdAt || 0) >= Date.now() - hours * 3600000).map(row => row.task)).size;
+                        result.metrics = { attempts: rows.length, accuracy: rows.length ? Math.round(100 * successful.length / rows.length) : 0, todaySolved: recent(24), weekSolved: recent(168) };
                     }
-                }
-            } catch (e) {
-                console.warn("training stats API unavailable, trying Firebase", e);
-            }
-
-            try {
-                if (!stats) {
-                    if (!window.db) throw new Error("firebase_database_unavailable");
-                    const statsSnap = await withTimeout(window.db.ref(`users/${login}/stats`).get(), 2600);
-                    stats = statsSnap && statsSnap.exists() ? (statsSnap.val() || {}) : {};
-                }
-                solvedMap = (stats && typeof stats.solved === "object" && stats.solved) ? stats.solved : {};
-                const solvedCnt = Number(stats.cnt || Object.keys(solvedMap).length || 0);
-                const exp = Number(stats.exp || 0);
-                userMetrics.solved = solvedCnt;
-                userMetrics.exp = exp;
-            } catch (e) {
-                solvedMap = {};
-                userMetrics.solved = 0;
-                userMetrics.exp = 0;
-            }
-
-            try {
-                if (!window.db) throw new Error("firebase_database_unavailable");
-                const subsSnap = await withTimeout(window.db.ref("submissions/global").get(), 3200);
-                const subsRaw = subsSnap && subsSnap.exists() ? (subsSnap.val() || {}) : {};
-                const rows = Array.isArray(subsRaw) ? subsRaw : Object.values(subsRaw);
-                const mine = rows.filter((s) => String((s && s.login) || "").trim() === login);
-                const attempts = mine.length;
-                const successRows = mine.filter(isSuccessfulSubmission);
-                const success = successRows.length;
-                const now = Date.now();
-                const dayAgo = now - 24 * 60 * 60 * 1000;
-                const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-                let todaySolved = 0;
-                let weekSolved = 0;
-                for (const row of successRows) {
-                    const ts = toMillis(row?.createdAt ?? row?.ts ?? row?.time);
-                    if (!ts) continue;
-                    if (ts >= weekAgo) weekSolved += 1;
-                    if (ts >= dayAgo) todaySolved += 1;
-                }
-                userMetrics.attempts = attempts;
-                userMetrics.accuracy = attempts > 0 ? Math.round((success / attempts) * 100) : 0;
-                userMetrics.todaySolved = todaySolved;
-                userMetrics.weekSolved = weekSolved;
-            } catch (e) {
-                userMetrics.attempts = 0;
-                userMetrics.accuracy = 0;
-                userMetrics.todaySolved = 0;
-                userMetrics.weekSolved = 0;
-            }
+                    return result;
+                }, { ttl: 15000 });
+                if (getUser() === login) apply(payload);
+            } catch (error) { console.warn("training metrics refresh failed", error); }
         }
 
         function nextLevelTarget(exp) {
@@ -1635,6 +1590,7 @@
             const empty = document.getElementById("empty");
             const rows = filteredProblems();
             list.innerHTML = "";
+            list.setAttribute("aria-busy", "false");
             empty.style.display = rows.length ? "none" : "block";
 
             rows.forEach((p) => {
@@ -1645,6 +1601,8 @@
         }
 
         function refreshModeratedTasks() {
+            CodeBugData.invalidate("catalog");
+            CodeBugData.invalidate("hidden-tasks");
             visibleProblems = problems.filter((problem) =>
                 problem.verificationStatus === "approved" && !hiddenMap[problem.id]
             );
@@ -1835,20 +1793,38 @@
         }
 
         async function initTraining() {
-            if (typeof updateNavbar === "function") updateNavbar();
-
-            isAdmin = (typeof checkAdminAccess === "function") ? await checkAdminAccess() : false;
-            problems = await loadProblems();
-            hiddenMap = await loadHiddenMap();
-            visibleProblems = problems.filter((p) =>
-                p.verificationStatus === "approved" && !hiddenMap[p.id]
-            );
-            syncDifficultyFilter();
-
-            await loadUserMetrics();
+            updateNavbar();
+            hiddenMap = CodeBugData.read("hidden-tasks") || {};
+            const applyCatalog = list => {
+                problems = list;
+                visibleProblems = problems.filter(p => p.verificationStatus !== "pending" && !hiddenMap[p.id]);
+                syncDifficultyFilter(); renderTaskList(); renderPendingTasks();
+                CodeBugData.mark("catalog-visible");
+            };
+            const cached = CodeBugData.read("catalog");
+            if (cached) applyCatalog(cached);
             renderTopMetrics();
-            renderTaskList();
-            renderPendingTasks();
+            // Personal metrics and management permissions never hold up the public list.
+            loadUserMetrics();
+            loadHiddenMap().then(map => { hiddenMap = map; CodeBugData.write("hidden-tasks", map); if (problems.length) applyCatalog(problems); });
+            const publicRequest = loadProblems().then(applyCatalog).catch(error => {
+                console.warn("catalog refresh failed", error);
+                if (!cached) {
+                    document.getElementById("taskList").innerHTML = "";
+                    const empty = document.getElementById("empty");
+                    empty.style.display = "block"; empty.textContent = "Не удалось загрузить задачи. Обнови страницу, чтобы повторить.";
+                }
+            });
+            checkAdminAccess().then(async allowed => {
+                isAdmin = allowed;
+                if (!allowed) return;
+                await publicRequest;
+                const token = await getFreshAuthToken();
+                if (!token) return;
+                const list = await CodeBugData.json("/tasks/list", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+                applyCatalog(list);
+            }).catch(error => console.warn("management controls unavailable", error));
+            await publicRequest;
         }
 
         function bindFilters() {
@@ -1878,5 +1854,11 @@
             initTraining();
         });
     </script>
+    <footer id="global-legal-footer"><div class="cb-legal-footer-inner">
+      <a class="cb-legal-btn" href="/privacy.html">Политика конфиденциальности</a>
+      <a class="cb-legal-btn" href="/terms.html">Пользовательское соглашение</a>
+      <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
+      <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
+    </div></footer>
 </body>
 </html>

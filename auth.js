@@ -70,6 +70,7 @@ function getUser() {
 }
 
 function clearSession() {
+    window.CodeBugData?.invalidate("private:");
     const previousLogin = localStorage.getItem("user");
     if (previousLogin) clearNavbarIdentityCache(previousLogin);
     localStorage.removeItem("user");
@@ -128,619 +129,12 @@ async function getFreshAuthToken(opts = {}) {
    MOBILE NAV (BURGER)
 ============================ */
 function ensureMobileNavStyles() {
-    if (document.getElementById("mobile-nav-style")) return;
-    const style = document.createElement("style");
-    style.id = "mobile-nav-style";
-    style.textContent = `
-[data-icon] {
-    line-height: 0;
-}
-[data-icon] > svg {
-    display: block;
-}
-.btn-arrow {
-    display: inline-flex;
-    align-items: center;
-    vertical-align: -2px;
-}
-header.cb-site-header,
-.top-nav {
-    background: #050608 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: none !important;
-    backdrop-filter: blur(12px) !important;
-}
-.top-nav {
-    height: auto !important;
-    min-height: 90px !important;
-    align-items: stretch !important;
-    padding: 0 !important;
-}
-header.cb-site-header,
-.top-nav .cb-site-header {
-    height: auto !important;
-    min-height: 90px !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    grid-template-rows: 48px 42px;
-    align-items: center !important;
-    row-gap: 0;
-}
-header.cb-site-header {
-    padding: 0 max(18px, 4vw) !important;
-}
-.top-nav .cb-site-header {
-    width: min(1180px, 96vw) !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-}
-header.cb-site-header .logo,
-.top-nav .cb-site-header .logo {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: center;
-    justify-self: start;
-    width: max-content;
-    color: #FFFFFF !important;
-    font-size: 19px !important;
-    line-height: 1 !important;
-    letter-spacing: 0 !important;
-}
-header .brand-code,
-header .brand-bug,
-header .brand-suffix,
-.top-nav .brand-code,
-.top-nav .brand-bug,
-.top-nav .brand-suffix {
-    color: #ffffff !important;
-}
-#nav-links {
-    display: contents !important;
-}
-#nav-links .nav-shell {
-    display: contents !important;
-}
-#nav-links .nav-links {
-    display: flex;
-    align-items: center;
-}
-#nav-links .nav-primary {
-    grid-column: 1 / 4;
-    grid-row: 2;
-    justify-self: center;
-    justify-content: center;
-    gap: clamp(20px, 3vw, 36px);
-    min-width: 0;
-    width: 100%;
-    height: 42px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-#nav-links .nav-primary a,
-#nav-links .nav-drawer a {
-    position: relative;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #9CA3AF !important;
-    text-decoration: none !important;
-    font-size: 14px;
-    font-weight: 650;
-    letter-spacing: 0;
-    line-height: 1;
-    white-space: nowrap;
-}
-#nav-links .nav-primary a {
-    display: inline-flex;
-    align-items: center;
-    height: 42px;
-    padding: 0 0 1px;
-}
-#nav-links .nav-primary a:hover,
-#nav-links .nav-primary a.active {
-    color: #FFFFFF !important;
-}
-#nav-links .nav-primary a.active::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 2px;
-    border-radius: 999px;
-    background: #F59E0B !important;
-}
-#nav-links .nav-account {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: end;
-    justify-content: flex-end;
-    gap: 10px;
-    position: relative;
-    z-index: 2003;
-}
-#nav-links .nav-auth-link {
-    color: #FFFFFF !important;
-    text-decoration: none !important;
-    font-size: 14px;
-    font-weight: 650;
-    white-space: nowrap;
-}
-#nav-links .nav-notification {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #CBD5E1 !important;
-    cursor: pointer;
-}
-#nav-links .nav-notification:hover {
-    background: rgba(255, 255, 255, 0.04) !important;
-    color: #FFFFFF !important;
-}
-#nav-links .nav-notification svg {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-}
-#nav-links .nav-notification-dot {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: #F59E0B;
-    box-shadow: 0 0 0 2px rgba(5, 5, 5, 0.92);
-    opacity: 0;
-}
-#nav-links .nav-notification.has-unread .nav-notification-dot {
-    opacity: 1;
-}
-#nav-links .nav-profile-wrap {
-    position: relative;
-}
-#nav-links .nav-profile {
-    display: inline-grid;
-    grid-template-columns: 28px minmax(0, auto);
-    align-items: center;
-    gap: 9px;
-    min-height: 34px;
-    padding: 4px 6px !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #FFFFFF !important;
-    cursor: pointer;
-    font: inherit;
-    text-align: left;
-}
-#nav-links .nav-profile:hover {
-    background: rgba(255, 255, 255, 0.04) !important;
-    box-shadow: none !important;
-}
-#nav-links .nav-profile:hover .nav-profile-name {
-    filter: brightness(1.12);
-}
-#nav-links .nav-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: #171717;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: none !important;
-    color: #E5E7EB;
-    font-size: 12px;
-    font-weight: 750;
-    line-height: 1;
-    text-transform: uppercase;
-}
-#nav-links .nav-avatar img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-#nav-links .nav-profile-text {
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-}
-#nav-links .nav-profile-name {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: #FFFFFF;
-    font-size: 14px;
-    font-weight: 750;
-    line-height: 1.05;
-}
-#nav-links .nav-profile-tier {
-    color: #9CA3AF;
-    font-size: 10px;
-    font-weight: 750;
-    letter-spacing: 0.08em;
-    line-height: 1;
-}
-#nav-links .nav-profile-tier.is-pro {
-    color: #FBBF24;
-}
-#nav-links .nav-profile-wrap {
-    position: relative;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-profile {
-    background: rgba(255, 255, 255, 0.06) !important;
-}
-#nav-links .nav-account-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 182px;
-    padding: 6px 0;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 12px;
-    background: rgba(9, 11, 15, 0.94);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(12px);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-7px) scale(0.97);
-    transform-origin: top right;
-    transition: opacity 0.16s ease, transform 0.22s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0s linear 0.22s;
-    z-index: 2005;
-}
-/* keeps hover alive across the gap between the button and the menu */
-#nav-links .nav-account-menu::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -10px;
-    height: 10px;
-}
-#nav-links .nav-account-menu > * {
-    opacity: 0;
-    transform: translateY(-5px);
-    transition: opacity 0.18s ease, transform 0.24s cubic-bezier(0.2, 0.9, 0.25, 1), color 0.15s, background 0.15s;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-account-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    transition: opacity 0.16s ease, transform 0.26s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0s;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-account-menu > * {
-    opacity: 1;
-    transform: none;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(1) {
-    transition-delay: 0.04s;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(2) {
-    transition-delay: 0.08s;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(3) {
-    transition-delay: 0.1s;
-}
-#nav-links .nav-profile-wrap.menu-open .nav-account-menu > *:nth-child(4) {
-    transition-delay: 0.12s;
-}
-#nav-links .nav-account-menu a,
-#nav-links .nav-account-menu button {
-    display: block;
-    width: 100%;
-    margin: 0 !important;
-    padding: 9px 14px;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #CBD5E1 !important;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 550;
-    line-height: 1.1;
-    text-align: left;
-    text-decoration: none !important;
-    cursor: pointer;
-}
-#nav-links .nav-account-menu a:hover,
-#nav-links .nav-account-menu button:hover {
-    color: #FFFFFF !important;
-    background: rgba(255, 255, 255, 0.04) !important;
-    box-shadow: none !important;
-}
-#nav-links .nav-account-menu .nav-menu-danger {
-    color: #EF4444 !important;
-}
-#nav-links .nav-account-menu .nav-menu-danger:hover {
-    color: #F87171 !important;
-    background: rgba(239, 68, 68, 0.08) !important;
-}
-#nav-links .nav-menu-separator {
-    height: 1px;
-    margin: 6px 0;
-    background: rgba(255, 255, 255, 0.08);
-}
-#nav-links .nav-burger {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: end;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #FFFFFF !important;
-    font-size: 20px;
-    cursor: pointer;
-    position: relative;
-    z-index: 2004;
-}
-#nav-links .nav-drawer {
-    display: none;
-    position: fixed;
-    top: 0;
-    /* Closed drawer sits on the edge with zero width: parked off-screen it made phones
-       lay every page out ~700px wide and shrink it. */
-    right: 0;
-    width: 0;
-    overflow: hidden;
-    visibility: hidden;
-    white-space: nowrap;
-    height: 100%;
-    background: #0B0B0B;
-    padding: 80px 0 24px;
-    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.45);
-    z-index: 2002;
-    gap: 0;
-    flex-direction: column;
-    transition: width 0.25s ease, padding 0.25s ease, visibility 0s linear 0.25s;
-    pointer-events: none;
-}
-#nav-links .nav-drawer a {
-    display: block;
-    padding: 11px 0;
-    color: #D4D4D4 !important;
-}
-#nav-links .nav-drawer a.active {
-    color: #FFFFFF !important;
-}
-#nav-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-    z-index: 2001;
-}
-body.nav-open #nav-overlay {
-    opacity: 1;
-    pointer-events: auto;
-}
-body.nav-open #nav-links .nav-drawer {
-    width: min(280px, 86vw);
-    padding: 80px 22px 24px;
-    visibility: visible;
-    pointer-events: auto;
-    transition: width 0.25s ease, padding 0.25s ease, visibility 0s;
-}
-@media (max-width: 900px) {
-    header.cb-site-header,
-    .top-nav .cb-site-header {
-        grid-template-rows: 50px;
-        min-height: 50px !important;
-    }
-    .top-nav {
-        min-height: 50px !important;
-    }
-    /* Phones: logo left, account + burger share the rest of the row, so
-       "Войти / Регистрация" stays on one line. */
-    header.cb-site-header,
-    .top-nav .cb-site-header {
-        grid-template-columns: auto minmax(0, 1fr);
-        column-gap: 12px;
-    }
-    #nav-links .nav-primary {
-        display: none;
-    }
-    #nav-links .nav-account {
-        grid-column: 2;
-        min-width: 0;
-        margin-right: 42px;
-    }
-    #nav-links .nav-burger {
-        grid-column: 2;
-    }
-    #nav-links .nav-burger {
-        display: inline-flex;
-    }
-    #nav-links .nav-drawer {
-        display: flex;
-    }
-}
-@media (max-width: 560px) {
-    #nav-links .nav-profile-name {
-        max-width: 92px;
-    }
-    #nav-links .nav-account {
-        gap: 6px;
-        margin-right: 38px;
-    }
-    #nav-links .nav-notification {
-        width: 28px;
-    }
-}
-@media (max-width: 360px) {
-    #nav-links .nav-auth-link {
-        font-size: 13px;
-    }
-}
-
-/* ---------- Beam header ----------
-   A full-width bar. A small amber glow follows the cursor along the bar and
-   along its bottom edge; links get an underline that grows from the centre.
-   The glass lives on ::before so the header itself has no backdrop-filter:
-   a filtered ancestor would trap the fixed mobile drawer inside the bar. */
-header.cb-site-header,
-.top-nav .cb-site-header {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 30 !important;
-    isolation: isolate;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    height: 64px !important;
-    min-height: 64px !important;
-    grid-template-columns: auto minmax(0, 1fr) auto !important;
-    grid-template-rows: 64px !important;
-    column-gap: 20px;
-    padding: 0 max(20px, calc((100% - 1180px) / 2)) !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-}
-.top-nav .cb-site-header {
-    position: relative !important;
-    pointer-events: auto;
-}
-header.cb-site-header::before,
-.top-nav .cb-site-header::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-        radial-gradient(150px 64px at var(--beam-x, 50%) 0%, rgba(245, 158, 11, calc(0.1 * var(--beam, 0))), transparent 70%),
-        rgba(6, 6, 6, 0.82);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    transition: background-color 0.3s ease;
-    pointer-events: none;
-}
-.cb-site-header.is-scrolled::before {
-    background:
-        radial-gradient(150px 64px at var(--beam-x, 50%) 0%, rgba(245, 158, 11, calc(0.1 * var(--beam, 0))), transparent 70%),
-        rgba(6, 6, 6, 0.94);
-}
-.cb-site-header .nav-beam {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 1px;
-    pointer-events: none;
-    background: radial-gradient(120px 1px at var(--beam-x, 50%) 50%, rgba(251, 191, 36, 0.7), transparent);
-    opacity: var(--beam, 0);
-    transition: opacity 0.3s ease;
-}
-.top-nav {
-    height: auto !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-}
-#nav-links .nav-primary {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: center;
-    width: auto;
-    height: 64px;
-    gap: 4px;
-    border-top: 0;
-}
-#nav-links .nav-primary a {
-    height: 64px;
-    padding: 0 11px;
-}
-#nav-links .nav-primary a.active::after,
-#nav-links .nav-primary a::after {
-    content: "";
-    position: absolute;
-    left: 11px;
-    right: 11px;
-    bottom: 14px;
-    height: 2px;
-    border-radius: 2px;
-    background: #F59E0B !important;
-    transform: scaleX(0);
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-#nav-links .nav-primary a:hover::after,
-#nav-links .nav-primary a:focus-visible::after,
-#nav-links .nav-primary a.active::after {
-    transform: scaleX(1);
-}
-#nav-links .nav-account {
-    grid-column: 3;
-    grid-row: 1;
-}
-#nav-links .nav-burger {
-    grid-column: 3;
-    grid-row: 1;
-}
-@media (max-width: 1080px) {
-    header.cb-site-header,
-    .top-nav .cb-site-header {
-        grid-template-columns: auto minmax(0, 1fr) !important;
-        column-gap: 12px;
-        padding: 0 18px !important;
-    }
-    #nav-links .nav-primary {
-        display: none;
-    }
-    #nav-links .nav-account {
-        grid-column: 2;
-        min-width: 0;
-        margin-right: 42px;
-    }
-    #nav-links .nav-burger {
-        grid-column: 2;
-        display: inline-flex;
-    }
-    #nav-links .nav-drawer {
-        display: flex;
-    }
-}
-@media (max-width: 640px) {
-    header.cb-site-header,
-    .top-nav .cb-site-header {
-        height: 54px !important;
-        min-height: 54px !important;
-        grid-template-rows: 54px !important;
-        padding: 0 14px !important;
-    }
-}
-`;
-    document.head.appendChild(style);
+    if (document.getElementById("site-shell-style")) return;
+    const link = document.createElement("link");
+    link.id = "site-shell-style";
+    link.rel = "stylesheet";
+    link.href = "site-shell.css?v=20261030-1";
+    document.head.appendChild(link);
 }
 
 function ensureNavOverlay() {
@@ -1209,22 +603,8 @@ function updateNavbar() {
 async function getUserSubscription(login) {
     if (!login) return null;
     try {
-        let val = null;
-        if (window.firebase) {
-            try {
-                const snap = await firebase.database().ref("users/" + login + "/subscription").get();
-                if (snap.exists()) val = snap.val() || {};
-            } catch (err) {
-                console.warn("subscription sdk read failed, using REST fallback", err);
-            }
-        }
-        if (!val || typeof val !== "object") {
-            const base = window.TASKS_API_BASE || window.CODEBUG_API_BASE || "https://codebug.onrender.com";
-            const res = await fetch(`${base}/users/${encodeURIComponent(login)}/profile-lite`, { cache: "no-store" });
-            if (!res.ok) return null;
-            const payload = await res.json().catch(() => ({}));
-            val = payload.subscription || null;
-        }
+        const data = await CodeBugData.profile(login);
+        const val = data.subscription || null;
         return normalizeSubscriptionForUi(val);
     } catch (err) {
         console.warn("getUserSubscription failed", err);
@@ -1349,14 +729,11 @@ async function applyProBrandingToNavbar(login) {
     let hasFreshIdentity = false;
 
     try {
-        const response = await fetch(`${base}/users/${encodeURIComponent(login)}/profile-lite`, { cache: "no-store" });
-        if (response.ok) {
-            const profile = await response.json();
-            sub = normalizeSubscriptionForUi(profile.subscription);
-            avatarUrl = normalizeSafeImageUrl(profile.avatarUrl || "");
-            exp = Number(profile?.stats?.exp || 0);
-            hasFreshIdentity = true;
-        }
+        const profile = await CodeBugData.profile(login);
+        sub = normalizeSubscriptionForUi(profile.subscription);
+        avatarUrl = normalizeSafeImageUrl(profile.avatarUrl || "");
+        exp = Number(profile.stats?.exp || 0);
+        hasFreshIdentity = true;
     } catch (_) {}
 
     if (!hasFreshIdentity) sub = await getUserSubscription(login);
@@ -1477,61 +854,7 @@ function ensureGlobalFooter() {
         </div>
     `;
 
-    const style = document.createElement("style");
-    style.textContent = `
-        body.cb-footer-layout {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            min-height: 100dvh;
-            height: auto;
-        }
-        body.cb-footer-layout > * {
-            flex-shrink: 0;
-        }
-        #global-legal-footer {
-            margin-top: auto;
-            padding: 12px 10px 18px;
-            border-top: 1px solid rgba(148, 163, 184, 0.22);
-            background: rgba(2, 6, 23, 0.18);
-        }
-        .cb-legal-footer-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 8px;
-            justify-content: center;
-            text-align: center;
-        }
-        #global-legal-footer .cb-legal-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 30px;
-            padding: 0 10px;
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            border-radius: 8px;
-            color: #B0B0B0;
-            font-size: 12px;
-            line-height: 1;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        #global-legal-footer .cb-legal-btn:hover {
-            border-color: rgba(125, 211, 252, 0.75);
-            color: #FFFFFF;
-            background: rgba(18, 18, 18, 0.9);
-        }
-        @media (max-width: 700px) {
-            .cb-legal-footer-inner {
-                justify-content: center;
-            }
-        }
-    `;
-
-    document.head.appendChild(style);
+    ensureMobileNavStyles();
     document.body.classList.add("cb-footer-layout");
     document.body.appendChild(footer);
 }
@@ -2388,6 +1711,27 @@ async function cancelPendingRegistration() {
 /* ============================
    IMAGE URL UPLOAD
 ============================ */
+async function prepareImageUpload(file, type) {
+    if (!file.type.startsWith("image/")) throw new Error("Выбери изображение");
+    if (file.size > 20 * 1024 * 1024) throw new Error("Изображение слишком большое (максимум 20 МБ)");
+    if (file.type === "image/gif" || file.type === "image/svg+xml" || typeof createImageBitmap !== "function") return file;
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(file);
+        const limit = type === "avatar" ? 768 : type === "competitionLogo" ? 512 : 1600;
+        const scale = Math.min(1, limit / Math.max(bitmap.width, bitmap.height));
+        if (scale === 1 && file.size < 200000) return file;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", .86));
+        if (!blob || blob.size >= file.size) return file;
+        return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", { type: "image/webp" });
+    } catch (_) { return file; }
+    finally { bitmap?.close(); }
+}
+
 async function uploadImage(file, type) {
     const allowedTypes = ["avatar", "cover", "competitionLogo"];
     if (!file) throw new Error("Файл не выбран");
@@ -2402,7 +1746,7 @@ async function uploadImage(file, type) {
     }
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", await prepareImageUpload(file, type));
     formData.append("upload_preset", config.uploadPreset);
     formData.append("folder", "codebug/" + type);
 
@@ -2434,24 +1778,27 @@ function getOptimizedCloudinaryUrl(url, transformation) {
     if (markerIndex < 0) return raw;
 
     const before = parsed.pathname.slice(0, markerIndex + marker.length);
-    const after = parsed.pathname.slice(markerIndex + marker.length);
+    let after = parsed.pathname.slice(markerIndex + marker.length);
+    if (/^f_auto,q_auto,[^/]+\//.test(after)) after = after.slice(after.indexOf("/") + 1);
     if (!after || after.startsWith(transformation + "/")) return raw;
 
     parsed.pathname = before + transformation + "/" + after;
     return parsed.toString();
 }
 
-function getOptimizedAvatarUrl(url) {
-    return getOptimizedCloudinaryUrl(url, "f_auto,q_auto,c_fill,w_256,h_256");
+function getOptimizedAvatarUrl(url, size = 96) {
+    size = Math.max(48, Math.min(512, Math.round(Number(size) || 96)));
+    return getOptimizedCloudinaryUrl(url, `f_auto,q_auto,c_fill,w_${size},h_${size}`);
 }
 
-function getOptimizedCoverUrl(url) {
-    return getOptimizedCloudinaryUrl(url, "f_auto,q_auto,c_limit,w_1600");
+function getOptimizedCoverUrl(url, width = 480, height = 0) {
+    width = Math.max(240, Math.min(1600, Math.round(Number(width) || 480)));
+    return getOptimizedCloudinaryUrl(url, height ? `f_auto,q_auto,c_fill,w_${width},h_${Math.round(height)}` : `f_auto,q_auto,c_limit,w_${width}`);
 }
 
 async function saveAvatarUrl(login, avatarUrl) {
     const updatedAt = Date.now();
-    return db.ref().update({
+    await db.ref().update({
         ["users/" + login + "/avatarUrl"]: avatarUrl,
         ["users/" + login + "/updatedAt"]: updatedAt,
         ["publicProfiles/" + login + "/avatarUrl"]: avatarUrl,
@@ -2459,16 +1806,23 @@ async function saveAvatarUrl(login, avatarUrl) {
         ["ratingLeaderboard/" + login + "/avatarUrl"]: avatarUrl,
         ["ratingLeaderboard/" + login + "/updatedAt"]: updatedAt
     });
+    const previous = CodeBugData.read("profile:" + login);
+    if (previous) CodeBugData.write("profile:" + login, { ...previous, avatarUrl });
+    else CodeBugData.invalidate("profile:" + login);
+    clearNavbarIdentityCache(login);
 }
 
 async function saveCoverUrl(login, coverUrl) {
     const updatedAt = Date.now();
-    return db.ref().update({
+    await db.ref().update({
         ["users/" + login + "/coverUrl"]: coverUrl,
         ["users/" + login + "/updatedAt"]: updatedAt,
         ["publicProfiles/" + login + "/coverUrl"]: coverUrl,
         ["publicProfiles/" + login + "/updatedAt"]: updatedAt
     });
+    const previous = CodeBugData.read("profile:" + login);
+    if (previous) CodeBugData.write("profile:" + login, { ...previous, coverUrl });
+    else CodeBugData.invalidate("profile:" + login);
 }
 
 async function saveCompetitionLogoUrl(competitionId, logoUrl) {

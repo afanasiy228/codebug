@@ -206,7 +206,8 @@ def test_training_page_uses_lucide_instead_of_hand_drawn_svg_icons():
 def test_admin_can_open_pending_task_assets_with_auth():
     page = (REPO_ROOT / "problem.html").read_text(encoding="utf-8")
 
-    assert "const taskFetch = (url) => fetch(url, taskRequestOptions)" in page
+    assert 'cache: isAdmin ? "no-store" : "default"' in page
+    assert "...taskRequestOptions" in page
     assert "taskFetch(`${base}/tasks/${id}/problem.json`)" in page
 
 

@@ -287,10 +287,18 @@
       .cell:hover, .reg-btn:not(:disabled):hover, .task:hover svg { transform: none; }
     }
   </style>
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js">
+    <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
+    <link id="site-shell-style" rel="stylesheet" href="site-shell.css?v=20261030-1">
+    <link rel="preconnect" href="https://codebug.onrender.com">
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <script src="public-config.js?v=20261030-1"></script>
+    <script src="site-data.js?v=20261030-1"></script>
 </head>
 
-<body>
-  <header>
+<body class="cb-footer-layout">
+  <header class="cb-site-header">
     <div class="logo">CodeBug</div>
     <nav id="nav-links"></nav>
   </header>
@@ -333,8 +341,8 @@
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
-  <script src="firebase.js?v=20260521-3"></script>
-  <script src="auth.js?v=20261029-footer"></script>
+  <script src="firebase.js?v=20261030-1"></script>
+  <script src="auth.js?v=20261030-1"></script>
 
   <script>
     updateNavbar();
@@ -376,19 +384,11 @@
 
     function loadParticipantProfile(login) {
       if (!contestProfileRequests.has(login)) {
-        contestProfileRequests.set(login, (async () => {
-          try {
-            const response = await fetch(`${TASKS_BASE()}/users/${encodeURIComponent(login)}/profile-lite`, { signal: AbortSignal.timeout(5000) });
-            if (!response.ok) return;
-            const profile = await response.json();
-            contestUserSubCache[login] = profile.subscription || {};
-            contestUserExpCache[login] = Number(profile.stats?.exp || 0);
-            contestUserCoverCache[login] = {
-              ...(profile.profileStyle || {}),
-              coverUrl: profile.coverUrl || profile.profileStyle?.coverUrl || ""
-            };
-          } catch (_) { /* Keep the public profile fallback if the API is unavailable. */ }
-        })());
+        contestProfileRequests.set(login, CodeBugData.profile(login).then(profile => {
+          contestUserSubCache[login] = profile.subscription || {};
+          contestUserExpCache[login] = Number(profile.stats?.exp || 0);
+          contestUserCoverCache[login] = { ...(profile.profileStyle || {}), coverUrl: profile.coverUrl || profile.profileStyle?.coverUrl || "" };
+        }).catch(() => {}));
       }
       return contestProfileRequests.get(login);
     }
@@ -544,6 +544,7 @@
         return;
       }
       isRegistered = true;
+      CodeBugData.write(CodeBugData.privateKey(user, "registration:" + contestId), true);
       renderBanner();
       renderTasks();
       loadStandings();
@@ -559,10 +560,21 @@
     async function loadContest() {
       if (!contestId) return showUnavailable("Соревнование не найдено");
 
-      const snap = await db.ref(`contests/${contestId}`).get();
-      if (!snap.exists()) return showUnavailable("Соревнование не найдено");
-
-      contestData = snap.val();
+      const cached = CodeBugData.read("contests:public") || [];
+      const saved = cached.find(item => item.id === contestId);
+      const key = user ? CodeBugData.privateKey(user, "contest:" + contestId) : "contest:" + contestId;
+      const previous = CodeBugData.read(key) || saved;
+      if (previous && previous.visibility !== "private") {
+        contestData = previous;
+        document.getElementById("contestTitle").textContent = previous.title || "Соревнование";
+        contestStatus = getStatus(previous.start, previous.end); renderBanner(); startTimer();
+      }
+      contestData = await CodeBugData.load(key, async () => {
+        const snap = await db.ref(`contests/${contestId}`).get();
+        if (!snap.exists()) throw new Error("contest_not_found");
+        return snap.val();
+      }, { ttl: 30000 }).catch(() => previous);
+      if (!contestData) return showUnavailable("Соревнование не найдено");
       const visibility = String(contestData.visibility || "public").toLowerCase();
       const owner = String(contestData.ownerLogin || "").trim();
       const allowed = Array.isArray(contestData.allowedUsers) ? contestData.allowedUsers.map(v => String(v || "").trim()) : [];
@@ -581,7 +593,12 @@
       startTimer();
 
       const tasks = Array.isArray(contestData.tasks) ? contestData.tasks : [];
-      await Promise.all(tasks.map(async (taskId) => {
+      renderTasks();
+      const catalog = CodeBugData.read("catalog") || [];
+      catalog.forEach(task => { taskTitles[task.id] = task.title; });
+      renderTasks();
+      CodeBugData.catalog().then(items => { items.forEach(task => { taskTitles[task.id] = task.title; }); renderTasks(); }).catch(() => {});
+      await Promise.all(tasks.filter(taskId => !taskTitles[taskId]).map(async (taskId) => {
         try {
           const res = await fetch(`${TASKS_BASE()}/tasks/${taskId}/meta.json`);
           const meta = await res.json();
@@ -595,8 +612,7 @@
 
     async function fetchSubs() {
       if (allSubs) return allSubs;
-      const snap = await db.ref("submissions/global").get();
-      allSubs = snap.exists() ? Object.values(snap.val()).filter(Boolean) : [];
+      allSubs = await CodeBugData.submissions({ contestId });
       return allSubs;
     }
 
@@ -616,7 +632,7 @@
 
       let solved = new Set();
       if (user) {
-        const subs = await fetchSubs();
+        const subs = await CodeBugData.submissions({ login: user });
         subs.forEach((sub) => {
           if (sub.login === user && sub.verdict === "OK") solved.add(Number(sub.task));
         });
@@ -647,8 +663,8 @@
     async function loadStandings() {
       const table = document.getElementById("standings");
       const empty = document.getElementById("standingsEmpty");
-      table.innerHTML = "";
-      document.getElementById("contestPlace").textContent = "—";
+      // Keep the previous table visible during refresh.
+      document.getElementById("contestPlace").textContent ||= "—";
       if (!contestData) return;
 
       const regsSnap = await db.ref(`contest_regs/${contestId}`).get();
@@ -660,18 +676,11 @@
 
       const regs = regsSnap.val() || {};
       const regUsers = Object.entries(regs).map(([key, value]) => String((value && value.login) || key)).filter(Boolean);
-      const usersSnap = await db.ref("publicProfiles").get();
-      if (usersSnap.exists()) {
-        const usersData = usersSnap.val() || {};
-        for (const login of regUsers) {
-          contestUserSubCache[login] = usersData[login]?.subscription || {};
-          contestUserExpCache[login] = Number(usersData[login]?.stats?.exp || 0);
-          const profile = usersData[login] || {};
-          contestUserCoverCache[login] = {
-            ...(profile.profileStyle || {}),
-            coverUrl: profile.coverUrl || profile.profileStyle?.coverUrl || ""
-          };
-        }
+      for (const login of regUsers) {
+        const profile = CodeBugData.read("profile:" + login) || {};
+        contestUserSubCache[login] = profile.subscription || {};
+        contestUserExpCache[login] = Number(profile.stats?.exp || 0);
+        contestUserCoverCache[login] = { ...(profile.profileStyle || {}), coverUrl: profile.coverUrl || profile.profileStyle?.coverUrl || "" };
       }
 
       const subs = (await fetchSubs()).slice().sort((a, b) => Number(a.date || 0) - Number(b.date || 0));
@@ -743,6 +752,12 @@
     requestAnimationFrame(moveIndicator);
     loadContest();
   </script>
+    <footer id="global-legal-footer"><div class="cb-legal-footer-inner">
+      <a class="cb-legal-btn" href="/privacy.html">Политика конфиденциальности</a>
+      <a class="cb-legal-btn" href="/terms.html">Пользовательское соглашение</a>
+      <a class="cb-legal-btn" href="https://t.me/afony_l" target="_blank" rel="noopener">Поддержка: @afony_l</a>
+      <a class="cb-legal-btn" href="mailto:support@codebug.online">support@codebug.online</a>
+    </div></footer>
 </body>
 
 </html>

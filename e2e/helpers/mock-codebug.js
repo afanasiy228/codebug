@@ -135,7 +135,7 @@ function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSes
       limitToLast() { return this; },
       on() { return () => {}; },
       off() {},
-      onDisconnect() { return { set: async () => undefined }; }
+      onDisconnect() { return { set: async () => undefined, update: async () => undefined }; }
     });
     const database = () => ({ ref, goOffline() {}, goOnline() {} });
     database.INTERNAL = { forceLongPolling() {}, forceWebSockets() {} };
@@ -200,6 +200,23 @@ function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSes
 }
 
 async function mockExternalServices(page, { plan = "free" } = {}) {
+  await page.route("**/tasks/catalog", route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{id:101,title:"Сумма двух чисел",difficulty:"easy",language:"cpp",tags:["math"],verificationStatus:"approved"}]) }));
+  await page.route("**/tasks/101/view", route => route.fulfill({status:404,body:"not available"}));
+  await page.route("**/contests/list", async route => {
+    const rows = await page.evaluate(() => Object.entries(window.__e2eStore.contests).map(([id,item]) => ({id,...item})));
+    await route.fulfill({contentType:"application/json",body:JSON.stringify(rows)});
+  });
+  await page.route(/\/users\/[^/]+\/submissions$/, async route => {
+    const login = decodeURIComponent(new URL(route.request().url()).pathname.split("/")[2]);
+    const rows = await page.evaluate(login => Object.entries(window.__e2eStore.submissions.global).filter(([,row])=>row.login===login).map(([id,row])=>({_id:id,...row})),login);
+    await route.fulfill({contentType:"application/json",body:JSON.stringify(rows)});
+  });
+  await page.route(/\/contests\/[^/]+\/submissions$/, async route => {
+    const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/")[2]);
+    const rows = await page.evaluate(id => Object.entries(window.__e2eStore.submissions.global).filter(([,row])=>row.contestId===id).map(([key,row])=>({_id:key,...row})),id);
+    await route.fulfill({contentType:"application/json",body:JSON.stringify(rows)});
+  });
+
   await page.route(/https:\/\/(www\.gstatic\.com\/firebasejs|www\.google\.com\/recaptcha|cdnjs\.cloudflare\.com\/ajax\/libs\/monaco-editor)\/.*/, (route) => route.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/auth/verify-captcha", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.route("**/auth/login", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, customToken: "e2e-custom-token", login: TEST_USER.login }) }));

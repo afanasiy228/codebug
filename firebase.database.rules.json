@@ -94,7 +94,7 @@
     "submissions": {
       "global": {
         ".read": true,
-        ".indexOn": ["date"]
+        ".indexOn": ["date", "login", "contestId"]
       }
     },
 

@@ -22,9 +22,9 @@ test.describe("Профиль, соревнования и доступ", () => 
     await page.goto("/contest.html?id=e2e-contest");
     await expect(page.locator("#contestTitle")).toHaveText("E2E Контест");
     await page.getByRole("button", { name: "Зарегистрироваться" }).click();
-    await expect(page.getByRole("button", { name: "Вы зарегистрированы" })).toBeDisabled();
+    await expect(page.locator("#registerBtn")).toBeHidden();
     await expect(page.locator("#tasksList")).toContainText("Сумма двух чисел");
-    await page.getByRole("button", { name: "Открыть" }).click();
+    await page.locator("#tasksList .task").first().click();
     await expect(page).toHaveURL(/problem\.html\?id=101&contest=e2e-contest/);
   });
 
