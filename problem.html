@@ -1647,15 +1647,15 @@
             const normalize = value => String(value || "").replace(/\r\n?/g, "\n").split("\n").map(line => line.trimEnd()).join("\n").trim();
             const inputLabel = /^(?:пример\s+(?:входных\s+данных|ввода)|(?:sample|example)\s+input)(?:\s*\d+)?\s*:?$/i;
             const outputLabel = /^(?:пример\s+(?:выходных\s+данных|вывода)|(?:sample|example)\s+output)(?:\s*\d+)?\s*:?$/i;
-            const isHeading = node => node && /^H[1-6]$/.test(node.tagName);
-            root.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(heading => {
-                if (!inputLabel.test(heading.textContent.trim())) return;
-                const input = heading.nextElementSibling;
+            const isLabel = node => node && (/^H[1-6]$/.test(node.tagName) || node.tagName === "P");
+            root.querySelectorAll("h1, h2, h3, h4, h5, h6, p").forEach(label => {
+                if (!inputLabel.test(label.textContent.trim())) return;
+                const input = label.nextElementSibling;
                 const outputHeading = input?.nextElementSibling;
                 const output = outputHeading?.nextElementSibling;
-                if (input?.tagName !== "PRE" || !isHeading(outputHeading) || !outputLabel.test(outputHeading.textContent.trim()) || output?.tagName !== "PRE") return;
+                if (input?.tagName !== "PRE" || !isLabel(outputHeading) || !outputLabel.test(outputHeading.textContent.trim()) || output?.tagName !== "PRE") return;
                 if (!displayedExamples.some(example => normalize(example.input) === normalize(input.textContent) && normalize(example.output) === normalize(output.textContent))) return;
-                [heading, input, outputHeading, output].forEach(node => node.remove());
+                [label, input, outputHeading, output].forEach(node => node.remove());
             });
         }
 

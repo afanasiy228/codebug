@@ -2,13 +2,13 @@ const { test } = require("@playwright/test");
 const { expect, preparePage, signInThroughUi } = require("./helpers/mock-codebug");
 
 test.describe("Задачи и посылки", () => {
-  for (const duplicate of [true, false]) {
-    test(duplicate ? "совпадающий пример показывается один раз и кнопки центрированы" : "отличающийся пример в условии сохраняется", async ({ page }) => {
+  for (const [labelTag, duplicate] of [["h2", true], ["h2", false], ["p", true], ["p", false]]) {
+    test(`${labelTag}: ${duplicate ? "совпадающий пример показывается один раз и кнопки центрированы" : "отличающийся пример в условии сохраняется"}`, async ({ page }) => {
       await preparePage(page, { authenticated: true });
       await page.route("**/tasks/101/view", route => route.fulfill({ json: {
         meta: { title: "Примеры", language: "cpp", statement: { html: "statement/russian.html" }, files: { code: "code.cpp" }, openTests: [{ name: "001", input: "tests/1.in", answer: "tests/1.out" }] },
         files: {
-          "statement/russian.html": `<h1>Примеры</h1><h2>Формат входных данных</h2><p>Даны числа.</p><h2>Пример входных данных</h2><pre>5 3\n1 2 -1 3 0\n</pre><h2>Пример выходных данных</h2><pre>${duplicate ? "3" : "9"}\n</pre><h2>Пояснение</h2><p>Это пояснение нужно сохранить.</p>`,
+          "statement/russian.html": `<h1>Примеры</h1><h2>Формат входных данных</h2><p>Даны числа.</p><${labelTag}>Пример входных данных</${labelTag}><pre><code>5 3\n1 2 -1 3 0\n</code></pre><${labelTag}>Пример выходных данных</${labelTag}><pre><code>${duplicate ? "3" : "9"}\n</code></pre><h2>Пояснение</h2><p>Это пояснение нужно сохранить.</p>`,
           "code.cpp": "int main() {}", "tests/1.in": "5 3\n1 2 -1 3 0\n", "tests/1.out": "3\n"
         }
       } }));
