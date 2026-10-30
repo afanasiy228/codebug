@@ -389,72 +389,25 @@
         
         .cta {
             position: relative;
-            isolation: isolate;
             margin-top: 24px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
-            min-height: 58px;
-            border: 0;
-            border-radius: 20px;
-            padding: 17px 25px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, .025) 48%, rgba(245, 158, 11, .09));
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), inset 0 -1px 0 rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .25);
-            -webkit-backdrop-filter: blur(18px) saturate(140%);
-            backdrop-filter: blur(18px) saturate(140%);
-            color: #fff7e8;
+            gap: 12px;
+            min-height: 52px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 16px;
+            padding: 13px 22px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .012));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .065), 0 6px 20px rgba(0, 0, 0, .12);
+            -webkit-backdrop-filter: blur(12px) saturate(110%);
+            backdrop-filter: blur(12px) saturate(110%);
+            color: #f4f2ec;
             text-decoration: none;
             font-size: 16px;
             font-weight: 600;
             line-height: 1.4;
             -webkit-tap-highlight-color: transparent;
-        }
-
-        .cta::before {
-            content: "";
-            position: absolute;
-            inset: -1px;
-            z-index: -1;
-            border-radius: inherit;
-            pointer-events: none;
-            box-shadow: 0 0 24px rgba(245, 158, 11, .17), 0 0 0 1px rgba(251, 191, 36, .1);
-            opacity: 0;
-        }
-
-        .cta-border {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-            fill: none;
-            pointer-events: none;
-        }
-
-        .cta-border rect {
-            x: 1px;
-            y: 1px;
-            width: calc(100% - 2px);
-            height: calc(100% - 2px);
-            stroke-width: 1;
-        }
-
-        .cta-border-track { stroke: rgba(255, 255, 255, .17); }
-        .cta-border-trail {
-            stroke: #fbbf24;
-            stroke-dasharray: 15 85;
-            opacity: 0;
-            filter: drop-shadow(0 0 4px rgba(245, 158, 11, .8));
-        }
-        .cta-border-star {
-            stroke: #fff4d2;
-            stroke-width: 2 !important;
-            stroke-dasharray: .8 99.2;
-            stroke-dashoffset: -15;
-            stroke-linecap: round;
-            opacity: 0;
-            filter: drop-shadow(0 0 3px #fff2c2) drop-shadow(0 0 8px #f59e0b);
         }
 
         .cta-arrow {
@@ -464,28 +417,6 @@
         }
 
         .cta:focus-visible { outline: 2px solid #fbbf24; outline-offset: 5px; }
-        .cta.is-activating::before { animation: cta-click-pulse .55s ease-out both; }
-        .cta.is-activating .cta-border-trail { opacity: .7; animation: cta-orbit .55s ease-in-out both; }
-        .cta.is-activating .cta-border-star { opacity: 1; animation: cta-star-orbit .55s ease-in-out both; }
-        .cta.is-activating .cta-border-trail-reverse { animation-name: cta-orbit-reverse; }
-        .cta.is-activating .cta-border-star-reverse { animation-name: cta-star-orbit-reverse; }
-
-        @keyframes cta-click-pulse {
-            0% { opacity: 0; transform: scale(1); }
-            35% { opacity: 1; }
-            100% { opacity: 0; transform: scale(1.12, 1.35); }
-        }
-        @keyframes cta-orbit { to { stroke-dashoffset: -100; } }
-        @keyframes cta-star-orbit { to { stroke-dashoffset: -115; } }
-        @keyframes cta-orbit-reverse { from { stroke-dashoffset: -50; } to { stroke-dashoffset: 50; } }
-        @keyframes cta-star-orbit-reverse { from { stroke-dashoffset: -50; } to { stroke-dashoffset: 50; } }
-
-        @media (prefers-reduced-motion: reduce) {
-            .cta.is-activating::before,
-            .cta.is-activating .cta-border-trail,
-            .cta.is-activating .cta-border-star { animation: none; }
-        }
-
         .hero-scroll-indicator {
             position: absolute;
             left: 50%;
@@ -1384,13 +1315,6 @@
                 <h1 class="brand"><span class="brand-code">Code</span><span class="brand-bug">Bug</span></h1>
                 <p class="subtitle">Платформа для тренировки дебага.</p>
                 <a class="cta" href="train.html">
-                    <svg class="cta-border" aria-hidden="true" focusable="false">
-                        <rect class="cta-border-track" rx="19" pathLength="100" />
-                        <rect class="cta-border-trail" rx="19" pathLength="100" />
-                        <rect class="cta-border-star" rx="19" pathLength="100" />
-                        <rect class="cta-border-trail cta-border-trail-reverse" rx="19" pathLength="100" />
-                        <rect class="cta-border-star cta-border-star-reverse" rx="19" pathLength="100" />
-                    </svg>
                     <span>К тренировке</span>
                     <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
                 </a>
@@ -2207,22 +2131,6 @@ return 0; }`;
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            const cta = document.querySelector(".cta");
-            if (cta) {
-                cta.addEventListener("click", event => {
-                    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                    event.preventDefault();
-                    if (cta.classList.contains("is-activating")) return;
-                    cta.classList.add("is-activating");
-                    cta.setAttribute("aria-busy", "true");
-                    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 550;
-                    window.setTimeout(() => window.location.assign(cta.href), delay);
-                });
-                window.addEventListener("pageshow", () => {
-                    cta.classList.remove("is-activating");
-                    cta.removeAttribute("aria-busy");
-                });
-            }
             updateNavbar();
             updateTaskMetric();
             initCodeEffect();
