@@ -1655,7 +1655,7 @@
             const bodyHtml = stripDuplicatedIoMetaHtml(statementSections[currentStatementLang] || statementSections.ru || "");
             target.innerHTML = `${statementPreludeHtml}${bodyHtml}`;
             hideStatementHints(target);
-            CodeBugData.mark("statement-visible");
+            if (bodyHtml.trim()) CodeBugData.mark("statement-visible");
             typesetWhenNeeded(target);
         }
 
