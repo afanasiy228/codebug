@@ -2,3 +2,43 @@
 # "__" holds the self-hosted Firebase sign-in helper (/__/auth/handler).
 include:
   - "__"
+
+# Publish only site assets. Backend, tests and operational files live in the
+# same repository but must not be copied to GitHub Pages.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - server.py
+  - judge.py
+  - read_api.py
+  - generator.py
+  - line_diff.py
+  - polygon_importer.py
+  - statement_compiler.py
+  - telegram_admin_bot.py
+  - sandbox
+  - runner
+  - docker
+  - scripts
+  - tests
+  - e2e
+  - codestyle
+  - output
+  - firebase.database.rules.json
+  - firebase.json
+  - firebase.test.json
+  - package.json
+  - package-lock.json
+  - playwright.config.js
+  - requirements.txt
+  - README.md
+  - SECURITY_KEYS.md
+  - TASK_SYSTEM_V2.md
+  - TELEGRAM_BOT.md
+  - E2E_TESTING.md
+  - start.txt
+  - problem_back_up.html
+  - test.html
+  - tests.html

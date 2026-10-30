@@ -1207,7 +1207,6 @@
             } catch (e) {
                 console.warn("acquireSubmitToken failed:", e);
             }
-            if (!token && !forceRefresh) token = localStorage.getItem("idToken") || "";
             token = String(token || "").trim();
             return token;
         }

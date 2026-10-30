@@ -461,7 +461,7 @@
             try {
                 const token = typeof getFreshAuthToken === "function"
                     ? await getFreshAuthToken({ timeoutMs: 4000, forceRefresh: true })
-                    : localStorage.getItem("idToken");
+                    : null;
                 if (!token) {
                     alert("Нужен повторный вход перед оплатой.");
                     window.location.href = "auth.html?next=donate.html";
@@ -512,7 +512,7 @@
             try {
                 const token = typeof getFreshAuthToken === "function"
                     ? await getFreshAuthToken({ timeoutMs: 1800 })
-                    : localStorage.getItem("idToken");
+                    : null;
                 if (!token) return;
                 const res = await fetch(`${apiBase()}/payments/subscription-status`, {
                     headers: { "Authorization": `Bearer ${token}` }

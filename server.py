@@ -113,7 +113,6 @@ def _cache_delete(key):
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 FIREBASE_SERVICE_ACCOUNT_FILE = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "/etc/secrets/serviceAccountKey.json")
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
 RECAPTCHA_VERIFY_URL = os.getenv("RECAPTCHA_VERIFY_URL", "https://www.google.com/recaptcha/api/siteverify")
 RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY", "")
@@ -235,6 +234,11 @@ RUN_SINGLE_INPUT_LIMIT_FREE = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_FREE", str(5
 RUN_SINGLE_INPUT_LIMIT_PRO = int(os.getenv("RUN_SINGLE_INPUT_LIMIT_PRO", str(1024 * 1024)))
 RUN_SINGLE_CODE_LIMIT_FREE = int(os.getenv("RUN_SINGLE_CODE_LIMIT_FREE", str(512 * 1024)))
 RUN_SINGLE_CODE_LIMIT_PRO = int(os.getenv("RUN_SINGLE_CODE_LIMIT_PRO", str(1024 * 1024)))
+RUN_SINGLE_RATE_FREE = int(os.getenv("RUN_SINGLE_RATE_FREE", "12"))
+RUN_SINGLE_RATE_PRO = int(os.getenv("RUN_SINGLE_RATE_PRO", "24"))
+DIRECT_EXEC_GLOBAL_RATE_LIMIT = int(os.getenv("DIRECT_EXEC_GLOBAL_RATE_LIMIT", "90"))
+DIRECT_EXEC_CONCURRENCY = max(1, int(os.getenv("DIRECT_EXEC_CONCURRENCY", "2")))
+DIRECT_EXEC_SEMAPHORE = threading.BoundedSemaphore(DIRECT_EXEC_CONCURRENCY)
 NICKNAME_CHANGE_COOLDOWN_SECONDS = int(os.getenv("NICKNAME_CHANGE_COOLDOWN_SECONDS", str(14 * 24 * 60 * 60)))
 SUBMIT_RATE_FREE = int(os.getenv("SUBMIT_RATE_FREE", "20"))
 SUBMIT_RATE_PRO = int(os.getenv("SUBMIT_RATE_PRO", "35"))
@@ -380,9 +384,9 @@ def _apply_security_headers(response):
             for item in response.headers.get("Vary", "").split(",")
             if item.strip()
         }
-        vary.update({"Authorization", "X-Admin-Key"})
+        vary.add("Authorization")
         response.headers["Vary"] = ", ".join(sorted(vary))
-        if request.headers.get("Authorization") or request.headers.get("X-Admin-Key"):
+        if request.headers.get("Authorization"):
             response.headers["Cache-Control"] = "private, no-store"
     if not is_public and "Cache-Control" not in response.headers:
         response.headers["Cache-Control"] = "private, no-store"
@@ -390,11 +394,6 @@ def _apply_security_headers(response):
 
 
 def _is_admin_request():
-    if ADMIN_API_KEY:
-        header_key = request.headers.get("X-Admin-Key", "")
-        if header_key == ADMIN_API_KEY:
-            return True
-
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         return False
@@ -1111,6 +1110,14 @@ def _validate_run_payload(data, *, tier="free"):
     if lang is None:
         lang = "cpp"
     return {"code": code, "input": input_data, "language": lang}, None
+
+
+def _acquire_direct_exec_slot():
+    if not _rate_limit_global("direct_exec_global", DIRECT_EXEC_GLOBAL_RATE_LIMIT, 60):
+        return _api_error("service_busy", 429, "GLOBAL_RATE_LIMIT_EXCEEDED")
+    if not DIRECT_EXEC_SEMAPHORE.acquire(blocking=False):
+        return _api_error("runner_busy", 503, "RUNNER_BUSY")
+    return None
 
 
 def _request_ai_code_completion(language, prefix, suffix):
@@ -2643,9 +2650,8 @@ def submit():
 
     print("\n=== ПОЛУЧЕН POST /submit ===")
 
-    # --- читаем JSON ---
+    # Never log the request body: it contains the user's submitted source code.
     data = request.get_json(silent=True) or {}
-    print("JSON RAW:", data)
 
     login, auth_error = _require_user_login()
     if auth_error:
@@ -3501,15 +3507,23 @@ def run_single():
     payload, payload_error = _validate_run_payload(request.get_json(silent=True) or {}, tier=tier)
     if payload_error:
         return payload_error
+    user_limit = RUN_SINGLE_RATE_PRO if tier in {"pro", "pro_plus"} else RUN_SINGLE_RATE_FREE
+    if not _rate_limit("run_single", user_login, user_limit, 60):
+        return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")
     if tier in {"pro", "pro_plus"}:
         timeout_sec = RUN_SINGLE_TIMEOUT_PRO
     else:
         timeout_sec = RUN_SINGLE_TIMEOUT_FREE
-
-    if payload["language"] == "python":
-        result = _run_python_single(payload["code"], payload["input"], timeout_sec)
-    else:
-        result = _run_cpp_single(payload["code"], payload["input"], timeout_sec)
+    slot_error = _acquire_direct_exec_slot()
+    if slot_error is not None:
+        return slot_error
+    try:
+        if payload["language"] == "python":
+            result = _run_python_single(payload["code"], payload["input"], timeout_sec)
+        else:
+            result = _run_cpp_single(payload["code"], payload["input"], timeout_sec)
+    finally:
+        DIRECT_EXEC_SEMAPHORE.release()
     result["tier"] = tier
     return jsonify(result)
 
@@ -3532,6 +3546,9 @@ def editor_diagnostics():
     lang = _validate_language(data.get("language")) or "cpp"
     if not code.strip():
         return jsonify({"ok": True, "markers": []})
+    slot_error = _acquire_direct_exec_slot()
+    if slot_error is not None:
+        return slot_error
     try:
         if lang == "python":
             result = _diagnose_python(code)
@@ -3542,6 +3559,8 @@ def editor_diagnostics():
         return _api_error("diagnostics_failed", 500, "DIAGNOSTICS_TIMEOUT")
     except Exception as e:
         return _server_error("diagnostics_failed", "DIAGNOSTICS_FAILED", exc=e)
+    finally:
+        DIRECT_EXEC_SEMAPHORE.release()
     return jsonify({"ok": bool(result.get("ok")), "markers": result.get("markers") or []})
 
 
@@ -3563,6 +3582,9 @@ def editor_format():
     lang = _validate_language(data.get("language")) or "cpp"
     if not code.strip():
         return jsonify({"ok": True, "formatted": ""})
+    slot_error = _acquire_direct_exec_slot()
+    if slot_error is not None:
+        return slot_error
     try:
         if lang == "python":
             result = _format_python(code)
@@ -3573,6 +3595,8 @@ def editor_format():
         return _api_error("format_failed", 500, "FORMAT_TIMEOUT")
     except Exception as e:
         return _server_error("format_failed", "FORMAT_FAILED", exc=e)
+    finally:
+        DIRECT_EXEC_SEMAPHORE.release()
     return jsonify({"ok": bool(result.get("ok")), "formatted": result.get("formatted", code)})
 
 
@@ -4296,7 +4320,7 @@ def platega_create_payment():
         transaction_id = str(result.get("transactionId") or result.get("id") or "").strip()
         payment_url = str(result.get("redirect") or result.get("url") or result.get("payformSuccessUrl") or "").strip()
         if not transaction_id or not payment_url:
-            print("[payments][platega] unexpected create response:", result)
+            print("[payments][platega] unexpected create response shape")
             return _api_error("payment_provider_bad_response", 502, "PAYMENT_PROVIDER_BAD_RESPONSE")
 
         record = {
@@ -4354,7 +4378,7 @@ def platega_callback():
         or not hmac.compare_digest(merchant_id, PLATEGA_MERCHANT_ID)
         or not hmac.compare_digest(secret, PLATEGA_SECRET)
     ):
-        print("[payments][platega] callback auth failed", {"merchant": merchant_id})
+        print("[payments][platega] callback auth failed")
         return _api_error("forbidden", 403, "FORBIDDEN")
     if not _rate_limit("payments_callback", _request_ip(), limit=240, per_seconds=60):
         return _api_error("rate_limit_exceeded", 429, "RATE_LIMIT_EXCEEDED")

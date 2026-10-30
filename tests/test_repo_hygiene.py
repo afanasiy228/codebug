@@ -1,10 +1,4 @@
-"""Regression tests for C3/M12: no secrets or database dumps may be tracked in git.
-
-The repository root is the GitHub Pages document root for codebug.online, so every
-tracked file at the root is published on the live site. A production database dump
-was committed here once (cleanup_report.json) and a second one lived in history
-(firebasebackup.json); these tests make that class of mistake fail loudly.
-"""
+"""Keep secrets out of Git and backend files out of the Pages build."""
 import json
 import os
 import re
@@ -43,7 +37,7 @@ def tracked_files():
 def test_no_secret_or_dump_filenames_are_tracked():
     offenders = [p for p in tracked_files() if FORBIDDEN_NAME.search(p)]
     assert offenders == [], (
-        "These files must not be tracked - the repo root is the published web root: "
+        "These files must not be tracked in the public repository: "
         f"{offenders}"
     )
 
@@ -94,3 +88,14 @@ def test_gitignore_covers_secret_patterns(pattern):
     with open(os.path.join(REPO_ROOT, ".gitignore"), encoding="utf-8") as fh:
         lines = {line.strip() for line in fh}
     assert pattern in lines, f".gitignore is missing the {pattern!r} pattern"
+
+
+def test_pages_excludes_backend_and_operational_files():
+    with open(os.path.join(REPO_ROOT, "_config.yml"), encoding="utf-8") as fh:
+        lines = fh.read().splitlines()
+    excluded = {line.strip()[2:].strip() for line in lines[lines.index("exclude:") + 1:] if line.startswith("  - ")}
+    required = {
+        "server.py", "judge.py", "read_api.py", "sandbox", "runner", "docker",
+        "scripts", "tests", "e2e", "firebase.database.rules.json", "output",
+    }
+    assert required <= excluded

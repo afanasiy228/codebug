@@ -108,7 +108,6 @@ function firebaseMockScript({ authenticated = false, plan = "free", seedLocalSes
       if (shouldSeedLocalSession !== false && authUser.uid === testUser.uid) {
         localStorage.setItem("user", testUser.login);
         localStorage.setItem("uid", testUser.uid);
-        localStorage.setItem("idToken", testUser.token);
       }
     }
 

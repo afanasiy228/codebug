@@ -115,25 +115,34 @@ def test_oversized_body_is_rejected_with_413(srv):
 
 # --- L5: destructive admin endpoint needs a confirmation --------------------
 
-def test_reset_foi_requires_a_confirmation_token(srv, monkeypatch):
-    monkeypatch.setattr(srv.module, "ADMIN_API_KEY", "admin-key")
+def test_reset_foi_requires_a_confirmation_token(srv):
+    token = srv.add_user("rootadmin", admin=True)
     res = srv.client.post(
         "/admin/contests/reset-foi",
         json={},
-        headers={"X-Admin-Key": "admin-key"},
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 400, res.get_json()
     assert res.get_json()["code"] == "CONFIRMATION_REQUIRED"
 
 
-def test_reset_foi_proceeds_with_the_confirmation_token(srv, monkeypatch):
-    monkeypatch.setattr(srv.module, "ADMIN_API_KEY", "admin-key")
+def test_reset_foi_proceeds_with_the_confirmation_token(srv):
+    token = srv.add_user("rootadmin", admin=True)
     res = srv.client.post(
         "/admin/contests/reset-foi",
         json={"confirm": "RESET_ALL_CONTESTS"},
-        headers={"X-Admin-Key": "admin-key"},
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 200, res.get_json()
+
+
+def test_static_admin_header_no_longer_grants_access(srv):
+    res = srv.client.post(
+        "/admin/contests/reset-foi",
+        json={},
+        headers={"X-Admin-Key": "old-master-key"},
+    )
+    assert res.status_code == 403
 
 
 # --- M4: rate limiting ------------------------------------------------------

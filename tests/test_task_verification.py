@@ -291,4 +291,3 @@ def test_authenticated_task_responses_cannot_enter_a_shared_cache(srv, monkeypat
     assert response.status_code == 200
     assert response.headers["Cache-Control"] == "private, no-store"
     assert "Authorization" in response.headers["Vary"]
-    assert "X-Admin-Key" in response.headers["Vary"]

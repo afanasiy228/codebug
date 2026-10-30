@@ -17,6 +17,10 @@ function getDb() {
     return window.db || db || null;
 }
 
+// Old versions copied Firebase ID tokens into a second localStorage key.
+// Firebase Auth owns session persistence; discard the redundant copy.
+try { localStorage.removeItem("idToken"); } catch (_) {}
+
 
 /* ============================
    POST-LOGIN REDIRECT TARGET
@@ -27,7 +31,7 @@ function getDb() {
  * The raw value used to be assigned straight to location.href, which made
  * auth.html?next=https://evil.example/ an open redirect fired the instant a user
  * logged in, and auth.html?next=javascript:... script execution in this origin
- * while a fresh ID token sits in localStorage. Only same-origin relative paths
+ * while an authenticated Firebase session is active. Only same-origin relative paths
  * are accepted; anything else falls back to the home page.
  */
 function safeNextTarget(rawNext, fallback) {
@@ -116,9 +120,7 @@ async function getFreshAuthToken(opts = {}) {
     const user = await waitForAuthUser(timeoutMs);
     if (!user) return null;
     try {
-        const token = await user.getIdToken(!!forceRefresh);
-        if (token) localStorage.setItem("idToken", token);
-        return token || null;
+        return (await user.getIdToken(!!forceRefresh)) || null;
     } catch (e) {
         console.warn("getFreshAuthToken failed", e);
         return null;
@@ -1148,7 +1150,6 @@ async function ensureUserProfile(login, userAuth) {
     // the token claim, so using the stale token made fresh registrations fail
     // with EMAIL_NOT_VERIFIED at the final profile-sync step.
     const token = await userAuth.getIdToken(true);
-    if (token) localStorage.setItem("idToken", token);
     const base = window.getTasksApiBase
         ? window.getTasksApiBase()
         : (window.TASKS_API_BASE || "https://codebug.onrender.com");
@@ -1877,13 +1878,6 @@ async function syncSessionFromAuth() {
         // local display session and retry naturally on the next page/load.
         return;
     }
-    try {
-        const token = await userAuth.getIdToken();
-        if (token) localStorage.setItem("idToken", token);
-    } catch (e) {
-        console.warn("syncSessionFromAuth token fetch failed", e);
-    }
-
     const nav = document.getElementById("nav-links");
     if (nav && (previousLogin !== finalized.login || nav.querySelector(".nav-auth-link"))) {
         updateNavbar();

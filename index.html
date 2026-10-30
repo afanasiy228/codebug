@@ -2146,7 +2146,7 @@ return 0; }`;
             const ctrl = typeof AbortController === "function" ? new AbortController() : null;
             const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : 0;
             try {
-                const res = await fetch(`${base}/tasks/list`, ctrl ? { signal: ctrl.signal } : {});
+                const res = await fetch(`${base}/tasks/catalog`, ctrl ? { signal: ctrl.signal } : {});
                 if (!res.ok) return;
                 const data = await res.json();
                 const list = Array.isArray(data) ? data : (data && (data.tasks || data.items)) || [];
