@@ -1360,7 +1360,13 @@
                 throw new Error(errorMessages[res.status] || "Не удалось отправить решение");
             }
 
-            CodeBugData.changed(user);
+            // Cache refresh is secondary to the accepted submission response.
+            // Use the login passed into this function, not submitCode's local variable.
+            try {
+                window.CodeBugData?.changed?.(payload.user);
+            } catch (error) {
+                console.warn("Submission cache refresh failed:", error);
+            }
             console.log("📦 JSON:", data);
             return data;
         }

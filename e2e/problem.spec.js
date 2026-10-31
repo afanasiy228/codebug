@@ -239,4 +239,13 @@ test.describe("Задачи и посылки", () => {
     expect(error).toEqual({ code: "AUTH_SESSION_EXPIRED", message: "Сессия истекла. Войди в аккаунт снова" });
     expect(requests).toBe(1);
   });
+
+  test("успешный ответ submit не превращается в ERROR при обновлении кэша", async ({ page }) => {
+    await preparePage(page, { authenticated: true });
+    await page.goto("/problem.html?id=101");
+
+    const result = await page.evaluate(() => window.sendToJudge(101, "int main(){}", "e2e_user"));
+
+    expect(result.status).toBe("OK");
+  });
 });
