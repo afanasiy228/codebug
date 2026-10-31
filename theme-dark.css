@@ -406,7 +406,7 @@ tr:hover {
 
 #editor .monaco-editor,
 #editor .monaco-editor * {
-  -webkit-text-fill-color: initial !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 .btn:hover,

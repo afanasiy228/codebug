@@ -2316,6 +2316,43 @@
             return normalizeTaskLanguage(lang) === "python" ? "python" : "cpp";
         }
 
+        const EDITOR_COMPLETIONS = {
+            cpp: ["auto", "bool", "break", "cin", "const", "continue", "cout", "double", "else", "for", "if", "int", "long", "max", "min", "pair", "return", "size", "sort", "string", "vector", "while"],
+            python: ["break", "class", "continue", "def", "dict", "elif", "else", "enumerate", "False", "for", "from", "if", "import", "in", "int", "len", "list", "None", "print", "range", "return", "str", "True", "while", "zip"]
+        };
+
+        function editorCompletionItems(model, position) {
+            const language = model.getLanguageId();
+            const word = model.getWordUntilPosition(position);
+            const prefix = word.word || "";
+            if (prefix.length < 2) return [];
+            const symbols = model.getValue().slice(0, 100000).match(/\b[A-Za-z_][A-Za-z_0-9]{2,}\b/g) || [];
+            const keywords = EDITOR_COMPLETIONS[language] || [];
+            const items = new Map();
+            for (const label of keywords) items.set(label, monaco.languages.CompletionItemKind.Keyword);
+            for (const label of symbols) {
+                if (!items.has(label)) items.set(label, monaco.languages.CompletionItemKind.Variable);
+            }
+            const range = {
+                startLineNumber: position.lineNumber,
+                endLineNumber: position.lineNumber,
+                startColumn: word.startColumn,
+                endColumn: position.column
+            };
+            return [...items].filter(([label]) => label !== prefix && label.startsWith(prefix)).slice(0, 24)
+                .map(([label, kind]) => ({ label, kind, insertText: label, range }));
+        }
+
+        function installEditorCompletions() {
+            for (const language of ["cpp", "python"]) {
+                monaco.languages.registerCompletionItemProvider(language, {
+                    provideCompletionItems(model, position) {
+                        return { suggestions: editorCompletionItems(model, position) };
+                    }
+                });
+            }
+        }
+
         function showEditorClipboardBlocked() {
             const feedback = document.getElementById("editorFeedback");
             if (!feedback) return;
@@ -2477,9 +2514,16 @@
                             "editor.background": "#0B0B0B",
                             "editor.lineHighlightBackground": "#00000000",
                             "editor.lineHighlightBorder": "#00000000",
-                            "editorCursor.foreground": "#f0f6ff"
+                            "editorCursor.foreground": "#f0f6ff",
+                            "editorSuggestWidget.background": "#171717",
+                            "editorSuggestWidget.foreground": "#e5e7eb",
+                            "editorSuggestWidget.border": "#3a3a3a",
+                            "editorSuggestWidget.selectedBackground": "#37302a",
+                            "editorSuggestWidget.highlightForeground": "#fbbf24"
                         }
                     });
+
+                    installEditorCompletions();
 
                     const model = monaco.editor.createModel(
                         pendingEditorValue,
@@ -2505,8 +2549,9 @@
                         autoClosingBrackets: "languageDefined",
                         autoClosingQuotes: "languageDefined",
                         autoSurround: "languageDefined",
-                        quickSuggestions: { other: true, comments: false, strings: true },
-                        wordBasedSuggestions: "allDocuments",
+                        quickSuggestions: false,
+                        suggestOnTriggerCharacters: false,
+                        wordBasedSuggestions: "off",
                         folding: true,
                         guides: {
                             indentation: false,
@@ -2521,9 +2566,19 @@
                         submitCode();
                     });
 
-                    monacoEditor.onDidChangeModelContent(() => {
+                    monacoEditor.onDidChangeModelContent((event) => {
                         scheduleEditorDraftSave();
                         updateChangeCounter();
+                        const change = event.changes.length === 1 ? event.changes[0] : null;
+                        if (event.isFlush || !change || !/^[A-Za-z_]$/.test(change.text)) return;
+                        setTimeout(() => {
+                            if (!monacoEditor?.hasTextFocus()) return;
+                            const model = monacoEditor.getModel();
+                            const position = monacoEditor.getPosition();
+                            if (model && position && editorCompletionItems(model, position).length) {
+                                monacoEditor.trigger("codebug", "editor.action.triggerSuggest", {});
+                            }
+                        }, 0);
                     });
 
                     editor = {
