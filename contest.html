@@ -219,16 +219,33 @@
     table.st td { border: 0 !important; padding: 0; }
     table.st tr:hover { background: transparent !important; }
     table.st tbody tr { animation: fade .4s ease both; animation-delay: calc(var(--i) * 40ms); }
-    table.st tbody tr:hover td.user { filter: brightness(1.35); }
+    table.st tbody tr:hover .participant-cover { filter: brightness(1.12); }
     td.place { font: 600 14px var(--mono); color: var(--muted); text-align: center; width: 22px; }
     td.user {
-      border-radius: 11px;
       white-space: nowrap;
-      padding: 0 18px 0 14px !important;
-      min-width: 160px;
+      padding: 0 4px 0 0 !important;
+      min-width: 260px;
       height: 60px;
       font-weight: 700;
-      border-left: 3px solid var(--ucol) !important;
+    }
+    .participant-entry { display: flex; align-items: center; gap: 14px; min-height: 60px; }
+    td.user a.participant-name {
+      display: flex;
+      align-items: center;
+      flex: 0 1 140px;
+      min-width: 95px;
+      height: 40px;
+      padding-left: 12px;
+      border-left: 2px solid var(--ucol);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .participant-cover {
+      flex: 1 1 auto;
+      min-width: 100px;
+      height: 60px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
       background-color: #121212;
       background-size: cover;
       background-position: center;
@@ -291,7 +308,7 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .aura i, .banner, .contest-content, .pane, .task, table.st tbody tr, .cell.ok, .cell.wa { animation: none; }
-      .tabs .ind, .tabs button.tab, .task, .task::before, .task .nm, .task svg, .reg-btn, td.user, .cell { transition: none; }
+      .tabs .ind, .tabs button.tab, .task, .task::before, .task .nm, .task svg, .reg-btn, .participant-cover, .cell { transition: none; }
       .cell:hover, .reg-btn:not(:disabled):hover, .task:hover svg { transform: none; }
     }
   </style>
@@ -445,7 +462,7 @@
       const nickHtml = level !== "free" && typeof buildStyledNickHtml === "function"
         ? buildStyledNickHtml(login, sub, color)
         : `<span style="color:${color}">${escapeHtml(login)}</span>`;
-      return `<a href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>`;
+      return `<a class="participant-name" href="profile.html?user=${encodeURIComponent(login)}">${nickHtml}</a>`;
     }
 
     function getStatus(start, end) {
@@ -728,7 +745,7 @@
       const head = `<thead><tr><th>#</th><th class="l">Участник</th><th>Сумма</th><th>Штраф</th>${tasks.map((_, i) => `<th>${letter(i)}</th>`).join("")}</tr></thead>`;
       const body = rows.map((row, idx) => `<tr style="--i:${idx}">
           <td class="place">${idx + 1}</td>
-          <td class="user l" style="--ucol:${nickColor(row.login)}">${profileLink(row.login)}</td>
+          <td class="user l" style="--ucol:${nickColor(row.login)}"><div class="participant-entry">${profileLink(row.login)}<span class="participant-cover" aria-hidden="true"></span></div></td>
           <td class="sum">${row.solved}</td>
           <td class="pen">${row.penalty}</td>
           ${tasks.map((taskId) => `<td class="sq">${cellHtml(attempts[row.login][taskId], idx)}</td>`).join("")}
@@ -736,7 +753,7 @@
       table.innerHTML = `${head}<tbody>${body}</tbody>`;
       const participantCells = Array.from(table.querySelectorAll("td.user"));
       participantCells.forEach((cell, index) => {
-        cell.style.backgroundImage = participantCover(rows[index].login);
+        cell.querySelector(".participant-cover").style.backgroundImage = participantCover(rows[index].login);
       });
       // Match the profile page's fresh cover and subscription data without delaying the table.
       let nextParticipant = 0;
@@ -748,9 +765,9 @@
           if (!cell.isConnected) return;
           await loadParticipantProfile(login);
           if (!cell.isConnected) continue;
-          cell.style.backgroundImage = participantCover(login);
+          cell.querySelector(".participant-cover").style.backgroundImage = participantCover(login);
           cell.style.setProperty("--ucol", nickColor(login));
-          cell.innerHTML = profileLink(login);
+          cell.querySelector(".participant-name").outerHTML = profileLink(login);
         }
       }
       await Promise.all(Array.from({ length: Math.min(4, participantCells.length) }, refreshParticipantCovers));
