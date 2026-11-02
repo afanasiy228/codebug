@@ -8,7 +8,7 @@
     if (!ctx) return;
 
     const spacing = 32;
-    const radius = 145;
+    const radius = 185;
     let width = 0, height = 0, frame = 0, lastTime = 0;
     let active = false, resizePending = true;
     let x = -1000, y = -1000, targetX = x, targetY = y;
@@ -36,21 +36,30 @@
         y += (targetY - y) * easing;
         strength += (targetStrength - strength) * easing;
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = 'rgba(186, 168, 133, .14)';
+        ctx.fillStyle = 'rgba(196, 177, 142, .24)';
         ctx.beginPath();
+        const lit = [];
         for (let py = spacing / 2; py < height; py += spacing) {
             for (let px = spacing / 2; px < width; px += spacing) {
                 const dx = px - x, dy = py - y;
                 const distance = Math.hypot(dx, dy);
-                // A small, smooth bulge; points return to their grid as the pointer leaves.
-                const shift = distance > 0 && distance < radius
-                    ? Math.sin(Math.PI * distance / radius) * 3.2 * strength / distance : 0;
-                const dotX = px + dx * shift, dotY = py + dy * shift;
-                ctx.moveTo(dotX + .8, dotY);
-                ctx.arc(dotX, dotY, .8, 0, Math.PI * 2);
+                if (strength > .002 && distance < radius) {
+                    const influence = (1 - distance / radius) * strength;
+                    const shift = distance > 0 ? Math.sin(Math.PI * distance / radius) * 10 * strength / distance : 0;
+                    lit.push([px + dx * shift, py + dy * shift, influence]);
+                } else {
+                    ctx.moveTo(px + 1.1, py);
+                    ctx.arc(px, py, 1.1, 0, Math.PI * 2);
+                }
             }
         }
         ctx.fill();
+        for (const [dotX, dotY, influence] of lit) {
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(245, 176, 67, ${(.25 + influence * .68).toFixed(3)})`;
+            ctx.arc(dotX, dotY, 1.1 + influence * 1.15, 0, Math.PI * 2);
+            ctx.fill();
+        }
         document.body.classList.add('training-dots-ready');
         if (Math.abs(targetX - x) + Math.abs(targetY - y) > .1 || Math.abs(targetStrength - strength) > .002) schedule();
     }
