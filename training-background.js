@@ -9,7 +9,9 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const CELL = 16;
+    const coarse = matchMedia('(pointer: coarse)');
+    // Finer cells give smoother isolines; touch screens get a lighter grid.
+    const CELL = coarse.matches ? 14 : 10;
     const LEVELS = 9;
     const HILL = 0.16;
     const HILL_SPREAD = 6000;
@@ -23,24 +25,24 @@
         }
         for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
     }
-    const fade = t => t * t * (3 - 2 * t);
-    const hash = (x, y, z) => perm[(perm[(perm[x & 255] + y) & 255] + z) & 255] / 255;
+    // Quintic fade keeps the field's slope continuous, so contours bend smoothly
+    // instead of kinking at noise-cell borders.
+    const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+    const hash = (x, y, z) => perm[(perm[(perm[x & 255] + y) & 255] + z) & 255];
     function noise(x, y, z) {
         const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
         const u = fade(x - xi), v = fade(y - yi), w = fade(z - zi);
-        const lerp = (a, b, t) => a + (b - a) * t;
-        const c = (dx, dy, dz) => hash(xi + dx, yi + dy, zi + dz);
-        return lerp(
-            lerp(lerp(c(0, 0, 0), c(1, 0, 0), u), lerp(c(0, 1, 0), c(1, 1, 0), u), v),
-            lerp(lerp(c(0, 0, 1), c(1, 0, 1), u), lerp(c(0, 1, 1), c(1, 1, 1), u), v),
-            w
-        );
+        const x0 = xi & 255, y0 = yi & 255, z0 = zi & 255, x1 = (xi + 1) & 255, y1 = (yi + 1) & 255, z1 = (zi + 1) & 255;
+        const a = hash(x0, y0, z0), b = hash(x1, y0, z0), c = hash(x0, y1, z0), d = hash(x1, y1, z0);
+        const e = hash(x0, y0, z1), f = hash(x1, y0, z1), g = hash(x0, y1, z1), h = hash(x1, y1, z1);
+        const ab = a + (b - a) * u, cd = c + (d - c) * u, ef = e + (f - e) * u, gh = g + (h - g) * u;
+        const front = ab + (cd - ab) * v, back = ef + (gh - ef) * v;
+        return (front + (back - front) * w) / 255;
     }
 
     let width = 0, height = 0, cols = 0, rows = 0, field = null;
     let resizePending = true, lastDraw = 0, frame = 0;
     const pointer = { x: -9999, y: -9999, sx: -9999, sy: -9999, on: 0, son: 0 };
-    const coarse = matchMedia('(pointer: coarse)');
 
     function resize() {
         width = innerWidth;
@@ -61,7 +63,7 @@
         for (let j = 0; j < rows; j++) {
             for (let i = 0; i < cols; i++) {
                 const x = i * CELL, y = j * CELL;
-                let v = noise(x * 0.0028, y * 0.0028, z) * 0.75 + noise(x * 0.008, y * 0.008, z * 1.6) * 0.25;
+                let v = noise(x * 0.0028, y * 0.0028, z) * 0.82 + noise(x * 0.008, y * 0.008, z * 1.6) * 0.18;
                 if (hill > 0.002) {
                     const dx = x - pointer.sx, dy = y - pointer.sy;
                     v += hill * Math.exp(-(dx * dx + dy * dy) / HILL_SPREAD);
@@ -70,6 +72,8 @@
             }
         }
         ctx.clearRect(0, 0, width, height);
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
         for (let level = 1; level < LEVELS; level++) {
             const iso = level / LEVELS * 1.05;
             const major = level % 4 === 0;
@@ -107,12 +111,12 @@
         if (resizePending) resize();
         const dt = Math.min(60, now - (tick.last || now));
         tick.last = now;
-        const k = 1 - Math.exp(-dt / 90);
+        const k = 1 - Math.exp(-dt / 160);
         pointer.sx += (pointer.x - pointer.sx) * k;
         pointer.sy += (pointer.y - pointer.sy) * k;
-        pointer.son += (pointer.on - pointer.son) * (1 - Math.exp(-dt / 260));
-        // The field changes slowly, so ~24 fps is plenty; touch screens get ~10 fps.
-        if (now - lastDraw < (coarse.matches ? 100 : 40)) return;
+        pointer.son += (pointer.on - pointer.son) * (1 - Math.exp(-dt / 420));
+        // Every frame with a mouse for smooth motion; about 30 fps on touch screens.
+        if (coarse.matches && now - lastDraw < 32) return;
         lastDraw = now;
         draw(now);
         document.body.classList.add('training-dots-ready');
