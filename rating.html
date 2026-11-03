@@ -241,7 +241,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(5, 5, 5, 0.84), rgba(11, 11, 11, 0.72));
+            background: linear-gradient(90deg, rgba(5, 5, 5, 0.8) 0%, rgba(8, 8, 8, 0.52) 45%, rgba(11, 11, 11, 0.3) 100%);
             z-index: 1;
         }
 
@@ -518,7 +518,7 @@
                 if (/["'\\()\s]/.test(coverUrl)) return null;
                 return { bg: `url("${coverUrl}") center/cover no-repeat` };
             }
-            if (!String(profileStyle.coverId || "").trim()) return null;
+            // Everyone gets a banner: no choice yet means the default cover.
             return CodeBugCovers.resolve(profileStyle.coverId, level);
         }
 
@@ -622,8 +622,8 @@
                 if (rowBanner && rowBanner.id) row.dataset.cover = rowBanner.id;
                 row.style.setProperty("--row-banner", "none");
 
-                row.style.setProperty("--row-banner-opacity", hasBanner ? "0.28" : "0");
-                row.style.setProperty("--row-banner-hover-opacity", hasBanner ? "0.35" : "0");
+                row.style.setProperty("--row-banner-opacity", hasBanner ? "0.75" : "0");
+                row.style.setProperty("--row-banner-hover-opacity", hasBanner ? "0.95" : "0");
                 row.style.cursor = "pointer";
                 row.addEventListener("click", () => {
                     window.location.href = profileUrl;
