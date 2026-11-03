@@ -1,4 +1,4 @@
-/* How many lines a participant changed in the broken code.
+/* How much of the broken code a participant changed: lines and characters.
    Mirrors line_diff.py on the server line for line, so the counter in the
    editor and the server check always show the same number. */
 (function () {
@@ -14,9 +14,8 @@
         return out;
     }
 
-    function countChangedLines(before, after) {
-        let a = normalizeLines(before);
-        let b = normalizeLines(after);
+    // Changed blocks between sequences a and b (arrays or strings) as [removed, added] slices.
+    function hunks(a, b) {
         let start = 0;
         while (start < a.length && start < b.length && a[start] === b[start]) start++;
         let endA = a.length, endB = b.length;
@@ -24,8 +23,8 @@
         a = a.slice(start, endA);
         b = b.slice(start, endB);
         const n = a.length, m = b.length;
-        if (n === 0 || m === 0) return Math.max(n, m);
-        if (n * m > MAX_CELLS) return n + m;
+        if (n === 0 || m === 0) return n || m ? [[a, b]] : [];
+        if (n * m > MAX_CELLS) return [[a, b]];
 
         const lcs = [];
         for (let i = 0; i <= n; i++) lcs.push(new Int32Array(m + 1));
@@ -36,19 +35,45 @@
             }
         }
 
-        let changed = 0, removed = 0, added = 0, i = 0, j = 0;
+        const out = [];
+        let i = 0, j = 0, hi = 0, hj = 0;
         while (i < n || j < m) {
             if (i < n && j < m && a[i] === b[j]) {
-                changed += Math.max(removed, added);
-                removed = 0; added = 0; i++; j++;
+                if (hi < i || hj < j) out.push([a.slice(hi, i), b.slice(hj, j)]);
+                i++; j++;
+                hi = i; hj = j;
             } else if (j >= m || (i < n && lcs[i + 1][j] >= lcs[i][j + 1])) {
-                removed++; i++;
+                i++;
             } else {
-                added++; j++;
+                j++;
             }
         }
-        return changed + Math.max(removed, added);
+        if (hi < n || hj < m) out.push([a.slice(hi), b.slice(hj)]);
+        return out;
+    }
+
+    function cost(a, b) {
+        let total = 0;
+        hunks(a, b).forEach(([removed, added]) => {
+            total += removed.length * added.length > MAX_CELLS
+                ? removed.length + added.length
+                : Math.max(removed.length, added.length);
+        });
+        return total;
+    }
+
+    function countChangedLines(before, after) {
+        return cost(normalizeLines(before), normalizeLines(after));
+    }
+
+    function countChangedChars(before, after) {
+        let total = 0;
+        hunks(normalizeLines(before), normalizeLines(after)).forEach(([removed, added]) => {
+            total += cost(removed.join("\n"), added.join("\n"));
+        });
+        return total;
     }
 
     window.codebugCountChangedLines = countChangedLines;
+    window.codebugCountChangedChars = countChangedChars;
 })();

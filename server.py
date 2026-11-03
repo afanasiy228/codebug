@@ -2,6 +2,7 @@ import os
 import sys
 from read_api import register_read_api, submission_rows, invalidate_submissions
 import json
+import math
 import subprocess
 import tempfile
 import re
@@ -26,7 +27,7 @@ except Exception:
     redis = None
 
 import firebase_admin
-from line_diff import count_changed_lines
+from line_diff import count_changed_chars, count_changed_lines
 from reference_match import matches_reference
 from firebase_admin import credentials, db
 from firebase_admin import auth as admin_auth
@@ -1892,6 +1893,50 @@ def task_change_budget(task_id, problem=None):
     return budget
 
 
+# Slack over the reference fix, in characters: (share of the fix, at least).
+# A fix can be written a little differently from the reference, and easier
+# tasks get more room because their fixes are short and easy to phrase otherwise.
+_CHAR_SLACK = {
+    "easy": (0.6, 10),
+    "normal": (0.4, 7),
+    "medium": (0.4, 7),
+    "hard": (0.3, 5),
+    "impossible": (0.25, 4),
+}
+_CHAR_BUDGET_CACHE = {}
+
+
+def task_char_budget(task_id, problem=None):
+    """How many characters a participant may change in the broken code.
+
+    An explicit maxChangedChars in problem.json wins; otherwise it is the
+    character diff between the broken and the reference solution plus a
+    small slack that depends on difficulty. None means no limit.
+    """
+    problem = problem if problem is not None else read_problem_config(task_id)
+    if not problem:
+        return None
+    explicit = problem.get("maxChangedChars")
+    if isinstance(explicit, int) and explicit > 0:
+        return explicit
+    files = problem.get("files") or {}
+    base = task_dir(task_id)
+    broken = os.path.join(base, files.get("code") or "")
+    reference = os.path.join(base, files.get("solution") or "")
+    if not (files.get("code") and files.get("solution") and os.path.isfile(broken) and os.path.isfile(reference)):
+        return None
+    difficulty = str(problem.get("difficulty") or "").strip().lower()
+    key = (str(task_id), os.path.getmtime(broken), os.path.getmtime(reference), difficulty)
+    cached = _CHAR_BUDGET_CACHE.get(str(task_id))
+    if cached and cached[0] == key:
+        return cached[1]
+    fix = count_changed_chars(_read_text(broken), _read_text(reference))
+    share, at_least = _CHAR_SLACK.get(difficulty, _CHAR_SLACK["normal"])
+    budget = fix + max(at_least, math.ceil(fix * share)) if fix else None
+    _CHAR_BUDGET_CACHE[str(task_id)] = (key, budget)
+    return budget
+
+
 def task_broken_code(task_id, problem=None):
     problem = problem if problem is not None else read_problem_config(task_id)
     files = (problem or {}).get("files") or {}
@@ -1954,6 +1999,7 @@ def public_problem_meta(problem):
         "kinds": task_kinds(problem),
         "mainTag": (task_kinds(problem) or [""])[0],
         "maxChangedLines": task_change_budget(problem.get("id"), problem) if problem.get("id") is not None else None,
+        "maxChangedChars": task_char_budget(problem.get("id"), problem) if problem.get("id") is not None else None,
         "taskType": problem.get("taskType", "standard"),
         "grader": problem.get("grader") if problem.get("taskType") == "grader" else None,
         "interactor": problem.get("interactor") if problem.get("taskType") == "interactive" else None,
@@ -2387,7 +2433,7 @@ def _write_task_tree(task_path, problem_v2, files, tests):
     return compile_result
 
 
-_CARRY_FIELDS = ("timeLimit", "memoryLimitMb", "kinds", "maxChangedLines", "reviewDecision")
+_CARRY_FIELDS = ("timeLimit", "memoryLimitMb", "kinds", "maxChangedLines", "maxChangedChars", "reviewDecision")
 _CARRY_STATEMENT_FILES = ("editorial", "hypothesis")
 
 
@@ -2785,6 +2831,16 @@ def submit():
                 "code": "TOO_MANY_CHANGES",
                 "changedLines": changed_lines,
                 "maxChangedLines": change_budget,
+            }), 400
+    char_budget = task_char_budget(task)
+    if char_budget is not None:
+        changed_chars = count_changed_chars(task_broken_code(task), code)
+        if changed_chars > char_budget:
+            return jsonify({
+                "error": "too_many_changes",
+                "code": "TOO_MANY_CHANGED_CHARS",
+                "changedChars": changed_chars,
+                "maxChangedChars": char_budget,
             }), 400
     with SUBMIT_QUEUE_LOCK:
         if (len(SUBMIT_QUEUE) + len(SUBMIT_QUEUE_PRO)) >= MAX_SUBMIT_QUEUE_SIZE:
@@ -3242,6 +3298,7 @@ def tasks_admin_review(task_id):
         "solution": _task_text(task_id, files.get("solution")),
         "kinds": task_kinds(problem),
         "maxChangedLines": task_change_budget(task_id, problem),
+        "maxChangedChars": task_char_budget(task_id, problem),
     })
 
 

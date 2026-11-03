@@ -695,7 +695,7 @@
 <script src="firebase.js?v=20261030-1"></script>
 <!-- обязательно первой! -->
 <script src="auth.js?v=20261030-1"></script>
-<script src="line-diff.js?v=20261026-1"></script>
+<script src="line-diff.js?v=20261103-1"></script>
 <script src="submission-diagnostics.js?v=20260921-1"></script>
 <!-- использует db -->
 <script src="globalsubmissions.js"></script>
@@ -759,7 +759,7 @@
                 <div class="editor-wrap">
                     <button type="button" class="reset-code-btn" onclick="resetEditorDraft()" title="Сбросить код к исходному шаблону">Сброс</button>
                     <span id="editorFeedback" class="editor-feedback" role="status"></span>
-                    <span id="changeCounter" class="change-counter" hidden title="Сколько строк сломанного кода ты изменил. Больше, чем нужно для исправления, отправить нельзя."></span>
+                    <span id="changeCounter" class="change-counter" hidden title="Сколько строк и символов сломанного кода ты изменил (пробелы и комментарии не считаются). Больше лимита отправить нельзя."></span>
                     <div id="editor" aria-label="Code editor"></div>
                 </div>
 
@@ -915,8 +915,9 @@
             DRAFT_SAVE_TIMER = setTimeout(saveEditorDraftNow, 500);
         }
 
-        // How many lines of the broken code the fix may touch (from the task meta).
+        // How many lines and characters of the broken code the fix may touch (from the task meta).
         let CHANGE_BUDGET = null;
+        let CHAR_BUDGET = null;
 
         function changedLinesNow() {
             if (typeof window.codebugCountChangedLines !== "function" || !window.editor || !editor.getValue) return 0;
@@ -926,12 +927,25 @@
         function updateChangeCounter() {
             const el = document.getElementById("changeCounter");
             if (!el) return;
-            if (!CHANGE_BUDGET || !BASELINE_CODE) { el.hidden = true; return; }
-            const used = changedLinesNow();
+            if ((!CHANGE_BUDGET && !CHAR_BUDGET) || !BASELINE_CODE) { el.hidden = true; return; }
+            const parts = [];
+            let full = false, over = false;
+            if (CHANGE_BUDGET) {
+                const used = changedLinesNow();
+                parts.push(`строк ${used} из ${CHANGE_BUDGET}`);
+                full = full || used === CHANGE_BUDGET;
+                over = over || used > CHANGE_BUDGET;
+            }
+            if (CHAR_BUDGET && typeof window.codebugCountChangedChars === "function" && window.editor && editor.getValue) {
+                const used = window.codebugCountChangedChars(BASELINE_CODE, editor.getValue());
+                parts.push(`символов ${used} из ${CHAR_BUDGET}`);
+                full = full || used >= CHAR_BUDGET * 0.9;
+                over = over || used > CHAR_BUDGET;
+            }
             el.hidden = false;
-            el.textContent = `Изменено строк: ${used} из ${CHANGE_BUDGET}`;
-            el.classList.toggle("is-full", used === CHANGE_BUDGET);
-            el.classList.toggle("is-over", used > CHANGE_BUDGET);
+            el.textContent = `Изменено: ${parts.join(" · ")}`;
+            el.classList.toggle("is-full", full && !over);
+            el.classList.toggle("is-over", over);
         }
 
         function setEditorCodeFromTask(code) {
@@ -1127,6 +1141,13 @@
                 const used = window.codebugCountChangedLines(BASELINE_CODE, code);
                 if (used > CHANGE_BUDGET) {
                     alert(`Изменено строк: ${used}, а для исправления хватает ${CHANGE_BUDGET}. Найди ошибку, а не переписывай решение.`);
+                    return;
+                }
+            }
+            if (CHAR_BUDGET && typeof window.codebugCountChangedChars === "function") {
+                const used = window.codebugCountChangedChars(BASELINE_CODE, code);
+                if (used > CHAR_BUDGET) {
+                    alert(`Изменено символов: ${used}, а для исправления хватает ${CHAR_BUDGET}. Найди ошибку, а не переписывай решение.`);
                     return;
                 }
             }
@@ -1350,6 +1371,9 @@
                 }
                 if (data && data.code === "TOO_MANY_CHANGES") {
                     throw new Error(`Изменено строк: ${data.changedLines}, можно не больше ${data.maxChangedLines}`);
+                }
+                if (data && data.code === "TOO_MANY_CHANGED_CHARS") {
+                    throw new Error(`Изменено символов: ${data.changedChars}, можно не больше ${data.maxChangedChars}`);
                 }
                 const errorMessages = {
                     403: "Нет доступа к этой задаче",
@@ -2091,6 +2115,7 @@
                 TASK_DIFFICULTY = meta.difficulty;
                 currentProblemMeta = meta;
                 CHANGE_BUDGET = Number(meta && meta.maxChangedLines) > 0 ? Number(meta.maxChangedLines) : null;
+                CHAR_BUDGET = Number(meta && meta.maxChangedChars) > 0 ? Number(meta.maxChangedChars) : null;
                 updateChangeCounter();
                 TASK_LANGUAGE = normalizeTaskLanguage(meta.language);
                 updateEditorLanguageFromTask();
