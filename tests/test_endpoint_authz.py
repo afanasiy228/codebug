@@ -15,7 +15,7 @@ PRIVATE_ENDPOINTS = [
     ("POST", "/editor/ai-complete", {"prefix": "x"}),
     ("POST", "/profile/change-login", {"login": "newname"}),
     ("POST", "/profile/set-nick-color", {"color": "#60a5fa"}),
-    ("POST", "/profile/set-cover", {"coverId": "amber_dusk"}),
+    ("POST", "/profile/set-cover", {"coverId": "grad_sunset"}),
     ("POST", "/payments/platega/create", {"tier": "pro"}),
     ("GET", "/payments/subscription-status", None),
     ("GET", "/profile/extended-stats/someone", None),
@@ -114,7 +114,7 @@ def test_set_cover_cannot_target_another_user(srv):
 
     srv.client.post(
         "/profile/set-cover",
-        json={"coverId": "ember", "login": "victim", "user": "victim"},
+        json={"coverId": "color_red", "login": "victim", "user": "victim"},
         headers={"Authorization": f"Bearer {token}"},
     )
     touched = {w[1] for w in srv.db.writes if "victim" in w[1]}
@@ -144,20 +144,24 @@ def test_animated_cover_needs_pro_plus(srv):
         "expiresAt": 4102444800000, "source": "payment",
     }
 
-    res = srv.client.post("/profile/set-cover", json={"coverId": "prism"},
+    res = srv.client.post("/profile/set-cover", json={"coverId": "live_sky"},
                           headers={"Authorization": f"Bearer {free}"})
     assert res.status_code == 403 and res.get_json()["code"] == "PRO_PLUS_REQUIRED"
-    assert srv.client.post("/profile/set-cover", json={"coverId": "ember"},
+    assert srv.client.post("/profile/set-cover", json={"coverId": "fractal_julia"},
                            headers={"Authorization": f"Bearer {free}"}).status_code == 200
-    assert srv.client.post("/profile/set-cover", json={"coverId": "prism"},
+    assert srv.client.post("/profile/set-cover", json={"coverId": "live_sky"},
                            headers={"Authorization": f"Bearer {plus}"}).status_code == 200
 
 
 def test_cover_ids_match_the_shared_frontend_list(srv):
     import re
     from pathlib import Path
-    source = (Path(__file__).resolve().parents[1] / "profile-covers.js").read_text(encoding="utf-8")
-    ids = set(re.findall(r'\{ id: "([a-z_]+)"', source))
-    animated = set(re.findall(r'\{ id: "([a-z_]+)", name: "[^"]+", animated: true', source))
-    assert ids == srv.module.PROFILE_COVER_PRESETS
-    assert animated == srv.module.PROFILE_COVER_ANIMATED
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "profile-covers.js").read_text(encoding="utf-8")
+    covers = re.findall(r'\{ id: "([a-z_]+)", group: "([a-z]+)"', source)
+    pro_plus_groups = set(re.findall(r'\{ id: "([a-z]+)", title: "[^"]+", proPlus: true', source))
+    assert {cid for cid, _ in covers} == srv.module.PROFILE_COVER_PRESETS
+    assert {cid for cid, group in covers if group in pro_plus_groups} == srv.module.PROFILE_COVER_PRO_PLUS
+    for name in re.findall(r'image\("([a-z_]+)"\)', source):
+        assert (root / "covers" / f"{name}.webp").is_file()
+        assert (root / "covers" / f"{name}.thumb.webp").is_file()

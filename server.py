@@ -252,13 +252,18 @@ PRO_NICK_COLORS = {
     "#f472b6", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6",
 }
 PRO_PLUS_NICK_THEMES = {"grad_ocean", "grad_sunset", "grad_candy", "grad_aurora", "nutella", "rainbow", "fire_ice", "matrix", "blood_ink"}
-# Same ids as profile-covers.js; the animated ones are a PRO+ perk.
-PROFILE_COVER_ANIMATED = {"prism", "aurora", "magma", "neon", "hologram", "matrix"}
+# Same ids as profile-covers.js; shimmering ("flow_") and live ("live_") covers are a PRO+ perk.
+PROFILE_COVER_PRO_PLUS = {
+    "flow_prism", "flow_aurora", "flow_magma", "flow_neon", "flow_hologram",
+    "live_sky", "live_honeycomb", "live_terminal", "live_synthwave", "live_fireflies",
+}
 PROFILE_COVER_PRESETS = {
-    "amber_dusk", "ember", "terminal", "blueprint", "midnight", "northern", "sakura",
-    "deep_sea", "graphite", "crimson", "dunes", "mint", "lavender", "punchcard",
-} | PROFILE_COVER_ANIMATED
-DEFAULT_PROFILE_COVER_ID = "amber_dusk"
+    "color_amber", "color_red", "color_orange", "color_green", "color_teal",
+    "color_blue", "color_indigo", "color_purple", "color_pink", "color_graphite",
+    "grad_sunset", "grad_northern", "grad_lavender", "grad_deep_sea", "grad_sakura",
+    "fractal_mandelbrot", "fractal_julia", "fractal_ship", "fractal_newton", "fractal_fern",
+} | PROFILE_COVER_PRO_PLUS
+DEFAULT_PROFILE_COVER_ID = "grad_sunset"
 MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))
 SUBSCRIPTION_PERIOD_DAYS = int(os.getenv("SUBSCRIPTION_PERIOD_DAYS", "30"))
 SUBSCRIPTION_GRACE_DAYS = int(os.getenv("SUBSCRIPTION_GRACE_DAYS", "10"))
@@ -4817,7 +4822,7 @@ def profile_set_cover():
         return _api_error("invalid_payload", 400, "INVALID_PAYLOAD")
     if cover_id and cover_id not in PROFILE_COVER_PRESETS:
         return _api_error("invalid_cover_id", 400, "INVALID_COVER_ID")
-    if cover_id in PROFILE_COVER_ANIMATED and not _is_pro_plus_active(login):
+    if cover_id in PROFILE_COVER_PRO_PLUS and not _is_pro_plus_active(login):
         return _api_error("pro_plus_required", 403, "PRO_PLUS_REQUIRED")
 
     if cover_url:

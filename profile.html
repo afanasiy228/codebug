@@ -990,14 +990,17 @@
         .cover-grid {
             margin-top: 14px;
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 10px;
-            max-height: 380px;
+            max-height: min(520px, 60vh);
             overflow: auto;
             padding-right: 4px;
         }
 
         .cover-option {
+            padding: 0 !important;
+            margin: 0 !important;
+            text-align: left;
             border: 1px solid rgba(148, 163, 184, 0.35);
             border-radius: 10px;
             background: rgba(18, 18, 18, .7);
@@ -1017,7 +1020,7 @@
         }
 
         .cover-thumb {
-            height: 92px;
+            height: 64px;
             background-position: center;
             background-size: cover;
         }
@@ -1041,6 +1044,19 @@
             font-size: 10px;
             letter-spacing: .4px;
         }
+
+        .cover-group-title {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            color: #e5e5e5;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .cover-group-title:first-child { margin-top: 0; }
 
         .cover-option.locked .cover-thumb { filter: saturate(.55) brightness(.7); }
         .cover-option.locked { cursor: not-allowed; }
@@ -1489,7 +1505,7 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             .cover-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
@@ -1737,7 +1753,7 @@
             <p style="margin:0;color:#B0B0B0;">Выберите одну из 10 базовых шапок. С активной PRO можно загрузить свою фотографию.</p>
             <div id="coverPresetGrid" class="cover-grid"></div>
             <div class="cover-upload-zone">
-                <div style="color:#B0B0B0;font-size:13px;">Кастомная шапка (только PRO)</div>
+                <div class="cover-group-title" style="margin:0 0 6px;">Своя картинка <span class="cover-tag">PRO</span></div>
                 <input type="file" id="coverCustomFile" accept="image/*">
                 <div class="cover-upload-actions">
                     <button type="button" id="coverUploadBtn" onclick="pickCoverCustomFile()">Загрузить свою</button>
@@ -2966,24 +2982,30 @@
             const isPro = level !== "free";
 
             grid.innerHTML = "";
-            CodeBugCovers.list.forEach((preset) => {
-                const locked = !CodeBugCovers.canUse(preset, level);
-                const card = document.createElement("button");
-                card.type = "button";
-                card.className = "cover-option" + (preset.id === activeId ? " active" : "") + (locked ? " locked" : "");
-                card.innerHTML = `
-                    <div class="cover-thumb"></div>
-                    <div class="cover-option-meta"><span>${preset.name}</span>${preset.animated ? '<span class="cover-tag">PRO+</span>' : ""}</div>
-                `;
-                CodeBugCovers.paint(card.querySelector(".cover-thumb"), preset);
-                card.addEventListener("click", () => {
-                    if (locked) {
-                        if (errorEl) errorEl.textContent = "Анимированные шапки доступны с подпиской PRO+.";
-                        return;
-                    }
-                    setProfileCoverPreset(preset.id);
+            CodeBugCovers.groups.forEach((group) => {
+                const title = document.createElement("div");
+                title.className = "cover-group-title";
+                title.innerHTML = `<span>${group.title}</span>${group.proPlus ? '<span class="cover-tag">PRO+</span>' : ""}`;
+                grid.appendChild(title);
+                CodeBugCovers.list.filter((preset) => preset.group === group.id).forEach((preset) => {
+                    const locked = !CodeBugCovers.canUse(preset, level);
+                    const card = document.createElement("button");
+                    card.type = "button";
+                    card.className = "cover-option" + (preset.id === activeId ? " active" : "") + (locked ? " locked" : "");
+                    card.innerHTML = `
+                        <div class="cover-thumb"></div>
+                        <div class="cover-option-meta"><span>${preset.name}</span></div>
+                    `;
+                    CodeBugCovers.paint(card.querySelector(".cover-thumb"), preset, { thumb: true });
+                    card.addEventListener("click", () => {
+                        if (locked) {
+                            if (errorEl) errorEl.textContent = "Переливы и живые шапки доступны с подпиской PRO+.";
+                            return;
+                        }
+                        setProfileCoverPreset(preset.id);
+                    });
+                    grid.appendChild(card);
                 });
-                grid.appendChild(card);
             });
 
             if (uploadBtn) uploadBtn.disabled = !isPro;
