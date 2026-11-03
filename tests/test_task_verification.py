@@ -75,6 +75,28 @@ def test_pending_task_cannot_be_opened_without_admin(srv, tmp_path, monkeypatch)
     assert admin_response.status_code == 200
 
 
+def test_task_hidden_until_contest_start(srv, tmp_path, monkeypatch):
+    future = int((srv.module.time.time() + 3600) * 1000)
+    past = int((srv.module.time.time() - 3600) * 1000)
+    _write_problem(tmp_path, 1, hiddenUntil=future)
+    _write_problem(tmp_path, 2, hiddenUntil=past)
+    monkeypatch.setattr(srv.module, "TASKS_REPO_DIR", str(tmp_path))
+    monkeypatch.setattr(srv.module, "_task_access_allowed", REAL_TASK_ACCESS_ALLOWED)
+
+    regular = srv.module.list_tasks(viewer_login="student", viewer_is_admin=False)
+    admin = srv.module.list_tasks(viewer_login="admin", viewer_is_admin=True)
+    assert [task["id"] for task in regular] == [2]
+    assert [task["id"] for task in admin] == [1, 2]
+
+    assert not REAL_TASK_ACCESS_ALLOWED(1, viewer_login="student")
+    assert REAL_TASK_ACCESS_ALLOWED(1, viewer_login="admin", viewer_is_admin=True)
+    assert REAL_TASK_ACCESS_ALLOWED(2, viewer_login="student")
+
+    token = srv.add_user("student")
+    response = srv.client.get("/tasks/1/problem.json", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 403
+
+
 def test_admin_can_approve_a_pending_task(srv, tmp_path, monkeypatch):
     problem_path = _write_problem(tmp_path, 2, verificationStatus="pending")
     monkeypatch.setattr(srv.module, "TASKS_REPO_DIR", str(tmp_path))

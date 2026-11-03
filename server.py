@@ -1840,6 +1840,16 @@ def task_verification_status(problem, *, default="approved"):
     return value if value in {"approved", "pending"} else default
 
 
+def task_hidden_now(problem):
+    """A task prepared for a contest stays hidden until `hiddenUntil` (ms since
+    epoch): it is not listed and only admins can open it before that moment."""
+    try:
+        until = int((problem or {}).get("hiddenUntil") or 0)
+    except (TypeError, ValueError):
+        return False
+    return until > time.time() * 1000
+
+
 TASK_KINDS = ("idea", "implementation", "algorithm")
 
 
@@ -2093,6 +2103,8 @@ def list_tasks(*, viewer_login=None, viewer_is_admin=False):
             problem = read_problem_config(name)
             if task_verification_status(problem) != "approved" and not viewer_is_admin:
                 continue
+            if task_hidden_now(problem) and not viewer_is_admin:
+                continue
             visibility = str(problem.get("visibility") or "public").strip().lower()
             if visibility == "private":
                 owner = str(problem.get("ownerLogin") or "").strip()
@@ -2126,6 +2138,8 @@ def _task_access_allowed(task_id, viewer_login=None, viewer_is_admin=False):
     if not problem:
         return False
     if task_verification_status(problem) != "approved" and not viewer_is_admin:
+        return False
+    if task_hidden_now(problem) and not viewer_is_admin:
         return False
     visibility = str(problem.get("visibility") or "public").strip().lower()
     if visibility != "private":
@@ -2433,7 +2447,7 @@ def _write_task_tree(task_path, problem_v2, files, tests):
     return compile_result
 
 
-_CARRY_FIELDS = ("timeLimit", "memoryLimitMb", "kinds", "maxChangedLines", "maxChangedChars", "reviewDecision")
+_CARRY_FIELDS = ("timeLimit", "memoryLimitMb", "kinds", "maxChangedLines", "maxChangedChars", "hiddenUntil", "reviewDecision")
 _CARRY_STATEMENT_FILES = ("editorial", "hypothesis")
 
 

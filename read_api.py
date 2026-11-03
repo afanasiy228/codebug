@@ -98,6 +98,8 @@ def register_read_api(app, runtime):
                 problem = runtime.read_problem_config(name)
                 if not problem or runtime.task_verification_status(problem) != "approved" or str(problem.get("visibility", "public")).lower() == "private":
                     continue
+                if runtime.task_hidden_now(problem):
+                    continue
                 catalog.append({
                     "id": int(name), "title": problem.get("title", ""),
                     "difficulty": problem.get("difficulty", ""),
@@ -122,7 +124,9 @@ def register_read_api(app, runtime):
         if not problem:
             return runtime._api_error("not_found", 404, "NOT_FOUND")
         meta = runtime.public_problem_meta(problem)
-        private = str(problem.get("visibility", "public")).lower() == "private" or runtime.task_verification_status(problem) != "approved"
+        private = (str(problem.get("visibility", "public")).lower() == "private"
+                   or runtime.task_verification_status(problem) != "approved"
+                   or bool(problem.get("hiddenUntil")))
         paths = public_files(meta)
         stat = []
         for path in paths + ["problem.json", "meta.json"]:
