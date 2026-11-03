@@ -452,7 +452,7 @@
         el.style.backgroundImage = `url(${JSON.stringify(url)})`;
         return;
       }
-      CodeBugCovers.paint(el, CodeBugCovers.resolve(style.coverId, level));
+      CodeBugCovers.paint(el, CodeBugCovers.resolve(style.coverId, level, login));
     }
 
     function profileLink(login) {

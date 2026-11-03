@@ -507,7 +507,7 @@
                 .replace(/'/g, "&#039;");
         }
 
-        function getRowBanner(style, level) {
+        function getRowBanner(style, level, login) {
             const profileStyle = (style && typeof style === "object") ? style : {};
             const custom = String(profileStyle.coverUrl || "").trim();
             const canUseCustom = level !== "free";
@@ -519,7 +519,7 @@
                 return { bg: `url("${coverUrl}") center/cover no-repeat` };
             }
             // Everyone gets a banner: no choice yet means the default cover.
-            return CodeBugCovers.resolve(profileStyle.coverId, level);
+            return CodeBugCovers.resolve(profileStyle.coverId, level, login);
         }
 
         /* ======================
@@ -614,7 +614,7 @@
                     `<a href="${profileUrl}" style="text-decoration:none;"><div class="ava default">${safeLogin[0].toUpperCase()}</div></a>`;
 
                 let solvedCnt = Number.isFinite(u.solvedCount) ? u.solvedCount : 0;
-                const rowBanner = getRowBanner(u.profileStyle, level);
+                const rowBanner = getRowBanner(u.profileStyle, level, u.login);
                 const hasBanner = !!rowBanner;
 
                 let row = document.createElement("div");

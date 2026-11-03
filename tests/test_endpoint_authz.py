@@ -165,3 +165,26 @@ def test_cover_ids_match_the_shared_frontend_list(srv):
     for name in re.findall(r'image\("([a-z_]+)"\)', source):
         assert (root / "covers" / f"{name}.webp").is_file()
         assert (root / "covers" / f"{name}.thumb.webp").is_file()
+
+
+def test_randomize_covers_only_touches_default_and_unknown(srv):
+    admin = srv.add_user("rootadmin", admin=True)
+    for login, cover in (("a", "grad_sunset"), ("b", "cover_3"), ("c", "fractal_julia"), ("d", None)):
+        srv.add_user(login)
+        if cover:
+            srv.db.data["users"][login]["profileStyle"] = {"coverId": cover}
+    srv.db.data["ratingLeaderboard"] = {"a": {"profileStyle": {"coverId": "grad_sunset"}}}
+
+    res = srv.client.post("/admin/covers/randomize", json={},
+                          headers={"Authorization": f"Bearer {admin}"})
+    assert res.get_json()["code"] == "CONFIRMATION_REQUIRED"
+    res = srv.client.post("/admin/covers/randomize", json={"confirm": "RANDOMIZE_COVERS"},
+                          headers={"Authorization": f"Bearer {admin}"})
+    assert res.status_code == 200, res.get_json()
+
+    users = srv.db.data["users"]
+    free = set(srv.module.PROFILE_COVER_FREE)
+    assert users["c"]["profileStyle"]["coverId"] == "fractal_julia"
+    for login in ("a", "b", "d"):
+        assert users[login]["profileStyle"]["coverId"] in free
+    assert srv.db.data["ratingLeaderboard"]["a"]["profileStyle"]["coverId"] == users["a"]["profileStyle"]["coverId"]

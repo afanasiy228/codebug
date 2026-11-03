@@ -1964,7 +1964,7 @@
             const coverEl = document.getElementById("profileCover");
             if (!coverEl) return;
             const style = (styleData && typeof styleData === "object") ? styleData : {};
-            const preset = CodeBugCovers.resolve(style.coverId, subLevel);
+            const preset = CodeBugCovers.resolve(style.coverId, subLevel, currentProfileLogin);
             const custom = String(style.coverUrl || "").trim();
             const canUseCustom = (subLevel !== "free");
 
@@ -2978,7 +2978,7 @@
 
             const style = (styleData && typeof styleData === "object") ? styleData : {};
             const hasCustom = !!String(style.coverUrl || "").trim();
-            const activeId = hasCustom ? "" : CodeBugCovers.resolve(style.coverId, level).id;
+            const activeId = hasCustom ? "" : CodeBugCovers.resolve(style.coverId, level, currentProfileLogin).id;
             const isPro = level !== "free";
 
             grid.innerHTML = "";

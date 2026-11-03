@@ -3,6 +3,7 @@ import sys
 from read_api import register_read_api, submission_rows, invalidate_submissions
 import json
 import math
+import secrets
 import subprocess
 import tempfile
 import re
@@ -263,7 +264,11 @@ PROFILE_COVER_PRESETS = {
     "grad_sunset", "grad_northern", "grad_lavender", "grad_deep_sea", "grad_sakura",
     "fractal_mandelbrot", "fractal_julia", "fractal_ship", "fractal_newton", "fractal_fern",
 } | PROFILE_COVER_PRO_PLUS
-DEFAULT_PROFILE_COVER_ID = "grad_sunset"
+PROFILE_COVER_FREE = sorted(PROFILE_COVER_PRESETS - PROFILE_COVER_PRO_PLUS)
+
+
+def _random_free_cover():
+    return secrets.choice(PROFILE_COVER_FREE)
 MAX_PROFILE_COVER_IMAGE_BYTES = int(os.getenv("MAX_PROFILE_COVER_IMAGE_BYTES", str(2 * 1024 * 1024)))
 SUBSCRIPTION_PERIOD_DAYS = int(os.getenv("SUBSCRIPTION_PERIOD_DAYS", "30"))
 SUBSCRIPTION_GRACE_DAYS = int(os.getenv("SUBSCRIPTION_GRACE_DAYS", "10"))
@@ -4838,7 +4843,8 @@ def profile_set_cover():
             current = {}
 
         next_style = dict(current)
-        next_style["coverId"] = cover_id or str(next_style.get("coverId") or DEFAULT_PROFILE_COVER_ID)
+        current_id = str(next_style.get("coverId") or "")
+        next_style["coverId"] = cover_id or (current_id if current_id in PROFILE_COVER_PRESETS else _random_free_cover())
         next_style.pop("customCover", None)
         next_style["updatedAt"] = int(time.time() * 1000)
 
@@ -5166,6 +5172,53 @@ def admin_contests_reset_foi():
         return jsonify({"ok": True, "id": "foi-2026", "contest": payload})
     except Exception as e:
         return _server_error("contest_reset_failed", "CONTEST_RESET_FAILED", exc=e)
+
+
+@app.route("/admin/covers/randomize", methods=["POST"])
+def admin_covers_randomize():
+    """Gives a random free cover to every user whose cover is missing, unknown
+    or still the old default. Custom uploaded covers are left alone."""
+    if not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    data = request.get_json(silent=True) or {}
+    if str(data.get("confirm") or "") != "RANDOMIZE_COVERS":
+        return _api_error("confirmation_required", 400, "CONFIRMATION_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    try:
+        users = db.reference("users").get() or {}
+        leaderboard = db.reference("ratingLeaderboard").get() or {}
+        public = db.reference("publicProfiles").get() or {}
+    except Exception as e:
+        return _server_error("covers_randomize_failed", "COVERS_RANDOMIZE_FAILED", exc=e)
+    updates, changed = {}, []
+    now = int(time.time() * 1000)
+    for login, user in users.items():
+        if not isinstance(user, dict):
+            continue
+        style = user.get("profileStyle") if isinstance(user.get("profileStyle"), dict) else {}
+        current = str(style.get("coverId") or "")
+        if current in PROFILE_COVER_PRESETS and current != "grad_sunset":
+            continue
+        cover = _random_free_cover()
+        updates[f"users/{login}/profileStyle/coverId"] = cover
+        updates[f"users/{login}/profileStyle/updatedAt"] = now
+        if login in public:
+            updates[f"publicProfiles/{login}/profileStyle/coverId"] = cover
+        if login in leaderboard:
+            updates[f"ratingLeaderboard/{login}/profileStyle/coverId"] = cover
+        changed.append(login)
+    if updates:
+        try:
+            db.reference("/").update(updates)
+        except Exception as e:
+            return _server_error("covers_randomize_failed", "COVERS_RANDOMIZE_FAILED", exc=e)
+    for login in changed:
+        _cache_delete(("profile-lite", login))
+    return jsonify({"ok": True, "changed": len(changed)})
 
 
 @app.route("/admin/contests/delete", methods=["POST"])

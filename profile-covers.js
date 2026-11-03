@@ -71,10 +71,21 @@
         return !proPlusOnly(cover) || level === "pro_plus";
     }
 
-    // The cover a user actually gets: unknown ids and PRO+ covers without PRO+ fall back to the default.
-    function resolve(id, level) {
+    const FREE = COVERS.filter((cover) => !proPlusOnly(cover));
+
+    // A random free cover that stays the same for a login on every page.
+    function randomFor(login) {
+        let h = 2166136261;
+        for (const ch of String(login || "")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+        return FREE[(h >>> 0) % FREE.length];
+    }
+
+    // The cover a user actually gets: no choice, an unknown id or a PRO+ cover
+    // without PRO+ falls back to the login's random free cover.
+    function resolve(id, level, login) {
         const cover = byId.get(String(id || "").toLowerCase());
-        return cover && canUse(cover, level) ? cover : byId.get(DEFAULT_ID);
+        if (cover && canUse(cover, level)) return cover;
+        return login ? randomFor(login) : byId.get(DEFAULT_ID);
     }
 
     // Paints a preset onto an element (the background shorthand keeps per-layer sizes).
@@ -91,5 +102,5 @@
         delete el.dataset.cover;
     }
 
-    window.CodeBugCovers = { groups: GROUPS, list: COVERS, defaultId: DEFAULT_ID, resolve, paint, clear, canUse, proPlusOnly };
+    window.CodeBugCovers = { groups: GROUPS, list: COVERS, defaultId: DEFAULT_ID, resolve, randomFor, paint, clear, canUse, proPlusOnly };
 })();
