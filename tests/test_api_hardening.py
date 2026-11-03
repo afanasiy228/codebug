@@ -136,6 +136,27 @@ def test_reset_foi_proceeds_with_the_confirmation_token(srv):
     assert res.status_code == 200, res.get_json()
 
 
+def test_contest_delete_needs_admin_and_confirmation(srv):
+    srv.db.data["contests"] = {"c1": {"title": "Weekly"}}
+    srv.db.data["contest_regs"] = {"c1": {"student": {"login": "student"}}}
+    user = srv.add_user("student")
+    admin = srv.add_user("rootadmin", admin=True)
+
+    res = srv.client.post("/admin/contests/delete", json={"contestId": "c1", "confirm": "c1"},
+                          headers={"Authorization": f"Bearer {user}"})
+    assert res.status_code == 403
+    res = srv.client.post("/admin/contests/delete", json={"contestId": "c1"},
+                          headers={"Authorization": f"Bearer {admin}"})
+    assert res.get_json()["code"] == "CONFIRMATION_REQUIRED"
+    assert "c1" in srv.db.data["contests"]
+
+    res = srv.client.post("/admin/contests/delete", json={"contestId": "c1", "confirm": "c1"},
+                          headers={"Authorization": f"Bearer {admin}"})
+    assert res.status_code == 200, res.get_json()
+    assert "c1" not in (srv.db.data.get("contests") or {})
+    assert "c1" not in (srv.db.data.get("contest_regs") or {})
+
+
 def test_static_admin_header_no_longer_grants_access(srv):
     res = srv.client.post(
         "/admin/contests/reset-foi",

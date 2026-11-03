@@ -5156,6 +5156,33 @@ def admin_contests_reset_foi():
         return _server_error("contest_reset_failed", "CONTEST_RESET_FAILED", exc=e)
 
 
+@app.route("/admin/contests/delete", methods=["POST"])
+def admin_contests_delete():
+    if not _is_admin_request():
+        return _api_error("forbidden", 403, "FORBIDDEN")
+    data = request.get_json(silent=True) or {}
+    contest_id = str(data.get("contestId") or "").strip()
+    if not contest_id or any(ch in contest_id for ch in ".#$[]/"):
+        return _api_error("contest_id_required", 400, "CONTEST_ID_REQUIRED")
+    # Deleting is irreversible, so the caller repeats the id as confirmation.
+    if str(data.get("confirm") or "") != contest_id:
+        return _api_error("confirmation_required", 400, "CONFIRMATION_REQUIRED")
+    global FIREBASE_READY
+    if not FIREBASE_READY:
+        FIREBASE_READY = init_firebase()
+    if not FIREBASE_READY:
+        return _api_error("firebase_not_ready", 500, "FIREBASE_NOT_READY")
+    if not db.reference(f"contests/{contest_id}").get():
+        return _api_error("contest_not_found", 404, "CONTEST_NOT_FOUND")
+    try:
+        db.reference(f"contests/{contest_id}").delete()
+        db.reference(f"contest_regs/{contest_id}").delete()
+    except Exception as e:
+        return _server_error("contest_delete_failed", "CONTEST_DELETE_FAILED", exc=e)
+    _cache_delete(("contests-read",))
+    return jsonify({"ok": True, "id": contest_id})
+
+
 def _contest_standings(contest_id, contest):
     registrations = db.reference(f"contest_regs/{contest_id}").get() or {}
     if not isinstance(registrations, dict):
