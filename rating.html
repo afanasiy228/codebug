@@ -229,13 +229,14 @@
             content: "";
             position: absolute;
             inset: 0;
-            background-image: var(--row-banner, none);
-            background-size: cover;
-            background-position: center;
+            background: var(--row-banner, none);
             opacity: var(--row-banner-opacity, 0);
             z-index: 0;
             transition: opacity .16s ease;
         }
+
+        .rating-row.cb-row-anim::before { animation: cbCoverShift 16s ease-in-out infinite alternate; }
+        .rating-row.cb-row-anim[data-cover="matrix"]::before { animation: cbCoverRain 9s linear infinite; }
 
         .rating-row::after {
             content: "";
@@ -453,7 +454,8 @@
 
     <script src="firebase.js?v=20261030-1"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261030-1"></script>
+    <script src="auth.js?v=20261103-1"></script>
+    <script src="profile-covers.js?v=20261103-1"></script>
     <script src="training-background.js?v=20261102-smooth" defer></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
@@ -506,19 +508,6 @@
                 .replace(/'/g, "&#039;");
         }
 
-        const RATING_COVER_PRESETS = {
-            cover_1: "linear-gradient(120deg,#121212 0%,#F59E0B 100%)",
-            cover_2: "linear-gradient(120deg,#050505 0%,#D97706 55%,#FBBF24 100%)",
-            cover_3: "linear-gradient(120deg,#050505 0%,#3A2A12 100%)",
-            cover_4: "linear-gradient(120deg,#0B0B0B 0%,#EF4444 100%)",
-            cover_5: "linear-gradient(120deg,#050505 0%,#121212 50%,#2A2A2A 100%)",
-            cover_6: "linear-gradient(120deg,#0B0B0B 0%,#242424 100%)",
-            cover_7: "linear-gradient(120deg,#121212 0%,#B45309 100%)",
-            cover_8: "linear-gradient(120deg,#050505 0%,#1A1A1A 50%,#F59E0B 100%)",
-            cover_9: "linear-gradient(120deg,#0B0B0B 0%,#F59E0B 35%,#F59E0B 100%)",
-            cover_10: "linear-gradient(120deg,#050505 0%,#121212 50%,#FBBF24 100%)"
-        };
-
         function getRowBanner(style, level) {
             const profileStyle = (style && typeof style === "object") ? style : {};
             const custom = String(profileStyle.coverUrl || "").trim();
@@ -527,12 +516,11 @@
                 const coverUrl = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom) : custom;
                 // A quote, backslash, parenthesis or newline in a user-supplied cover URL
                 // would otherwise break out of the CSS url("...") string.
-                if (/["'\\()\s]/.test(coverUrl)) return "";
-                return `url("${coverUrl}")`;
+                if (/["'\\()\s]/.test(coverUrl)) return null;
+                return { bg: `url("${coverUrl}") center/cover no-repeat` };
             }
-            const coverIdRaw = String(profileStyle.coverId || "").trim().toLowerCase();
-            if (!coverIdRaw) return "";
-            return RATING_COVER_PRESETS[coverIdRaw] || "";
+            if (!String(profileStyle.coverId || "").trim()) return null;
+            return CodeBugCovers.resolve(profileStyle.coverId, level);
         }
 
         /* ======================
@@ -631,7 +619,8 @@
                 const hasBanner = !!rowBanner;
 
                 let row = document.createElement("div");
-                row.className = "rating-row";
+                row.className = "rating-row" + (rowBanner && rowBanner.animated ? " cb-row-anim" : "");
+                if (rowBanner && rowBanner.id) row.dataset.cover = rowBanner.id;
                 row.style.setProperty("--row-banner", "none");
 
                 row.style.setProperty("--row-banner-opacity", hasBanner ? "0.28" : "0");
@@ -657,7 +646,7 @@
         `;
 
                 list.appendChild(row);
-                if (hasBanner) CodeBugData.deferVisible(row, () => row.style.setProperty("--row-banner", rowBanner));
+                if (hasBanner) CodeBugData.deferVisible(row, () => row.style.setProperty("--row-banner", rowBanner.bg));
             });
         }
 

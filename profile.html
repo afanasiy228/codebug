@@ -1027,7 +1027,23 @@
             color: #B0B0B0;
             font-size: 12px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
         }
+
+        .cover-tag {
+            padding: 1px 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(251, 191, 36, 0.55);
+            color: #fbbf24;
+            font-size: 10px;
+            letter-spacing: .4px;
+        }
+
+        .cover-option.locked .cover-thumb { filter: saturate(.55) brightness(.7); }
+        .cover-option.locked { cursor: not-allowed; }
 
         .cover-upload-zone {
             margin-top: 14px;
@@ -1741,7 +1757,8 @@
 
     <script src="firebase.js?v=20261030-1"></script>
     <!-- обязательно первой! -->
-    <script src="auth.js?v=20261030-1"></script>
+    <script src="auth.js?v=20261103-1"></script>
+    <script src="profile-covers.js?v=20261103-1"></script>
     <!-- использует db -->
     <script src="globalsubmissions.js"></script>
     <!-- использует db -->
@@ -1765,19 +1782,7 @@
         ];
         const PRO_PLUS_THEMES = ["grad_ocean", "grad_sunset", "grad_candy", "grad_aurora"];
         const PRO_PLUS_EXTRA_THEMES = ["nutella", "rainbow", "fire_ice", "matrix", "blood_ink"];
-        const COVER_PRESETS = [
-            { id: "cover_1", name: "Amber code", bg: "linear-gradient(120deg,#121212 0%,#F59E0B 100%)" },
-            { id: "cover_2", name: "Dark build", bg: "linear-gradient(120deg,#050505 0%,#D97706 55%,#FBBF24 100%)" },
-            { id: "cover_3", name: "Deep terminal", bg: "linear-gradient(120deg,#050505 0%,#3A2A12 100%)" },
-            { id: "cover_4", name: "Баг найден", bg: "linear-gradient(120deg,#0B0B0B 0%,#EF4444 100%)" },
-            { id: "cover_5", name: "Ночной техно", bg: "linear-gradient(120deg,#050505 0%,#121212 50%,#2A2A2A 100%)" },
-            { id: "cover_6", name: "Slate terminal", bg: "linear-gradient(120deg,#0B0B0B 0%,#242424 100%)" },
-            { id: "cover_7", name: "Compiler amber", bg: "linear-gradient(120deg,#121212 0%,#B45309 100%)" },
-            { id: "cover_8", name: "Debug console", bg: "linear-gradient(120deg,#050505 0%,#1A1A1A 50%,#F59E0B 100%)" },
-            { id: "cover_9", name: "Runtime trace", bg: "linear-gradient(120deg,#0B0B0B 0%,#F59E0B 35%,#F59E0B 100%)" },
-            { id: "cover_10", name: "Cold deploy", bg: "linear-gradient(120deg,#050505 0%,#121212 50%,#FBBF24 100%)" }
-        ];
-        const DEFAULT_COVER_ID = "cover_1";
+        const DEFAULT_COVER_ID = CodeBugCovers.defaultId;
         let currentProfileStyle = {};
         let currentProfileLogin = viewedUser;
         let preferRestDbReads = false;
@@ -1887,7 +1892,7 @@
         }
 
         function getRankColor(exp, login) {
-            return "#FFFFFF";
+            return typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF";
         }
 
         function getNickThemeSampleStyle(theme) {
@@ -1939,16 +1944,11 @@
             return `<span style="${getNickThemeSampleStyle(theme)}">${safeNick}</span>`;
         }
 
-        function coverPresetById(id) {
-            const key = String(id || "").toLowerCase();
-            return COVER_PRESETS.find((item) => item.id === key) || COVER_PRESETS[0];
-        }
-
         function applyProfileCover(styleData, subLevel) {
             const coverEl = document.getElementById("profileCover");
             if (!coverEl) return;
             const style = (styleData && typeof styleData === "object") ? styleData : {};
-            const preset = coverPresetById(style.coverId || DEFAULT_COVER_ID);
+            const preset = CodeBugCovers.resolve(style.coverId, subLevel);
             const custom = String(style.coverUrl || "").trim();
             const canUseCustom = (subLevel !== "free");
 
@@ -1961,13 +1961,15 @@
                 image.fetchPriority = "high";
                 image.onload = () => {
                     if (coverEl.dataset.source !== coverUrl) return;
+                    coverEl.style.background = "";
+                    CodeBugCovers.clear(coverEl);
                     coverEl.style.backgroundImage = `url(${JSON.stringify(coverUrl)})`;
                     CodeBugData.mark("profile-cover-loaded");
                 };
                 image.src = coverUrl;
             } else {
                 coverEl.dataset.source = "preset:" + preset.id;
-                coverEl.style.backgroundImage = preset.bg;
+                CodeBugCovers.paint(coverEl, preset);
             }
         }
 
@@ -2817,7 +2819,7 @@
                 const navProfileNameEl = document.querySelector("#nav-links .nav-profile-name");
                 const navProfileTierEl = document.querySelector("#nav-links .nav-profile-tier");
                 if (navProfileNameEl) {
-                    navProfileNameEl.innerHTML = isPro ? buildStyledNickHtml(data.login, sub, "#FFFFFF") : escapeHtml(data.login);
+                    navProfileNameEl.innerHTML = buildStyledNickHtml(data.login, sub, getRankColor(Number(stats.exp || 0), data.login));
                 } else {
                     navProfileEl.textContent = isPro ? `${data.login} · ${navTier}` : data.login;
                 }
@@ -2893,7 +2895,7 @@
                     usernameEl.style.cursor = isPro ? "pointer" : "default";
                     usernameEl.title = isPro ? "Нажми, чтобы сменить ник или цвет" : "";
                 }
-                if (changeCoverBtn) changeCoverBtn.style.display = "inline-block";
+                if (changeCoverBtn) changeCoverBtn.style.display = "inline-flex";
                 if (avatarEditBtn) avatarEditBtn.style.display = "inline-flex";
                 if (proStyleNickBtn) proStyleNickBtn.style.display = isPro ? "inline-flex" : "none";
                 if (logoutIconBtn) logoutIconBtn.style.display = "none";
@@ -2959,20 +2961,28 @@
             if (!grid) return;
 
             const style = (styleData && typeof styleData === "object") ? styleData : {};
-            const activeId = String(style.coverId || DEFAULT_COVER_ID).toLowerCase();
             const hasCustom = !!String(style.coverUrl || "").trim();
+            const activeId = hasCustom ? "" : CodeBugCovers.resolve(style.coverId, level).id;
             const isPro = level !== "free";
 
             grid.innerHTML = "";
-            COVER_PRESETS.forEach((preset) => {
+            CodeBugCovers.list.forEach((preset) => {
+                const locked = !CodeBugCovers.canUse(preset, level);
                 const card = document.createElement("button");
                 card.type = "button";
-                card.className = "cover-option" + (preset.id === activeId ? " active" : "");
+                card.className = "cover-option" + (preset.id === activeId ? " active" : "") + (locked ? " locked" : "");
                 card.innerHTML = `
-                    <div class="cover-thumb" style="background-image:${preset.bg};"></div>
-                    <div class="cover-option-meta">${preset.name}</div>
+                    <div class="cover-thumb"></div>
+                    <div class="cover-option-meta"><span>${preset.name}</span>${preset.animated ? '<span class="cover-tag">PRO+</span>' : ""}</div>
                 `;
-                card.addEventListener("click", () => setProfileCoverPreset(preset.id));
+                CodeBugCovers.paint(card.querySelector(".cover-thumb"), preset);
+                card.addEventListener("click", () => {
+                    if (locked) {
+                        if (errorEl) errorEl.textContent = "Анимированные шапки доступны с подпиской PRO+.";
+                        return;
+                    }
+                    setProfileCoverPreset(preset.id);
+                });
                 grid.appendChild(card);
             });
 

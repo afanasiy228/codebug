@@ -683,7 +683,11 @@ function escapeInlineHtml(value) {
 function buildStyledNickHtml(login, sub, fallbackColor) {
     const safe = escapeInlineHtml(login);
     const level = getSubscriptionLevel(sub);
-    if (level === "free") return `<span style="color:#FFFFFF">${safe}</span>`;
+    if (level === "free") {
+        // Free nicks take the rank colour that grows with exp; only a plain colour value is accepted.
+        const color = /^(#[0-9a-f]{3,8}|hsl\([\d.%\s]+\))$/i.test(String(fallbackColor || "")) ? fallbackColor : "#FFFFFF";
+        return `<span style="color:${color}">${safe}</span>`;
+    }
     const theme = getSubscriptionNickTheme(sub);
     if (theme.startsWith("#")) return `<span style="color:${theme}">${safe}</span>`;
     if (theme === "grad_ocean") {

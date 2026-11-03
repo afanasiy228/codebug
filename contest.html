@@ -260,7 +260,10 @@
       background-position: center;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
       transition: filter .2s;
+      position: relative;
+      overflow: hidden;
     }
+    .participant-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .45), rgba(0, 0, 0, .2)); }
     td.user a { text-decoration: none; }
     td.pen, td.sum { font: 700 16px var(--mono); color: var(--ink); text-align: center; white-space: nowrap; padding: 0 6px !important; }
     td.sq { width: 60px; min-width: 60px; height: 60px; }
@@ -376,7 +379,8 @@
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
   <script src="firebase.js?v=20261030-1"></script>
-  <script src="auth.js?v=20261030-1"></script>
+  <script src="auth.js?v=20261103-1"></script>
+  <script src="profile-covers.js?v=20261103-1"></script>
 
   <script>
     updateNavbar();
@@ -427,20 +431,6 @@
       return contestProfileRequests.get(login);
     }
 
-    // Same preset backgrounds as the profile cover picker.
-    const COVER_PRESETS = [
-      { id: "cover_1", name: "Amber code", bg: "linear-gradient(120deg,#121212 0%,#F59E0B 100%)" },
-      { id: "cover_2", name: "Dark build", bg: "linear-gradient(120deg,#050505 0%,#D97706 55%,#FBBF24 100%)" },
-      { id: "cover_3", name: "Deep terminal", bg: "linear-gradient(120deg,#050505 0%,#3A2A12 100%)" },
-      { id: "cover_4", name: "Баг найден", bg: "linear-gradient(120deg,#0B0B0B 0%,#EF4444 100%)" },
-      { id: "cover_5", name: "Ночной техно", bg: "linear-gradient(120deg,#050505 0%,#121212 50%,#2A2A2A 100%)" },
-      { id: "cover_6", name: "Slate terminal", bg: "linear-gradient(120deg,#0B0B0B 0%,#242424 100%)" },
-      { id: "cover_7", name: "Compiler amber", bg: "linear-gradient(120deg,#121212 0%,#B45309 100%)" },
-      { id: "cover_8", name: "Debug console", bg: "linear-gradient(120deg,#050505 0%,#1A1A1A 50%,#F59E0B 100%)" },
-      { id: "cover_9", name: "Runtime trace", bg: "linear-gradient(120deg,#0B0B0B 0%,#F59E0B 35%,#F59E0B 100%)" },
-      { id: "cover_10", name: "Cold deploy", bg: "linear-gradient(120deg,#050505 0%,#121212 50%,#FBBF24 100%)" }
-    ];
-
     function nickColor(login) {
       const sub = contestUserSubCache[String(login)] || {};
       const exp = Number(contestUserExpCache[String(login)] || 0);
@@ -449,19 +439,20 @@
       return typeof getRankNickColorByExp === "function" ? getRankNickColorByExp(exp) : "#FFFFFF";
     }
 
-    function participantCover(login) {
+    function paintParticipantCover(el, login) {
       const style = contestUserCoverCache[login] || {};
-      const preset = COVER_PRESETS.find(item => item.id === String(style.coverId || "").toLowerCase()) || COVER_PRESETS[0];
       const sub = contestUserSubCache[login] || {};
       const level = typeof getSubscriptionLevel === "function" ? getSubscriptionLevel(sub) : "free";
       const custom = String(style.coverUrl || "").trim();
-      let background = preset.bg;
       if (level !== "free" && (/^https?:\/\//i.test(custom) || custom.startsWith("/"))) {
         const url = typeof getOptimizedCoverUrl === "function" ? getOptimizedCoverUrl(custom) : custom;
+        el.style.background = "";
+        CodeBugCovers.clear(el);
         // Quote as a CSS string; assign through the style API after rendering.
-        background = `url(${JSON.stringify(url)})`;
+        el.style.backgroundImage = `url(${JSON.stringify(url)})`;
+        return;
       }
-      return `linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.2)), ${background}`;
+      CodeBugCovers.paint(el, CodeBugCovers.resolve(style.coverId, level));
     }
 
     function profileLink(login) {
@@ -762,7 +753,7 @@
       table.innerHTML = `${head}<tbody>${body}</tbody>`;
       const participantCells = Array.from(table.querySelectorAll("td.user"));
       participantCells.forEach((cell, index) => {
-        cell.querySelector(".participant-cover").style.backgroundImage = participantCover(rows[index].login);
+        paintParticipantCover(cell.querySelector(".participant-cover"), rows[index].login);
       });
       // Match the profile page's fresh cover and subscription data without delaying the table.
       let nextParticipant = 0;
@@ -774,7 +765,7 @@
           if (!cell.isConnected) return;
           await loadParticipantProfile(login);
           if (!cell.isConnected) continue;
-          cell.querySelector(".participant-cover").style.backgroundImage = participantCover(login);
+          paintParticipantCover(cell.querySelector(".participant-cover"), login);
           cell.style.setProperty("--ucol", nickColor(login));
           cell.querySelector(".participant-name").outerHTML = profileLink(login);
         }
