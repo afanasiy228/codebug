@@ -12,20 +12,19 @@
         { id: "live", title: "Живые", proPlus: true },
     ];
 
-    const solid = (top, base) => `linear-gradient(180deg,${top} 0%,${base} 70%)`;
     const image = (name) => ({ bg: `url("/covers/${name}.webp") center/cover no-repeat`, thumb: `url("/covers/${name}.thumb.webp") center/cover no-repeat` });
 
     const COVERS = [
-        { id: "color_amber", group: "color", name: "Янтарный", bg: solid("#f59e0b", "#b45309") },
-        { id: "color_red", group: "color", name: "Красный", bg: solid("#ef4444", "#991b1b") },
-        { id: "color_orange", group: "color", name: "Оранжевый", bg: solid("#f97316", "#c2410c") },
-        { id: "color_green", group: "color", name: "Зелёный", bg: solid("#22c55e", "#15803d") },
-        { id: "color_teal", group: "color", name: "Бирюзовый", bg: solid("#14b8a6", "#0f766e") },
-        { id: "color_blue", group: "color", name: "Синий", bg: solid("#3b82f6", "#1d4ed8") },
-        { id: "color_indigo", group: "color", name: "Индиго", bg: solid("#6366f1", "#3730a3") },
-        { id: "color_purple", group: "color", name: "Фиолетовый", bg: solid("#a855f7", "#6b21a8") },
-        { id: "color_pink", group: "color", name: "Розовый", bg: solid("#ec4899", "#9d174d") },
-        { id: "color_graphite", group: "color", name: "Графит", bg: solid("#3f3f46", "#18181b") },
+        { id: "color_amber", group: "color", name: "Янтарный", bg: "#f59e0b" },
+        { id: "color_red", group: "color", name: "Красный", bg: "#ef4444" },
+        { id: "color_orange", group: "color", name: "Оранжевый", bg: "#f97316" },
+        { id: "color_green", group: "color", name: "Зелёный", bg: "#22c55e" },
+        { id: "color_teal", group: "color", name: "Бирюзовый", bg: "#14b8a6" },
+        { id: "color_blue", group: "color", name: "Синий", bg: "#3b82f6" },
+        { id: "color_indigo", group: "color", name: "Индиго", bg: "#6366f1" },
+        { id: "color_purple", group: "color", name: "Фиолетовый", bg: "#a855f7" },
+        { id: "color_pink", group: "color", name: "Розовый", bg: "#ec4899" },
+        { id: "color_graphite", group: "color", name: "Графит", bg: "#3f3f46" },
 
         { id: "grad_sunset", group: "grad", name: "Янтарный закат", bg: "linear-gradient(120deg,#1a0f05 0%,#b45309 55%,#fbbf24 100%)" },
         { id: "grad_northern", group: "grad", name: "Северный свет", bg: "linear-gradient(160deg,#04141a 8%,#0f766e 45%,#4c1d95 92%)" },
